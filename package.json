@@ -2,6 +2,7 @@
   "name": "black-cat-quiz",
   "version": "1.0.0",
   "dependencies": {
+    "@supabase/supabase-js": "^2.103.0",
     "node-fetch": "^2.6.7"
   }
 }
