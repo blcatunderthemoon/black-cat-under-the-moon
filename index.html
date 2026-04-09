@@ -345,7 +345,7 @@ body::after {
 }
 .range-value {
   font-family: 'Press Start 2P', monospace;
-  font-size: 18px;
+  font-size: 12px;
   color: var(--cyan);
   text-shadow: 0 0 10px rgba(0,229,255,0.4);
 }
@@ -363,6 +363,16 @@ body::after {
   outline: none;
   border-radius: 0;
   margin: 12px 0;
+}
+.pixel-range.dual-min {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.pixel-range.dual-max {
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 .pixel-range::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -1223,13 +1233,13 @@ const QUESTIONS = [
   },
   {
     id:'height_diff', part:6,
-    text:'理想對象嘅身高差（正數 = 對方高過你）：', type:'range',
+    text:'理想對象嘅身高差（正數 = 對方高過你）：', type:'dual_range',
     min:-20, max:20, step:1, unit:'cm',
     field:'height_diff'
   },
   {
     id:'age_diff', part:6,
-    text:'理想對象嘅年齡差（正數 = 對方大過你）：', type:'range',
+    text:'理想對象嘅年齡差（正數 = 對方大過你）：', type:'dual_range',
     min:-10, max:10, step:1, unit:'歲',
     field:'age_diff'
   },
@@ -1571,76 +1581,200 @@ function buildRangeInput(q) {
   display.appendChild(valSpan);
   display.appendChild(unitSpan);
 
-  const slider = document.createElement('input');
-  slider.type = 'range';
-  slider.className = 'pixel-range';
-  slider.min = q.min;
-  slider.max = q.max;
-  slider.step = q.step || 1;
-  slider.value = answers[q.field] !== undefined ? answers[q.field] : 0;
+  if (q.type === 'dual_range') {
+    // Dual range slider
+    const minVal = answers[q.field] && answers[q.field][0] !== undefined ? answers[q.field][0] : q.min;
+    const maxVal = answers[q.field] && answers[q.field][1] !== undefined ? answers[q.field][1] : q.max;
 
-  // Tooltip for realtime value display
-  const tooltip = document.createElement('div');
-  tooltip.className = 'range-tooltip';
-  tooltip.style.display = 'none';
-  tooltip.style.position = 'absolute';
-  tooltip.style.bottom = '30px';
-  tooltip.style.left = '0';
-  tooltip.style.background = 'var(--bg-card-alt)';
-  tooltip.style.border = '1px solid var(--cyan)';
-  tooltip.style.color = 'var(--cyan)';
-  tooltip.style.padding = '4px 8px';
-  tooltip.style.fontSize = '0.75rem';
-  tooltip.style.borderRadius = '2px';
-  tooltip.style.whiteSpace = 'nowrap';
-  tooltip.style.pointerEvents = 'none';
-  tooltip.style.zIndex = '10';
+    const minSlider = document.createElement('input');
+    minSlider.type = 'range';
+    minSlider.className = 'pixel-range dual-min';
+    minSlider.min = q.min;
+    minSlider.max = q.max;
+    minSlider.step = q.step || 1;
+    minSlider.value = minVal;
 
-  const sliderWrap = document.createElement('div');
-  sliderWrap.style.position = 'relative';
-  sliderWrap.appendChild(slider);
-  sliderWrap.appendChild(tooltip);
+    const maxSlider = document.createElement('input');
+    maxSlider.type = 'range';
+    maxSlider.className = 'pixel-range dual-max';
+    maxSlider.min = q.min;
+    maxSlider.max = q.max;
+    maxSlider.step = q.step || 1;
+    maxSlider.value = maxVal;
 
-  function updateDisplay(v) {
-    const num = parseInt(v);
-    valSpan.textContent = (num > 0 ? '+' : '') + num;
-    // Update tooltip
-    tooltip.textContent = (num > 0 ? '+' : '') + num + q.unit;
-  }
-  updateDisplay(slider.value);
+    // Tooltip for realtime value display
+    const tooltip = document.createElement('div');
+    tooltip.className = 'range-tooltip';
+    tooltip.style.display = 'none';
+    tooltip.style.position = 'absolute';
+    tooltip.style.bottom = '30px';
+    tooltip.style.left = '0';
+    tooltip.style.background = 'var(--bg-card-alt)';
+    tooltip.style.border = '1px solid var(--cyan)';
+    tooltip.style.color = 'var(--cyan)';
+    tooltip.style.padding = '4px 8px';
+    tooltip.style.fontSize = '0.75rem';
+    tooltip.style.borderRadius = '2px';
+    tooltip.style.whiteSpace = 'nowrap';
+    tooltip.style.pointerEvents = 'none';
+    tooltip.style.zIndex = '10';
 
-  slider.addEventListener('input', () => {
+    const sliderWrap = document.createElement('div');
+    sliderWrap.style.position = 'relative';
+    sliderWrap.appendChild(minSlider);
+    sliderWrap.appendChild(maxSlider);
+    sliderWrap.appendChild(tooltip);
+
+    function updateDisplay() {
+      const min = parseInt(minSlider.value);
+      const max = parseInt(maxSlider.value);
+      valSpan.textContent = (min > 0 ? '+' : '') + min + ' 至 ' + (max > 0 ? '+' : '') + max;
+      // Update tooltip
+      tooltip.textContent = (min > 0 ? '+' : '') + min + ' 至 ' + (max > 0 ? '+' : '') + max + q.unit;
+    }
+    updateDisplay();
+
+    function enforceConstraints() {
+      const min = parseInt(minSlider.value);
+      const max = parseInt(maxSlider.value);
+      if (min > max) {
+        minSlider.value = max;
+      }
+      if (max < min) {
+        maxSlider.value = min;
+      }
+      updateDisplay();
+      answers[q.field] = [parseInt(minSlider.value), parseInt(maxSlider.value)];
+    }
+
+    minSlider.addEventListener('input', enforceConstraints);
+    maxSlider.addEventListener('input', enforceConstraints);
+
+    // Haptic feedback on limits
+    function addHaptic() {
+      if ('vibrate' in navigator) {
+        navigator.vibrate(50);
+      }
+    }
+
+    minSlider.addEventListener('change', () => {
+      if (parseInt(minSlider.value) === q.min) addHaptic();
+    });
+    maxSlider.addEventListener('change', () => {
+      if (parseInt(maxSlider.value) === q.max) addHaptic();
+    });
+
+    minSlider.addEventListener('mouseenter', () => {
+      tooltip.style.display = 'block';
+    });
+    minSlider.addEventListener('mouseleave', () => {
+      tooltip.style.display = 'none';
+    });
+    maxSlider.addEventListener('mouseenter', () => {
+      tooltip.style.display = 'block';
+    });
+    maxSlider.addEventListener('mouseleave', () => {
+      tooltip.style.display = 'none';
+    });
+
+    minSlider.addEventListener('touchstart', () => {
+      tooltip.style.display = 'block';
+    });
+    minSlider.addEventListener('touchend', () => {
+      tooltip.style.display = 'none';
+    });
+    maxSlider.addEventListener('touchstart', () => {
+      tooltip.style.display = 'block';
+    });
+    maxSlider.addEventListener('touchend', () => {
+      tooltip.style.display = 'none';
+    });
+
+    const labels = document.createElement('div');
+    labels.className = 'range-labels';
+    labels.innerHTML = '<span>' + q.min + '</span><span>0</span><span>+' + q.max + '</span>';
+
+    wrap.appendChild(display);
+    wrap.appendChild(sliderWrap);
+    wrap.appendChild(labels);
+    $qAnswers.appendChild(wrap);
+
+    // Dual range always has values
+    answers[q.field] = [parseInt(minSlider.value), parseInt(maxSlider.value)];
+  } else {
+    // Single range slider (existing code)
+    const slider = document.createElement('input');
+    slider.type = 'range';
+    slider.className = 'pixel-range';
+    slider.min = q.min;
+    slider.max = q.max;
+    slider.step = q.step || 1;
+    slider.value = answers[q.field] !== undefined ? answers[q.field] : 0;
+
+    // Tooltip for realtime value display
+    const tooltip = document.createElement('div');
+    tooltip.className = 'range-tooltip';
+    tooltip.style.display = 'none';
+    tooltip.style.position = 'absolute';
+    tooltip.style.bottom = '30px';
+    tooltip.style.left = '0';
+    tooltip.style.background = 'var(--bg-card-alt)';
+    tooltip.style.border = '1px solid var(--cyan)';
+    tooltip.style.color = 'var(--cyan)';
+    tooltip.style.padding = '4px 8px';
+    tooltip.style.fontSize = '0.75rem';
+    tooltip.style.borderRadius = '2px';
+    tooltip.style.whiteSpace = 'nowrap';
+    tooltip.style.pointerEvents = 'none';
+    tooltip.style.zIndex = '10';
+
+    const sliderWrap = document.createElement('div');
+    sliderWrap.style.position = 'relative';
+    sliderWrap.appendChild(slider);
+    sliderWrap.appendChild(tooltip);
+
+    function updateDisplay(v) {
+      const num = parseInt(v);
+      valSpan.textContent = (num > 0 ? '+' : '') + num;
+      // Update tooltip
+      tooltip.textContent = (num > 0 ? '+' : '') + num + q.unit;
+    }
     updateDisplay(slider.value);
+
+    slider.addEventListener('input', () => {
+      updateDisplay(slider.value);
+      answers[q.field] = slider.value;
+    });
+
+    slider.addEventListener('mouseenter', () => {
+      tooltip.style.display = 'block';
+    });
+
+    slider.addEventListener('mouseleave', () => {
+      tooltip.style.display = 'none';
+    });
+
+    slider.addEventListener('touchstart', () => {
+      tooltip.style.display = 'block';
+    });
+
+    slider.addEventListener('touchend', () => {
+      tooltip.style.display = 'none';
+    });
+
+    const labels = document.createElement('div');
+    labels.className = 'range-labels';
+    labels.innerHTML = '<span>' + q.min + '</span><span>0</span><span>+' + q.max + '</span>';
+
+    wrap.appendChild(display);
+    wrap.appendChild(sliderWrap);
+    wrap.appendChild(labels);
+    $qAnswers.appendChild(wrap);
+
+    // Range always has a value, so enable next
     answers[q.field] = slider.value;
-  });
+  }
 
-  slider.addEventListener('mouseenter', () => {
-    tooltip.style.display = 'block';
-  });
-
-  slider.addEventListener('mouseleave', () => {
-    tooltip.style.display = 'none';
-  });
-
-  slider.addEventListener('touchstart', () => {
-    tooltip.style.display = 'block';
-  });
-
-  slider.addEventListener('touchend', () => {
-    tooltip.style.display = 'none';
-  });
-
-  const labels = document.createElement('div');
-  labels.className = 'range-labels';
-  labels.innerHTML = '<span>' + q.min + '</span><span>0</span><span>+' + q.max + '</span>';
-
-  wrap.appendChild(display);
-  wrap.appendChild(sliderWrap);
-  wrap.appendChild(labels);
-  $qAnswers.appendChild(wrap);
-
-  // Range always has a value, so enable next
-  answers[q.field] = slider.value;
   $btnRow.style.display = 'flex';
   $nextBtn.textContent = currentIdx === TOTAL - 1 ? '提交 ✦' : '下一題 ▸';
   $nextBtn.disabled = false;
@@ -1940,6 +2074,8 @@ async function submitAnswers() {
     cohabitation: answers.cohabitation || '',
     ideal_identity: answers.preferred_attribute || '',
     ideal_visuals: answers.ideal_appearance || '',
+    ideal_height_gap: answers.height_diff || [-20, 20],
+    ideal_age_gap: answers.age_diff || [-10, 10],
     gap_moe: answers.gap_moe || '',
     personal_traits: answers.three_traits || '',
     contact_info: answers.contact_info || '',
