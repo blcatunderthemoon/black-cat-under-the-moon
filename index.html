@@ -364,32 +364,60 @@ body::after {
   border-radius: 0;
   margin: 12px 0;
 }
-.pixel-range.dual-min {
-  position: absolute;
-  top: 0;
-  left: 0;
+.dual-slider-wrap {
+  position: relative;
+  height: 30px;
 }
+.pixel-range.dual-min,
 .pixel-range.dual-max {
   position: absolute;
   top: 0;
   left: 0;
+  background: transparent;
+  pointer-events: none;
+  margin: 12px 0;
+}
+.pixel-range.dual-min::-webkit-slider-thumb,
+.pixel-range.dual-max::-webkit-slider-thumb {
+  pointer-events: auto;
+}
+.pixel-range.dual-min::-moz-range-thumb,
+.pixel-range.dual-max::-moz-range-thumb {
+  pointer-events: auto;
+}
+.dual-track {
+  position: absolute;
+  top: 12px;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: var(--border);
+  pointer-events: none;
+}
+.dual-track-fill {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: linear-gradient(90deg, var(--pink), var(--cyan));
+  pointer-events: none;
 }
 .pixel-range::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 22px;
   height: 22px;
-  background-color: var(--cyan);
+  background-color: #00ffff !important;
+  opacity: 1 !important;
   background-image:
-    repeating-linear-gradient(45deg, rgba(255,255,255,0.18) 0 2px, transparent 2px 4px),
-    repeating-linear-gradient(-45deg, rgba(0,0,0,0.15) 0 2px, transparent 2px 4px);
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.22) 0 1px, #00ffff 1px 2px, rgba(0,0,0,0.18) 2px 3px, #00ffff 3px 4px),
+    repeating-linear-gradient(-45deg, rgba(255,255,255,0.18) 0 1px, #00ffff 1px 2px, rgba(0,0,0,0.14) 2px 3px, #00ffff 3px 4px);
   background-size: 6px 6px;
   background-clip: padding-box;
   border: 2px solid var(--bg-deep);
   cursor: pointer;
   box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.2),
-    0 0 0 1px rgba(255,255,255,0.08),
+    inset 0 0 0 1px rgba(255,255,255,0.22),
+    0 0 0 1px rgba(255,255,255,0.12),
     0 0 8px rgba(0,229,255,0.4);
   transition: box-shadow 0.2s, transform 0.1s;
 }
@@ -397,33 +425,34 @@ body::after {
 .pixel-range::-webkit-slider-thumb:active,
 .pixel-range.active-thumb::-webkit-slider-thumb {
   box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.25),
-    0 0 0 1px rgba(255,255,255,0.12),
+    inset 0 0 0 1px rgba(255,255,255,0.28),
+    0 0 0 1px rgba(255,255,255,0.16),
     0 0 12px rgba(0,229,255,0.6);
   transform: scale(1.02);
 }
 .pixel-range::-moz-range-thumb {
   width: 22px;
   height: 22px;
-  background-color: var(--cyan);
+  background-color: #00ffff !important;
+  opacity: 1 !important;
   background-image:
-    repeating-linear-gradient(45deg, rgba(255,255,255,0.18) 0 2px, transparent 2px 4px),
-    repeating-linear-gradient(-45deg, rgba(0,0,0,0.15) 0 2px, transparent 2px 4px);
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.22) 0 1px, #00ffff 1px 2px, rgba(0,0,0,0.18) 2px 3px, #00ffff 3px 4px),
+    repeating-linear-gradient(-45deg, rgba(255,255,255,0.18) 0 1px, #00ffff 1px 2px, rgba(0,0,0,0.14) 2px 3px, #00ffff 3px 4px);
   background-size: 6px 6px;
   border: 2px solid var(--bg-deep);
   cursor: pointer;
   border-radius: 0;
   box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.2),
-    0 0 0 1px rgba(255,255,255,0.08),
+    inset 0 0 0 1px rgba(255,255,255,0.22),
+    0 0 0 1px rgba(255,255,255,0.12),
     0 0 8px rgba(0,229,255,0.4);
 }
 .pixel-range::-moz-range-thumb:hover,
 .pixel-range::-moz-range-thumb:active,
 .pixel-range.active-thumb::-moz-range-thumb {
   box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.25),
-    0 0 0 1px rgba(255,255,255,0.12),
+    inset 0 0 0 1px rgba(255,255,255,0.28),
+    0 0 0 1px rgba(255,255,255,0.16),
     0 0 12px rgba(0,229,255,0.6);
 }
 .range-labels {
@@ -1250,13 +1279,13 @@ const QUESTIONS = [
   // ---- Part 6: 理想對象 ----
   {
     id:'preferred_attribute', part:6, partTitle:'理想對象與彩蛋 The Ideal Match',
-    text:'希望對方的屬性：', type:'single',
+    text:'希望對方的屬性（可多選）：', type:'multi',
     options:['TB','TBG','Pure','Bi','No Label','冇所謂'],
     field:'preferred_attribute'
   },
   {
     id:'ideal_appearance', part:6,
-    text:'理想對象嘅身型：', type:'single',
+    text:'理想對象嘅身型（可多選）：', type:'multi',
     options:['纖瘦偏薄','均勻適中','結實健美','圓潤肉感','冇所謂'],
     field:'ideal_appearance'
   },
@@ -1651,7 +1680,15 @@ function buildRangeInput(q) {
     tooltip.style.zIndex = '10';
 
     const sliderWrap = document.createElement('div');
-    sliderWrap.style.position = 'relative';
+    sliderWrap.className = 'dual-slider-wrap';
+
+    const dualTrack = document.createElement('div');
+    dualTrack.className = 'dual-track';
+    const dualFill = document.createElement('div');
+    dualFill.className = 'dual-track-fill';
+    dualTrack.appendChild(dualFill);
+
+    sliderWrap.appendChild(dualTrack);
     sliderWrap.appendChild(minSlider);
     sliderWrap.appendChild(maxSlider);
     sliderWrap.appendChild(tooltip);
@@ -1662,6 +1699,12 @@ function buildRangeInput(q) {
       valSpan.textContent = (min > 0 ? '+' : '') + min + ' 至 ' + (max > 0 ? '+' : '') + max;
       // Update tooltip
       tooltip.textContent = (min > 0 ? '+' : '') + min + ' 至 ' + (max > 0 ? '+' : '') + max + q.unit;
+      // Update range fill bar
+      const range = q.max - q.min;
+      const leftPct = ((min - q.min) / range) * 100;
+      const rightPct = ((max - q.min) / range) * 100;
+      dualFill.style.left = leftPct + '%';
+      dualFill.style.width = (rightPct - leftPct) + '%';
     }
     updateDisplay();
 
