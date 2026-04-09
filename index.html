@@ -1913,11 +1913,8 @@ async function submitAnswers() {
   const loadingStartTime = Date.now();
   const minLoadingDuration = 800; // Minimum loading display time in ms
 
-  // 將逗號分隔嘅多選值轉為陣列（Airtable multi-select 需要陣列） - Now sending as strings for typecast
-  // function toArr(v) { return v ? v.split(', ').filter(Boolean) : []; }
-
-  // Map internal field names to Airtable column names
-  const fields = {
+  // Map internal values to Supabase snake_case columns
+  const payload = {
     name: answers.name || '',
     age: parseInt(answers.age) || 0,
     height: parseInt(answers.height) || 0,
@@ -1925,6 +1922,7 @@ async function submitAnswers() {
     identity: answers.attribute || '',
     hair_style: answers.hair_style || '',
     fashion_style: answers.fashion_style || '',
+    bed_role: answers.bed_position || '',
     social_energy: answers.social_energy || '',
     weekend_mode: answers.ideal_weekend || '',
     interests: answers.interests || '',
@@ -1937,8 +1935,7 @@ async function submitAnswers() {
     security_needs: answers.security_need || '',
     romance_ritual: answers.ritual_sense || '',
     decision_style: answers.decision_style || '',
-    conflict_handle: answers.conflict_style || '',
-    emotion_process: answers.conflict_style || '',
+    communication_style: answers.conflict_style || '',
     money_values: answers.money_view || '',
     cohabitation: answers.cohabitation || '',
     ideal_identity: answers.preferred_attribute || '',
@@ -1957,7 +1954,7 @@ async function submitAnswers() {
     const resp = await fetch('/api/submit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fields })
+      body: JSON.stringify(payload)
     });
     if (!resp.ok) {
       const errBody = await resp.json().catch(() => ({}));
