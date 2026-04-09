@@ -1088,7 +1088,7 @@ const QUESTIONS = [
     text:'身體能量（運動，可多選）：', type:'multi',
     categories:[
       { label:'🌿 戶外系', options:['行山/露營','水上運動（衝浪/潛水）','球類運動','跑步/踩單車'] },
-      { label:'🏋️ 室內系', options:['做 Gym 訓練','瑜伽/普拉提','跳舞 (Jazz/Street Dance)','攀石'] },
+      { label:'🏋️ 室內系', options:['做 Gym 訓練','瑜伽/普拉提','跳舞','攀石'] },
       { label:'🧘 佛系', options:['拉筋伸展','呼吸係我唯一運動'] }
     ],
     field:'exercise'
@@ -1217,7 +1217,7 @@ const QUESTIONS = [
   },
   {
     id:'ideal_appearance', part:6,
-    text:'理想的身型與外表：', type:'single',
+    text:'理想對象嘅身型：', type:'single',
     options:['纖瘦偏薄','均勻適中','結實健美','圓潤肉感','冇所謂'],
     field:'ideal_appearance'
   },
@@ -1913,8 +1913,8 @@ async function submitAnswers() {
   const loadingStartTime = Date.now();
   const minLoadingDuration = 800; // Minimum loading display time in ms
 
-  // 將逗號分隔嘅多選值轉為陣列（Airtable multi-select 需要陣列）
-  function toArr(v) { return v ? v.split(', ').filter(Boolean) : []; }
+  // 將逗號分隔嘅多選值轉為陣列（Airtable multi-select 需要陣列） - Now sending as strings for typecast
+  // function toArr(v) { return v ? v.split(', ').filter(Boolean) : []; }
 
   // Map internal field names to Airtable column names
   const fields = {
@@ -1924,16 +1924,16 @@ async function submitAnswers() {
     body_type: answers.body_type || '',
     identity: answers.attribute || '',
     hair_style: answers.hair_style || '',
-    fashion_style: toArr(answers.fashion_style),
+    fashion_style: answers.fashion_style || '',
     social_energy: answers.social_energy || '',
     weekend_mode: answers.ideal_weekend || '',
-    interests: toArr(answers.interests),
-    exercise_habit: toArr(answers.exercise),
+    interests: answers.interests || '',
+    exercise_habit: answers.exercise || '',
     travel_mode: answers.travel_mode || '',
     relationship_goal: answers.relationship_goal || '',
     time_commitment: answers.time_investment || '',
-    deal_breaker: toArr(answers.deal_breaker),
-    love_language: toArr(answers.love_language),
+    deal_breaker: answers.deal_breaker || '',
+    love_language: answers.love_language || '',
     security_needs: answers.security_need || '',
     romance_ritual: answers.ritual_sense || '',
     decision_style: answers.decision_style || '',
