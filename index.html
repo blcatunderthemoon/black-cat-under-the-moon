@@ -1562,7 +1562,7 @@ function buildAnswerArea(q) {
     buildSingleChoice(q);
   } else if (q.type === 'multi') {
     buildMultiChoice(q);
-  } else if (q.type === 'range') {
+  } else if (q.type === 'range' || q.type === 'dual_range') {
     buildRangeInput(q);
   }
 }
