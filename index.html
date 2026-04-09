@@ -1,0 +1,2191 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0a1a">
+<title>🌙 Black Cat Under The Moon：靈魂配對問卷</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' shape-rendering='crispEdges'%3E%3Crect width='32' height='32' rx='6' fill='%2307060e'/%3E%3C!-- ears --%3E%3Crect x='6' y='4' width='4' height='4' fill='%232a2640'/%3E%3Crect x='8' y='2' width='2' height='2' fill='%232a2640'/%3E%3Crect x='22' y='4' width='4' height='4' fill='%232a2640'/%3E%3Crect x='22' y='2' width='2' height='2' fill='%232a2640'/%3E%3C!-- head --%3E%3Crect x='6' y='8' width='20' height='12' fill='%232a2640'/%3E%3Crect x='8' y='6' width='16' height='2' fill='%232a2640'/%3E%3C!-- eyes --%3E%3Crect x='10' y='12' width='4' height='2' fill='%2350fa7b'/%3E%3Crect x='18' y='12' width='4' height='2' fill='%2350fa7b'/%3E%3Crect x='12' y='12' width='2' height='2' fill='%23111'/%3E%3Crect x='20' y='12' width='2' height='2' fill='%23111'/%3E%3C!-- nose --%3E%3Crect x='15' y='15' width='2' height='2' fill='%23ff79c6'/%3E%3C!-- body --%3E%3Crect x='8' y='20' width='16' height='6' fill='%232a2640'/%3E%3Crect x='10' y='26' width='4' height='2' fill='%232a2640'/%3E%3Crect x='18' y='26' width='4' height='2' fill='%232a2640'/%3E%3C!-- moon --%3E%3Crect x='26' y='3' width='2' height='2' fill='%23ffe066'/%3E%3Crect x='28' y='5' width='2' height='4' fill='%23ffe066'/%3E%3Crect x='26' y='9' width='2' height='2' fill='%23ffe066'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ========== CSS RESET & BASE ========== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-deep: #07060e;
+  --bg-card: #12111d;
+  --bg-card-alt: #1a1830;
+  --border: #2a2650;
+  --border-glow: #3d3870;
+  --pink: #ff6b9d;
+  --cyan: #00e5ff;
+  --yellow: #ffe066;
+  --cream: #f0ebd8;
+  --cream-dim: #a09c8c;
+  --green: #50fa7b;
+  --purple-light: #bd93f9;
+  --text: #f0ebd8;
+  --text-dim: #7a7590;
+  --shadow: rgba(0,0,0,0.5);
+}
+
+html { font-size: 16px; }
+body {
+  background: var(--bg-deep);
+  color: var(--text);
+  font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Scanline overlay */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 2px,
+    rgba(0,0,0,0.06) 2px,
+    rgba(0,0,0,0.06) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ========== PIXEL FONT UTILITY ========== */
+.pixel-font {
+  font-family: 'Press Start 2P', monospace;
+  letter-spacing: 1px;
+}
+
+/* ========== BACKGROUND CANVAS ========== */
+#bg-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ========== PROGRESS BAR ========== */
+.progress-wrap {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: var(--bg-deep);
+  padding: 0;
+  border-bottom: 2px solid var(--border);
+}
+.progress-bar {
+  height: 6px;
+  background: var(--bg-card);
+  position: relative;
+  image-rendering: pixelated;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--pink), var(--purple-light), var(--cyan));
+  transition: width 0.6s cubic-bezier(.22,.68,0,1.2);
+  position: relative;
+}
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  right: 0; top: -2px; bottom: -2px;
+  width: 8px;
+  background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan), 0 0 16px var(--cyan);
+}
+.progress-label {
+  text-align: center;
+  padding: 6px 0;
+  font-size: 8px;
+  color: var(--text-dim);
+}
+
+/* ========== HEADER ========== */
+.site-header {
+  text-align: center;
+  padding: 50px 16px 8px;
+  position: relative;
+  z-index: 10;
+}
+.header-art {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+#cat-canvas {
+  image-rendering: pixelated;
+  width: 72px;
+  height: 48px;
+}
+.site-title {
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--yellow);
+  text-shadow: 0 0 10px rgba(255,224,102,0.4);
+}
+.site-subtitle {
+  font-size: 7px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+/* ========== MAIN CONTAINER ========== */
+.main-container {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 4px 16px 120px;
+  position: relative;
+  z-index: 10;
+}
+
+/* ========== QUESTION CARD ========== */
+.q-card {
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  padding: 28px 24px 32px;
+  position: relative;
+  box-shadow:
+    4px 4px 0 var(--border),
+    0 0 30px rgba(100,80,200,0.06);
+  transition: opacity 0.35s, transform 0.35s;
+  overflow: hidden;
+  will-change: opacity, transform;
+  margin: 0 auto;
+}
+.q-card.fade-out {
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+}
+.q-card.fade-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Part label */
+.part-label {
+  font-family: 'Noto Sans TC', 'Press Start 2P', monospace;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--cyan);
+  margin-bottom: 16px;
+  padding: 6px 10px;
+  border: 1px solid var(--cyan);
+  display: inline-block;
+  opacity: 0.85;
+  line-height: 1.8;
+  letter-spacing: 0.5px;
+  word-spacing: 2px;
+}
+
+/* Question number */
+.q-number {
+  font-size: 9px;
+  color: var(--pink);
+  margin-bottom: 8px;
+}
+
+/* Question text (typewriter) */
+.q-text {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.8;
+  min-height: 2.2em;
+  margin-bottom: 24px;
+  color: var(--cream);
+  min-width: 0;
+  will-change: contents;
+}
+.q-text .cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: var(--cyan);
+  margin-left: 2px;
+  animation: blink-cursor 0.6s step-end infinite;
+  vertical-align: text-bottom;
+}
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ========== INPUT TYPES ========== */
+
+/* Text Input */
+.pixel-input {
+  width: 100%;
+  background: rgba(7,6,14,0.7);
+  border: 3px solid var(--border);
+  color: var(--cream);
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 1rem;
+  padding: 14px 16px;
+  outline: none;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  border-radius: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.pixel-input::placeholder { color: var(--text-dim); font-size: 0.85rem; }
+.pixel-input:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 2px rgba(0,229,255,0.15), 0 0 20px rgba(0,229,255,0.08);
+}
+
+/* Single choice buttons */
+.choices { display: flex; flex-direction: column; gap: 10px; }
+.choice-btn {
+  background: var(--bg-card-alt);
+  border: 2px solid var(--border);
+  color: var(--cream);
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 0.9rem;
+  padding: 14px 16px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  line-height: 1.6;
+  border-radius: 0;
+}
+.choice-btn:hover {
+  border-color: var(--pink);
+  background: rgba(255,107,157,0.08);
+  box-shadow: 0 0 12px rgba(255,107,157,0.15);
+  transform: translateX(4px);
+}
+.choice-btn:active {
+  transform: translateX(2px) scale(0.98);
+}
+.choice-btn.selected {
+  border-color: var(--cyan);
+  background: rgba(0,229,255,0.1);
+  box-shadow: 0 0 12px rgba(0,229,255,0.2), inset 0 0 20px rgba(0,229,255,0.04);
+}
+.choice-btn .choice-marker {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: var(--pink);
+  margin-right: 10px;
+  display: inline-block;
+  min-width: 20px;
+}
+.choice-btn.selected .choice-marker { color: var(--cyan); }
+
+/* Multi-choice checkboxes */
+.multi-choices { display: flex; flex-direction: column; gap: 8px; }
+.cat-label { font-size: 0.8rem; color: var(--yellow); margin: 10px 0 4px; font-weight: 700; }
+.cat-label:first-child { margin-top: 0; }
+.multi-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-card-alt);
+  border: 2px solid var(--border);
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+.multi-item:hover {
+  border-color: var(--purple-light);
+  background: rgba(189,147,249,0.06);
+}
+.multi-item.checked {
+  border-color: var(--cyan);
+  background: rgba(0,229,255,0.08);
+}
+.pixel-check {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  font-size: 10px;
+  color: transparent;
+}
+.multi-item.checked .pixel-check {
+  border-color: var(--cyan);
+  background: var(--cyan);
+  color: var(--bg-deep);
+  box-shadow: 0 0 6px rgba(0,229,255,0.4);
+}
+.multi-item-text { font-size: 0.88rem; line-height: 1.5; color: var(--cream); }
+
+/* Max select warning */
+.max-warn {
+  font-size: 0.72rem;
+  color: var(--pink);
+  margin-top: 6px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.max-warn.show { opacity: 1; }
+
+/* ========== RANGE SLIDER ========== */
+.range-wrap {
+  padding: 8px 0 4px;
+}
+.range-display {
+  text-align: center;
+  margin-bottom: 16px;
+}
+.range-value {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 18px;
+  color: var(--cyan);
+  text-shadow: 0 0 10px rgba(0,229,255,0.4);
+}
+.range-unit {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin-left: 6px;
+}
+.pixel-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: var(--border);
+  outline: none;
+  border-radius: 0;
+  margin: 12px 0;
+}
+.pixel-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  background: var(--cyan);
+  border: 2px solid var(--bg-deep);
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(0,229,255,0.5);
+  transition: box-shadow 0.2s;
+}
+.pixel-range::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 16px rgba(0,229,255,0.7);
+}
+.pixel-range::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  background: var(--cyan);
+  border: 2px solid var(--bg-deep);
+  border-radius: 0;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(0,229,255,0.5);
+}
+.range-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+/* ========== NEXT / SUBMIT BUTTON ========== */
+.btn-row { margin-top: 24px; display: flex; justify-content: flex-end; }
+.next-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  background: transparent;
+  border: 2px solid var(--pink);
+  color: var(--pink);
+  padding: 14px 28px;
+  cursor: pointer;
+  transition: all 0.25s;
+  position: relative;
+  letter-spacing: 1px;
+}
+.next-btn:hover:not(:disabled) {
+  background: var(--pink);
+  color: var(--bg-deep);
+  box-shadow: 0 0 14px rgba(255,107,157,0.4), 4px 4px 0 rgba(255,107,157,0.3);
+  transform: translateY(-2px);
+}
+.next-btn:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 0 6px rgba(255,107,157,0.3);
+}
+.next-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ========== LOADING SCREEN ========== */
+.overlay-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background: var(--bg-deep);
+  gap: 24px;
+}
+.overlay-screen.active { display: flex; }
+
+.loading-cat {
+  font-size: 36px;
+  animation: cat-bounce 0.6s ease-in-out infinite;
+}
+@keyframes cat-bounce {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  30% { transform: translateY(-18px) rotate(-5deg); }
+  60% { transform: translateY(-4px) rotate(3deg); }
+}
+.loading-text {
+  font-size: 9px;
+  color: var(--cyan);
+  animation: pulse-text 1.2s ease-in-out infinite;
+}
+@keyframes pulse-text {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+.loading-dots::after {
+  content: '';
+  animation: dots 1.5s steps(4, end) infinite;
+}
+@keyframes dots {
+  0% { content: ''; }
+  25% { content: '.'; }
+  50% { content: '..'; }
+  75% { content: '...'; }
+}
+
+/* ========== THANK YOU SCREEN ========== */
+.thankyou-content {
+  text-align: center;
+  animation: fadeUp 0.8s ease-out;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.level-up {
+  font-size: 28px;
+  color: var(--yellow);
+  text-shadow: 0 0 20px rgba(255,224,102,0.5), 0 0 40px rgba(255,224,102,0.2), 0 0 60px rgba(255,107,157,0.2);
+  margin-bottom: 12px;
+  animation: levelUpGlow 1.5s ease-in-out infinite;
+  letter-spacing: 2px;
+}
+@keyframes level-glow {
+  0%, 100% { text-shadow: 0 0 20px rgba(255,224,102,0.5); }
+  50% { text-shadow: 0 0 30px rgba(255,224,102,0.8), 0 0 60px rgba(255,224,102,0.3); }
+}
+.thankyou-cat {
+  font-size: 48px;
+  margin: 20px 0;
+  animation: cat-bounce 1s ease-in-out infinite;
+}
+.thankyou-msg {
+  color: var(--cream);
+  font-size: 0.95rem;
+  line-height: 2;
+  margin-top: 8px;
+}
+.thankyou-heart {
+  color: var(--pink);
+  font-size: 1.1rem;
+}
+
+/* ========== ERROR SCREEN ========== */
+.error-content { text-align: center; }
+.error-icon { font-size: 48px; margin-bottom: 16px; }
+.error-msg {
+  font-size: 9px;
+  color: var(--pink);
+  line-height: 2.2;
+  margin-bottom: 20px;
+}
+.error-detail {
+  max-width: 300px;
+  margin: -6px auto 16px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-glow);
+  background: rgba(26,24,48,0.55);
+  color: var(--cream-dim);
+  font-size: 0.8rem;
+  line-height: 1.6;
+  text-align: left;
+  display: none;
+}
+.retry-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  background: transparent;
+  border: 2px solid var(--cyan);
+  color: var(--cyan);
+  padding: 12px 24px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.retry-btn:hover {
+  background: var(--cyan);
+  color: var(--bg-deep);
+  box-shadow: 0 0 14px rgba(0,229,255,0.4);
+}
+
+/* ========== AUDIO TOGGLE ========== */
+.audio-toggle {
+  position: fixed;
+  bottom: 44px;
+  right: 20px;
+  z-index: 150;
+  width: 44px;
+  height: 44px;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  color: var(--text-dim);
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.audio-toggle:hover {
+  border-color: var(--purple-light);
+  color: var(--purple-light);
+  box-shadow: 0 0 12px rgba(189,147,249,0.3);
+}
+.audio-toggle.playing {
+  border-color: var(--cyan);
+  color: var(--cyan);
+  animation: radio-pulse 2s ease-in-out infinite;
+}
+@keyframes radio-pulse {
+  0%, 100% { box-shadow: 0 0 4px rgba(0,229,255,0.2); }
+  50% { box-shadow: 0 0 12px rgba(0,229,255,0.5); }
+}
+
+/* ========== WELCOME SCREEN ========== */
+.welcome-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: var(--bg-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 24px;
+  transition: opacity 0.8s;
+  cursor: pointer;
+}
+.welcome-screen.hiding {
+  opacity: 0;
+  pointer-events: none;
+}
+.welcome-title {
+  font-size: 16px;
+  color: var(--yellow);
+  text-align: center;
+  line-height: 2.5;
+  text-shadow: 0 0 20px rgba(255,224,102,0.4);
+  animation: fadeUp 1s ease-out;
+}
+.welcome-sub {
+  font-size: 1rem;
+  color: var(--text-dim);
+  text-align: center;
+  line-height: 2;
+  animation: fadeUp 1.2s ease-out;
+  font-family: 'Noto Sans TC', sans-serif;
+}
+.welcome-start {
+  font-size: 0.85rem;
+  font-family: 'Noto Sans TC', sans-serif;
+}
+.welcome-cat {
+  font-size: 56px;
+  animation: cat-bounce 1.5s ease-in-out infinite;
+}
+.welcome-start-pixel {
+  font-size: 8px;
+  color: var(--pink);
+  animation: pulse-text 1.5s ease-in-out infinite;
+  margin-top: 12px;
+}
+
+/* ========== PART TRANSITION ========== */
+.part-transition {
+  position: fixed;
+  inset: 0;
+  z-index: 250;
+  background: var(--bg-deep);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+.part-transition.active {
+  display: flex;
+  opacity: 1;
+}
+.part-transition.fade-out { opacity: 0; }
+.part-num {
+  font-size: 10px;
+  color: var(--cyan);
+}
+.part-name {
+  font-size: 0.95rem;
+  color: var(--cream);
+  text-align: center;
+  line-height: 2;
+}
+.part-line {
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--pink), var(--cyan));
+  margin: 4px 0;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (min-width: 640px) {
+  .site-title { font-size: 13px; }
+  .site-subtitle { font-size: 8px; }
+  .welcome-title { font-size: 20px; }
+  .welcome-sub { font-size: 1.1rem; }
+  .part-label { font-size: 10px; }
+  .q-card { padding: 32px 28px 36px; }
+  .q-text { font-size: 1.15rem; }
+  .main-container { padding-bottom: 80px; }
+  #cat-canvas { width: 90px; height: 60px; }
+  .welcome-title { font-size: 16px; }
+  .level-up { font-size: 22px; }
+}
+
+@media (max-width: 380px) {
+  .site-title { font-size: 8px; }
+  .q-card { padding: 18px 14px 22px; }
+  .choice-btn { padding: 11px 12px; font-size: 0.82rem; }
+  .multi-item { padding: 10px 12px; }
+  .next-btn { font-size: 9px; padding: 12px 20px; }
+}
+
+/* ========== TEXTAREA ========== */
+.pixel-textarea {
+  width: 100%;
+  background: rgba(7,6,14,0.7);
+  border: 3px solid var(--border);
+  color: var(--cream);
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 1rem;
+  padding: 14px 16px;
+  outline: none;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  border-radius: 0;
+  resize: vertical;
+  min-height: 100px;
+  max-height: 250px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.pixel-textarea::placeholder { color: var(--text-dim); font-size: 0.85rem; }
+.pixel-textarea:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 2px rgba(0,229,255,0.15), 0 0 20px rgba(0,229,255,0.08);
+}
+
+/* ========== NODDING CAT (feedback) ========== */
+.nodding-cat {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  font-size: 28px;
+  opacity: 0;
+  transition: opacity 0.4s;
+  pointer-events: none;
+  z-index: 5;
+}
+.nodding-cat.visible {
+  opacity: 1;
+  animation: nod 0.8s ease-in-out infinite;
+}
+@keyframes nod {
+  0%, 100% { transform: rotate(0deg); }
+  30% { transform: rotate(8deg); }
+  60% { transform: rotate(-4deg); }
+}
+
+/* Navigation hint animations */
+@keyframes fadeInFloat {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOutFloat {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+
+/* Confetti animation */
+@keyframes confettiFall {
+  to {
+    transform: translateY(100vh) rotateZ(720deg);
+    opacity: 0;
+  }
+}
+
+@keyframes confettiTwist {
+  0%, 100% { transform: rotateX(0deg) rotateY(0deg); }
+  50% { transform: rotateX(180deg) rotateY(180deg); }
+}
+
+/* Level up pulsing glow */
+@keyframes levelUpGlow {
+  0%, 100% {
+    text-shadow: 0 0 20px rgba(255,224,102,0.5), 0 0 40px rgba(255,107,157,0.3);
+  }
+  50% {
+    text-shadow: 0 0 40px rgba(255,224,102,0.8), 0 0 80px rgba(255,224,102,0.4), 0 0 30px rgba(255,107,157,0.5);
+  }
+}
+
+/* ========== DONATE / SUPPORT ========== */
+.support-section {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 2px solid var(--border);
+  text-align: center;
+}
+.support-text {
+  font-size: 0.9rem;
+  color: var(--cream-dim);
+  line-height: 2;
+  margin-bottom: 16px;
+}
+.donate-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  display: inline-block;
+  background: transparent;
+  border: 2px solid var(--yellow);
+  color: var(--yellow);
+  padding: 14px 28px;
+  cursor: pointer;
+  text-decoration: none;
+  letter-spacing: 1px;
+  transition: all 0.25s;
+  animation: pixel-pulse 2.5s ease-in-out infinite;
+}
+.donate-btn:hover {
+  background: var(--yellow);
+  color: var(--bg-deep);
+  box-shadow: 0 0 20px rgba(255,224,102,0.5), 4px 4px 0 rgba(255,224,102,0.3);
+  transform: translateY(-2px);
+  animation: none;
+}
+
+.share-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  display: inline-block;
+  background: transparent;
+  border: 2px solid var(--cyan);
+  color: var(--cyan);
+  padding: 14px 28px;
+  cursor: pointer;
+  text-decoration: none;
+  letter-spacing: 1px;
+  transition: all 0.25s;
+  margin-bottom: 16px;
+  animation: pixel-pulse-cyan 2.5s ease-in-out infinite;
+}
+.share-btn:hover {
+  background: var(--cyan);
+  color: var(--bg-deep);
+  box-shadow: 0 0 20px rgba(0,229,255,0.5), 4px 4px 0 rgba(0,229,255,0.3);
+  transform: translateY(-2px);
+  animation: none;
+}
+
+@keyframes pixel-pulse-cyan {
+  0%, 100% { box-shadow: 0 0 4px rgba(0,229,255,0.2); }
+  50% { box-shadow: 0 0 16px rgba(0,229,255,0.45), 0 0 30px rgba(0,229,255,0.15); }
+}
+
+@keyframes pixel-pulse {
+  0%, 100% { box-shadow: 0 0 4px rgba(255,224,102,0.2); }
+  50% { box-shadow: 0 0 16px rgba(255,224,102,0.45), 0 0 30px rgba(255,224,102,0.15); }
+}
+
+/* ========== GLOBAL FOOTER ========== */
+.site-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 90;
+  background: rgba(7,6,14,0.92);
+  border-top: 1px solid var(--border);
+  text-align: center;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.footer-email {
+  font-size: 7px;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+}
+.footer-coffee {
+  font-size: 7px;
+  color: var(--yellow);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.footer-coffee:hover { color: var(--pink); }
+
+/* ========== THANK YOU SCROLLABLE ========== */
+.overlay-screen.scrollable {
+  overflow-y: auto;
+  align-items: flex-start;
+  padding: 60px 16px 80px;
+}
+.overlay-screen.scrollable .thankyou-content {
+  max-width: 500px;
+  width: 100%;
+  margin: auto;
+}
+
+/* Optional label for contact section */
+.contact-note {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin-top: 8px;
+  line-height: 1.7;
+}
+
+/* ========== SMOOTH SCROLL FIX ========== */
+html { scroll-behavior: smooth; }
+#q-answers {
+  min-height: 1px;
+  will-change: opacity, transform;
+}
+</style>
+</head>
+<body>
+
+<!-- Background starfield -->
+<canvas id="bg-canvas"></canvas>
+
+<!-- Welcome Screen -->
+<div class="welcome-screen" id="welcome">
+  <div class="welcome-cat">🐈‍⬛</div>
+  <div class="welcome-title pixel-font">🌈 Black Cat<br>Under The Moon</div>
+  <div class="welcome-sub">靈魂配對問卷</div>
+  <div class="welcome-start">— 點擊任意位置開始 —</div>
+</div>
+
+<!-- Part Transition Screen -->
+<div class="part-transition" id="part-transition">
+  <div class="part-num pixel-font" id="pt-num"></div>
+  <div class="part-line"></div>
+  <div class="part-name" id="pt-name"></div>
+</div>
+
+<!-- Progress Bar -->
+<div class="progress-wrap" id="progress-wrap" style="display:none;">
+  <div class="progress-bar">
+    <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+  </div>
+  <div class="progress-label pixel-font">
+    <span id="progress-text">Q1 / 31</span>
+  </div>
+</div>
+
+<!-- Header -->
+<header class="site-header" id="site-header" style="display:none;">
+  <div class="header-art">
+    <canvas id="cat-canvas" width="90" height="60"></canvas>
+    <div>
+      <div class="site-title pixel-font">🌈 Black Cat<br>Under The Moon</div>
+    </div>
+  </div>
+</header>
+
+<!-- Main Content -->
+<main class="main-container" id="main-content" style="display:none;">
+  <div class="q-card" id="q-card">
+    <div class="part-label pixel-font" id="q-part-label"></div>
+    <div class="q-number pixel-font" id="q-number"></div>
+    <div class="q-text" id="q-text"></div>
+    <div id="q-answers"></div>
+    <div class="btn-row" id="btn-row" style="display:none;">
+      <button class="next-btn pixel-font" id="next-btn" disabled>下一題 ▸</button>
+    </div>
+  </div>
+</main>
+
+<!-- Loading Screen -->
+<div class="overlay-screen" id="loading-screen">
+  <div class="loading-cat">🐈‍⬛</div>
+  <div class="loading-text pixel-font">傳送中<span class="loading-dots"></span></div>
+</div>
+
+<!-- Thank You Screen -->
+<div class="overlay-screen scrollable" id="thankyou-screen">
+  <div id="confetti-container" style="position:fixed;inset:0;pointer-events:none;z-index:10;"></div>
+  <div class="thankyou-content">
+    <div class="level-up pixel-font" id="level-up-text">✦ LEVEL UP! ✦</div>
+    <div class="thankyou-cat">🐈‍⬛✨</div>
+    <div class="thankyou-msg">資料已成功傳送！</div>
+    <div class="thankyou-msg thankyou-heart">多謝你嘅參與 ♡</div>
+    <div class="thankyou-msg" style="margin-top:16px;font-size:0.8rem;color:var(--text-dim);">期待你嘅靈魂伴侶出現 🌙</div>
+    <!-- Share & Support -->
+    <div class="support-section">
+      <div class="support-text">分享你的故事 📲</div>
+      <a class="share-btn" id="share-threads-btn" href="https://threads.net/intent/post?text=🐈‍⬛ 我剛完成了『Black Cat Under The Moon』靈魂配對問卷，你都嚟一份？✨🌙" target="_blank" rel="noopener noreferrer">🧵 分享到 Threads</a>
+      <div class="support-text" style="margin-top:24px;">支持黑貓 ☕</div>
+      <a class="donate-btn" href="https://ko-fi.com/blackcatunderthemoon" target="_blank" rel="noopener noreferrer">☕ SUPPORT ON KO-FI</a>
+      <div style="margin-top:20px;font-size:0.75rem;color:var(--text-dim);line-height:1.8;">Contact: blcatunderthemoon@gmail.com</div>
+    </div>
+  </div>
+</div>
+
+<!-- Error Screen -->
+<div class="overlay-screen" id="error-screen">
+  <div class="error-content">
+    <div class="error-icon">⚡</div>
+    <div class="error-msg pixel-font">月球連線失敗<br>請再試一次</div>
+    <div class="error-detail" id="error-detail"></div>
+    <button class="retry-btn pixel-font" id="retry-btn">RETRY ↻</button>
+  </div>
+</div>
+
+<!-- Audio Toggle -->
+<button class="audio-toggle" id="audio-toggle" title="Lo-fi 音樂" style="display:none;">♪</button>
+
+<!-- Global Footer -->
+<footer class="site-footer" id="site-footer">
+  <span class="footer-email pixel-font">Contact: blcatunderthemoon@gmail.com</span>
+  <a class="footer-coffee pixel-font" href="https://ko-fi.com/blackcatunderthemoon" target="_blank" rel="noopener noreferrer">☕ Ko-fi</a>
+</footer>
+
+<script>
+/* ==============================================================
+   BLACK CAT UNDER THE MOON — SOUL MATCH QUESTIONNAIRE
+   ============================================================== */
+
+// ===================== QUESTIONS DATA =====================
+const QUESTIONS = [
+  // ---- Part 1: 基本畫像 ----
+  {
+    id:'name', part:1, partTitle:'基本畫像 The Visuals',
+    text:'Hello，點稱呼你？', type:'text',
+    placeholder:'輸入你嘅名字...', field:'name'
+  },
+  {
+    id:'age', part:1,
+    text:'年齡：', type:'text', inputType:'number',
+    placeholder:'你嘅年齡...', field:'age'
+  },
+  {
+    id:'height', part:1,
+    text:'身高 (cm)：', type:'text', inputType:'number',
+    placeholder:'例如：165', field:'height'
+  },
+  {
+    id:'body_type', part:1,
+    text:'體型：', type:'single',
+    options:['纖瘦偏薄','均勻適中','結實健美','圓潤肉感'],
+    field:'body_type'
+  },
+  {
+    id:'attribute', part:1,
+    text:'你的屬性：', type:'single',
+    options:['TB','TBG','Pure','Bi','No Label','仲探索緊'],
+    field:'attribute'
+  },
+  {
+    id:'hair_style', part:1,
+    text:'髮型標籤：', type:'single',
+    options:['飄逸長髮','中長及肩','爽朗短髮','帥氣剷青'],
+    field:'hair_style'
+  },
+  {
+    id:'fashion_style', part:1,
+    text:'穿搭風格（可多選）：', type:'multi',
+    options:['簡約歐美','日系小清新','街頭型格','文青文藝','優雅大方','慵懶隨性','運動機能','中性帥氣'],
+    field:'fashion_style'
+  },
+  {
+    id:'bed_position', part:1,
+    text:'關於「床上地位」，誠實豆沙包時間：', type:'single',
+    options:[
+      '霸總負責進攻：全力輸出，我唔係嚟休息嘅 (Top)',
+      '懶豬負責享受：穩定接收，我就係嚟休息嘅 (Bottom)',
+      '遇強則弱，遇弱則強：睇對方係咩料，我可以隨時切換 (Switch)',
+      '躺平派：係咪一定要分？唔想動腦，舒服就得'
+    ],
+    field:'bed_position'
+  },
+  // ---- Part 2: 生活動能 ----
+  {
+    id:'social_energy', part:2, partTitle:'生活動能與頻率 Daily Energy',
+    text:'你的社交電量：', type:'single',
+    options:['好動（戶外玩家）','好靜（宅家修煉）','動靜皆宜（睇心情切換）'],
+    field:'social_energy'
+  },
+  {
+    id:'ideal_weekend', part:2,
+    text:'理想週末模式：', type:'single',
+    options:[
+      '社交派：鍾意同朋友聚會、參加活動',
+      '二人世界：同另一半靜靜過，唔想被打擾',
+      '平衡派：一半社交，一半留俾對方',
+      '隨心派：完全睇當日心情同能量決定'
+    ],
+    field:'ideal_weekend'
+  },
+  {
+    id:'interests', part:2,
+    text:'興趣與活動（可多選）：', type:'multi',
+    categories:[
+      { label:'🎨 文藝類', options:['睇戲/睇展覽','影相記錄','睇書','寫作/手帳','聽 Live House/音樂節'] },
+      { label:'🏠 生活類', options:['搵正餐廳食好嘢','咖啡店打卡','行超市/市集','煮飯研究','居家佈置'] },
+      { label:'🎯 體驗類', options:['深度旅遊','工作坊體驗 (DIY/畫畫/陶藝)','密室逃脫/劇本殺','買嘢 Shopping'] },
+      { label:'🛋️ 休閒類', options:['屋企 Netflix & Chill','漫無目的散步','同寵物玩','冥想/放空'] }
+    ],
+    field:'interests'
+  },
+  {
+    id:'exercise', part:2,
+    text:'身體能量（運動，可多選）：', type:'multi',
+    categories:[
+      { label:'🌿 戶外系', options:['行山/露營','水上運動（衝浪/潛水）','球類運動','跑步/踩單車'] },
+      { label:'🏋️ 室內系', options:['做 Gym 訓練','瑜伽/普拉提','跳舞 (Jazz/Street Dance)','攀石'] },
+      { label:'🧘 佛系', options:['拉筋伸展','呼吸係我唯一運動'] }
+    ],
+    field:'exercise'
+  },
+  {
+    id:'travel_mode', part:2,
+    text:'旅行模式：', type:'single',
+    options:['隨心即興（去到邊玩到邊）','完美攻略（做足準備唔想浪費時間）'],
+    field:'travel_mode'
+  },
+  // ---- Part 3: 關係導向 ----
+  {
+    id:'relationship_goal', part:3, partTitle:'關係導向 Hard Filters',
+    text:'你目前對關係嘅期待係？', type:'single',
+    options:[
+      '認真長期發展：以穩定伴侶為目標，穩定後考慮未來',
+      '順其自然：慢慢了解，唔急於定義關係',
+      '輕鬆相處：偏向 Casual，唔想有太多標籤或束縛',
+      '開放認識：仲未準備好投入關係，但開放識人'
+    ],
+    field:'relationship_goal'
+  },
+  {
+    id:'time_investment', part:3,
+    text:'你每星期可以投入幾多時間喺關係？', type:'single',
+    options:[
+      '幾乎每日見 / 長時間相處',
+      '一星期 2–3 次',
+      '一星期 1 次',
+      '視乎工作或當下心情'
+    ],
+    field:'time_investment'
+  },
+  {
+    id:'deal_breaker', part:3,
+    text:'你最唔可以接受邊樣（最多選 2）：', type:'multi',
+    maxSelect:2,
+    options:[
+      '冷暴力 / 已讀不回 / 唔溝通',
+      '控制慾強 / 查手機 / 限制社交',
+      '經常失約 / 唔守承諾',
+      '金錢觀極端（過度計較或過度揮霍）'
+    ],
+    field:'deal_breaker'
+  },
+  // ---- Part 4: 靈魂共鳴 ----
+  {
+    id:'love_language', part:4, partTitle:'靈魂共鳴與安全感 The Deep Layer',
+    text:'邊種行為最能令你感受到被愛？（最多選 2）', type:'multi',
+    maxSelect:2,
+    options:[
+      '肯定的言語：對方不斷讚美、鼓勵同肯定我',
+      '服務的行動：對方主動幫我分擔生活瑣事或解決困難',
+      '身體的接觸：隨時隨地的牽手、擁抱或親吻',
+      '禮物與驚喜：收到對方悉心準備的小禮物',
+      '精心時刻：兩個人放低電話，全神貫注地深度交流、散步，或者只係專屬於彼此嘅陪伴'
+    ],
+    field:'love_language'
+  },
+  {
+    id:'security_need', part:4,
+    text:'你喺關係中最需要嘅「安全感」係？', type:'single',
+    options:[
+      '穩定聯絡：每日都有交流，唔會突然失蹤',
+      '明確承諾：對關係定義清晰，有共同認可嘅名分',
+      '行動證明：講得出做得到，會為我做實事',
+      '自由空間：有足夠個人空間，唔會被過度限制'
+    ],
+    field:'security_need'
+  },
+  {
+    id:'ritual_sense', part:4,
+    text:'你認為最能代表「愛」嘅日常小事係咩？', type:'single',
+    options:[
+      '記得我隨口講過嘅小願望或細碎嘅喜好',
+      '喺我攰嘅時候默默陪伴（例如幫我吹頭/按摩）',
+      '喺社交媒體公開合照，俾我有安全感',
+      '即使再忙，每日都會抽時間講電話或錄語音'
+    ],
+    field:'ritual_sense'
+  },
+  // ---- Part 5: 三觀 ----
+  {
+    id:'decision_style', part:5, partTitle:'內在邏輯與三觀 Values & Logic',
+    text:'決策導向：', type:'single',
+    options:['直覺系：相信第一印象同感覺','事實系：鍾意收集資訊，分析過後先做決定'],
+    field:'decision_style'
+  },
+  {
+    id:'conflict_style', part:5,
+    text:'當雙方出現分歧或你感到受委屈時，你屬於哪種「溝通體質」？', type:'single',
+    options:[
+      '直球解決型：唔鍾意拖，要即時講清楚介意咩',
+      '冷靜消化型：會先分開一下，等自己整理好情緒同邏輯先再傾',
+      '情感引導型：比起即刻講道理，我更想對方先接住我情緒',
+      '觀察留白型：唔太習慣主動開口，會希望對方自己察覺我唔對路'
+    ],
+    field:'conflict_style'
+  },
+  {
+    id:'money_view', part:5,
+    text:'約會時比較傾向點分配開支？', type:'single',
+    options:[
+      '絕對 AA 制，大家清清楚楚',
+      '你一餐我一餐，唔需要計到盡',
+      '收入較高或主動約嗰位請客'
+    ],
+    field:'money_view'
+  },
+  {
+    id:'cohabitation', part:5,
+    text:'你理想中的同居生活係？', type:'single',
+    options:[
+      '期待早日同居，每日睜開眼就見到對方',
+      '穩定交往一段時間（一年以上）再考慮',
+      '傾向各自居住，保有個人空間'
+    ],
+    field:'cohabitation'
+  },
+  // ---- Part 6: 理想對象 ----
+  {
+    id:'preferred_attribute', part:6, partTitle:'理想對象與彩蛋 The Ideal Match',
+    text:'希望對方的屬性：', type:'single',
+    options:['TB','TBG','Pure','Bi','No Label','冇所謂'],
+    field:'preferred_attribute'
+  },
+  {
+    id:'ideal_appearance', part:6,
+    text:'理想的身型與外表：', type:'single',
+    options:['纖瘦偏薄','均勻適中','結實健美','圓潤肉感','冇所謂'],
+    field:'ideal_appearance'
+  },
+  {
+    id:'height_diff', part:6,
+    text:'理想對象嘅身高差（正數 = 對方高過你）：', type:'range',
+    min:-20, max:20, step:1, unit:'cm',
+    field:'height_diff'
+  },
+  {
+    id:'age_diff', part:6,
+    text:'理想對象嘅年齡差（正數 = 對方大過你）：', type:'range',
+    min:-10, max:10, step:1, unit:'歲',
+    field:'age_diff'
+  },
+  {
+    id:'gap_moe', part:6,
+    text:'關於「反差萌」：邊種反差最容易令你心動？', type:'single',
+    options:[
+      '外表高冷硬朗，但對住我會展現極致溫柔',
+      '平時理性冷靜，但喺我面前會撒嬌變細路女',
+      '生活隨性自然，但對工作或熱愛嘅事極度專注'
+    ],
+    field:'gap_moe'
+  },
+  {
+    id:'three_traits', part:6,
+    text:'假如要用三個詞形容你嘅優點：', type:'text',
+    placeholder:'例如：善良、幽默、有耐性（最多20字）', field:'three_traits',
+    maxLength:20
+  },
+  // ---- Part 7: 聯絡資訊 ----
+  {
+    id:'contact_info', part:7, partTitle:'留下聯絡方式 Stay Connected',
+    text:'留下聯絡方式，讓我們找到你 ✉️', type:'text',
+    placeholder:'Email 或 IG Username', field:'contact_info'
+  },
+  {
+    id:'feedback', part:7,
+    text:'給我們的建議 / 意見收集箱 📮', type:'textarea',
+    placeholder:'任何想法、建議、或者想對黑貓講嘅說話...', field:'feedback',
+    optional: true
+  }
+];
+
+const TOTAL = QUESTIONS.length; // 31 (29 soul + 2 contact)
+
+// ============ AIRTABLE CONFIG ============
+// 透過 /api/submit serverless function 提交（Token 藏在 env vars）
+
+// ===================== STATE =====================
+let currentIdx = 0;
+let answers = {};
+let multiSelected = new Set();
+let typewriterTimer = null;
+let typewriterDoneTimer = null;
+let isTransitioning = false;
+let lastPart = 0;
+let renderTimer = null;
+let partTransitionTimer = null;
+let partTransitionFadeTimer = null;
+let autoAdvanceTimer = null;
+
+// ===================== DOM REFS =====================
+const $welcome     = document.getElementById('welcome');
+const $progressWrap= document.getElementById('progress-wrap');
+const $progressFill= document.getElementById('progress-fill');
+const $progressText= document.getElementById('progress-text');
+const $header      = document.getElementById('site-header');
+const $main        = document.getElementById('main-content');
+const $card        = document.getElementById('q-card');
+const $partLabel   = document.getElementById('q-part-label');
+const $qNumber     = document.getElementById('q-number');
+const $qText       = document.getElementById('q-text');
+const $qAnswers    = document.getElementById('q-answers');
+const $btnRow      = document.getElementById('btn-row');
+const $nextBtn     = document.getElementById('next-btn');
+const $loading     = document.getElementById('loading-screen');
+const $thankyou    = document.getElementById('thankyou-screen');
+const $error       = document.getElementById('error-screen');
+const $errorDetail = document.getElementById('error-detail');
+const $retryBtn    = document.getElementById('retry-btn');
+const $audioBtn    = document.getElementById('audio-toggle');
+const $partTrans   = document.getElementById('part-transition');
+const $ptNum       = document.getElementById('pt-num');
+const $ptName      = document.getElementById('pt-name');
+
+function toFriendlyErrorMessage(raw) {
+  const msg = String(raw || '').trim();
+  const lower = msg.toLowerCase();
+  if (!msg) return '請稍後再試，或聯絡管理員檢查伺服器設定。';
+  if (lower.includes('failed to fetch') || lower.includes('networkerror')) {
+    return '連線不到提交 API。請確認你正使用 http://localhost 或已部署網址開啟頁面（不要用 file:// 直接打開），並檢查 /api/submit 是否可用。';
+  }
+  if (lower.includes('missing token') || lower.includes('server misconfigured')) {
+    return '伺服器未設定 AIRTABLE_TOKEN。請先在部署平台加入環境變數。';
+  }
+  if (lower.includes('unauthorized') || lower.includes('401')) {
+    return 'Airtable Token 無效或權限不足，請檢查 token 與權限設定。';
+  }
+  if (lower.includes('not found') || lower.includes('404')) {
+    return '找不到 Airtable Base/Table，請檢查 AIRTABLE_BASE / AIRTABLE_TABLE。';
+  }
+  return msg;
+}
+
+function showErrorOverlay(errLike) {
+  const raw = errLike && errLike.message ? errLike.message : errLike;
+  const friendly = toFriendlyErrorMessage(raw);
+  if ($errorDetail) {
+    $errorDetail.textContent = '詳細：' + friendly;
+    $errorDetail.style.display = 'block';
+  }
+  $loading.classList.remove('active');
+  $error.classList.add('active');
+}
+
+// ===================== INIT =====================
+document.addEventListener('DOMContentLoaded', () => {
+  initStarfield();
+  drawHeaderCat();
+  $welcome.addEventListener('click', startQuiz);
+});
+
+function startQuiz() {
+  $welcome.classList.add('hiding');
+  // Auto-play background music on start
+  if (!bgmAudio) {
+    bgmAudio = new Audio('Keira%20Knightley%20%20Lost%20Stars%20(Begin%20Again%20Soundtrack).mp3');
+    bgmAudio.volume = 0.35;
+  }
+  bgmAudio.play().then(() => {
+    isPlaying = true;
+    $audioBtn.classList.add('playing');
+    $audioBtn.textContent = '♫';
+  }).catch(() => {});
+  setTimeout(() => {
+    $welcome.style.display = 'none';
+    $progressWrap.style.display = 'block';
+    $header.style.display = 'block';
+    $main.style.display = 'block';
+    $audioBtn.style.display = 'flex';
+    showQuestion(0);
+  }, 800);
+}
+
+// ===================== SHOW QUESTION =====================
+function showQuestion(idx) {
+  if (isTransitioning) return;
+  resetQuestionState(true);
+  window.scrollTo({ top: 0, behavior: 'auto' });
+  const q = QUESTIONS[idx];
+
+  // Part transition
+  if (q.partTitle && q.part !== lastPart) {
+    lastPart = q.part;
+    showPartTransition(q.part, q.partTitle, () => renderQuestion(idx, true));
+    return;
+  }
+
+  renderQuestion(idx);
+}
+
+function showPartTransition(partNum, partTitle, callback) {
+  isTransitioning = true;
+  // Hide card during transition to prevent ghosting
+  $card.style.opacity = '0';
+  $card.style.pointerEvents = 'none';
+  
+  $ptNum.textContent = 'PART ' + partNum;
+  $ptName.textContent = partTitle;
+  $partTrans.classList.add('active');
+  $partTrans.classList.remove('fade-out');
+
+  partTransitionTimer = setTimeout(() => {
+    $partTrans.classList.add('fade-out');
+    partTransitionFadeTimer = setTimeout(() => {
+      $partTrans.classList.remove('active', 'fade-out');
+      isTransitioning = false;
+      callback();
+    }, 500);
+  }, 1400);
+}
+
+function renderQuestion(idx, fromPartTransition = false) {
+  isTransitioning = true;
+  const q = QUESTIONS[idx];
+  currentIdx = idx;
+  multiSelected = new Set();
+
+  // Update progress
+  $progressFill.style.width = ((idx / TOTAL) * 100) + '%';
+  $progressText.textContent = 'Q' + (idx + 1) + ' / ' + TOTAL;
+
+  // Fade out - immediately hide answers too
+  $qAnswers.style.opacity = '0';
+  $qAnswers.style.transform = 'translateY(10px)';
+  $card.classList.remove('fade-in');
+  if (!fromPartTransition) {
+    $card.classList.add('fade-out');
+  }
+
+  renderTimer = setTimeout(() => {
+    // Part label
+    const partQ = QUESTIONS.find(qq => qq.part === q.part && qq.partTitle);
+    $partLabel.textContent = 'Part ' + q.part + ': ' + (partQ ? partQ.partTitle : '');
+
+    // Question number
+    $qNumber.textContent = 'Q' + (idx + 1);
+
+    // Clear
+    resetQuestionDOM();
+
+    // Pre-hide answer area to prevent flashing
+    $qAnswers.style.display = 'none';
+    $qAnswers.style.opacity = '0';
+    $qAnswers.style.transform = 'translateY(10px)';
+    $qAnswers.style.transition = 'opacity 0.4s, transform 0.4s';
+
+    // Build answer area first (hidden until typewriter done)
+    buildAnswerArea(q);
+    
+    // Show answer area container again (but keep opacity 0)
+    $qAnswers.style.display = '';
+
+    // Fade in
+    if (fromPartTransition) {
+      // Card was hidden by part transition overlay; clear inline lock and fade in once.
+      $card.style.opacity = '';
+      $card.style.pointerEvents = '';
+    }
+    $card.classList.remove('fade-out');
+    $card.classList.add('fade-in');
+
+    // Typewriter
+    typeWriter($qText, q.text, () => {
+      // Show answers after typewriter
+      $qAnswers.style.opacity = '1';
+      $qAnswers.style.transform = 'translateY(0)';
+      if (q.type === 'text' || q.type === 'multi' || q.type === 'textarea') {
+        $btnRow.style.display = 'flex';
+      }
+      // Focus text input
+      const inp = $qAnswers.querySelector('.pixel-input') || $qAnswers.querySelector('.pixel-textarea');
+      if (inp) setTimeout(() => inp.focus(), 100);
+
+      // Show navigation hint bubble for first interactive question
+      if (idx === 0 && (q.type === 'single' || q.type === 'multi')) {
+        let hintBubble = document.getElementById('nav-hint-bubble');
+        if (!hintBubble) {
+          hintBubble = document.createElement('div');
+          hintBubble.id = 'nav-hint-bubble';
+          hintBubble.style.position = 'fixed';
+          hintBubble.style.bottom = '120px';
+          hintBubble.style.right = '20px';
+          hintBubble.style.background = 'var(--bg-card)';
+          hintBubble.style.border = '2px solid var(--pink)';
+          hintBubble.style.color = 'var(--cream)';
+          hintBubble.style.padding = '12px 16px';
+          hintBubble.style.fontSize = '0.8rem';
+          hintBubble.style.borderRadius = '4px';
+          hintBubble.style.boxShadow = '0 0 20px rgba(255,107,157,0.3)';
+          hintBubble.style.zIndex = '50';
+          hintBubble.style.maxWidth = '200px';
+          hintBubble.style.lineHeight = '1.6';
+          hintBubble.textContent = '💡 點擊選項將自動進入下一題';
+          hintBubble.style.animation = 'fadeInFloat 0.5s ease-out forwards';
+          document.body.appendChild(hintBubble);
+          // Remove hint after 3 seconds
+          setTimeout(() => {
+            if (hintBubble) {
+              hintBubble.style.animation = 'fadeOutFloat 0.5s ease-out forwards';
+              setTimeout(() => hintBubble.remove(), 500);
+            }
+          }, 3000);
+        }
+      }
+    });
+
+    isTransitioning = false;
+  }, fromPartTransition ? 0 : 380);
+}
+
+// ===================== TYPEWRITER =====================
+function typeWriter(el, text, callback) {
+  if (typewriterTimer) clearInterval(typewriterTimer);
+  if (typewriterDoneTimer) clearTimeout(typewriterDoneTimer);
+  el.innerHTML = '';
+  let i = 0;
+  const cursor = document.createElement('span');
+  cursor.className = 'cursor';
+  el.appendChild(cursor);
+
+  function completeTypewriter() {
+    // Show remaining text
+    while (i < text.length) {
+      el.insertBefore(document.createTextNode(text[i]), cursor);
+      i++;
+    }
+    if (typewriterTimer) clearInterval(typewriterTimer);
+    typewriterTimer = null;
+    if (cursor.parentNode) cursor.remove();
+    if (callback) callback();
+  }
+
+  // Allow clicking anywhere on $qText to complete typewriter immediately
+  el.addEventListener('click', completeTypewriter, { once: true });
+
+  typewriterTimer = setInterval(() => {
+    if (i < text.length) {
+      el.insertBefore(document.createTextNode(text[i]), cursor);
+      i++;
+    } else {
+      clearInterval(typewriterTimer);
+      typewriterTimer = null;
+      el.removeEventListener('click', completeTypewriter);
+      typewriterDoneTimer = setTimeout(() => {
+        if (cursor.parentNode) cursor.remove();
+        if (callback) callback();
+      }, 300);
+    }
+  }, 30);
+}
+
+// ===================== BUILD ANSWER AREA =====================
+function buildAnswerArea(q) {
+  if (q.type === 'text') {
+    buildTextInput(q);
+  } else if (q.type === 'textarea') {
+    buildTextarea(q);
+  } else if (q.type === 'single') {
+    buildSingleChoice(q);
+  } else if (q.type === 'multi') {
+    buildMultiChoice(q);
+  } else if (q.type === 'range') {
+    buildRangeInput(q);
+  }
+}
+
+function buildRangeInput(q) {
+  const wrap = document.createElement('div');
+  wrap.className = 'range-wrap';
+
+  const display = document.createElement('div');
+  display.className = 'range-display';
+  const valSpan = document.createElement('span');
+  valSpan.className = 'range-value';
+  const unitSpan = document.createElement('span');
+  unitSpan.className = 'range-unit';
+  unitSpan.textContent = q.unit || '';
+  display.appendChild(valSpan);
+  display.appendChild(unitSpan);
+
+  const slider = document.createElement('input');
+  slider.type = 'range';
+  slider.className = 'pixel-range';
+  slider.min = q.min;
+  slider.max = q.max;
+  slider.step = q.step || 1;
+  slider.value = answers[q.field] !== undefined ? answers[q.field] : 0;
+
+  // Tooltip for realtime value display
+  const tooltip = document.createElement('div');
+  tooltip.className = 'range-tooltip';
+  tooltip.style.display = 'none';
+  tooltip.style.position = 'absolute';
+  tooltip.style.bottom = '30px';
+  tooltip.style.left = '0';
+  tooltip.style.background = 'var(--bg-card-alt)';
+  tooltip.style.border = '1px solid var(--cyan)';
+  tooltip.style.color = 'var(--cyan)';
+  tooltip.style.padding = '4px 8px';
+  tooltip.style.fontSize = '0.75rem';
+  tooltip.style.borderRadius = '2px';
+  tooltip.style.whiteSpace = 'nowrap';
+  tooltip.style.pointerEvents = 'none';
+  tooltip.style.zIndex = '10';
+
+  const sliderWrap = document.createElement('div');
+  sliderWrap.style.position = 'relative';
+  sliderWrap.appendChild(slider);
+  sliderWrap.appendChild(tooltip);
+
+  function updateDisplay(v) {
+    const num = parseInt(v);
+    valSpan.textContent = (num > 0 ? '+' : '') + num;
+    // Update tooltip
+    tooltip.textContent = (num > 0 ? '+' : '') + num + q.unit;
+  }
+  updateDisplay(slider.value);
+
+  slider.addEventListener('input', () => {
+    updateDisplay(slider.value);
+    answers[q.field] = slider.value;
+  });
+
+  slider.addEventListener('mouseenter', () => {
+    tooltip.style.display = 'block';
+  });
+
+  slider.addEventListener('mouseleave', () => {
+    tooltip.style.display = 'none';
+  });
+
+  slider.addEventListener('touchstart', () => {
+    tooltip.style.display = 'block';
+  });
+
+  slider.addEventListener('touchend', () => {
+    tooltip.style.display = 'none';
+  });
+
+  const labels = document.createElement('div');
+  labels.className = 'range-labels';
+  labels.innerHTML = '<span>' + q.min + '</span><span>0</span><span>+' + q.max + '</span>';
+
+  wrap.appendChild(display);
+  wrap.appendChild(sliderWrap);
+  wrap.appendChild(labels);
+  $qAnswers.appendChild(wrap);
+
+  // Range always has a value, so enable next
+  answers[q.field] = slider.value;
+  $btnRow.style.display = 'flex';
+  $nextBtn.textContent = currentIdx === TOTAL - 1 ? '提交 ✦' : '下一題 ▸';
+  $nextBtn.disabled = false;
+}
+
+function buildTextInput(q) {
+  const inp = document.createElement('input');
+  inp.type = q.inputType || 'text';
+  inp.className = 'pixel-input';
+  inp.placeholder = q.placeholder || '';
+  inp.setAttribute('autocomplete', 'off');
+  if (q.maxLength) inp.maxLength = q.maxLength;
+
+  // Restore previous answer
+  if (answers[q.field]) inp.value = answers[q.field];
+
+  inp.addEventListener('input', () => {
+    $nextBtn.disabled = !inp.value.trim();
+  });
+  inp.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && inp.value.trim()) {
+      e.preventDefault();
+      handleNext();
+    }
+  });
+
+  $qAnswers.appendChild(inp);
+  $btnRow.style.display = 'flex';
+  $nextBtn.textContent = currentIdx === TOTAL - 1 ? '提交 ✦' : '下一題 ▸';
+  $nextBtn.disabled = !inp.value.trim();
+}
+
+function buildTextarea(q) {
+  const wrap = document.createElement('div');
+  wrap.style.position = 'relative';
+
+  const ta = document.createElement('textarea');
+  ta.className = 'pixel-textarea';
+  ta.placeholder = q.placeholder || '';
+  ta.setAttribute('autocomplete', 'off');
+  if (answers[q.field]) ta.value = answers[q.field];
+
+  // Nodding cat
+  const cat = document.createElement('div');
+  cat.className = 'nodding-cat';
+  cat.textContent = '🐈‍⬛';
+  wrap.appendChild(cat);
+
+  let nodTimer = null;
+  ta.addEventListener('input', () => {
+    const hasText = ta.value.trim().length > 0;
+    // Enable/disable next: optional fields always allow proceed
+    $nextBtn.disabled = q.optional ? false : !hasText;
+    // Show nodding cat while typing
+    cat.classList.add('visible');
+    clearTimeout(nodTimer);
+    nodTimer = setTimeout(() => cat.classList.remove('visible'), 1200);
+  });
+  ta.addEventListener('keydown', (e) => {
+    // Don't submit on Enter in textarea (allow newlines)
+  });
+
+  if (q.optional) {
+    const note = document.createElement('div');
+    note.className = 'contact-note';
+    note.textContent = '（選填，可直接跳過）';
+    wrap.appendChild(note);
+  }
+
+  wrap.insertBefore(ta, wrap.firstChild);
+  $qAnswers.appendChild(wrap);
+  $btnRow.style.display = 'flex';
+  $nextBtn.textContent = currentIdx === TOTAL - 1 ? '提交 ✦' : '下一題 ▸';
+  $nextBtn.disabled = q.optional ? false : !ta.value.trim();
+}
+
+function buildSingleChoice(q) {
+  const wrap = document.createElement('div');
+  wrap.className = 'choices';
+  const markers = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = '<span class="choice-marker">' + markers[i] + '</span>' + escHtml(opt);
+    // Restore selection
+    if (answers[q.field] === opt) btn.classList.add('selected');
+
+    btn.addEventListener('click', () => {
+      playClick();
+      wrap.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      answers[q.field] = opt;
+      // Auto-advance after short delay
+      if (autoAdvanceTimer) clearTimeout(autoAdvanceTimer);
+      autoAdvanceTimer = setTimeout(() => handleNext(true), 350);
+    });
+    wrap.appendChild(btn);
+  });
+
+  $qAnswers.appendChild(wrap);
+}
+
+function buildMultiChoice(q) {
+  const wrap = document.createElement('div');
+  wrap.className = 'multi-choices';
+  const maxSel = q.maxSelect || Infinity;
+
+  // Restore previous selections
+  if (answers[q.field]) {
+    const prev = answers[q.field].split(', ');
+    prev.forEach(v => multiSelected.add(v));
+  }
+
+  let warnEl = null;
+  if (maxSel < Infinity) {
+    warnEl = document.createElement('div');
+    warnEl.className = 'max-warn';
+    warnEl.textContent = '最多選擇 ' + maxSel + ' 項';
+  }
+
+  const allOptions = [];
+  if (q.categories) {
+    q.categories.forEach(cat => {
+      const label = document.createElement('div');
+      label.className = 'cat-label';
+      label.textContent = cat.label;
+      wrap.appendChild(label);
+      cat.options.forEach(opt => {
+        wrap.appendChild(createMultiItem(opt, maxSel, warnEl));
+        allOptions.push(opt);
+      });
+    });
+  } else {
+    q.options.forEach(opt => {
+      wrap.appendChild(createMultiItem(opt, maxSel, warnEl));
+      allOptions.push(opt);
+    });
+  }
+
+  if (warnEl) wrap.appendChild(warnEl);
+  $qAnswers.appendChild(wrap);
+  $btnRow.style.display = 'flex';
+  $nextBtn.textContent = currentIdx === TOTAL - 1 ? '提交 ✦' : '下一題 ▸';
+  $nextBtn.disabled = multiSelected.size === 0;
+}
+
+function createMultiItem(opt, maxSel, warnEl) {
+  const item = document.createElement('div');
+  item.className = 'multi-item';
+  if (multiSelected.has(opt)) item.classList.add('checked');
+
+  const check = document.createElement('div');
+  check.className = 'pixel-check';
+  check.textContent = '✓';
+
+  const text = document.createElement('span');
+  text.className = 'multi-item-text';
+  text.textContent = opt;
+
+  item.appendChild(check);
+  item.appendChild(text);
+
+  item.addEventListener('click', () => {
+    playClick();
+    if (multiSelected.has(opt)) {
+      multiSelected.delete(opt);
+      item.classList.remove('checked');
+      if (warnEl) warnEl.classList.remove('show');
+    } else {
+      if (multiSelected.size >= maxSel) {
+        if (warnEl) warnEl.classList.add('show');
+        return;
+      }
+      multiSelected.add(opt);
+      item.classList.add('checked');
+      if (warnEl && multiSelected.size < maxSel) warnEl.classList.remove('show');
+    }
+    $nextBtn.disabled = multiSelected.size === 0;
+  });
+
+  return item;
+}
+
+// ===================== NAVIGATION =====================
+$nextBtn.addEventListener('click', handleNext);
+
+function handleNext(skipClickSound = false) {
+  if (isTransitioning) return;
+  const q = QUESTIONS[currentIdx];
+
+  // Save answer
+  if (q.type === 'text') {
+    const inp = $qAnswers.querySelector('.pixel-input');
+    if (!inp || !inp.value.trim()) return;
+    answers[q.field] = inp.value.trim();
+  } else if (q.type === 'textarea') {
+    const ta = $qAnswers.querySelector('.pixel-textarea');
+    if (ta && ta.value.trim()) {
+      answers[q.field] = ta.value.trim();
+    } else if (!q.optional) {
+      return;
+    }
+  } else if (q.type === 'multi') {
+    if (multiSelected.size === 0) return;
+    answers[q.field] = Array.from(multiSelected).join(', ');
+  } else if (q.type === 'range') {
+    // already saved on input
+  }
+  // single choice already saved on click
+
+  if (!skipClickSound) playClick();
+
+  if (currentIdx < TOTAL - 1) {
+    showQuestion(currentIdx + 1);
+  } else {
+    submitAnswers();
+  }
+}
+
+function resetQuestionDOM() {
+  $qText.innerHTML = '';
+  $qAnswers.innerHTML = '';
+  $qAnswers.style.opacity = '0';
+  $qAnswers.style.transform = 'translateY(10px)';
+  $btnRow.style.display = 'none';
+  $nextBtn.disabled = true;
+}
+
+function resetQuestionState(preserveDOM = false) {
+  if (typewriterTimer) {
+    clearInterval(typewriterTimer);
+    typewriterTimer = null;
+  }
+  if (typewriterDoneTimer) {
+    clearTimeout(typewriterDoneTimer);
+    typewriterDoneTimer = null;
+  }
+  if (renderTimer) {
+    clearTimeout(renderTimer);
+    renderTimer = null;
+  }
+  if (partTransitionTimer) {
+    clearTimeout(partTransitionTimer);
+    partTransitionTimer = null;
+  }
+  if (partTransitionFadeTimer) {
+    clearTimeout(partTransitionFadeTimer);
+    partTransitionFadeTimer = null;
+  }
+  if (autoAdvanceTimer) {
+    clearTimeout(autoAdvanceTimer);
+    autoAdvanceTimer = null;
+  }
+  $card.classList.remove('fade-in', 'fade-out');
+  if (!preserveDOM) resetQuestionDOM();
+}
+
+// ===================== SUBMIT =====================
+async function submitAnswers() {
+  $main.style.display = 'none';
+  $header.style.display = 'none';
+  $progressWrap.style.display = 'none';
+  $loading.classList.add('active');
+  if ($errorDetail) {
+    $errorDetail.textContent = '';
+    $errorDetail.style.display = 'none';
+  }
+  
+  const loadingStartTime = Date.now();
+  const minLoadingDuration = 800; // Minimum loading display time in ms
+
+  // 將逗號分隔嘅多選值轉為陣列（Airtable multi-select 需要陣列）
+  function toArr(v) { return v ? v.split(', ').filter(Boolean) : []; }
+
+  // Map internal field names to Airtable column names
+  const fields = {
+    name: answers.name || '',
+    age: parseInt(answers.age) || 0,
+    height: parseInt(answers.height) || 0,
+    body_type: answers.body_type || '',
+    identity: answers.attribute || '',
+    hair_style: answers.hair_style || '',
+    fashion_style: toArr(answers.fashion_style),
+    social_energy: answers.social_energy || '',
+    weekend_mode: answers.ideal_weekend || '',
+    interests: toArr(answers.interests),
+    exercise_habit: toArr(answers.exercise),
+    travel_mode: answers.travel_mode || '',
+    relationship_goal: answers.relationship_goal || '',
+    time_commitment: answers.time_investment || '',
+    deal_breaker: toArr(answers.deal_breaker),
+    love_language: toArr(answers.love_language),
+    security_needs: answers.security_need || '',
+    romance_ritual: answers.ritual_sense || '',
+    decision_style: answers.decision_style || '',
+    conflict_handle: answers.conflict_style || '',
+    emotion_process: answers.conflict_style || '',
+    money_values: answers.money_view || '',
+    cohabitation: answers.cohabitation || '',
+    ideal_identity: answers.preferred_attribute || '',
+    ideal_visuals: answers.ideal_appearance || '',
+    gap_moe: answers.gap_moe || '',
+    personal_traits: answers.three_traits || '',
+    contact_info: answers.contact_info || '',
+    feedback: answers.feedback || ''
+  };
+
+  try {
+    if (window.location.protocol === 'file:') {
+      throw new Error('Failed to fetch: opened via file://');
+    }
+
+    const resp = await fetch('/api/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields })
+    });
+    if (!resp.ok) {
+      const errBody = await resp.json().catch(() => ({}));
+      console.error('Submit error:', errBody);
+      throw new Error(errBody.error || ('HTTP ' + resp.status));
+    }
+    
+    // Calculate elapsed time and wait for remaining duration if needed
+    const elapsedTime = Date.now() - loadingStartTime;
+    const remainingDelay = Math.max(0, minLoadingDuration - elapsedTime);
+    
+    setTimeout(() => {
+      $loading.classList.remove('active');
+      $thankyou.classList.add('active');
+      $progressFill.style.width = '100%';
+      // Trigger confetti and animations
+      setTimeout(() => {
+        createConfetti();
+      }, 200);
+    }, remainingDelay);
+  } catch (err) {
+    console.error('Submit error:', err);
+    showErrorOverlay(err);
+  }
+}
+
+$retryBtn.addEventListener('click', () => {
+  $error.classList.remove('active');
+  if ($errorDetail) {
+    $errorDetail.textContent = '';
+    $errorDetail.style.display = 'none';
+  }
+  submitAnswers();
+});
+
+// ===================== AUDIO (MP3 Player) =====================
+let bgmAudio = null;
+let isPlaying = false;
+
+$audioBtn.addEventListener('click', () => {
+  if (!bgmAudio) {
+    bgmAudio = new Audio('Keira%20Knightley%20%20Lost%20Stars%20(Begin%20Again%20Soundtrack).mp3');
+    bgmAudio.volume = 0.35;
+    bgmAudio.addEventListener('ended', () => {
+      isPlaying = false;
+      $audioBtn.classList.remove('playing');
+      $audioBtn.textContent = '♪';
+    });
+  }
+  if (isPlaying) {
+    bgmAudio.pause();
+    isPlaying = false;
+    $audioBtn.classList.remove('playing');
+    $audioBtn.textContent = '♪';
+  } else {
+    bgmAudio.play().catch(() => {});
+    isPlaying = true;
+    $audioBtn.classList.add('playing');
+    $audioBtn.textContent = '♫';
+  }
+});
+
+// ===================== CONFETTI EFFECT =====================
+function createConfetti() {
+  const container = document.getElementById('confetti-container');
+  if (!container) return;
+  
+  const confettiCount = 50;
+  const colors = ['var(--pink)', 'var(--cyan)', 'var(--yellow)', 'var(--purple-light)', 'var(--green)'];
+  const colorVars = ['#ff6b9d', '#00e5ff', '#ffe066', '#bd93f9', '#50fa7b'];
+  
+  for (let i = 0; i < confettiCount; i++) {
+    const confetti = document.createElement('div');
+    confetti.style.position = 'fixed';
+    confetti.style.width = Math.random() * 10 + 5 + 'px';
+    confetti.style.height = Math.random() * 10 + 5 + 'px';
+    confetti.style.left = Math.random() * window.innerWidth + 'px';
+    confetti.style.top = '-10px';
+    confetti.style.backgroundColor = colorVars[Math.floor(Math.random() * colorVars.length)];
+    confetti.style.opacity = '0.8';
+    confetti.style.pointerEvents = 'none';
+    confetti.style.zIndex = '15';
+    confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0px';
+    
+    const duration = Math.random() * 2 + 2.5; // 2.5-4.5 seconds
+    const delay = Math.random() * 0.5;
+    
+    confetti.style.animation = `confettiFall ${duration}s linear ${delay}s forwards`;
+    
+    container.appendChild(confetti);
+    
+    setTimeout(() => confetti.remove(), (duration + delay) * 1000 + 100);
+  }
+}
+
+let clickCtx = null;
+function playClick() {
+  try {
+    if (!clickCtx) clickCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (clickCtx.state === 'suspended') clickCtx.resume();
+    const osc = clickCtx.createOscillator();
+    const gain = clickCtx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(660, clickCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(180, clickCtx.currentTime + 0.07);
+    gain.gain.setValueAtTime(0.06, clickCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, clickCtx.currentTime + 0.07);
+    osc.connect(gain);
+    gain.connect(clickCtx.destination);
+    osc.start(clickCtx.currentTime);
+    osc.stop(clickCtx.currentTime + 0.07);
+  } catch (e) {}
+}
+
+// ===================== STARFIELD =====================
+function initStarfield() {
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const stars = [];
+  for (let i = 0; i < 80; i++) {
+    stars.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      size: Math.random() < 0.3 ? 2 : 1,
+      speed: Math.random() * 0.15 + 0.05,
+      phase: Math.random() * Math.PI * 2,
+      twinkle: Math.random() * 0.015 + 0.005
+    });
+  }
+
+  function draw(time) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    stars.forEach(s => {
+      s.y += s.speed;
+      if (s.y > canvas.height + 2) {
+        s.y = -2;
+        s.x = Math.random() * canvas.width;
+      }
+      const alpha = 0.25 + 0.35 * Math.sin(time * s.twinkle + s.phase);
+      const colors = ['255,255,255', '200,180,255', '180,230,255', '255,220,180'];
+      const c = colors[(s.size + Math.floor(s.x)) % colors.length];
+      ctx.fillStyle = 'rgba(' + c + ',' + alpha.toFixed(2) + ')';
+      ctx.fillRect(Math.floor(s.x), Math.floor(s.y), s.size, s.size);
+    });
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+}
+
+// ===================== HEADER CAT PIXEL ART =====================
+function drawHeaderCat() {
+  const canvas = document.getElementById('cat-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const px = 3;
+
+  // Sprite map: 0=empty, 1=body, 2=eye, 3=nose, 4=moon, 5=star
+  const sprite = [
+    [0,1,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0],
+    [0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,4,4,0,0,0],
+    [1,1,2,1,1,1,2,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,4,0,0],
+    [1,1,1,1,3,1,1,1,1,0,0,0,0,0,0,0,0,0,0,5,0,0,4,0,0,0,0,0,0,0],
+    [0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0],
+    [0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,4,0,0],
+    [0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,4,4,4,0,0,0],
+    [1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0],
+    [1,1,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [1,1,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  ];
+
+  const colors = {
+    1: '#2a2640',
+    2: '#50fa7b',
+    3: '#ff79c6',
+    4: '#ffe066',
+    5: '#ffffff'
+  };
+
+  let eyeOpen = true;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let r = 0; r < sprite.length; r++) {
+      for (let c = 0; c < sprite[r].length; c++) {
+        const val = sprite[r][c];
+        if (val === 0) continue;
+        if (val === 2 && !eyeOpen) {
+          ctx.fillStyle = colors[1]; // closed eyes = body color
+        } else if (val === 5) {
+          // Stars twinkle
+          const t = Date.now() * 0.003 + c * 2;
+          const a = 0.4 + 0.6 * Math.abs(Math.sin(t));
+          ctx.fillStyle = 'rgba(255,255,255,' + a.toFixed(2) + ')';
+        } else {
+          ctx.fillStyle = colors[val];
+        }
+        ctx.fillRect(c * px, r * px, px, px);
+      }
+    }
+  }
+
+  // Blink animation
+  setInterval(() => {
+    eyeOpen = false;
+    draw();
+    setTimeout(() => { eyeOpen = true; draw(); }, 180);
+  }, 3500);
+
+  // Continuous draw for star twinkling
+  function loop() { draw(); requestAnimationFrame(loop); }
+  loop();
+}
+
+// ===================== UTILITY =====================
+function escHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+</script>
+</body>
+</html>
