@@ -21,8 +21,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid payload: JSON object expected' });
     }
 
-    // Insert into a single jsonb column to avoid schema issues
-    const { data, error } = await supabase.from('responses').insert({ data: payload }).select();
+    // Insert directly into table columns (assuming table has matching column names)
+    const { data, error } = await supabase.from('responses').insert(payload).select();
     if (error) {
       console.error('Supabase insert error:', error);
       return res.status(500).json({ error: error.message || 'Supabase insert failed' });
