@@ -1480,7 +1480,9 @@ function renderQuestion(idx, fromPartTransition = false) {
   $progressFill.style.width = ((idx / TOTAL) * 100) + '%';
   $progressText.textContent = 'Q' + (idx + 1) + ' / ' + TOTAL;
 
-  // Fade out - immediately hide answers too
+  // Immediately clear old answers to prevent flashing
+  $qAnswers.innerHTML = '';
+  // Fade out - hide answers
   $qAnswers.style.opacity = '0';
   $qAnswers.style.transform = 'translateY(10px)';
   $card.classList.remove('fade-in');
