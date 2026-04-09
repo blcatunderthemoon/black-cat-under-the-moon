@@ -156,10 +156,11 @@ body::after {
   box-shadow:
     4px 4px 0 var(--border),
     0 0 30px rgba(100,80,200,0.06);
-  transition: opacity 0.35s, transform 0.35s;
+  transition: opacity 0.35s ease-in-out, transform 0.35s ease-in-out;
   overflow: hidden;
   will-change: opacity, transform;
   margin: 0 auto;
+  min-height: 450px; /* Prevent height collapse during transitions */
 }
 .q-card.fade-out {
   opacity: 0;
@@ -1491,50 +1492,47 @@ function renderQuestion(idx, fromPartTransition = false) {
   }
 
   renderTimer = setTimeout(() => {
-    // Part label
+    // Update labels first
     const partQ = QUESTIONS.find(qq => qq.part === q.part && qq.partTitle);
     $partLabel.textContent = 'Part ' + q.part + ': ' + (partQ ? partQ.partTitle : '');
-
-    // Question number
     $qNumber.textContent = 'Q' + (idx + 1);
 
-    // Clear
+    // Clear old content
     resetQuestionDOM();
+    $qAnswers.innerHTML = '';
 
-    // Pre-hide answer area to prevent flashing
+    // Pre-hide answer area
     $qAnswers.style.display = 'none';
     $qAnswers.style.opacity = '0';
     $qAnswers.style.transform = 'translateY(10px)';
-    $qAnswers.style.transition = 'opacity 0.4s, transform 0.4s';
 
-    // Build answer area first (hidden until typewriter done)
+    // Build new answer area (hidden)
     buildAnswerArea(q);
-    
-    // Show answer area container again (but keep opacity 0)
+
+    // Show container
     $qAnswers.style.display = '';
 
-    // Fade in
+    // Fade in card
     if (fromPartTransition) {
-      // Card was hidden by part transition overlay; clear inline lock and fade in once.
       $card.style.opacity = '';
       $card.style.pointerEvents = '';
     }
     $card.classList.remove('fade-out');
     $card.classList.add('fade-in');
 
-    // Typewriter
+    // Start typewriter
     typeWriter($qText, q.text, () => {
-      // Show answers after typewriter
+      // After typewriter, fade in answers
       $qAnswers.style.opacity = '1';
       $qAnswers.style.transform = 'translateY(0)';
       if (q.type === 'text' || q.type === 'multi' || q.type === 'textarea') {
         $btnRow.style.display = 'flex';
       }
-      // Focus text input
+      // Focus input
       const inp = $qAnswers.querySelector('.pixel-input') || $qAnswers.querySelector('.pixel-textarea');
       if (inp) setTimeout(() => inp.focus(), 100);
 
-      // Show navigation hint bubble for first interactive question
+      // Navigation hint
       if (idx === 0 && (q.type === 'single' || q.type === 'multi')) {
         let hintBubble = document.getElementById('nav-hint-bubble');
         if (!hintBubble) {
@@ -1556,7 +1554,6 @@ function renderQuestion(idx, fromPartTransition = false) {
           hintBubble.textContent = '💡 點擊選項將自動進入下一題';
           hintBubble.style.animation = 'fadeInFloat 0.5s ease-out forwards';
           document.body.appendChild(hintBubble);
-          // Remove hint after 3 seconds
           setTimeout(() => {
             if (hintBubble) {
               hintBubble.style.animation = 'fadeOutFloat 0.5s ease-out forwards';
@@ -1568,7 +1565,7 @@ function renderQuestion(idx, fromPartTransition = false) {
     });
 
     isTransitioning = false;
-  }, fromPartTransition ? 0 : 380);
+  }, fromPartTransition ? 0 : 400);
 }
 
 // ===================== TYPEWRITER =====================
