@@ -1593,6 +1593,7 @@ function buildRangeInput(q) {
     minSlider.max = q.max;
     minSlider.step = q.step || 1;
     minSlider.value = minVal;
+    minSlider.style.zIndex = '2';
 
     const maxSlider = document.createElement('input');
     maxSlider.type = 'range';
@@ -1601,6 +1602,7 @@ function buildRangeInput(q) {
     maxSlider.max = q.max;
     maxSlider.step = q.step || 1;
     maxSlider.value = maxVal;
+    maxSlider.style.zIndex = '1';
 
     // Tooltip for realtime value display
     const tooltip = document.createElement('div');
@@ -1650,6 +1652,24 @@ function buildRangeInput(q) {
     minSlider.addEventListener('input', enforceConstraints);
     maxSlider.addEventListener('input', enforceConstraints);
 
+    function activateSlider(slider, other) {
+      slider.style.zIndex = '3';
+      slider.style.pointerEvents = 'auto';
+      other.style.pointerEvents = 'none';
+    }
+
+    function resetSliderState(slider, other) {
+      slider.style.zIndex = slider === minSlider ? '2' : '1';
+      other.style.pointerEvents = '';
+    }
+
+    minSlider.addEventListener('pointerdown', () => activateSlider(minSlider, maxSlider));
+    maxSlider.addEventListener('pointerdown', () => activateSlider(maxSlider, minSlider));
+    minSlider.addEventListener('pointerup', () => resetSliderState(minSlider, maxSlider));
+    maxSlider.addEventListener('pointerup', () => resetSliderState(maxSlider, minSlider));
+    minSlider.addEventListener('pointercancel', () => resetSliderState(minSlider, maxSlider));
+    maxSlider.addEventListener('pointercancel', () => resetSliderState(maxSlider, minSlider));
+
     // Haptic feedback on limits
     function addHaptic() {
       if ('vibrate' in navigator) {
@@ -1666,28 +1686,36 @@ function buildRangeInput(q) {
 
     minSlider.addEventListener('mouseenter', () => {
       tooltip.style.display = 'block';
+      activateSlider(minSlider, maxSlider);
     });
     minSlider.addEventListener('mouseleave', () => {
       tooltip.style.display = 'none';
+      resetSliderState(minSlider, maxSlider);
     });
     maxSlider.addEventListener('mouseenter', () => {
       tooltip.style.display = 'block';
+      activateSlider(maxSlider, minSlider);
     });
     maxSlider.addEventListener('mouseleave', () => {
       tooltip.style.display = 'none';
+      resetSliderState(maxSlider, minSlider);
     });
 
     minSlider.addEventListener('touchstart', () => {
       tooltip.style.display = 'block';
+      activateSlider(minSlider, maxSlider);
     });
     minSlider.addEventListener('touchend', () => {
       tooltip.style.display = 'none';
+      resetSliderState(minSlider, maxSlider);
     });
     maxSlider.addEventListener('touchstart', () => {
       tooltip.style.display = 'block';
+      activateSlider(maxSlider, minSlider);
     });
     maxSlider.addEventListener('touchend', () => {
       tooltip.style.display = 'none';
+      resetSliderState(maxSlider, minSlider);
     });
 
     const labels = document.createElement('div');
