@@ -21,49 +21,68 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid payload: JSON object expected' });
     }
 
-    const normalizeRange = (value, fallback) => {
-      if (typeof value === 'string') {
-        return value;
+    const normalizeValue = (value) => {
+      if (value == null) {
+        return '';
       }
       if (Array.isArray(value)) {
         return JSON.stringify(value);
       }
-      return JSON.stringify(fallback);
+      return value.toString();
     };
 
-    // Align frontend keys to latest Supabase `responses` column names.
+    const getIncomingValue = (incoming, primaryKey, fallbackKey) => {
+      return incoming?.[primaryKey] ?? incoming?.[fallbackKey] ?? null;
+    };
+
+    const normalizeRange = (value, fallback) => {
+      if (value == null) {
+        return JSON.stringify(fallback);
+      }
+      if (Array.isArray(value)) {
+        return JSON.stringify(value);
+      }
+      if (typeof value === 'object') {
+        return JSON.stringify(value);
+      }
+      return value.toString();
+    };
+
+    // Align frontend keys to real Supabase `responses` column names.
     const payload = {
-      name: incoming.name || '',
-      age: (incoming.age ?? '').toString(),
-      height: (incoming.height ?? '').toString(),
-      body_type: incoming.body_type || '',
-      attribute: incoming.identity || '',
-      hair_style: incoming.hair_style || '',
-      fashion_style: incoming.fashion_style || '',
-      bed_position: incoming.bed_role || '',
-      social_energy: incoming.social_energy || '',
-      ideal_weekend: incoming.weekend_mode || '',
-      interests: incoming.interests || '',
-      exercise: incoming.exercise_habit || '',
-      travel_mode: incoming.travel_mode || '',
-      relationship_goal: incoming.relationship_goal || '',
-      time_investment: incoming.time_commitment || '',
-      deal_breaker: incoming.deal_breakers || '',
-      love_language: incoming.love_languages || '',
-      security_need: incoming.security_needs || '',
-      ritual_sense: incoming.daily_love_ritual || '',
-      decision_style: incoming.decision_making || '',
-      conflict_style: incoming.communication_style || '',
-      money_view: incoming.expense_splitting || '',
-      cohabitation: incoming.cohabitation || '',
-      preferred_attribute: incoming.ideal_identity || '',
-      ideal_appearance: incoming.ideal_visuals || '',
-      height_diff: normalizeRange(incoming.ideal_height_gap, [-20, 20]),
-      age_diff: normalizeRange(incoming.ideal_age_gap, [-10, 10]),
-      gap_moe: incoming.gap_moe || '',
-      three_traits: incoming.personal_traits || '',
-      contact_info: incoming.contact_info || '',
-      feedback: incoming.feedback || ''
+      part1_name: normalizeValue(getIncomingValue(incoming, 'part1_name', 'name')),
+      part1_age: normalizeValue(getIncomingValue(incoming, 'part1_age', 'age')),
+      part1_height: normalizeValue(getIncomingValue(incoming, 'part1_height', 'height')),
+      part1_identity: normalizeValue(getIncomingValue(incoming, 'part1_identity', 'identity')),
+      part1_body_type: normalizeValue(getIncomingValue(incoming, 'part1_body_type', 'body_type')),
+      part1_hair_style: normalizeValue(getIncomingValue(incoming, 'part1_hair_style', 'hair_style')),
+      part1_fashion_styles: normalizeValue(getIncomingValue(incoming, 'part1_fashion_styles', 'fashion_style')),
+      part1_bed_role: normalizeValue(getIncomingValue(incoming, 'part1_bed_role', 'bed_role')),
+      part1_social_energy: normalizeValue(getIncomingValue(incoming, 'part1_social_energy', 'social_energy')),
+      part1_weekend_mode: normalizeValue(getIncomingValue(incoming, 'part1_weekend_mode', 'weekend_mode')),
+      part1_interests: normalizeValue(getIncomingValue(incoming, 'part1_interests', 'interests')),
+      part1_exercise_habits: normalizeValue(getIncomingValue(incoming, 'part1_exercise_habits', 'exercise_habit')),
+      part1_travel_mode: normalizeValue(getIncomingValue(incoming, 'part1_travel_mode', 'travel_mode')),
+      relationship_goal: normalizeValue(getIncomingValue(incoming, 'relationship_goal', 'relationship_goal')),
+      time_commitment: normalizeValue(getIncomingValue(incoming, 'time_commitment', 'time_commitment')),
+      deal_breakers: normalizeValue(getIncomingValue(incoming, 'deal_breakers', 'deal_breakers')),
+      love_languages: normalizeValue(getIncomingValue(incoming, 'love_languages', 'love_languages')),
+      security_needs: normalizeValue(getIncomingValue(incoming, 'security_needs', 'security_needs')),
+      daily_love_ritual: normalizeValue(getIncomingValue(incoming, 'daily_love_ritual', 'daily_love_ritual')),
+      decision_making: normalizeValue(getIncomingValue(incoming, 'decision_making', 'decision_making')),
+      communication_style: normalizeValue(getIncomingValue(incoming, 'communication_style', 'communication_style')),
+      expense_splitting: normalizeValue(getIncomingValue(incoming, 'expense_splitting', 'expense_splitting')),
+      living_together: normalizeValue(getIncomingValue(incoming, 'living_together', 'cohabitation')),
+      ideal_identity: normalizeValue(getIncomingValue(incoming, 'ideal_identity', 'ideal_identity')),
+      ideal_body_type: normalizeValue(getIncomingValue(incoming, 'ideal_body_type', 'ideal_visuals')),
+      preferred_attribute: normalizeValue(getIncomingValue(incoming, 'preferred_attribute', 'ideal_identity')),
+      ideal_appearance: normalizeValue(getIncomingValue(incoming, 'ideal_appearance', 'ideal_visuals')),
+      ideal_height_gap: normalizeRange(getIncomingValue(incoming, 'ideal_height_gap', 'ideal_height_gap'), [-20, 20]),
+      ideal_age_gap: normalizeRange(getIncomingValue(incoming, 'ideal_age_gap', 'ideal_age_gap'), [-10, 10]),
+      gap_moe: normalizeValue(getIncomingValue(incoming, 'gap_moe', 'gap_moe')),
+      personal_traits: normalizeValue(getIncomingValue(incoming, 'personal_traits', 'personal_traits')),
+      contact_info: normalizeValue(getIncomingValue(incoming, 'contact_info', 'contact_info')),
+      feedback: normalizeValue(getIncomingValue(incoming, 'feedback', 'feedback'))
     };
 
     console.log('Payload to Supabase:', payload);
