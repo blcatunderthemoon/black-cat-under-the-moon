@@ -1081,12 +1081,15 @@ const QUESTIONS = [
   {
     id:'age', part:1,
     text:'年齡：', type:'text', inputType:'number',
-    placeholder:'你嘅年齡...', field:'age'
+    placeholder:'你嘅年齡...', field:'age',
+    minValue:18, maxValue:60,
+    underMinWarning:'需滿 18 歲方可參與'
   },
   {
     id:'height', part:1,
     text:'身高 (cm)：', type:'text', inputType:'number',
-    placeholder:'例如：165', field:'height'
+    placeholder:'例如：165', field:'height',
+    minValue:140, maxValue:190
   },
   {
     id:'body_type', part:1,
@@ -1293,14 +1296,16 @@ const QUESTIONS = [
   {
     id:'height_diff', part:6,
     text:'理想對象嘅身高差（正數 = 對方高過你）：', type:'dual_range',
-    min:-20, max:20, step:1, unit:'cm',
-    field:'height_diff'
+    min:-30, max:30, step:1, unit:'cm',
+    field:'ideal_height_gap',
+    allowNoPreference:true
   },
   {
     id:'age_diff', part:6,
     text:'理想對象嘅年齡差（正數 = 對方大過你）：', type:'dual_range',
-    min:-10, max:10, step:1, unit:'歲',
-    field:'age_diff'
+    min:-20, max:20, step:1, unit:'歲',
+    field:'ideal_age_gap',
+    allowNoPreference:true
   },
   {
     id:'gap_moe', part:6,
@@ -1718,6 +1723,10 @@ function buildRangeInput(q) {
       }
       updateDisplay();
       answers[q.field] = [parseInt(minSlider.value), parseInt(maxSlider.value)];
+      if (noPrefItem && noPrefItem.classList.contains('checked')) {
+        noPrefItem.classList.remove('checked');
+        setNoPreferenceMode(false);
+      }
     }
 
     minSlider.addEventListener('input', enforceConstraints);
@@ -1796,13 +1805,62 @@ function buildRangeInput(q) {
     labels.className = 'range-labels';
     labels.innerHTML = '<span>' + q.min + '</span><span>0</span><span>+' + q.max + '</span>';
 
+    let noPrefItem = null;
+    const setNoPreferenceMode = (isNoPreference) => {
+      minSlider.disabled = isNoPreference;
+      maxSlider.disabled = isNoPreference;
+      sliderWrap.style.opacity = isNoPreference ? '0.45' : '1';
+      labels.style.opacity = isNoPreference ? '0.45' : '1';
+      display.style.opacity = isNoPreference ? '0.6' : '1';
+      if (isNoPreference) {
+        valSpan.textContent = '冇所謂';
+        unitSpan.style.visibility = 'hidden';
+        tooltip.textContent = '冇所謂';
+        answers[q.field] = null;
+      } else {
+        unitSpan.style.visibility = '';
+        updateDisplay();
+        answers[q.field] = [parseInt(minSlider.value), parseInt(maxSlider.value)];
+      }
+    };
+
     wrap.appendChild(display);
     wrap.appendChild(sliderWrap);
-    wrap.appendChild(labels);
+      wrap.appendChild(labels);
+    if (q.allowNoPreference) {
+      noPrefItem = document.createElement('div');
+      noPrefItem.className = 'multi-item';
+      noPrefItem.style.marginTop = '12px';
+
+      const noPrefCheck = document.createElement('div');
+      noPrefCheck.className = 'pixel-check';
+      noPrefCheck.textContent = '✓';
+
+      const noPrefText = document.createElement('span');
+      noPrefText.className = 'multi-item-text';
+      noPrefText.textContent = '冇所謂';
+
+      noPrefItem.appendChild(noPrefCheck);
+      noPrefItem.appendChild(noPrefText);
+      wrap.appendChild(noPrefItem);
+
+      if (answers[q.field] === null) {
+        noPrefItem.classList.add('checked');
+      }
+
+      noPrefItem.addEventListener('click', () => {
+        const isChecked = noPrefItem.classList.toggle('checked');
+        setNoPreferenceMode(isChecked);
+      });
+    }
     $qAnswers.appendChild(wrap);
 
-    // Dual range always has values
-    answers[q.field] = [parseInt(minSlider.value), parseInt(maxSlider.value)];
+    // Dual range has values unless user chooses no preference.
+    if (noPrefItem && noPrefItem.classList.contains('checked')) {
+      setNoPreferenceMode(true);
+    } else {
+      answers[q.field] = [parseInt(minSlider.value), parseInt(maxSlider.value)];
+    }
   } else {
     // Single range slider (existing code)
     const slider = document.createElement('input');
@@ -1888,25 +1946,61 @@ function buildTextInput(q) {
   inp.className = 'pixel-input';
   inp.placeholder = q.placeholder || '';
   inp.setAttribute('autocomplete', 'off');
+  if (typeof q.minValue === 'number') inp.min = String(q.minValue);
+  if (typeof q.maxValue === 'number') inp.max = String(q.maxValue);
   if (q.maxLength) inp.maxLength = q.maxLength;
 
   // Restore previous answer
   if (answers[q.field]) inp.value = answers[q.field];
 
+  const warn = document.createElement('div');
+  warn.className = 'max-warn';
+  warn.style.marginTop = '10px';
+  warn.style.display = 'none';
+
+  function validateTextInput() {
+    const raw = inp.value.trim();
+    let valid = raw.length > 0;
+    warn.classList.remove('show');
+    warn.style.display = 'none';
+    warn.textContent = '';
+
+    if (valid && typeof q.minValue === 'number' && typeof q.maxValue === 'number') {
+      const numeric = Number.parseInt(raw, 10);
+      if (Number.isNaN(numeric)) {
+        valid = false;
+      } else if (numeric < q.minValue) {
+        valid = false;
+        warn.textContent = q.underMinWarning || ('輸入值需大於或等於 ' + q.minValue);
+      } else if (numeric > q.maxValue) {
+        valid = false;
+        warn.textContent = '輸入值需介乎 ' + q.minValue + ' 至 ' + q.maxValue;
+      }
+    }
+
+    if (!valid && warn.textContent) {
+      warn.style.display = 'block';
+      warn.classList.add('show');
+    }
+
+    $nextBtn.disabled = !valid;
+  }
+
   inp.addEventListener('input', () => {
-    $nextBtn.disabled = !inp.value.trim();
+    validateTextInput();
   });
   inp.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && inp.value.trim()) {
+    if (e.key === 'Enter' && !$nextBtn.disabled) {
       e.preventDefault();
       handleNext();
     }
   });
 
   $qAnswers.appendChild(inp);
+  $qAnswers.appendChild(warn);
   $btnRow.style.display = 'flex';
   $nextBtn.textContent = currentIdx === TOTAL - 1 ? '提交 ✦' : '下一題 ▸';
-  $nextBtn.disabled = !inp.value.trim();
+  validateTextInput();
 }
 
 function buildTextarea(q) {
@@ -2151,39 +2245,43 @@ async function submitAnswers() {
 
   // Map internal values to API payload keys matching Supabase columns
   const payload = {
-    part1_name: answers.name || '',
-    part1_age: (answers.age ?? '').toString(),
-    part1_height: (answers.height ?? '').toString(),
-    part1_identity: answers.attribute || '',
-    part1_body_type: answers.body_type || '',
-    part1_hair_style: answers.hair_style || '',
-    part1_fashion_styles: answers.fashion_style || '',
-    part1_bed_role: answers.bed_position || '',
-    part2_social_energy: answers.social_energy || '',
-    part2_weekend_mode: answers.ideal_weekend || '',
-    part2_interests: answers.interests || '',
-    part2_exercise_habits: answers.exercise || '',
-    part2_travel_mode: answers.travel_mode || '',
-    part3_relationship_goal: answers.relationship_goal || '',
-    part3_time_commitment: answers.time_investment || '',
-    part3_deal_breakers: answers.deal_breaker || '',
-    part4_love_languages: answers.love_language || '',
-    part4_security_needs: answers.security_need || '',
-    part4_daily_love_ritual: answers.ritual_sense || '',
-    part5_decision_making: answers.decision_style || '',
-    part5_communication_style: answers.conflict_style || '',
-    part5_expense_splitting: answers.money_view || '',
-    part5_living_together: answers.cohabitation || '',
-    part6_ideal_identity: answers.preferred_attribute || '',
-    part6_ideal_body_type: answers.ideal_appearance || '',
-    part6_preferred_attribute: answers.preferred_attribute || '',
-    part6_ideal_appearance: answers.ideal_appearance || '',
-    part6_ideal_height_gap: JSON.stringify(Array.isArray(answers.height_diff) ? answers.height_diff : [-20, 20]),
-    part6_ideal_age_gap: JSON.stringify(Array.isArray(answers.age_diff) ? answers.age_diff : [-10, 10]),
-    part6_gap_moe: answers.gap_moe || '',
-    part6_personal_traits: answers.three_traits || '',
-    part7_contact_info: answers.contact_info || '',
-    part7_feedback: answers.feedback || ''
+    name: answers.name || '',
+    age: (answers.age ?? '').toString(),
+    height: (answers.height ?? '').toString(),
+    identity: answers.attribute || '',
+    body_type: answers.body_type || '',
+    hair_style: answers.hair_style || '',
+    fashion_styles: answers.fashion_style || '',
+    bed_role: answers.bed_position || '',
+    social_energy: answers.social_energy || '',
+    weekend_mode: answers.ideal_weekend || '',
+    interests: answers.interests || '',
+    exercise_habits: answers.exercise || '',
+    travel_mode: answers.travel_mode || '',
+    relationship_goal: answers.relationship_goal || '',
+    time_commitment: answers.time_investment || '',
+    deal_breakers: answers.deal_breaker || '',
+    love_languages: answers.love_language || '',
+    security_needs: answers.security_need || '',
+    daily_love_ritual: answers.ritual_sense || '',
+    decision_making: answers.decision_style || '',
+    communication_style: answers.conflict_style || '',
+    expense_splitting: answers.money_view || '',
+    living_together: answers.cohabitation || '',
+    ideal_identity: answers.preferred_attribute || '',
+    ideal_body_type: answers.ideal_appearance || '',
+    ideal_height_gap: answers.ideal_height_gap === null
+      ? null
+      : JSON.stringify(Array.isArray(answers.ideal_height_gap) ? answers.ideal_height_gap : [-30, 30]),
+    ideal_age_gap: answers.ideal_age_gap === null
+      ? null
+      : JSON.stringify(Array.isArray(answers.ideal_age_gap) ? answers.ideal_age_gap : [-20, 20]),
+    gap_moe: answers.gap_moe || '',
+    preferred_attribute: answers.preferred_attribute || '',
+    ideal_appearance: answers.ideal_appearance || '',
+    personal_traits: answers.three_traits || '',
+    contact_info: answers.contact_info || '',
+    feedback: answers.feedback || ''
   };
 
   try {
