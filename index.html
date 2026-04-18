@@ -1584,6 +1584,9 @@ function typeWriter(el, text, callback) {
   if (typewriterTimer) clearInterval(typewriterTimer);
   if (typewriterDoneTimer) clearTimeout(typewriterDoneTimer);
   el.innerHTML = '';
+  const chars = typeof Intl !== 'undefined' && Intl.Segmenter
+    ? Array.from(new Intl.Segmenter('zh-Hant', { granularity: 'grapheme' }).segment(text), seg => seg.segment)
+    : Array.from(text);
   let i = 0;
   const cursor = document.createElement('span');
   cursor.className = 'cursor';
@@ -1591,8 +1594,8 @@ function typeWriter(el, text, callback) {
 
   function completeTypewriter() {
     // Show remaining text
-    while (i < text.length) {
-      el.insertBefore(document.createTextNode(text[i]), cursor);
+    while (i < chars.length) {
+      el.insertBefore(document.createTextNode(chars[i]), cursor);
       i++;
     }
     if (typewriterTimer) clearInterval(typewriterTimer);
@@ -1605,8 +1608,8 @@ function typeWriter(el, text, callback) {
   el.addEventListener('click', completeTypewriter, { once: true });
 
   typewriterTimer = setInterval(() => {
-    if (i < text.length) {
-      el.insertBefore(document.createTextNode(text[i]), cursor);
+    if (i < chars.length) {
+      el.insertBefore(document.createTextNode(chars[i]), cursor);
       i++;
     } else {
       clearInterval(typewriterTimer);
@@ -2286,7 +2289,8 @@ async function submitAnswers() {
     preferred_attribute: answers.preferred_attribute || '',
     ideal_appearance: answers.ideal_appearance || '',
     personal_traits: answers.three_traits || '',
-    contact_info: answers.contact_info || '',
+    email: answers.email || '',
+    ig_username: answers.ig_username || '',
     feedback: answers.feedback || ''
   };
 
