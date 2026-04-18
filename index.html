@@ -1325,9 +1325,15 @@ const QUESTIONS = [
   },
   // ---- Part 7: 聯絡資訊 ----
   {
-    id:'contact_info', part:7, partTitle:'留下聯絡方式 Stay Connected',
-    text:'留下聯絡方式，讓我們找到你 ✉️', type:'text',
-    placeholder:'Email 或 IG Username', field:'contact_info'
+    id:'email', part:7, partTitle:'留下聯絡方式 Stay Connected',
+    text:'你的 Email 📧', type:'text',
+    placeholder:'example@email.com', field:'email',
+    inputType:'email'
+  },
+  {
+    id:'ig_username', part:7,
+    text:'你的 IG Username 📸', type:'text',
+    placeholder:'@your_ig_handle', field:'ig_username'
   },
   {
     id:'feedback', part:7,
@@ -1337,7 +1343,7 @@ const QUESTIONS = [
   }
 ];
 
-const TOTAL = QUESTIONS.length; // 31 (29 soul + 2 contact)
+const TOTAL = QUESTIONS.length; // 32 (29 soul + 3 contact)
 
 // ============ AIRTABLE CONFIG ============
 // 透過 /api/submit serverless function 提交（Token 藏在 env vars）

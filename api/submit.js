@@ -107,7 +107,8 @@ export default async function handler(req, res) {
       preferred_attribute: normalizeValue(getIncomingValue(incoming, 'preferred_attribute', 'preferred_attribute')),
       ideal_appearance: normalizeValue(getIncomingValue(incoming, 'ideal_appearance', 'ideal_appearance')),
       personal_traits: normalizeValue(getIncomingValue(incoming, 'personal_traits', 'personal_traits')),
-      contact_info: normalizeValue(getIncomingValue(incoming, 'contact_info', 'contact_info')),
+      email: normalizeValue(getIncomingValue(incoming, 'email', 'email')),
+      ig_username: normalizeValue(getIncomingValue(incoming, 'ig_username', 'ig_username')),
       feedback: normalizeValue(getIncomingValue(incoming, 'feedback', 'feedback'))
     };
 
