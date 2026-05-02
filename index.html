@@ -1424,16 +1424,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function startQuiz() {
   $welcome.classList.add('hiding');
-  // Auto-play background music on start
+  // Pre-load audio but do NOT auto-play — user can start via the ♪ button
   if (!bgmAudio) {
     bgmAudio = new Audio('Keira%20Knightley%20%20Lost%20Stars%20(Begin%20Again%20Soundtrack).mp3');
     bgmAudio.volume = 0.35;
+    bgmAudio.addEventListener('ended', () => {
+      isPlaying = false;
+      $audioBtn.classList.remove('playing');
+      $audioBtn.textContent = '♪';
+    });
   }
-  bgmAudio.play().then(() => {
-    isPlaying = true;
-    $audioBtn.classList.add('playing');
-    $audioBtn.textContent = '♫';
-  }).catch(() => {});
   setTimeout(() => {
     $welcome.style.display = 'none';
     $progressWrap.style.display = 'block';
