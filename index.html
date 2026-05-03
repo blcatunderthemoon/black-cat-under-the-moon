@@ -1038,12 +1038,12 @@ html { scroll-behavior: smooth; }
     <!-- Share & Support -->
     <div class="support-section">
       <div class="support-text">分享你的故事 📲</div>
-      <a class="share-btn" id="share-threads-btn" href="https://threads.net/intent/post?text=%F0%9F%90%88%E2%80%8D%E2%AC%9B%E6%88%91%E5%89%9B%E5%AE%8C%E6%88%90%E4%BA%86%E3%80%8EBlack%20Cat%20Under%20The%20Moon%E3%80%8F%E9%9D%88%E9%AD%82%E9%85%8D%E5%B0%8D%E5%95%8F%E5%8D%B7%EF%BC%8C%E4%B8%80%E4%BB%BD%E5%B0%88%E7%82%BALesbian%E9%85%8D%E5%B0%8D%E8%A8%AD%E8%A8%88%E5%98%85%E5%95%8F%E5%8D%B7%EF%BC%8C%E4%BD%A0%E9%83%BD%E5%98%9F%E8%A9%A6%E4%B8%8B%E6%90%B5%E5%B1%AC%E6%96%BC%E4%BD%A0%E5%98%85%20Soulmate%EF%BC%9F%E2%9C%A8%F0%9F%8C%99%0A%F0%9F%94%97%3A%20https%3A//black-cat-under-the-moon.vercel.app/%0A%23%E6%9C%88%E8%80%81%E9%9D%88%E8%B2%93%20%23%E9%9D%88%E9%AD%82%E9%85%8D%E5%B0%8D%20%23LesbianHK" target="_blank" rel="noopener noreferrer">🧵 分享到 Threads</a>
+      <a class="share-btn" id="share-threads-btn" href="#" target="_blank" rel="noopener noreferrer" aria-label="分享到 Threads">🧵 分享到 Threads</a>
       <div class="support-text" style="margin-top:24px;">支持黑貓 ☕</div>
       <a class="donate-btn" href="https://ko-fi.com/blackcatunderthemoon" target="_blank" rel="noopener noreferrer">☕ SUPPORT ON KO-FI</a>
       <div style="margin-top:20px;font-size:0.75rem;color:var(--text-dim);line-height:1.8;">Contact: blcatunderthemoon@gmail.com</div>
       <!-- Social handles -->
-      <div style="margin-top:20px;display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;">
+      <div id="social-handles" style="margin-top:20px;display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;">
         <a href="https://www.instagram.com/blackcatunderthemoonhk/" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;gap:10px;text-decoration:none;font-size:0.85rem;font-weight:700;letter-spacing:0.5px;">
           <span style="width:26px;height:26px;border-radius:6px;background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
@@ -1378,6 +1378,12 @@ let partTransitionTimer = null;
 let partTransitionFadeTimer = null;
 let autoAdvanceTimer = null;
 
+const THREADS_SHARE_TEXT = [
+  '🐈\u200d⬛我剛完成了《Black Cat Under The Moon》靈魂配對問卷，一份專為 Lesbian 配對設計嘅問卷，你都試下搵屬於你嘅 Soulmate？✨🌙',
+  '🔗 https://black-cat-under-the-moon.vercel.app/',
+  '#月老靈貓 #靈魂配對 #LesbianHK'
+].join('\n');
+
 // ===================== DOM REFS =====================
 const $welcome     = document.getElementById('welcome');
 const $progressWrap= document.getElementById('progress-wrap');
@@ -1401,6 +1407,8 @@ const $audioBtn    = document.getElementById('audio-toggle');
 const $partTrans   = document.getElementById('part-transition');
 const $ptNum       = document.getElementById('pt-num');
 const $ptName      = document.getElementById('pt-name');
+const $shareThreadsBtn = document.getElementById('share-threads-btn');
+const $socialHandles = document.getElementById('social-handles');
 
 function toFriendlyErrorMessage(raw) {
   const msg = String(raw || '').trim();
@@ -1436,8 +1444,21 @@ function showErrorOverlay(errLike) {
 document.addEventListener('DOMContentLoaded', () => {
   initStarfield();
   drawHeaderCat();
+  initShareLink();
+  ensureSocialHandlesVisible();
   $welcome.addEventListener('click', startQuiz);
 });
+
+function initShareLink() {
+  if (!$shareThreadsBtn) return;
+  const url = 'https://www.threads.net/intent/post?text=' + encodeURIComponent(THREADS_SHARE_TEXT);
+  $shareThreadsBtn.setAttribute('href', url);
+}
+
+function ensureSocialHandlesVisible() {
+  if (!$socialHandles) return;
+  $socialHandles.style.display = 'flex';
+}
 
 function startQuiz() {
   $welcome.classList.add('hiding');
