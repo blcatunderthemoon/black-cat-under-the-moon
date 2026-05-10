@@ -1543,7 +1543,6 @@ let lastPart = 0;
 let renderTimer = null;
 let partTransitionTimer = null;
 let partTransitionFadeTimer = null;
-let autoAdvanceTimer = null;
 
 const THREADS_SHARE_TEXT = [
   '我剛完成了「Black Cat Under The Moon」靈魂配對問卷，一份專為 Lesbian 配對設計嘅問卷，你都試下搵屬於你嘅 Soulmate？',
@@ -1766,7 +1765,7 @@ function renderQuestion(idx, fromPartTransition = false) {
           hintBubble.style.zIndex = '50';
           hintBubble.style.maxWidth = '200px';
           hintBubble.style.lineHeight = '1.6';
-          hintBubble.textContent = '💡 點擊選項將自動進入下一題';
+          hintBubble.textContent = '💡 先揀答案，再按「下一題」前進';
           hintBubble.style.animation = 'fadeInFloat 0.5s ease-out forwards';
           document.body.appendChild(hintBubble);
           setTimeout(() => {
@@ -2272,9 +2271,6 @@ function buildSingleChoice(q) {
       btn.classList.add('selected');
       answers[q.field] = opt;
       $nextBtn.disabled = false;
-      // Auto-advance after short delay
-      if (autoAdvanceTimer) clearTimeout(autoAdvanceTimer);
-      autoAdvanceTimer = setTimeout(() => handleNext(true), 350);
     });
     wrap.appendChild(btn);
   });
@@ -2449,10 +2445,6 @@ function resetQuestionState(preserveDOM = false) {
   if (partTransitionFadeTimer) {
     clearTimeout(partTransitionFadeTimer);
     partTransitionFadeTimer = null;
-  }
-  if (autoAdvanceTimer) {
-    clearTimeout(autoAdvanceTimer);
-    autoAdvanceTimer = null;
   }
   $card.classList.remove('fade-in', 'fade-out');
   if (!preserveDOM) resetQuestionDOM();
