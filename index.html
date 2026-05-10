@@ -464,7 +464,31 @@ body::after {
 }
 
 /* ========== NEXT / SUBMIT BUTTON ========== */
-.btn-row { margin-top: 24px; display: flex; justify-content: flex-end; }
+.btn-row { margin-top: 24px; display: flex; justify-content: flex-end; align-items: center; }
+.back-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  background: transparent;
+  border: 2px solid var(--cyan);
+  color: var(--cyan);
+  padding: 14px 22px;
+  cursor: pointer;
+  transition: all 0.25s;
+  letter-spacing: 1px;
+  margin-right: auto;
+  opacity: 0.65;
+}
+.back-btn:hover {
+  background: var(--cyan);
+  color: var(--bg-deep);
+  box-shadow: 0 0 14px rgba(0,229,255,0.4), -4px 4px 0 rgba(0,229,255,0.3);
+  transform: translateY(-2px);
+  opacity: 1;
+}
+.back-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 0 6px rgba(0,229,255,0.3);
+}
 .next-btn {
   font-family: 'Press Start 2P', monospace;
   font-size: 11px;
@@ -748,6 +772,7 @@ body::after {
   .choice-btn { padding: 11px 12px; font-size: 0.82rem; }
   .multi-item { padding: 10px 12px; }
   .next-btn { font-size: 9px; padding: 12px 20px; }
+  .back-btn { font-size: 9px; padding: 12px 18px; }
 }
 
 /* ========== TEXTAREA ========== */
@@ -1138,6 +1163,7 @@ html { scroll-behavior: smooth; }
     <div class="q-text" id="q-text"></div>
     <div id="q-answers"></div>
     <div class="btn-row" id="btn-row" style="display:none;">
+      <button class="back-btn pixel-font" id="back-btn" style="display:none;">◂ 上一題</button>
       <button class="next-btn pixel-font" id="next-btn" disabled>下一題 ▸</button>
     </div>
   </div>
@@ -1539,6 +1565,7 @@ const $qText       = document.getElementById('q-text');
 const $qAnswers    = document.getElementById('q-answers');
 const $btnRow      = document.getElementById('btn-row');
 const $nextBtn     = document.getElementById('next-btn');
+const $backBtn     = document.getElementById('back-btn');
 const $loading     = document.getElementById('loading-screen');
 const $thankyou    = document.getElementById('thankyou-screen');
 const $error       = document.getElementById('error-screen');
@@ -1616,19 +1643,20 @@ function startQuiz() {
 }
 
 // ===================== SHOW QUESTION =====================
-function showQuestion(idx) {
+function showQuestion(idx, goingBack = false) {
   if (isTransitioning) return;
   resetQuestionState(true);
   window.scrollTo({ top: 0, behavior: 'auto' });
   const q = QUESTIONS[idx];
 
-  // Part transition
-  if (q.partTitle && q.part !== lastPart) {
+  // Part transition: skip when going back to avoid re-showing it
+  if (!goingBack && q.partTitle && q.part !== lastPart) {
     lastPart = q.part;
     showPartTransition(q.part, q.partTitle, () => renderQuestion(idx, true));
     return;
   }
 
+  lastPart = q.part;
   renderQuestion(idx);
 }
 
@@ -1707,8 +1735,13 @@ function renderQuestion(idx, fromPartTransition = false) {
       // After typewriter, fade in answers
       $qAnswers.style.opacity = '1';
       $qAnswers.style.transform = 'translateY(0)';
-      if (q.type === 'text' || q.type === 'multi' || q.type === 'textarea') {
-        $btnRow.style.display = 'flex';
+      // Always show btn-row and manage navigation buttons
+      $btnRow.style.display = 'flex';
+      $nextBtn.textContent = idx === TOTAL - 1 ? '提交 ✦' : '下一題 ▸';
+      $backBtn.style.display = idx > 0 ? 'inline-block' : 'none';
+      // For single choice, enable Next if already answered
+      if (q.type === 'single') {
+        $nextBtn.disabled = !answers[q.field];
       }
       // Focus input
       const inp = $qAnswers.querySelector('.pixel-input') || $qAnswers.querySelector('.pixel-textarea');
@@ -2115,8 +2148,6 @@ function buildRangeInput(q) {
     answers[q.field] = slider.value;
   }
 
-  $btnRow.style.display = 'flex';
-  $nextBtn.textContent = currentIdx === TOTAL - 1 ? '提交 ✦' : '下一題 ▸';
   $nextBtn.disabled = false;
 }
 
@@ -2178,8 +2209,6 @@ function buildTextInput(q) {
 
   $qAnswers.appendChild(inp);
   $qAnswers.appendChild(warn);
-  $btnRow.style.display = 'flex';
-  $nextBtn.textContent = currentIdx === TOTAL - 1 ? '提交 ✦' : '下一題 ▸';
   validateTextInput();
 }
 
@@ -2222,8 +2251,6 @@ function buildTextarea(q) {
 
   wrap.insertBefore(ta, wrap.firstChild);
   $qAnswers.appendChild(wrap);
-  $btnRow.style.display = 'flex';
-  $nextBtn.textContent = currentIdx === TOTAL - 1 ? '提交 ✦' : '下一題 ▸';
   $nextBtn.disabled = q.optional ? false : !ta.value.trim();
 }
 
@@ -2244,6 +2271,7 @@ function buildSingleChoice(q) {
       wrap.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
       answers[q.field] = opt;
+      $nextBtn.disabled = false;
       // Auto-advance after short delay
       if (autoAdvanceTimer) clearTimeout(autoAdvanceTimer);
       autoAdvanceTimer = setTimeout(() => handleNext(true), 350);
@@ -2293,8 +2321,6 @@ function buildMultiChoice(q) {
 
   if (warnEl) wrap.appendChild(warnEl);
   $qAnswers.appendChild(wrap);
-  $btnRow.style.display = 'flex';
-  $nextBtn.textContent = currentIdx === TOTAL - 1 ? '提交 ✦' : '下一題 ▸';
   $nextBtn.disabled = multiSelected.size === 0;
 }
 
@@ -2337,6 +2363,28 @@ function createMultiItem(opt, maxSel, warnEl) {
 
 // ===================== NAVIGATION =====================
 $nextBtn.addEventListener('click', handleNext);
+$backBtn.addEventListener('click', handleBack);
+
+function saveCurrentAnswer() {
+  const q = QUESTIONS[currentIdx];
+  if (q.type === 'text') {
+    const inp = $qAnswers.querySelector('.pixel-input');
+    if (inp && inp.value.trim()) answers[q.field] = inp.value.trim();
+  } else if (q.type === 'textarea') {
+    const ta = $qAnswers.querySelector('.pixel-textarea');
+    if (ta && ta.value.trim()) answers[q.field] = ta.value.trim();
+  } else if (q.type === 'multi') {
+    if (multiSelected.size > 0) answers[q.field] = Array.from(multiSelected).join(', ');
+  }
+  // single: already saved on click; range/dual_range: already saved on input
+}
+
+function handleBack() {
+  if (isTransitioning || currentIdx <= 0) return;
+  saveCurrentAnswer();
+  playClick();
+  showQuestion(currentIdx - 1, true);
+}
 
 function handleNext(skipClickSound = false) {
   if (isTransitioning) return;
@@ -2378,6 +2426,7 @@ function resetQuestionDOM() {
   $qAnswers.style.transform = 'translateY(10px)';
   $btnRow.style.display = 'none';
   $nextBtn.disabled = true;
+  $backBtn.style.display = 'none';
 }
 
 function resetQuestionState(preserveDOM = false) {
