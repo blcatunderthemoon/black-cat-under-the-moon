@@ -1,0 +1,145 @@
+﻿<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0a1a">
+<title>🌙 Black Cat Under The Moon：靈魂配對</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' shape-rendering='crispEdges'%3E%3Crect width='32' height='32' rx='6' fill='%2307060e'/%3E%3Crect x='6' y='4' width='4' height='4' fill='%232a2640'/%3E%3Crect x='8' y='2' width='2' height='2' fill='%232a2640'/%3E%3Crect x='22' y='4' width='4' height='4' fill='%232a2640'/%3E%3Crect x='22' y='2' width='2' height='2' fill='%232a2640'/%3E%3Crect x='6' y='8' width='20' height='12' fill='%232a2640'/%3E%3Crect x='8' y='6' width='16' height='2' fill='%232a2640'/%3E%3Crect x='10' y='12' width='4' height='2' fill='%2350fa7b'/%3E%3Crect x='18' y='12' width='4' height='2' fill='%2350fa7b'/%3E%3Crect x='12' y='12' width='2' height='2' fill='%23111'/%3E%3Crect x='20' y='12' width='2' height='2' fill='%23111'/%3E%3Crect x='15' y='15' width='2' height='2' fill='%23ff79c6'/%3E%3Crect x='8' y='20' width='16' height='6' fill='%232a2640'/%3E%3Crect x='10' y='26' width='4' height='2' fill='%232a2640'/%3E%3Crect x='18' y='26' width='4' height='2' fill='%232a2640'/%3E%3Crect x='26' y='3' width='2' height='2' fill='%23ffe066'/%3E%3Crect x='28' y='5' width='2' height='4' fill='%23ffe066'/%3E%3Crect x='26' y='9' width='2' height='2' fill='%23ffe066'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/questionnaire.css">
+<style>
+@keyframes logoHover {
+  0%,100% { transform: translateY(0px) scale(1); }
+  40%      { transform: translateY(-6px) scale(1.03); }
+  70%      { transform: translateY(-2px) scale(1.01); }
+}
+.welcome-cat { font-size: unset; animation: none; }
+.welcome-cat img { width: 160px; height: 160px; object-fit: contain; image-rendering: pixelated; filter: drop-shadow(0 0 18px rgba(189,147,249,.45)); transition: filter 0.3s ease; }
+.welcome-cat img:hover { animation: logoHover 0.6s ease-in-out; filter: drop-shadow(0 0 28px rgba(189,147,249,.75)); cursor: pointer; }
+</style>
+</head>
+<body>
+
+<!-- Background starfield -->
+<canvas id="bg-canvas"></canvas>
+
+<!-- Welcome Screen -->
+<div class="welcome-screen" id="welcome">
+  <div class="welcome-cat"><img src="entrancelogo.png" alt="Black Cat Under The Moon"></div>
+  <div class="welcome-title pixel-font">🌈 Black Cat<br>Under The Moon</div>
+  <div class="welcome-sub">靈魂配對 · 月光漂流瓶</div>
+  <div class="welcome-start">— 點擊任意位置開始 —</div>
+  <div class="mode-select-socials" onclick="event.stopPropagation()">
+    <a class="mode-social-link ig" href="https://www.instagram.com/blackcatunderthemoonhk/" target="_blank" rel="noopener noreferrer">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+      Instagram
+    </a>
+    <a class="mode-social-link threads" href="https://www.threads.net/@blackcatunderthemoonhk" target="_blank" rel="noopener noreferrer">
+      <svg width="13" height="13" viewBox="0 0 192 192" fill="currentColor"><path d="M141.537 88.988a66.667 66.667 0 0 0-2.518-1.143c-1.482-27.307-16.403-42.94-41.457-43.1h-.34c-14.986 0-27.449 6.396-35.12 18.036l13.779 9.452c5.73-8.695 14.724-10.548 21.348-10.548h.229c8.249.053 14.474 2.452 18.503 7.129 2.932 3.405 4.893 8.111 5.864 14.05-7.314-1.243-15.224-1.626-23.68-1.14-23.82 1.371-39.134 15.264-38.105 34.568.522 9.792 5.4 18.216 13.735 23.719 7.047 4.652 16.124 6.927 25.557 6.412 12.458-.683 22.231-5.436 29.049-14.127 5.178-6.6 8.453-15.153 9.899-25.93 5.937 3.583 10.337 8.298 12.767 13.966 4.132 9.635 4.373 25.468-8.546 38.376-11.319 11.308-24.925 16.2-45.488 16.351-22.809-.169-40.06-7.484-51.275-21.742C35.236 139.966 29.808 120.682 29.605 96c.203-24.682 5.63-43.966 16.133-57.317C56.954 24.425 74.206 17.11 97.015 16.94c22.975.17 40.526 7.52 52.171 21.847 5.71 7.026 10.015 15.86 12.853 26.162l16.147-4.308c-3.44-12.68-8.853-23.606-16.219-32.668C147.036 10.784 125.322 1.201 97.098 1 68.752 1.201 47.264 10.816 32.216 28.447 18.568 44.425 11.565 67.461 11.318 96.001c.247 28.54 7.25 51.576 20.898 67.554C47.264 181.216 68.752 190.798 97.098 191c23.814-.168 41.037-6.404 55.3-20.153 18.04-17.916 17.406-40.364 11.476-54.158-4.269-9.956-12.492-18.047-22.337-27.701z"/></svg>
+      Threads
+    </a>
+    <a class="mode-social-link kofi" href="https://ko-fi.com/blackcatunderthemoon" target="_blank" rel="noopener noreferrer">
+      ☕ Ko-fi
+    </a>
+  </div>
+  <a onclick="event.stopPropagation()" href="tos.html" style="margin-top:18px;font-size:10px;color:rgba(189,147,249,.45);text-decoration:none;letter-spacing:.05em;display:inline-block" onmouseover="this.style.color='rgba(189,147,249,.85)'" onmouseout="this.style.color='rgba(189,147,249,.45)'">使用條款 · Terms of Service</a>
+</div>
+
+<!-- Mode Select Screen -->
+<div class="mode-select-screen" id="mode-select">
+  <div class="mode-select-hdr">
+    <span class="mode-select-hdr-cat">🐈‍⬛</span>
+    <div class="mode-select-hdr-title">Black Cat Under The Moon</div>
+  </div>
+  <div class="mode-select-title pixel-font">選擇你的模式</div>
+  <div class="mode-select-sub">配對靈魂 · 傾訴心事 · 探索自己</div>
+  <div class="mode-cards">
+    <div class="mode-card mode-b coming-soon" id="mode-b-btn">
+      <div class="mode-card-icon">🔮</div>
+      <div class="mode-card-badge pixel-font">MIRROR MODE</div>
+      <div class="mode-card-name"><span class="name-zh">【靈魂鏡像】</span><span class="name-en">Mirror Mode</span></div>
+      <div class="mode-card-desc">測驗並得到單人卡<br>── 這是起點</div>
+      <div class="cs-badge pixel-font">整修中 ⚙</div>
+    </div>
+    <a class="mode-card mode-c" href="drift-bottle.html" style="text-decoration:none; color:inherit;">
+      <div class="new-badge pixel-font">★ 新推出</div>
+      <div class="mode-card-icon">🌙</div>
+      <div class="mode-card-badge pixel-font">DRIFT MODE</div>
+      <div class="mode-card-name"><span class="name-zh">【月光漂流瓶】</span><span class="name-en">Drift Mode</span></div>
+      <div class="mode-card-desc">匿名傾訴 · 搵同路隊友<br>── 把心事丟進大海</div>
+      <div class="mode-card-cta pixel-font">投瓶入海 ▸</div>
+    </a>
+    <a class="mode-card mode-a" href="match.html" style="text-decoration:none; color:inherit;">
+      <div class="mode-card-icon">💫</div>
+      <div class="mode-card-badge pixel-font">MATCH MODE</div>
+      <div class="mode-card-name"><span class="name-zh">【月下緣分】</span><span class="name-en">Match Mode</span></div>
+      <div class="mode-card-desc">讓靈貓為你尋找靈魂伴侶，愛的配對即將來臨</div>
+      <div class="mode-card-cta pixel-font">開始配對 ▸</div>
+    </a>
+  </div>
+  <div class="mode-select-socials">
+    <a class="mode-social-link ig" href="https://www.instagram.com/blackcatunderthemoonhk/" target="_blank" rel="noopener noreferrer">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+      Instagram
+    </a>
+    <a class="mode-social-link threads" href="https://www.threads.net/@blackcatunderthemoonhk" target="_blank" rel="noopener noreferrer">
+      <svg width="13" height="13" viewBox="0 0 192 192" fill="currentColor"><path d="M141.537 88.988a66.667 66.667 0 0 0-2.518-1.143c-1.482-27.307-16.403-42.94-41.457-43.1h-.34c-14.986 0-27.449 6.396-35.12 18.036l13.779 9.452c5.73-8.695 14.724-10.548 21.348-10.548h.229c8.249.053 14.474 2.452 18.503 7.129 2.932 3.405 4.893 8.111 5.864 14.05-7.314-1.243-15.224-1.626-23.68-1.14-23.82 1.371-39.134 15.264-38.105 34.568.522 9.792 5.4 18.216 13.735 23.719 7.047 4.652 16.124 6.927 25.557 6.412 12.458-.683 22.231-5.436 29.049-14.127 5.178-6.6 8.453-15.153 9.899-25.93 5.937 3.583 10.337 8.298 12.767 13.966 4.132 9.635 4.373 25.468-8.546 38.376-11.319 11.308-24.925 16.2-45.488 16.351-22.809-.169-40.06-7.484-51.275-21.742C35.236 139.966 29.808 120.682 29.605 96c.203-24.682 5.63-43.966 16.133-57.317C56.954 24.425 74.206 17.11 97.015 16.94c22.975.17 40.526 7.52 52.171 21.847 5.71 7.026 10.015 15.86 12.853 26.162l16.147-4.308c-3.44-12.68-8.853-23.606-16.219-32.668C147.036 10.784 125.322 1.201 97.098 1 68.752 1.201 47.264 10.816 32.216 28.447 18.568 44.425 11.565 67.461 11.318 96.001c.247 28.54 7.25 51.576 20.898 67.554C47.264 181.216 68.752 190.798 97.098 191c23.814-.168 41.037-6.404 55.3-20.153 18.04-17.916 17.406-40.364 11.476-54.158-4.269-9.956-12.492-18.047-22.337-27.701z"/></svg>
+      Threads
+    </a>
+    <a class="mode-social-link kofi" href="https://ko-fi.com/blackcatunderthemoon" target="_blank" rel="noopener noreferrer">
+      ☕ Ko-fi
+    </a>
+  </div>
+</div>
+
+<script>
+/* Landing page — starfield + welcome/mode-select only */
+(function () {
+  function initStarfield() {
+    var canvas = document.getElementById('bg-canvas');
+    var ctx = canvas.getContext('2d');
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    resize(); window.addEventListener('resize', resize);
+    var stars = [];
+    for (var i = 0; i < 80; i++) {
+      stars.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height,
+        size: Math.random()<0.3?2:1, speed: Math.random()*0.15+0.05,
+        phase: Math.random()*Math.PI*2, twinkle: Math.random()*0.015+0.005 });
+    }
+    function draw(time) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      stars.forEach(function(s) {
+        s.y += s.speed;
+        if (s.y > canvas.height+2) { s.y = -2; s.x = Math.random()*canvas.width; }
+        var alpha = 0.25 + 0.35 * Math.sin(time * s.twinkle + s.phase);
+        var colors = ['255,255,255','200,180,255','180,230,255','255,220,180'];
+        var c = colors[(s.size + Math.floor(s.x)) % colors.length];
+        ctx.fillStyle = 'rgba(' + c + ',' + alpha.toFixed(2) + ')';
+        ctx.fillRect(Math.floor(s.x), Math.floor(s.y), s.size, s.size);
+      });
+      requestAnimationFrame(draw);
+    }
+    requestAnimationFrame(draw);
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    initStarfield();
+    var welcome = document.getElementById('welcome');
+    var modeSelect = document.getElementById('mode-select');
+    if (window.location.hash === '#mode') {
+      welcome.style.display = 'none';
+      modeSelect.classList.add('active');
+    }
+    welcome.addEventListener('click', function() {
+      welcome.classList.add('hiding');
+      modeSelect.classList.add('active');
+      setTimeout(function() {
+        welcome.style.display = 'none';
+      }, 800);
+    });
+  });
+}());
+</script>
+</body>
+</html>

@@ -1,0 +1,302 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>使用條款 · 月光漂流瓶</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:        #050914;
+      --card:      #0b0d22;
+      --border:    #1d2055;
+      --pink:      #ff6b9d;
+      --cyan:      #00e5ff;
+      --yellow:    #ffe066;
+      --cream:     #f0ebd8;
+      --purple:    #7c5cfc;
+      --purple-l:  #bd93f9;
+      --dim:       #7a7590;
+      --font-main: 'M PLUS Rounded 1c', 'Noto Sans TC', sans-serif;
+      --font-px:   'Press Start 2P', monospace;
+    }
+    html, body { min-height: 100vh; background: var(--bg); color: var(--cream); font-family: var(--font-main); line-height: 1.85; }
+
+    /* stars */
+    .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .star  { position: absolute; border-radius: 50%; background: #fff; animation: twinkle var(--d,3s) infinite ease-in-out; opacity: 0; }
+    @keyframes twinkle { 0%,100%{opacity:0;transform:scale(.8)} 50%{opacity:var(--op,.6);transform:scale(1.1)} }
+
+    /* layout */
+    .page {
+      position: relative; z-index: 1;
+      max-width: 720px; margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    /* header */
+    .site-back { display: inline-flex; align-items: center; gap: .45rem; font-size: .8rem; color: var(--dim); text-decoration: none; margin-bottom: 2.5rem; transition: color .2s; }
+    .site-back:hover { color: var(--purple-l); }
+
+    .page-title {
+      font-family: var(--font-px);
+      font-size: .65rem;
+      color: var(--pink);
+      letter-spacing: .12em;
+      line-height: 2.2;
+      text-shadow: 0 0 14px rgba(255,107,157,.4);
+      margin-bottom: .5rem;
+    }
+    .page-subtitle {
+      font-size: .85rem;
+      color: var(--dim);
+      margin-bottom: 2.8rem;
+      letter-spacing: .04em;
+    }
+
+    /* section */
+    .section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.6rem 1.8rem;
+      margin-bottom: 1.2rem;
+    }
+    .section-title {
+      font-size: .78rem;
+      font-weight: 700;
+      color: var(--purple-l);
+      letter-spacing: .06em;
+      margin-bottom: .9rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    .section-body { font-size: .88rem; color: var(--cream); }
+    .section-body p  { margin-bottom: .7rem; }
+    .section-body p:last-child { margin-bottom: 0; }
+    .section-body ul { padding-left: 1.4rem; margin-bottom: .7rem; }
+    .section-body li { margin-bottom: .35rem; }
+    .highlight { color: var(--yellow); font-weight: 700; }
+    .danger    { color: var(--pink);   font-weight: 700; }
+
+    /* hotlines */
+    .hotlines { display: flex; flex-direction: column; gap: .5rem; margin-top: .8rem; }
+    .hotline  {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: .6rem 1rem;
+      background: rgba(124,92,252,.07);
+      border: 1px solid rgba(124,92,252,.2);
+      border-radius: 10px;
+      text-decoration: none; color: inherit;
+      font-size: .82rem;
+      transition: background .2s;
+    }
+    .hotline:hover { background: rgba(124,92,252,.14); }
+    .hotline-num {
+      font-family: var(--font-px);
+      font-size: .5rem;
+      color: var(--cyan);
+      letter-spacing: .08em;
+      white-space: nowrap;
+      margin-left: .5rem;
+    }
+
+    /* footer */
+    .tos-footer {
+      text-align: center;
+      font-size: .72rem;
+      color: var(--dim);
+      margin-top: 3rem;
+      line-height: 2;
+    }
+    .tos-footer a { color: var(--purple-l); text-decoration: none; }
+    .tos-footer a:hover { text-decoration: underline; }
+
+    /* ── Language toggle ── */
+    .en { display: none; }
+    body.lang-en .zh { display: none; }
+    body.lang-en span.en { display: inline; }
+    body.lang-en div.en  { display: block; }
+    .lang-toggle { position: fixed; top: 1rem; right: 1.2rem; z-index: 100; }
+    .lang-btn {
+      background: var(--card); border: 1px solid var(--border);
+      color: var(--purple-l); padding: 5px 15px; border-radius: 20px;
+      cursor: pointer; font-size: .72rem; font-family: var(--font-main);
+      letter-spacing: .05em; transition: border-color .2s, color .2s, box-shadow .2s;
+    }
+    .lang-btn:hover { border-color: var(--purple-l); color: #fff; box-shadow: 0 0 12px rgba(189,147,249,.3); }
+  </style>
+</head>
+<body>
+  <div class="stars" id="stars"></div>
+  <div class="lang-toggle"><button class="lang-btn" onclick="toggleLang()"><span class="zh">EN</span><span class="en">中文</span></button></div>
+
+  <div class="page">
+    <a class="site-back" href="index.html">⌂ <span class="zh">主頁</span><span class="en">Home</span></a>
+
+    <div class="page-title"><span class="zh">使用條款</span><span class="en">Terms of Service</span></div>
+    <!-- 1. Disclaimer -->
+    <div class="section">
+      <div class="section-title">📋 <span class="zh">免責聲明</span><span class="en">Disclaimer</span></div>
+      <div class="section-body zh">
+        <ul>
+          <li>本平台不對用戶發佈的任何內容承擔責任。</li>
+          <li>本平台以「現狀」提供服務，不保證服務的持續可用性。</li>
+          <li>本平台保留隨時修改、暫停或終止服務的權利，恕不另行通知。</li>
+          <li>本條款隨時可能更新，繼續使用本平台即表示接受最新條款。</li>
+        </ul>
+        <p>如對本條款有任何疑問，請透過平台舉報功能與我們聯繫。</p>
+      </div>
+      <div class="section-body en">
+        <ul>
+          <li>This platform bears no responsibility for any content posted by users.</li>
+          <li>This platform provides its service "as is" without guaranteeing continuous availability.</li>
+          <li>This platform reserves the right to modify, suspend, or terminate the service at any time without prior notice.</li>
+          <li>These terms may be updated at any time; continued use constitutes acceptance of the latest version.</li>
+        </ul>
+        <p>For questions about these terms, please contact us through the platform's report function.</p>
+      </div>
+    </div>
+
+    <!-- 2. Soul Matching Disclaimer -->
+    <div class="section">
+      <div class="section-title">💫 <span class="zh">靈魂配對免責聲明</span><span class="en">Soul Matching Disclaimer</span></div>
+      <div class="section-body zh">
+        <p>靈魂配對功能由系統演算法根據問卷答案進行匹配，<span class="highlight">結果僅供參考，並不構成任何形式的推薦或保證。</span></p>
+        <ul>
+          <li>配對結果不代表雙方在性格、價值觀或生活方式上必然相容。</li>
+          <li>平台對配對雙方之間的任何互動、通訊或線下見面所發生的事件<span class="danger">概不負責</span>。</li>
+          <li>參加者須自行評估風險，對自身安全及行為負全部責任。</li>
+          <li>如選擇與配對對象線下見面，請在公共場所進行，並事先告知信任的朋友或家人。</li>
+          <li>平台不會主動要求用戶提供個人聯絡資料；如有人以平台名義索取，請提高警惕。</li>
+        </ul>
+        <p class="danger">⚠️ 請保護自身安全。如遇到任何令你感到不適的情況，請立即停止聯繫並向相關機構舉報。</p>
+      </div>
+      <div class="section-body en">
+        <p>The Soul Matching feature uses an algorithm to match users based on questionnaire answers. <span class="highlight">Results are for reference only and do not constitute any recommendation or guarantee.</span></p>
+        <ul>
+          <li>Match results do not imply compatibility in personality, values, or lifestyle.</li>
+          <li>The platform accepts <span class="danger">no responsibility</span> for any interactions, communications, or incidents between matched users, including offline meetings.</li>
+          <li>Participants must independently assess risks and take full responsibility for their own safety and actions.</li>
+          <li>If you choose to meet a match offline, do so in a public place and inform a trusted friend or family member in advance.</li>
+          <li>The platform will never proactively request users' personal contact details; be vigilant if anyone claims to represent this platform and asks for such information.</li>
+        </ul>
+        <p class="danger">⚠️ Please protect your safety. If you encounter any situation that makes you uncomfortable, cease contact immediately and report to the relevant authorities.</p>
+      </div>
+    </div>
+
+    <!-- 3. Platform Rules -->
+    <div class="section">
+      <div class="section-title">🌙 <span class="zh">平台規則</span><span class="en">Platform Rules</span></div>
+      <div class="section-body zh">
+        <p>月光漂流瓶是一個完全匿名的心靈漂流空間。使用本平台即表示你同意以下規則：</p>
+        <ul>
+          <li>請以善意與尊重對待每一只漂流瓶和回聲。</li>
+          <li>禁止發佈任何形式的人身攻擊、騷擾或仇恨內容。</li>
+          <li>禁止發佈色情、性交易或援交相關內容。</li>
+          <li>禁止發佈垃圾訊息、廣告連結或重複性內容。</li>
+          <li>禁止發佈任何可識別他人身份的個人資料。</li>
+          <li>每位用戶每小時最多投出 2 個漂流瓶、留下 10 條回聲。</li>
+        </ul>
+        <p>違反規則的內容將在收到 <span class="highlight">3 次舉報</span>後自動隱藏，並由管理員審核。情節嚴重者將封禁 IP 24 小時。</p>
+      </div>
+      <div class="section-body en">
+        <p>Moonlight Drift Bottle is a fully anonymous space for sharing thoughts. By using this platform, you agree to the following rules:</p>
+        <ul>
+          <li>Please treat every drift bottle and echo with kindness and respect.</li>
+          <li>Prohibited: personal attacks, harassment, or hate speech of any kind.</li>
+          <li>Prohibited: pornographic, sex work, or escort-related content.</li>
+          <li>Prohibited: spam, advertisement links, or repetitive content.</li>
+          <li>Prohibited: any personally identifiable information about others.</li>
+          <li>Each user may send at most 2 drift bottles and 10 echoes per hour.</li>
+        </ul>
+        <p>Content violating these rules will be automatically hidden after <span class="highlight">3 reports</span> and reviewed by administrators. Severe violations result in a 24-hour IP ban.</p>
+      </div>
+    </div>
+
+    <!-- 4. Legal Statement -->
+    <div class="section">
+      <div class="section-title">⚖️ <span class="zh">法律聲明</span><span class="en">Legal Statement</span></div>
+      <div class="section-body zh">
+        <p>本平台根據香港適用法律運營，包括但不限於《國家安全法》（NSL）及《個人資料（私隱）條例》。</p>
+        <ul>
+          <li>嚴禁發佈任何違反《國家安全法》或其他香港本地法律的內容。</li>
+          <li>我們保留在法律要求下向相關執法機構提供必要資料的權利。</li>
+          <li>本平台不會主動收集或儲存用戶個人身份資料；所有漂流瓶及回聲均以匿名方式儲存。</li>
+          <li>為防止濫用，系統會記錄請求 IP 地址以進行速率限制，相關資料不會超過 24 小時保留。</li>
+        </ul>
+        <p class="danger">如發現任何違法內容，請透過「舉報」功能向我們反映。</p>
+      </div>
+      <div class="section-body en">
+        <p>This platform operates in accordance with applicable Hong Kong laws, including but not limited to the National Security Law (NSL) and the Personal Data (Privacy) Ordinance.</p>
+        <ul>
+          <li>Prohibited: any content that violates the National Security Law or other applicable Hong Kong laws.</li>
+          <li>We reserve the right to provide necessary information to relevant law enforcement agencies when required by law.</li>
+          <li>This platform does not actively collect or store personally identifiable user data; all drift bottles and echoes are stored anonymously.</li>
+          <li>To prevent misuse, the system logs request IP addresses for rate-limiting; such data is not retained for more than 24 hours.</li>
+        </ul>
+        <p class="danger">If you discover any illegal content, please report it using the "Report" function.</p>
+      </div>
+    </div>
+
+    <!-- 5. Crisis Intervention -->
+    <div class="section">
+      <div class="section-title">💙 <span class="zh">危機介入聲明</span><span class="en">Crisis Intervention</span></div>
+      <div class="section-body zh">
+        <p>如果你或你身邊的人正在經歷困難，請記住：你並不孤單。</p>
+        <p>當系統偵測到內容可能涉及心理危機時，會自動顯示危機介入横幅，提供以下緊急支援熱線：</p>
+        <div class="hotlines">
+          <a class="hotline" href="tel:23892222"><span>撒瑪利亞防止自殺會</span><span class="hotline-num">2389 2222</span></a>
+          <a class="hotline" href="tel:23820000"><span>生命熱線</span><span class="hotline-num">2382 0000</span></a>
+          <a class="hotline" href="tel:53824343"><span>陪我講 Shall We Talk</span><span class="hotline-num">5382 4343</span></a>
+          <a class="hotline" href="tel:24400"><span>醫管局精神健康直通車</span><span class="hotline-num">24400</span></a>
+        </div>
+        <p style="margin-top:.9rem;font-size:.8rem;color:#7a7590">以上熱線均由香港本地機構提供，24 小時服務（部分熱線服務時間請向各機構查詢）。</p>
+      </div>
+      <div class="section-body en">
+        <p>If you or someone around you is going through a difficult time, remember: you are not alone.</p>
+        <p>When the system detects content that may involve a mental health crisis, a crisis intervention banner will automatically appear with the following emergency hotlines:</p>
+        <div class="hotlines">
+          <a class="hotline" href="tel:23892222"><span>Samaritans Hong Kong</span><span class="hotline-num">2389 2222</span></a>
+          <a class="hotline" href="tel:23820000"><span>Samaritan Befrienders HK</span><span class="hotline-num">2382 0000</span></a>
+          <a class="hotline" href="tel:53824343"><span>Shall We Talk</span><span class="hotline-num">5382 4343</span></a>
+          <a class="hotline" href="tel:24400"><span>HA Mental Health Direct</span><span class="hotline-num">24400</span></a>
+        </div>
+        <p style="margin-top:.9rem;font-size:.8rem;color:#7a7590">All hotlines are provided by Hong Kong-based organisations. (Please check individual organisations for service hours.)</p>
+      </div>
+    </div>
+
+    <div class="tos-footer">
+      <p><span class="zh">最後更新：2026年 · Black Cat Under The Moon</span><span class="en">Last updated: 2026 · Black Cat Under The Moon</span></p>
+      <p><a href="index.html">⌂ <span class="zh">主頁</span><span class="en">Home</span></a></p>
+    </div>
+  </div>
+
+  <script>
+    function toggleLang() {
+      const isEn = document.body.classList.toggle('lang-en');
+      try { localStorage.setItem('tos-lang', isEn ? 'en' : 'zh'); } catch(e) {}
+    }
+    try { if (localStorage.getItem('tos-lang') === 'en') document.body.classList.add('lang-en'); } catch(e) {}
+
+    (function() {
+      const stars = document.getElementById('stars');
+      for (let i = 0; i < 80; i++) {
+        const s  = document.createElement('div');
+        s.className = 'star';
+        const size = Math.random() * 2.2 + .5;
+        s.style.cssText = [
+          `width:${size}px`, `height:${size}px`,
+          `left:${Math.random()*100}%`, `top:${Math.random()*100}%`,
+          `--d:${(Math.random()*4+2).toFixed(1)}s`,
+          `--op:${(Math.random()*.5+.2).toFixed(2)}`,
+          `animation-delay:${(Math.random()*5).toFixed(1)}s`,
+        ].join(';');
+        stars.appendChild(s);
+      }
+    })();
+  </script>
+</body>
+</html>

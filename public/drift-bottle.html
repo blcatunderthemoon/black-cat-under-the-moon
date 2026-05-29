@@ -1,0 +1,358 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌙 月光漂流瓶 × Black Cat Under The Moon</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/drift-bottle.css">
+  <!-- Cloudflare Turnstile — replace data-sitekey after Cloudflare setup (see src/lib/turnstile.js) -->
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <!-- PostHog analytics — session recordings mask all inputs by default -->
+  <script>
+    !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="Mi Ri init Vi Gi Rr Wi Ji Bi capture calculateEventProperties tn register register_once register_for_session unregister unregister_for_session an getFeatureFlag getFeatureFlagPayload getFeatureFlagResult isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync un identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty nn Xi createPersonProfile setInternalOrTestUser sn Hi cn opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing Ki debug Lr rn getPageViewId captureTraceFeedback captureTraceMetric Di".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+    posthog.init('phc_xdk4CgWnJYNGrfNNMTYKya8fb3Xw6K5rJkd3KyW75Ajw', {
+      api_host: 'https://us.i.posthog.com',
+      defaults: '2026-01-30',
+      person_profiles: 'identified_only',
+      session_recording: { maskAllInputs: true },
+    });
+  </script>
+</head>
+<body data-tab="throw">
+
+<div class="stars" id="stars"></div>
+<div class="sea-shimmer"></div>
+
+<div class="page">
+
+  <!-- Header -->
+  <a href="index.html" class="back-link">⌂ 主頁</a>
+  <header class="page-header">
+    <div class="header-inner">
+    <div class="logo-wrap">
+      <img src="driftlogo.png" alt="月光漂流瓶" width="90" height="90" style="image-rendering: pixelated; display: block;">
+    </div>
+    <div class="header-text">
+      <div class="page-title">月光漂流瓶</div>
+      <p class="page-sub">把話說給大海聽，也許有人會撈起你的瓶子</p>
+    </div>
+    </div>
+  </header>
+
+  <!-- Phase 2: Tab bar -->
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-panel="throw"  role="tab" aria-selected="true">🌙 投瓶</button>
+    <button class="tab"        data-panel="random" role="tab" aria-selected="false">🌊 撈瓶</button>
+    <button class="tab"        data-panel="find"   role="tab" aria-selected="false">🗝️ 尋瓶</button>
+  </div>
+
+  <!-- ── Panel A: 投瓶 (Wizard) ── -->
+  <div class="panel active" id="panel-throw">
+
+      <!-- Phase 5: Progress dots -->
+      <div class="wizard-progress">
+        <div class="wstep-segment active"><div class="wdot active" id="wd1"></div><div class="wstep-label">① 心事</div></div>
+        <div class="wstep-segment"><div class="wdot" id="wd2"></div><div class="wstep-label">② 標籤</div></div>
+        <div class="wstep-segment"><div class="wdot" id="wd3"></div><div class="wstep-label">③ 確認</div></div>
+      </div>
+
+      <!-- Step 1: Write -->
+      <div class="wizard-step active" id="wstep-1">
+        <div class="wizard-header">今晚想讓海浪帶走什麼？</div>
+        <!-- Phase 3: Floating writing area -->
+        <div class="floating-writing-area">
+          <div class="textarea-wrap">
+            <textarea class="floating-textarea" id="throw-content"
+              placeholder="深夜的心事、一個問題、一段話……" maxlength="200"></textarea>
+            <div class="char-count" id="throw-count">0 / 200</div>
+          </div>
+        </div>
+        <!-- Phase 8: Mission toggle -->
+        <div class="mission-toggle" id="mission-toggle" onclick="toggleMission()">
+          <div class="toggle-switch"></div>
+          <div class="mission-toggle-label">🤝 召集貓隊友</div>
+        </div>
+        <!-- Phase 8: Mission hint (shown below toggle when active) -->
+        <div class="mission-hint" id="mission-hint-text">
+          💡 提示：寫下你想組隊做的事，並留下你可以交換的技能（例如：週末排隊拉麵換專業攝影）。普通瓶子不留聯絡方式，但隊友瓶<strong>強烈建議</strong>你在內容最後留下 IG 或聯絡方式，方便對方找到你！
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:14px">
+          <button class="btn btn-purple" style="width:auto;padding:13px 32px" onclick="goStep(2)">繼續 →</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Mood chips -->
+      <div class="wizard-step" id="wstep-2">
+        <div class="wizard-header">這瓶子承載著什麼心情？</div>
+        <!-- Phase 4: Mood chips -->
+        <div class="mood-chips" id="mood-chips">
+          <div class="chip" data-mood="🌧️ 想被理解">🌧️ 想被理解</div>
+          <div class="chip" data-mood="🌙 睡不著">🌙 睡不著</div>
+          <div class="chip" data-mood="🫧 快樂不起來">🫧 快樂不起來</div>
+          <div class="chip" data-mood="🕯️ 有點想念誰">🕯️ 有點想念誰</div>
+          <div class="chip" data-mood="🌊 漂浮感">🌊 漂浮感</div>
+          <div class="chip chip-custom" data-mood="">✏️ 自定義…</div>
+        </div>
+        <input class="chip-custom-input" id="chip-custom-input"
+          placeholder="輸入你的心情…" maxlength="50">
+        <div style="display:flex;align-items:center;gap:8px;margin-top:14px">
+          <button class="btn-text" onclick="goStep(1)">← 返回</button>
+          <button class="btn btn-purple" style="width:auto;padding:13px 32px;margin-left:auto" onclick="goStep(3)">繼續 →</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Preview + submit -->
+      <div class="wizard-step" id="wstep-3">
+        <div class="wizard-header">準備好了嗎？</div>
+        <div class="wizard-preview">
+          <div class="wp-content"  id="wp-content"></div>
+          <div class="wp-mood"     id="wp-mood"></div>
+          <div class="wp-mission"  id="wp-mission" style="display:none">🤝 #召集貓隊友</div>
+        </div>
+        <div class="msg msg-err" id="throw-err"></div>
+        <!-- Turnstile: replace data-sitekey with your Site Key from Cloudflare -->
+        <div class="cf-turnstile" id="throw-turnstile"
+             data-sitekey="0x4AAAAAADYg006rqWz6ukif"
+             data-theme="dark"
+             data-appearance="interaction-only"
+             data-size="flexible"
+             style="margin:10px 0 4px"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+          <button class="btn-text" onclick="goStep(2)">← 返回</button>
+          <button class="btn btn-purple" id="btn-throw" onclick="throwBottle()" style="width:auto;padding:13px 32px;margin-left:auto">🌙 將話語封進瓶中</button>
+        </div>
+      </div>
+    <p class="hint-text">完全匿名 · 無需登入<br>丟出後會收到一串神秘鑰匙，憑鑰匙可隨時查看留言<br><a href="tos.html" style="color:rgba(189,147,249,.55);text-decoration:none" onmouseover="this.style.color='rgba(189,147,249,.9)'" onmouseout="this.style.color='rgba(189,147,249,.55)'">使用條款 · Terms of Service</a></p>
+  </div>
+
+  <!-- ── Panel B: 撈瓶 ── -->
+  <div class="panel" id="panel-random">
+    <div class="state" id="rnd-loading">
+      <span class="state-icon">🌊</span>
+      正在打撈漂流瓶…
+      <span style="display:flex;gap:6px;justify-content:center;margin-top:14px;align-items:flex-end;height:14px">
+        <span style="display:inline-block;width:5px;height:5px;background:var(--cyan);opacity:.75;
+                     animation:pixelFloat .9s 0s ease-in-out infinite"></span>
+        <span style="display:inline-block;width:5px;height:5px;background:var(--purple-light);opacity:.65;
+                     animation:pixelFloat .9s .15s ease-in-out infinite"></span>
+        <span style="display:inline-block;width:5px;height:5px;background:var(--cyan);opacity:.75;
+                     animation:pixelFloat .9s .30s ease-in-out infinite"></span>
+      </span>
+    </div>
+    <div class="state" id="rnd-empty" style="display:none">
+      <span class="state-icon">🍾</span>大海上還沒有瓶子，快去投一個！
+    </div>
+    <div id="rnd-content" style="display:none">
+      <div class="bottle-card" id="rnd-card">
+        <button id="btn-report" onclick="reportBottle()"
+          style="position:absolute;top:12px;right:14px;
+                 background:none;border:none;color:rgba(255,255,255,.18);font-size:11px;cursor:pointer;
+                 padding:0;line-height:1;transition:color .2s;z-index:2"
+          onmouseover="this.style.color='rgba(255,100,100,.75)'" onmouseout="this.style.color='rgba(255,255,255,.18)'">⚑</button>
+        <div class="mission-card-badge">🐈 #召集貓隊友</div>
+        <div class="moonlight-badge" id="rnd-moonlight">🌙 月光瓶</div>
+        <span class="mood-badge" id="rnd-mood"></span>
+        <div class="bottle-body" id="rnd-body"></div>
+        <div class="bottle-meta">
+          <span id="rnd-time"></span>
+          <div class="expires-hint" id="rnd-expires" style="margin-top:0;opacity:.75"></div>
+        </div>
+        <!-- Toggle: replies list + reply form unified -->
+        <div id="rnd-replies-toggle" style="margin-top:16px">
+          <!-- 方案三: compact inline pill toggle -->
+          <div style="text-align:center">
+            <button onclick="toggleReplies()"
+              style="background:none;border:1px solid rgba(255,255,255,.1);border-radius:20px;
+                     color:var(--text-dim);font-size:11px;cursor:pointer;padding:5px 18px;
+                     opacity:.6;transition:all .2s;letter-spacing:.05em"
+              onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'">
+              <span id="rnd-toggle-label">💬 留下第一條留言</span>
+            </button>
+          </div>
+          <div id="rnd-replies-expanded" style="display:none;margin-top:14px">
+            <div id="rnd-replies-list"></div>
+            <div style="margin-top:14px">
+              <p style="font-size:11px;color:rgba(185,200,232,.90);margin:2px 0 10px;letter-spacing:.1em">✦ 留下你的話語</p>
+              <!-- 方案二: textarea with embedded circular send button -->
+              <div style="position:relative">
+                <textarea id="reply-content" placeholder="寫下你想說的話，悄悄放進這只漂流瓶…" maxlength="100"
+                          style="min-height:90px;padding-bottom:30px;padding-right:56px;background:rgba(0,10,26,.5);border-color:rgba(0,140,190,.22)"></textarea>
+                <div class="char-count" id="reply-count">0 / 100</div>
+                <button id="btn-reply" onclick="sendReply()" class="btn-round-send"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="display:block"><path transform="rotate(-30,12,12) translate(2.6,0)" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+              </div>
+              <!-- Turnstile for reply -->
+              <div class="cf-turnstile" id="reply-turnstile"
+                   data-sitekey="0x4AAAAAADYg006rqWz6ukif"
+                   data-theme="dark"
+                   data-appearance="interaction-only"
+                   data-size="flexible"
+                   style="margin:8px 0 4px"></div>
+              <div class="msg msg-err" id="reply-err" style="margin-top:8px"></div>
+              <div class="msg msg-ok"  id="reply-ok" style="margin-top:8px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="margin:10px auto 0;text-align:center">
+        <button class="btn btn-cyan" id="btn-next" onclick="skipBottle()" style="display:inline-flex;width:auto;padding:13px 44px">🌊 拋回大海</button>
+      </div>
+      <div class="msg msg-ok" id="report-ok" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- ── Panel C: 尋瓶 ── -->
+  <div class="panel" id="panel-find">
+    <div class="card">
+      <div class="section-tag">🗝️ 找回你的瓶子</div>
+      <div class="field">
+        <label class="field-label">輸入你的神秘鑰匙</label>
+        <div class="key-boxes" id="key-boxes">
+          <input class="key-box" maxlength="1" autocomplete="off" spellcheck="false" inputmode="text" placeholder="✦">
+          <input class="key-box" maxlength="1" autocomplete="off" spellcheck="false" inputmode="text" placeholder="✦">
+          <input class="key-box" maxlength="1" autocomplete="off" spellcheck="false" inputmode="text" placeholder="✦">
+          <input class="key-box" maxlength="1" autocomplete="off" spellcheck="false" inputmode="text" placeholder="✦">
+          <input class="key-box" maxlength="1" autocomplete="off" spellcheck="false" inputmode="text" placeholder="✦">
+          <input class="key-box" maxlength="1" autocomplete="off" spellcheck="false" inputmode="text" placeholder="✦">
+        </div>
+      </div>
+      <button class="btn btn-purple" onclick="findBottle()">🗝️ 解鎖瓶子</button>
+      <div class="msg msg-err" id="find-err"></div>
+    </div>
+    <div id="found-wrap">
+      <!-- Subtle divider: separates the action zone above from the result zone -->
+      <div aria-hidden="true" style="
+        height:1px; margin-bottom:24px;
+        background: linear-gradient(90deg,
+          transparent 0%, rgba(124,92,252,.22) 30%,
+          rgba(0,200,240,.18) 70%, transparent 100%);
+      "></div>
+      <div class="bottle-card" id="found-card">
+        <div class="mission-card-badge">🐈 #召集貓隊友</div>
+        <div class="moonlight-badge" id="found-moonlight">🌙 月光瓶</div>
+        <span class="mood-badge" id="found-mood"></span>
+        <div class="bottle-body" id="found-body"></div>
+        <div class="bottle-meta"><span id="found-time"></span><div class="expires-hint" id="found-expires" style="margin-top:0;opacity:.75"></div></div>
+      </div>
+      <div class="replies-section">
+        <div class="replies-heading" id="found-heading"></div>
+        <div id="found-list"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- Phase 5: Sea ripple element -->
+<div class="sea-ripple" id="sea-ripple"></div>
+
+<!-- Success overlay -->
+<div class="overlay" id="overlay" role="dialog" aria-modal="true">
+  <div class="overlay-box">
+    <span class="bottle-anim" id="ov-bottle">🍾</span>
+    <div class="ov-title">瓶子已飄向遠方 🌊</div>
+    <div class="ov-sub">
+      這是你瓶子的神秘鑰匙。<br>
+      請複製保存，以便日後撈回查看留言，<br>
+      或傳給特定的人解鎖。
+    </div>
+    <div id="ov-key-box">
+      <div class="key-label">神秘鑰匙</div>
+      <div class="key-value" id="ov-key">------</div>
+    </div>
+    <button class="btn-copy" id="btn-copy" onclick="copyKey()">📋 一鍵複製鑰匙</button>
+    <button class="btn-close-ov" onclick="closeOverlay()">關閉</button>
+  </div>
+</div>
+
+<script src="js/drift-bottle.js"></script>
+
+<!-- ── Crisis Intervention Banner ── -->
+<div id="crisis-banner" class="crisis-overlay" style="display:none;"
+     role="dialog" aria-modal="true" aria-labelledby="crisis-title-text">
+  <div class="crisis-card">
+    <span class="crisis-star">✨</span>
+    <div class="crisis-title" id="crisis-title-text">今晚嘅夜空好黑</div>
+    <div class="crisis-subtitle">但總有一粒星為你閃爍</div>
+    <p class="crisis-msg">喺投出瓶子之前<br>試吓同佢哋傾吓計？</p>
+    <div class="crisis-hotlines">
+      <a class="crisis-hotline" href="tel:23892222">
+        <span class="crisis-hotline-name">撒瑪利亞防止自殺會</span>
+        <span class="crisis-hotline-num">2389&nbsp;2222</span>
+      </a>
+      <a class="crisis-hotline" href="tel:23820000">
+        <span class="crisis-hotline-name">生命熱線</span>
+        <span class="crisis-hotline-num">2382&nbsp;0000</span>
+      </a>
+      <a class="crisis-hotline" href="tel:53824343">
+        <span class="crisis-hotline-name">陪我講 Shall We Talk</span>
+        <span class="crisis-hotline-num">5382&nbsp;4343</span>
+      </a>
+      <a class="crisis-hotline" href="tel:24400">
+        <span class="crisis-hotline-name">醫管局精神健康直通車</span>
+        <span class="crisis-hotline-num">24400</span>
+      </a>
+    </div>
+    <button class="crisis-close" onclick="closeCrisisBanner()">了解，謝謝你</button>
+  </div>
+</div>
+
+<!-- ── Bottom wave decoration ── -->
+<div id="bottom-wave" aria-hidden="true" style="
+  position:fixed; bottom:0; left:-10%; width:120%; height:150px;
+  pointer-events:none; z-index:0; overflow:hidden;
+  animation:waveSway 18s ease-in-out infinite;
+">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 150"
+       preserveAspectRatio="none"
+       style="width:100%;height:100%;display:block">
+    <defs>
+      <linearGradient id="waveGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"  stop-color="rgba(0,229,255,0.18)"/>
+        <stop offset="100%" stop-color="rgba(0,140,200,0.04)"/>
+      </linearGradient>
+      <filter id="waveGlow">
+        <feGaussianBlur stdDeviation="6" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="waveSoft">
+        <feGaussianBlur stdDeviation="0.9"/>
+      </filter>
+    </defs>
+    <!-- back wave: gentle blur for depth -->
+    <path d="M0,75 C200,25 400,115 600,70 C800,25 1000,110 1200,65 L1200,150 L0,150 Z"
+          fill="rgba(0,180,220,0.07)" filter="url(#waveSoft)" />
+    <!-- front wave: glow -->
+    <path d="M0,98 C150,45 350,138 600,90 C850,42 1050,128 1200,85 L1200,150 L0,150 Z"
+          fill="url(#waveGrad)" filter="url(#waveGlow)" />
+  </svg>
+
+  <!-- Ghost bottle silhouettes — ride the wave together with the container -->
+
+  <!-- Bottle 1: ~25% viewport left, sitting in the front-wave trough (~bottom:8px) -->
+  <svg style="position:absolute;bottom:10px;left:29%;width:16px;height:26px;
+              animation:bottleFloat1 8s ease-in-out infinite"
+       viewBox="0 0 20 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path transform="rotate(14,10,20)"
+          d="M12.5,0.5 Q13.5,0.5 13.5,1.5 L13.5,4 Q13.5,5 12.5,5
+             L12.5,12 Q17,15 17,18 L17,29 Q17,34 10,34
+             Q3,34 3,29 L3,18 Q3,15 7.5,12
+             L7.5,5 Q6.5,5 6.5,4 L6.5,1.5 Q6.5,0.5 7.5,0.5 Z"
+          stroke="rgba(0,220,255,0.30)" stroke-width="1.2" stroke-linejoin="round"/>
+  </svg>
+
+  <!-- Bottle 2: ~74% viewport left, near a crest (~bottom:42px), smaller / dimmer -->
+  <svg style="position:absolute;bottom:42px;left:70%;width:12px;height:20px;
+              animation:bottleFloat2 11s 2.2s ease-in-out infinite"
+       viewBox="0 0 20 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path transform="rotate(-9,10,20)"
+          d="M12.5,0.5 Q13.5,0.5 13.5,1.5 L13.5,4 Q13.5,5 12.5,5
+             L12.5,12 Q17,15 17,18 L17,29 Q17,34 10,34
+             Q3,34 3,29 L3,18 Q3,15 7.5,12
+             L7.5,5 Q6.5,5 6.5,4 L6.5,1.5 Q6.5,0.5 7.5,0.5 Z"
+          stroke="rgba(0,220,255,0.20)" stroke-width="1.3" stroke-linejoin="round"/>
+  </svg>
+</div>
+
+</body>
+</html>
