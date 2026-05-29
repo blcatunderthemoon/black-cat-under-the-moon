@@ -539,7 +539,7 @@ function renderReplyList(replies) {
             <span style="color:var(--text-dim);font-size:11px;display:block;margin-bottom:4px">第 ${i + 1} 條 · ${new Date(r.created_at).toLocaleString('zh-Hant', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
             ${escHtml(r.content)}
           </div>
-          <button onclick="reportReply('${escHtml(r.id)}')" title="檢舉留言"
+          <button onclick="reportReply('${escHtml(r.id)}', this)" title="檢舉留言"
             style="background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:11px;padding:2px 4px;flex-shrink:0;opacity:.55;transition:opacity .15s"
             onmouseover="this.style.opacity=1" onmouseout="this.style.opacity='.55'">⚑</button>
         </div>
@@ -581,15 +581,26 @@ async function confirmReport() {
   } catch { /* silent */ }
 }
 
-async function reportReply(replyId) {
-  if (!replyId) return;
+async function reportReply(replyId, btn) {
+  if (!replyId || btn?.disabled) return;
+  if (btn) { btn.disabled = true; btn.textContent = '✓'; }
   try {
-    await fetch(API.report, {
+    const res = await fetch(API.report, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reply_id: replyId }),
     });
-  } catch { /* silent */ }
+    if (res.ok) {
+      showMsg('report-ok', '已提交檢舉，感謝你的回報。', 'ok');
+    } else {
+      const data = await res.json().catch(() => ({}));
+      showMsg('report-ok', data.error || '檢舉失敗，請稍後再試。', 'err');
+      if (btn) { btn.disabled = false; btn.textContent = '⚑'; }
+    }
+  } catch {
+    showMsg('report-ok', '網路錯誤，請稍後再試。', 'err');
+    if (btn) { btn.disabled = false; btn.textContent = '⚑'; }
+  }
 }
 
 /* ─── Panel C: Find bottle by key ────────────────── */
