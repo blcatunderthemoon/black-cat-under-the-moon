@@ -480,7 +480,7 @@ async function toggleReplies() {
     list.innerHTML = data.replies.map((r, i) => `
       <div style="border-top:1px solid var(--border);padding:10px 0;font-size:13px;color:var(--cream);line-height:1.75">
         <div style="display:flex;align-items:flex-start;gap:6px">
-          <div style="flex:1">
+          <div style="flex:1;overflow-wrap:anywhere;word-break:break-word">
             <span style="color:var(--text-dim);font-size:11px;display:block;margin-bottom:4px">第 ${i + 1} 條 · ${new Date(r.created_at).toLocaleString('zh-Hant', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
             ${escHtml(r.content)}
           </div>
