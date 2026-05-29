@@ -211,10 +211,10 @@
 
     /* 6-box key input */
     .key-boxes {
-      display: flex; gap: 10px; justify-content: center; margin: 6px 0;
+      display: flex; gap: 8px; justify-content: center; margin: 6px 0; width: 100%;
     }
     .key-box {
-      width: 52px; height: 60px;
+      flex: 1; min-width: 0; max-width: 52px; height: 60px;
       background: rgba(7,6,14,.85);
       border: 1px solid rgba(61,56,112,.5);
       border-bottom: 2px solid rgba(61,56,112,.8);
