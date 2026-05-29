@@ -566,6 +566,11 @@ async function reportBottle() {
 }
 function cancelReport() {
   document.getElementById('report-confirm-overlay').classList.remove('show');
+  // always restore defaults in case this was a reply report
+  document.getElementById('report-confirm-title').textContent = '確認檢舉？';
+  document.getElementById('report-confirm-sub').textContent = '確認後，我哋會審核呢條內容。感謝你維護社區安全 🙏';
+  document.querySelector('#report-confirm-overlay .btn-report-confirm').onclick = confirmReport;
+  _pendingReplyId = null; _pendingReplyBtn = null;
 }
 async function confirmReport() {
   cancelReport();
@@ -587,10 +592,17 @@ function reportReply(replyId, btn) {
   if (!replyId || btn?.disabled) return;
   _pendingReplyId = replyId;
   _pendingReplyBtn = btn || null;
-  document.getElementById('report-reply-overlay').classList.add('show');
+  document.getElementById('report-confirm-title').textContent = '確認檢舉留言？';
+  document.getElementById('report-confirm-sub').textContent = '確認後，我哋會審核呢條留言。感謝你維護社區安全 🙏';
+  document.querySelector('#report-confirm-overlay .btn-report-confirm').onclick = confirmReplyReport;
+  document.getElementById('report-confirm-overlay').classList.add('show');
 }
 function cancelReplyReport() {
-  document.getElementById('report-reply-overlay').classList.remove('show');
+  // restore bottle report defaults then close
+  document.getElementById('report-confirm-title').textContent = '確認檢舉？';
+  document.getElementById('report-confirm-sub').textContent = '確認後，我哋會審核呢條內容。感謝你維護社區安全 🙏';
+  document.querySelector('#report-confirm-overlay .btn-report-confirm').onclick = confirmReport;
+  document.getElementById('report-confirm-overlay').classList.remove('show');
   _pendingReplyId = null;
   _pendingReplyBtn = null;
 }
