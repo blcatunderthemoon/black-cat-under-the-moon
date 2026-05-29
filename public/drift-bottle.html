@@ -142,7 +142,9 @@
       </span>
     </div>
     <div class="state" id="rnd-empty" style="display:none">
-      <span class="state-icon">🍾</span>大海上還沒有瓶子，快去投一個！
+      <span class="state-icon" id="rnd-empty-icon">🍾</span>
+      <span id="rnd-empty-msg">大海上還沒有瓶子，快去投一個！</span>
+      <button id="btn-retry" onclick="retryRandom()" style="display:none;margin-top:14px;padding:8px 22px;border-radius:20px;border:1px solid rgba(100,200,255,.35);background:rgba(100,200,255,.08);color:var(--cyan-light,#7df9ff);font-size:13px;cursor:pointer;letter-spacing:.04em">🔄 重新嘗試</button>
     </div>
     <div id="rnd-content" style="display:none">
       <div class="bottle-card" id="rnd-card">

@@ -334,6 +334,7 @@ let nextRandomAt = 0;
 let randomSkipCount = 0;
 let repliesOpen = false;
 let prefetchedReplies = null;
+function retryRandom() { nextRandomAt = 0; loadRandom(); }
 async function loadRandom() {
   const now = Date.now();
   if (now < nextRandomAt) return;
@@ -377,7 +378,13 @@ async function loadRandom() {
     }
 
     document.getElementById('rnd-loading').style.display = 'none';
-    if (!res.ok) { document.getElementById('rnd-empty').style.display = 'block'; randomSkipCount = 0; return; }
+    if (!res.ok) {
+      document.getElementById('rnd-empty-icon').textContent = '🍾';
+      document.getElementById('rnd-empty-msg').textContent = '大海上還沒有瓶子，快去投一個！';
+      document.getElementById('btn-retry').style.display = 'none';
+      document.getElementById('rnd-empty').style.display = 'block';
+      randomSkipCount = 0; return;
+    }
     randomSkipCount = 0;
 
     currentBottleId = data.id;
@@ -413,6 +420,9 @@ async function loadRandom() {
     }
   } catch {
     document.getElementById('rnd-loading').style.display = 'none';
+    document.getElementById('rnd-empty-icon').textContent = '⚠️';
+    document.getElementById('rnd-empty-msg').textContent = '載入失敗，請稍後再試。';
+    document.getElementById('btn-retry').style.display = 'block';
     document.getElementById('rnd-empty').style.display   = 'block';
     randomSkipCount = 0;
   } finally {
