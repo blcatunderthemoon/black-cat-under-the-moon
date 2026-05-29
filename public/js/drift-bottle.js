@@ -463,6 +463,12 @@ async function sendReply() {
     const lbl = document.getElementById('rnd-toggle-label');
     const prevNum = parseInt(lbl.textContent.match(/\d+/)?.[0] ?? '0', 10);
     lbl.textContent = `💬 收起留言 (${prevNum + 1})`;
+    // Inject new reply into local cache and refresh list if panel is open
+    const newReply = { id: 'local-' + Date.now(), content, created_at: new Date().toISOString() };
+    prefetchedReplies = prefetchedReplies ? [...prefetchedReplies, newReply] : [newReply];
+    if (repliesOpen) {
+      document.getElementById('rnd-replies-list').innerHTML = renderReplyList(prefetchedReplies);
+    }
   } catch {
     showMsg('reply-err', '網路錯誤，請稍後再試。', 'err');
   } finally {
