@@ -358,7 +358,10 @@ async function loadRandom() {
   document.getElementById('rnd-replies-list').innerHTML = '';
 
   try {
-    const res  = await fetch(API.random);
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 2000);
+    const res  = await fetch(API.random, { signal: ctrl.signal });
+    clearTimeout(timer);
     const data = await res.json();
 
     // Check retry BEFORE hiding loading so the screen stays stable during retries
