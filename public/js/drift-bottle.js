@@ -1,4 +1,4 @@
-/* ¢w¢w¢w API endpoints ¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w */
+ï»¿/* â”€â”€â”€ API endpoints â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const API = {
   throw:   '/api/bottle/throw',
   random:  '/api/bottle/random',
@@ -8,7 +8,7 @@ const API = {
   replies: '/api/bottle/replies',
 };
 
-/* ¢w¢w¢w Anonymous user ID ¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w */
+/* â”€â”€â”€ Anonymous user ID â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function uid() {
   let id = localStorage.getItem('bcm_uid');
   if (!id) {
@@ -20,7 +20,7 @@ function uid() {
   return id;
 }
 
-/* ¢w¢w¢w Replied-bottles tracker (localStorage) ¢w¢w¢w¢w¢w¢w */
+/* â”€â”€â”€ Replied-bottles tracker (localStorage) â”€â”€â”€â”€â”€â”€ */
 function getReplied() {
   try { return JSON.parse(localStorage.getItem('bcm_replied') || '[]'); } catch { return []; }
 }
@@ -33,7 +33,7 @@ function markReplied(id) {
   }
 }
 
-/* ¢w¢w¢w Phase 2: Tabs with atmosphere shift ¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w */
+/* â”€â”€â”€ Phase 2: Tabs with atmosphere shift â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 let randomLoaded = false;
 document.querySelectorAll('.tab').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -53,7 +53,7 @@ document.querySelectorAll('.tab').forEach(btn => {
   });
 });
 
-/* ¢w¢w¢w Char counters ¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w */
+/* â”€â”€â”€ Char counters â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 document.getElementById('throw-content').addEventListener('input', function () {
   if (this.value.length > 200) this.value = this.value.slice(0, 200);
   const n = this.value.length;
@@ -100,7 +100,7 @@ document.getElementById('reply-content').addEventListener('input', function () {
   });
 })();
 
-/* ¢w¢w¢w Phase 4+5: Wizard state ¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w */
+/* â”€â”€â”€ Phase 4+5: Wizard state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 let selectedMood = '';
 let isMission    = false;
 let throwContent = '';
@@ -154,7 +154,7 @@ function toggleMission() {
   }
 }
 
-/* ¢w¢w¢w Phase 5: Wizard navigation ¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w */
+/* â”€â”€â”€ Phase 5: Wizard navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function goStep(n) {
   if (n === 2) {
     throwContent = document.getElementById('throw-content').value.trim();
@@ -167,7 +167,7 @@ function goStep(n) {
     document.getElementById('wp-content').textContent = throwContent;
     const moodEl    = document.getElementById('wp-mood');
     const missionEl = document.getElementById('wp-mission');
-    moodEl.textContent   = selectedMood ? '¤ß±¡¡G' + selectedMood : '';
+    moodEl.textContent   = selectedMood ? 'å¿ƒæƒ…ï¼š' + selectedMood : '';
     moodEl.style.display = selectedMood ? '' : 'none';
     missionEl.style.display = isMission ? '' : 'none';
   }
@@ -185,7 +185,7 @@ function goStep(n) {
   }
 }
 
-/* ¢w¢w¢w Helpers ¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w */
+/* â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 let currentBottleId = null;
 function showMsg(id, msg, type) {
   const el = document.getElementById(id);
@@ -213,7 +213,7 @@ function esc(s) {
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-/* ¢w¢w¢w Phase 7+8: Render bottle card ¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w */
+/* â”€â”€â”€ Phase 7+8: Render bottle card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function renderBottleCard(data, ids) {
   const card = document.getElementById(ids.card);
   const isMissionBottle = data.is_mission_bottle === true || data.bottle_type === 'mission';
@@ -232,15 +232,15 @@ function renderBottleCard(data, ids) {
   if (ids.expires && data.expires_at) {
     const days = daysUntil(data.expires_at);
     document.getElementById(ids.expires).textContent =
-      days !== null ? (days > 0 ? '?? ' + days + ' ¤é«á¨I¨S' : '²~¤l¤w¨I¤J®ü©³') : '';
+      days !== null ? (days > 0 ? 'ğŸŒŠ ' + days + ' æ—¥å¾Œæ²‰æ²’' : 'ç“¶å­å·²æ²‰å…¥æµ·åº•') : '';
   }
   if (ids.replies) {
     document.getElementById(ids.replies).textContent =
-      '?? ¤w¦¬¨ì ' + (data.reply_count || 0) + ' ­Ó¦^À³';
+      'ğŸ’¬ å·²æ”¶åˆ° ' + (data.reply_count || 0) + ' å€‹å›æ‡‰';
   }
 }
 
-/* ¢w¢w¢w Phase 5: 4-stage post-submit animation ¢w¢w¢w¢w¢w¢w¢w */
+/* â”€â”€â”€ Phase 5: 4-stage post-submit animation â”€â”€â”€â”€â”€â”€â”€ */
 function runSubmitAnimation() {
   // Stage 1 (t=0ms): Cork seal
   const em = document.getElementById('ov-bottle');
@@ -274,12 +274,12 @@ function runSubmitAnimation() {
   }, 2500);
 }
 
-/* ¢w¢w¢w Panel A: Throw bottle ¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w */
+/* â”€â”€â”€ Panel A: Throw bottle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 let currentKey = '';
 async function throwBottle() {
   showMsg('throw-err', '');
   const btn = document.getElementById('btn-throw');
-  btn.disabled = true; btn.textContent = '?? §ë©ñ¤¤¡K';
+  btn.disabled = true; btn.textContent = 'ğŸŒŠ æŠ•æ”¾ä¸­â€¦';
   try {
     const res  = await fetch(API.throw, {
       method: 'POST',
@@ -294,7 +294,7 @@ async function throwBottle() {
     });
     const data = await res.json();
     if (res.status === 451) { showCrisisBanner(); return; }
-    if (!res.ok) { showMsg('throw-err', data.error || 'µo¥Í¿ù»~¡A½Ğ­«¸Õ¡C', 'err'); return; }
+    if (!res.ok) { showMsg('throw-err', data.error || 'ç™¼ç”ŸéŒ¯èª¤ï¼Œè«‹é‡è©¦ã€‚', 'err'); return; }
     window.posthog?.capture('bottle_thrown', {
       mood_tag:       selectedMood || null,
       is_mission:     isMission,
@@ -312,23 +312,24 @@ async function throwBottle() {
 
     currentKey = data.view_key;
     document.getElementById('ov-key').textContent = data.view_key;
-    document.getElementById('btn-copy').textContent = '?? ¤@Áä½Æ»sÆ_°Í';
+    document.getElementById('btn-copy').textContent = 'ğŸ“‹ ä¸€éµè¤‡è£½é‘°åŒ™';
     document.getElementById('btn-copy').classList.remove('copied');
     document.getElementById('ov-key-box').classList.remove('key-float-anim');
 
     runSubmitAnimation();
     window.turnstile?.reset('#throw-turnstile');
     goStep(1);
-  } catch { showMsg('throw-err', 'ºô¸ô¿ù»~¡A½Ğµy«á¦A¸Õ¡C', 'err'); }
-  finally { btn.disabled = false; btn.textContent = '?? ±N¸Ü»y«Ê¶i²~¤¤'; }
+  } catch { showMsg('throw-err', 'ç¶²è·¯éŒ¯èª¤ï¼Œè«‹ç¨å¾Œå†è©¦ã€‚', 'err'); }
+  finally { btn.disabled = false; btn.textContent = 'ğŸŒ™ å°‡è©±èªå°é€²ç“¶ä¸­'; }
 }
 
-/* ¢w¢w¢w Panel B: Load random bottle ¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w */
+/* â”€â”€â”€ Panel B: Load random bottle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const SEND_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="display:block"><path transform="rotate(-30,12,12) translate(2.6,0)" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>';
 const BOTTLE_ICON = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" style="display:block"><rect x="9.5" y="1.5" width="5" height="2.5" rx="1.2" fill="currentColor" opacity=".6"/><rect x="10.2" y="4" width="3.6" height="3.5" rx=".7" fill="currentColor" opacity=".9"/><path d="M9 8.5C7.5 9.8 7 11.5 7 13.5v5.5C7 20.1 9.2 21 12 21s5-.9 5-2v-5.5c0-2-.5-3.7-2-5H9z" fill="currentColor" opacity=".8"/><line x1="9.5" y1="13" x2="9.5" y2="18" stroke="rgba(255,255,255,.5)" stroke-width="1.2" stroke-linecap="round"/></svg>';
 let nextRandomAt = 0;
 let randomSkipCount = 0;
 let repliesOpen = false;
+let prefetchedReplies = null;
 async function loadRandom() {
   const now = Date.now();
   if (now < nextRandomAt) return;
@@ -348,10 +349,11 @@ async function loadRandom() {
   replyBtn.innerHTML = SEND_ICON;
   replyBtn.classList.remove('btn-success');
   document.getElementById('btn-report').disabled = false;
-  document.getElementById('btn-report').textContent = '?';
+  document.getElementById('btn-report').textContent = 'âš‘';
   document.getElementById('btn-report').style.color = 'rgba(255,255,255,.18)';
   // Reset replies panel
   repliesOpen = false;
+  prefetchedReplies = null;
   document.getElementById('rnd-replies-expanded').style.display = 'none';
   document.getElementById('rnd-replies-list').innerHTML = '';
 
@@ -384,15 +386,24 @@ async function loadRandom() {
     // If still showing a replied bottle (exhausted retries), lock reply form
     if (getReplied().includes(data.id)) {
       const rb = document.getElementById('btn-reply');
-      rb.disabled = true; rb.textContent = '?';
+      rb.disabled = true; rb.textContent = 'âœ“';
       rb.classList.add('btn-success');
     }
 
     // Always show toggle; label reflects reply count
     document.getElementById('rnd-toggle-label').textContent =
-      data.reply_count > 0 ? `?? ¬d¬İ¯d¨¥ (${data.reply_count})` : '?? ¯d¤U²Ä¤@±ø¯d¨¥';
+      data.reply_count > 0 ? `ğŸ’¬ æŸ¥çœ‹ç•™è¨€ (${data.reply_count})` : 'ğŸ’¬ ç•™ä¸‹ç¬¬ä¸€æ¢ç•™è¨€';
 
     document.getElementById('rnd-content').style.display = 'block';
+
+    // Pre-fetch replies in background so toggle is instant
+    if (data.reply_count > 0) {
+      const prefetchId = data.id;
+      fetch(`${API.replies}?id=${prefetchId}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d?.replies && currentBottleId === prefetchId) prefetchedReplies = d.replies; })
+        .catch(() => {});
+    }
   } catch {
     document.getElementById('rnd-loading').style.display = 'none';
     document.getElementById('rnd-empty').style.display   = 'block';
@@ -404,15 +415,15 @@ async function loadRandom() {
   }
 }
 
-/* ¢w¢w¢w Panel B: Send reply ¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w */
+/* â”€â”€â”€ Panel B: Send reply â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 async function sendReply() {
   if (!currentBottleId) return;
   const content = document.getElementById('reply-content').value.trim();
   showMsg('reply-err', ''); showMsg('reply-ok', '');
-  if (!content) { showMsg('reply-err', '½Ğ¼gÂI¤°»ò¦A°e¥X¡C', 'err'); return; }
+  if (!content) { showMsg('reply-err', 'è«‹å¯«é»ä»€éº¼å†é€å‡ºã€‚', 'err'); return; }
 
   const btn = document.getElementById('btn-reply');
-  btn.disabled = true; btn.textContent = '?';
+  btn.disabled = true; btn.textContent = 'â³';
   let replied = false;
   try {
     const res  = await fetch(API.reply, {
@@ -428,17 +439,17 @@ async function sendReply() {
     const data = await res.json();
     if (res.status === 409) {
       markReplied(currentBottleId);
-      showMsg('reply-err', '§A¤w¸g¯d¹L¨¥¡X¡X¼´¤U¤@­Ó¡K', 'err');
+      showMsg('reply-err', 'ä½ å·²ç¶“ç•™éè¨€â€”â€”æ’ˆä¸‹ä¸€å€‹â€¦', 'err');
       btn.innerHTML = BOTTLE_ICON;
       btn.classList.add('btn-success');
       setTimeout(() => { nextRandomAt = 0; loadRandom(); }, 1500);
       return;
     }
     if (res.status === 451) { showCrisisBanner(); return; }
-    if (!res.ok) { showMsg('reply-err', data.error || 'µo¥Í¿ù»~¡C', 'err'); return; }
+    if (!res.ok) { showMsg('reply-err', data.error || 'ç™¼ç”ŸéŒ¯èª¤ã€‚', 'err'); return; }
     replied = true;
     markReplied(currentBottleId);
-    showMsg('reply-ok', '¯d¨¥¤w°e¥X ?', 'ok');
+    showMsg('reply-ok', 'ç•™è¨€å·²é€å‡º âœ¨', 'ok');
     window.posthog?.capture('reply_sent');
     window.turnstile?.reset('#reply-turnstile');
     document.getElementById('reply-content').value = '';
@@ -448,15 +459,15 @@ async function sendReply() {
     // Update toggle label with new count
     const lbl = document.getElementById('rnd-toggle-label');
     const prevNum = parseInt(lbl.textContent.match(/\d+/)?.[0] ?? '0', 10);
-    lbl.textContent = `?? ¦¬°_¯d¨¥ (${prevNum + 1})`;
+    lbl.textContent = `ğŸ’¬ æ”¶èµ·ç•™è¨€ (${prevNum + 1})`;
   } catch {
-    showMsg('reply-err', 'ºô¸ô¿ù»~¡A½Ğµy«á¦A¸Õ¡C', 'err');
+    showMsg('reply-err', 'ç¶²è·¯éŒ¯èª¤ï¼Œè«‹ç¨å¾Œå†è©¦ã€‚', 'err');
   } finally {
-    if (!replied) { btn.disabled = false; if (btn.textContent === '?') btn.innerHTML = SEND_ICON; }
+    if (!replied) { btn.disabled = false; if (btn.textContent === 'â³') btn.innerHTML = SEND_ICON; }
   }
 }
 
-/* ¢w¢w¢w Panel B: View replies ¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w */
+/* â”€â”€â”€ Panel B: View replies â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function escHtml(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
@@ -468,41 +479,51 @@ async function toggleReplies() {
   if (!repliesOpen) {
     expanded.style.display = 'none';
     const n = label.textContent.match(/\d+/)?.[0];
-    label.textContent = n ? `?? ¬d¬İ¯d¨¥ (${n})` : '?? ¯d¤U²Ä¤@±ø¯d¨¥';
+    label.textContent = n ? `ğŸ’¬ æŸ¥çœ‹ç•™è¨€ (${n})` : 'ğŸ’¬ ç•™ä¸‹ç¬¬ä¸€æ¢ç•™è¨€';
     return;
   }
   expanded.style.display = 'block';
   list.innerHTML = '';
-  label.textContent = '? ¸ü¤J¤¤¡K';
+  // Use pre-fetched data if available (instant); otherwise fetch now
+  if (prefetchedReplies) {
+    const replies = prefetchedReplies;
+    list.innerHTML = renderReplyList(replies);
+    label.textContent = `ğŸ’¬ æ”¶èµ·ç•™è¨€ (${replies.length})`;
+    return;
+  }
+  label.textContent = 'â³ è¼‰å…¥ä¸­â€¦';
   try {
     const res  = await fetch(`${API.replies}?id=${currentBottleId}`);
     const data = await res.json();
     if (!res.ok || !data.replies?.length) {
       list.innerHTML = '';
-      label.textContent = '?? ¦¬°_';
+      label.textContent = 'ğŸ’¬ æ”¶èµ·';
       return;
     }
-    list.innerHTML = data.replies.map((r, i) => `
-      <div style="border-top:1px solid var(--border);padding:10px 0;font-size:13px;color:var(--cream);line-height:1.75">
-        <div style="display:flex;align-items:flex-start;gap:6px">
-          <div style="flex:1;overflow-wrap:anywhere;word-break:break-word">
-            <span style="color:var(--text-dim);font-size:11px;display:block;margin-bottom:4px">²Ä ${i + 1} ±ø ¡P ${new Date(r.created_at).toLocaleString('zh-Hant', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-            ${escHtml(r.content)}
-          </div>
-          <button onclick="reportReply('${escHtml(r.id)}')" title="ÀËÁ|¯d¨¥"
-            style="background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:11px;padding:2px 4px;flex-shrink:0;opacity:.55;transition:opacity .15s"
-            onmouseover="this.style.opacity=1" onmouseout="this.style.opacity='.55'">?</button>
-        </div>
-      </div>`).join('');
-    label.textContent = `?? ¦¬°_¯d¨¥ (${data.replies.length})`;
+    list.innerHTML = renderReplyList(data.replies);
+    label.textContent = `ğŸ’¬ æ”¶èµ·ç•™è¨€ (${data.replies.length})`;
   } catch {
-    list.innerHTML = '<p style="font-size:12px;color:var(--text-dim)">¸ü¤J¥¢±Ñ¡A½Ğ­«¸Õ</p>';
-    label.textContent = '?? ¬d¬İ¯d¨¥';
+    list.innerHTML = '<p style="font-size:12px;color:var(--text-dim)">è¼‰å…¥å¤±æ•—ï¼Œè«‹é‡è©¦</p>';
+    label.textContent = 'ğŸ’¬ æŸ¥çœ‹ç•™è¨€';
     repliesOpen = false;
   }
 }
+function renderReplyList(replies) {
+  return replies.map((r, i) => `
+      <div style="border-top:1px solid var(--border);padding:10px 0;font-size:13px;color:var(--cream);line-height:1.75">
+        <div style="display:flex;align-items:flex-start;gap:6px">
+          <div style="flex:1;overflow-wrap:anywhere;word-break:break-word">
+            <span style="color:var(--text-dim);font-size:11px;display:block;margin-bottom:4px">ç¬¬ ${i + 1} æ¢ Â· ${new Date(r.created_at).toLocaleString('zh-Hant', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+            ${escHtml(r.content)}
+          </div>
+          <button onclick="reportReply('${escHtml(r.id)}')" title="æª¢èˆ‰ç•™è¨€"
+            style="background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:11px;padding:2px 4px;flex-shrink:0;opacity:.55;transition:opacity .15s"
+            onmouseover="this.style.opacity=1" onmouseout="this.style.opacity='.55'">âš‘</button>
+        </div>
+      </div>`).join('');
+}
 
-/* ¢w¢w¢w Crisis Intervention Banner ¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w */
+/* â”€â”€â”€ Crisis Intervention Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function showCrisisBanner() {
   document.getElementById('crisis-banner').style.display = 'flex';
   document.body.style.overflow = 'hidden';
@@ -512,7 +533,7 @@ function closeCrisisBanner() {
   document.body.style.overflow = '';
 }
 
-/* ¢w¢w¢w Panel B: Report bottle ¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w */function skipBottle() {
+/* â”€â”€â”€ Panel B: Report bottle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */function skipBottle() {
   window.posthog?.capture('bottle_skipped');
   loadRandom();
 }
@@ -526,14 +547,14 @@ function cancelReport() {
 async function confirmReport() {
   cancelReport();
   const btn = document.getElementById('btn-report');
-  btn.disabled = true; btn.textContent = '¤wÀËÁ|';
+  btn.disabled = true; btn.textContent = 'å·²æª¢èˆ‰';
   try {
     await fetch(API.report, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ bottle_id: currentBottleId }),
     });
-    showMsg('report-ok', '¤w´£¥æÀËÁ|¡A·PÁÂ§Aªº¦^³ø¡C', 'ok');
+    showMsg('report-ok', 'å·²æäº¤æª¢èˆ‰ï¼Œæ„Ÿè¬ä½ çš„å›å ±ã€‚', 'ok');
   } catch { /* silent */ }
 }
 
@@ -548,12 +569,12 @@ async function reportReply(replyId) {
   } catch { /* silent */ }
 }
 
-/* ¢w¢w¢w Panel C: Find bottle by key ¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w */
+/* â”€â”€â”€ Panel C: Find bottle by key â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 async function findBottle() {
   const key = Array.from(document.querySelectorAll('#key-boxes .key-box')).map(b=>(b.value||'').toUpperCase()).join('');
   showMsg('find-err', '');
   document.getElementById('found-wrap').classList.remove('found-visible');
-  if (key.replace(/[A-Z0-9]/g,'').length || key.length !== 6) { showMsg('find-err', '½Ğ¶ñº¡¥ş³¡ 6 ­Ó®æ¤l¡C', 'err'); return; }
+  if (key.replace(/[A-Z0-9]/g,'').length || key.length !== 6) { showMsg('find-err', 'è«‹å¡«æ»¿å…¨éƒ¨ 6 å€‹æ ¼å­ã€‚', 'err'); return; }
 
   try {
     const res  = await fetch(API.find, {
@@ -562,7 +583,7 @@ async function findBottle() {
       body: JSON.stringify({ key }),
     });
     const data = await res.json();
-    if (!res.ok) { showMsg('find-err', data.error || '§ä¤£¨ì³o­Ó²~¤l¡C', 'err'); return; }
+    if (!res.ok) { showMsg('find-err', data.error || 'æ‰¾ä¸åˆ°é€™å€‹ç“¶å­ã€‚', 'err'); return; }
 
     renderBottleCard(data, {
       card: 'found-card', moonlight: 'found-moonlight', mood: 'found-mood',
@@ -570,25 +591,25 @@ async function findBottle() {
     });
 
     const replies = data.replies || [];
-    document.getElementById('found-heading').textContent = '¬B²~¤Hªº¦^Án¡]' + replies.length + '¡^';
+    document.getElementById('found-heading').textContent = 'æ‹¾ç“¶äººçš„å›è²ï¼ˆ' + replies.length + 'ï¼‰';
     const listEl = document.getElementById('found-list');
     if (replies.length === 0) {
-      listEl.innerHTML = '<div class="no-replies">ÁÙ¨S¦³¤H¯d¨¥¡A¦Aµ¥µ¥¬İ§a ??</div>';
+      listEl.innerHTML = '<div class="no-replies">é‚„æ²’æœ‰äººç•™è¨€ï¼Œå†ç­‰ç­‰çœ‹å§ ğŸŒ™</div>';
     } else {
       listEl.innerHTML = replies
         .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
         .map(r =>
-          `<div class="reply-item">?? ${esc(r.content)}`
+          `<div class="reply-item">ğŸ¾ ${esc(r.content)}`
           + `<span class="reply-time">${fmtDate(r.created_at)}</span></div>`
         )
         .join('');
     }
     window.posthog?.capture('key_lookup', { reply_count: replies.length });
     document.getElementById('found-wrap').classList.add('found-visible');
-  } catch { showMsg('find-err', 'ºô¸ô¿ù»~¡A½Ğµy«á¦A¸Õ¡C', 'err'); }
+  } catch { showMsg('find-err', 'ç¶²è·¯éŒ¯èª¤ï¼Œè«‹ç¨å¾Œå†è©¦ã€‚', 'err'); }
 }
 
-/* ¢w¢w¢w Overlay helpers ¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w */
+/* â”€â”€â”€ Overlay helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function closeOverlay() {
   document.getElementById('overlay').classList.remove('show');
 }
@@ -605,10 +626,10 @@ async function copyKey() {
     document.execCommand('copy');
     document.body.removeChild(ta);
   }
-  btn.textContent = '? ¤w½Æ»s¡I';
+  btn.textContent = 'âœ… å·²è¤‡è£½ï¼';
   btn.classList.add('copied');
   setTimeout(() => {
-    btn.textContent = '?? ¤@Áä½Æ»sÆ_°Í';
+    btn.textContent = 'ğŸ“‹ ä¸€éµè¤‡è£½é‘°åŒ™';
     btn.classList.remove('copied');
   }, 2500);
 }
@@ -626,10 +647,10 @@ async function copyLink() {
     document.execCommand('copy');
     document.body.removeChild(ta);
   }
-  btn.textContent = '? ³sµ²¤w½Æ»s¡I';
+  btn.textContent = 'âœ… é€£çµå·²è¤‡è£½ï¼';
   btn.classList.add('copied');
   setTimeout(() => {
-    btn.textContent = '?? ½Æ»s¬d¾\³sµ²';
+    btn.textContent = 'ğŸ”— è¤‡è£½æŸ¥é–±é€£çµ';
     btn.classList.remove('copied');
   }, 2500);
 }
@@ -637,7 +658,7 @@ document.getElementById('overlay').addEventListener('click', function (e) {
   if (e.target === this) closeOverlay();
 });
 
-/* ¢w¢w¢w Phase 1: Starfield ¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w */
+/* â”€â”€â”€ Phase 1: Starfield â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 (function () {
   const c = document.getElementById('stars');
   const starPalette = ['#c8deff', '#ddd0ff', '#ffe8a0', '#b0d8ff', '#e8e0ff', '#fff'];
@@ -664,7 +685,7 @@ document.getElementById('overlay').addEventListener('click', function (e) {
   }
 })();
 
-/* ¢w¢w¢w Phase 1: Floating particles ¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w */
+/* â”€â”€â”€ Phase 1: Floating particles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 (function () {
   const c      = document.getElementById('stars');
   const colors = ['rgba(0,229,255,', 'rgba(124,92,252,', 'rgba(255,224,102,'];
@@ -690,21 +711,18 @@ document.getElementById('overlay').addEventListener('click', function (e) {
   }
 })();
 
-/* ¢w¢w¢w URL param auto-load ¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w */
+/* â”€â”€â”€ URL param auto-load â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 (function () {
   const key = new URLSearchParams(location.search).get('key');
   if (!key || key.replace(/[A-Z0-9]/gi, '').length || key.length !== 6) return;
   const upper = key.toUpperCase();
-  // Switch to find tab
   document.querySelectorAll('.tab').forEach(b => {
     b.classList.toggle('active', b.dataset.panel === 'find');
     b.setAttribute('aria-selected', b.dataset.panel === 'find');
   });
   document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-find'));
   document.body.dataset.tab = 'find';
-  // Fill key boxes
   const boxes = Array.from(document.querySelectorAll('#key-boxes .key-box'));
   upper.split('').forEach(function (ch, i) { if (boxes[i]) { boxes[i].value = ch; boxes[i].classList.add('filled'); } });
-  // Auto-submit
   setTimeout(findBottle, 120);
 })();
