@@ -1,0 +1,107 @@
+{
+  "version": 3,
+  "pages404": true,
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [],
+    "fallback": []
+  },
+  "dynamicRoutes": [],
+  "staticRoutes": [
+    {
+      "page": "/dashboard",
+      "regex": "^/dashboard(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard(?:/)?$"
+    },
+    {
+      "page": "/dashboard/email-automation",
+      "regex": "^/dashboard/email\\-automation(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/email\\-automation(?:/)?$"
+    },
+    {
+      "page": "/dashboard/experiment-lab",
+      "regex": "^/dashboard/experiment\\-lab(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/experiment\\-lab(?:/)?$"
+    },
+    {
+      "page": "/dashboard/export",
+      "regex": "^/dashboard/export(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/export(?:/)?$"
+    },
+    {
+      "page": "/dashboard/match-explorer",
+      "regex": "^/dashboard/match\\-explorer(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/match\\-explorer(?:/)?$"
+    },
+    {
+      "page": "/dashboard/matching-analytics",
+      "regex": "^/dashboard/matching\\-analytics(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/matching\\-analytics(?:/)?$"
+    },
+    {
+      "page": "/dashboard/moderation",
+      "regex": "^/dashboard/moderation(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/moderation(?:/)?$"
+    },
+    {
+      "page": "/dashboard/questionnaire-stats",
+      "regex": "^/dashboard/questionnaire\\-stats(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/questionnaire\\-stats(?:/)?$"
+    },
+    {
+      "page": "/dashboard/scoring",
+      "regex": "^/dashboard/scoring(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/scoring(?:/)?$"
+    },
+    {
+      "page": "/dashboard/sent-pairs",
+      "regex": "^/dashboard/sent\\-pairs(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/sent\\-pairs(?:/)?$"
+    },
+    {
+      "page": "/dashboard/test-data",
+      "regex": "^/dashboard/test\\-data(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/test\\-data(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSuffix": ".prefetch.rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments"
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}

@@ -1,0 +1,171 @@
+.page {}
+
+.topRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.bottomRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.userSelect {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.userSelect label {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.select {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color var(--transition);
+}
+
+.select:focus, .select:hover {
+  border-color: var(--accent);
+  outline: none;
+}
+
+/* Dimension bars */
+.dimBars {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 0;
+}
+
+.dimRow {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dimLabel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.dimValue {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.dimTrack {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.dimFill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+/* Funnel */
+.funnel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.funnelRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.funnelLabel {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.funnelCount {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.funnelTrack {
+  height: 28px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--r-xs);
+  overflow: hidden;
+  position: relative;
+}
+
+.funnelBar {
+  height: 100%;
+  background: var(--gradient);
+  border-radius: var(--r-xs);
+  transition: width 0.7s ease;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 10px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.8);
+  font-weight: 600;
+  min-width: 28px;
+}
+
+/* Heatmap */
+.heatmapWrap {
+  overflow-x: auto;
+}
+
+.heatmapGrid {
+  display: inline-grid;
+  gap: 4px;
+}
+
+.heatCell {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--r-xs);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  transition: transform var(--transition);
+  cursor: default;
+}
+
+.heatCell:hover {
+  transform: scale(1.08);
+  z-index: 2;
+}
+
+.heatLabel {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+}

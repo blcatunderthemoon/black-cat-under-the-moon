@@ -1,0 +1,331 @@
+/* ── Add Card ─────────────────────────────────────────────────────────── */
+.addCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 20px 24px;
+  margin-bottom: 16px;
+  backdrop-filter: blur(12px);
+}
+
+.sectionTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.addForm {}
+
+.addRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.addField {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 120px;
+}
+
+.addFieldWide {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+  min-width: 180px;
+}
+
+.addLabel {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.addInput {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  padding: 8px 10px;
+  font-size: 13px;
+  transition: border-color var(--transition);
+}
+
+.addInput:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.addBtn {
+  background: var(--accent);
+  color: #0d0b1a;
+  border: none;
+  border-radius: var(--r-sm);
+  padding: 9px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity var(--transition);
+  white-space: nowrap;
+  align-self: flex-end;
+}
+
+.addBtn:hover { opacity: 0.85; }
+.addBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.addError {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #f87171;
+}
+
+/* ── Filter Bar ───────────────────────────────────────────────────────── */
+.filterBar {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.filterLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.filterLabel {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.filterInput {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  padding: 8px 10px;
+  font-size: 13px;
+  width: 200px;
+  transition: border-color var(--transition);
+}
+
+.filterInput:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.filterActions {
+  display: flex;
+  gap: 8px;
+}
+
+.searchBtn {
+  background: var(--accent);
+  color: #0d0b1a;
+  border: none;
+  border-radius: var(--r-sm);
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity var(--transition);
+}
+.searchBtn:hover { opacity: 0.85; }
+.searchBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.clearBtn {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 8px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color var(--transition), color var(--transition);
+}
+.clearBtn:hover { border-color: var(--accent); color: var(--text); }
+
+.totalBadge {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-left: auto;
+  align-self: center;
+}
+
+/* ── Table Card ───────────────────────────────────────────────────────── */
+.tableCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table thead th {
+  background: rgba(255,255,255,0.03);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.tableRow {
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background var(--transition);
+}
+
+.tableRow:last-child { border-bottom: none; }
+.tableRow:hover { background: rgba(255,255,255,0.03); }
+
+.table tbody td {
+  padding: 12px 14px;
+  vertical-align: middle;
+  color: var(--text);
+}
+
+.idCell {
+  color: var(--text-dim) !important;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.userCell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.userName {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.userMeta {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.scoreBadge {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.na {
+  color: var(--text-dim);
+}
+
+.dateCell {
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--text-muted) !important;
+}
+
+.notesCell {
+  max-width: 200px;
+  color: var(--text-dim) !important;
+  font-size: 12px;
+}
+
+.previewBtn {
+  background: transparent;
+  border: 1px solid rgba(139,92,246,0.45);
+  color: #a78bfa;
+  border-radius: var(--r-sm);
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+  white-space: nowrap;
+}
+
+.previewBtn:hover {
+  background: rgba(139,92,246,0.12);
+  border-color: #a78bfa;
+}
+
+.previewBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.deleteBtn {
+  background: transparent;
+  border: 1px solid rgba(248,113,113,0.35);
+  color: #f87171;
+  border-radius: var(--r-sm);
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+  white-space: nowrap;
+}
+
+.deleteBtn:hover {
+  background: rgba(248,113,113,0.1);
+  border-color: #f87171;
+}
+
+/* ── Pagination ───────────────────────────────────────────────────────── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.pageBtn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: var(--r-sm);
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color var(--transition), color var(--transition);
+}
+.pageBtn:hover:not(:disabled) { border-color: var(--accent); color: var(--text); }
+.pageBtn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.pageInfo {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+/* ── Empty State ─────────────────────────────────────────────────────── */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 56px 24px;
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+.emptyIcon {
+  font-size: 32px;
+  opacity: 0.5;
+}
