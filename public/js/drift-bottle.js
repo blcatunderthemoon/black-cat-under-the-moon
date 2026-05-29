@@ -129,6 +129,7 @@ document.querySelectorAll('.chip').forEach(chip => {
   });
 });
 document.getElementById('chip-custom-input').addEventListener('input', function () {
+  if (this.value.length > 20) this.value = this.value.slice(0, 20);
   selectedMood = this.value.trim();
 });
 
