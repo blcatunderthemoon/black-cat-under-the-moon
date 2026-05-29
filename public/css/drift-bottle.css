@@ -607,6 +607,12 @@
       padding: 12px; cursor: pointer; transition: all .2s;
     }
     .btn-close-ov:hover { border-color: var(--pink); color: var(--pink); }
+    .btn-report-confirm {
+      width: 100%; background: rgba(255,107,157,.12); border: 1px solid rgba(255,107,157,.4);
+      border-radius: 8px; color: var(--pink); font: 700 13px/1 'Noto Sans TC', sans-serif;
+      padding: 12px; cursor: pointer; margin-bottom: 10px; transition: all .2s;
+    }
+    .btn-report-confirm:hover { background: rgba(255,107,157,.22); border-color: var(--pink); }
 
     @media (max-width: 480px) {
       .page-title { font-size: 20px; }

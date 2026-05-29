@@ -513,6 +513,13 @@ function closeCrisisBanner() {
 }
 async function reportBottle() {
   if (!currentBottleId) return;
+  document.getElementById('report-confirm-overlay').classList.add('show');
+}
+function cancelReport() {
+  document.getElementById('report-confirm-overlay').classList.remove('show');
+}
+async function confirmReport() {
+  cancelReport();
   const btn = document.getElementById('btn-report');
   btn.disabled = true; btn.textContent = '已檢舉';
   try {
