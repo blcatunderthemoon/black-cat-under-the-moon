@@ -1,7 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
+﻿import { createClient } from '@supabase/supabase-js';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
-import { checkIp } from '../../src/lib/ip-guard.js';
+import { checkIp } from '../../../lib/ip-guard.js';
 
 const ratelimit = process.env.UPSTASH_REDIS_REST_URL
   ? new Ratelimit({
@@ -77,7 +77,6 @@ export default async function handler(req, res) {
       .eq('bottle_id', bottle.id);
 
     // Strip view_key and user_id — never expose to the public
-    // bottle_type, expires_at, is_mission_bottle are retained in the spread
     const { view_key: _vk, user_id: _uid, ...safeBottle } = bottle;
 
     return res.status(200).json({ ...safeBottle, reply_count: count ?? 0 });

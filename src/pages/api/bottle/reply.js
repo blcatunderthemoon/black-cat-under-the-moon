@@ -1,9 +1,9 @@
-import { createClient } from '@supabase/supabase-js';
+﻿import { createClient } from '@supabase/supabase-js';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
-import { checkIp } from '../../src/lib/ip-guard.js';
-import { filterContent } from '../../src/lib/content-filter.js';
-import { verifyTurnstile } from '../../src/lib/turnstile.js';
+import { checkIp } from '../../../lib/ip-guard.js';
+import { filterContent } from '../../../lib/content-filter.js';
+import { verifyTurnstile } from '../../../lib/turnstile.js';
 
 const ratelimit = process.env.UPSTASH_REDIS_REST_URL
   ? new Ratelimit({
