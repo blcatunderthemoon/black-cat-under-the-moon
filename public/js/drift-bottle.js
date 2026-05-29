@@ -55,16 +55,20 @@ document.querySelectorAll('.tab').forEach(btn => {
 
 /* ─── Char counters ─────────────────────────────── */
 document.getElementById('throw-content').addEventListener('input', function () {
+  if (this.value.length > 200) this.value = this.value.slice(0, 200);
   const n = this.value.length;
   const el = document.getElementById('throw-count');
   el.textContent = n + ' / 200';
-  el.classList.toggle('warn', n >= 180);
+  el.classList.toggle('warn', n >= 180 && n < 200);
+  el.classList.toggle('limit', n >= 200);
 });
 document.getElementById('reply-content').addEventListener('input', function () {
+  if (this.value.length > 100) this.value = this.value.slice(0, 100);
   const n = this.value.length;
   const el = document.getElementById('reply-count');
   el.textContent = n + ' / 100';
-  el.classList.toggle('warn', n >= 90);
+  el.classList.toggle('warn', n >= 90 && n < 100);
+  el.classList.toggle('limit', n >= 100);
 });
 (function () {
   const boxes = Array.from(document.querySelectorAll('.key-box'));
