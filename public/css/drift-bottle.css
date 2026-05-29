@@ -618,6 +618,10 @@
     }
     .btn-copy:hover  { background: rgba(0,229,255,.16); }
     .btn-copy.copied { background: rgba(80,250,123,.08); border-color: rgba(80,250,123,.3); color: #50fa7b; }
+    .btn-link-ov {
+      background: rgba(189,147,249,.09); border-color: rgba(189,147,249,.3); color: var(--purple-light);
+    }
+    .btn-link-ov:hover { background: rgba(189,147,249,.16); }
     .btn-close-ov {
       width: 100%; background: transparent; border: 1px solid rgba(255,255,255,.1);
       border-radius: 8px; color: var(--text-dim); font: 13px/1 'Noto Sans TC', sans-serif;
