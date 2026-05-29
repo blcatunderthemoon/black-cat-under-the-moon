@@ -1,4 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
+import { checkIp } from '../src/lib/ip-guard.js';
+
+const ratelimit = process.env.UPSTASH_REDIS_REST_URL
+  ? new Ratelimit({
+      redis: Redis.fromEnv(),
+      limiter: Ratelimit.slidingWindow(1, '1 h'), // 每個 IP 每小時最多 1 次提交
+    })
+  : null;
 
 // Try server-side vars first (without NEXT_PUBLIC_), fallback to frontend vars
 const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -12,6 +22,23 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const ip = (req.headers['x-forwarded-for'] ?? '').split(',')[0].trim() || '127.0.0.1';
+
+  // Burst detection + 24h IP block
+  const guard = await checkIp(ip);
+  if (guard.blocked) {
+    return res.status(429).json({
+      error: guard.reason === 'burst' ? '操作太頻繁，已暫時限制訪問。' : '訪問受限，請稍後再試。',
+    });
+  }
+
+  if (ratelimit) {
+    const { success } = await ratelimit.limit(ip);
+    if (!success) {
+      return res.status(429).json({ error: '提交太頻繁，請稍後再試。' });
+    }
+  }
+
   if (!supabaseUrl || !supabaseAnonKey) {
     return res.status(500).json({ error: 'Server misconfigured: missing Supabase URL or anon key' });
   }
@@ -20,6 +47,11 @@ export default async function handler(req, res) {
     const incoming = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
     if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) {
       return res.status(400).json({ error: 'Invalid payload: JSON object expected' });
+    }
+
+    const igRaw = (incoming.ig_username || '').toString().trim();
+    if (!igRaw || igRaw === '@') {
+      return res.status(400).json({ error: 'IG Username 為必填欄位。' });
     }
 
     const normalizeValue = (value) => {
@@ -111,8 +143,6 @@ export default async function handler(req, res) {
       ig_username: normalizeValue(getIncomingValue(incoming, 'ig_username', 'ig_username')),
       feedback: normalizeValue(getIncomingValue(incoming, 'feedback', 'feedback'))
     };
-
-    console.log('Payload to Supabase:', payload);
 
     // Insert mapped object directly; do not wrap in { data: ... }.
     const { data, error } = await supabase.from('responses').insert(payload).select();
