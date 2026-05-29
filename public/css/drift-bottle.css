@@ -606,10 +606,23 @@
     .btn-close-ov:hover { border-color: var(--pink); color: var(--pink); }
 
     @media (max-width: 480px) {
-      .page-title { font-size: 18px; }
-      .tab { font-size: 11px; padding: 9px 4px; }
+      .page-title { font-size: 20px; }
+      .page-sub { font-size: 13px; }
+      .tab { font-size: 12px; padding: 9px 4px; }
+      .wstep-label { font-size: 12px; }
+      .wizard-header { font-size: 15px; }
+      .floating-textarea { font-size: 15px; }
+      .char-count { font-size: 12px; }
       .mood-chips { gap: 6px; }
-      .chip { font-size: 11px; padding: 5px 10px; }
+      .chip { font-size: 13px; padding: 6px 12px; }
+      .mission-hint { font-size: 13px; }
+      .field-label { font-size: 13px; }
+      .bottle-body { font-size: 16px; }
+      .bottle-meta, #rnd-time, #found-time { font-size: 12px; }
+      .expires-hint { font-size: 12px; }
+      .mood-badge { font-size: 12px; }
+      .state { font-size: 14px; }
+      .msg { font-size: 14px; }
     }
 
 /* ========== MEDIA QUERIES ========== */
