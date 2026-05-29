@@ -33,12 +33,8 @@
     .page {
       position: relative; z-index: 1;
       max-width: 720px; margin: 0 auto;
-      padding: 3.5rem 1.5rem 5rem;
+      padding: 5.5rem 1.5rem 5rem;
     }
-
-    /* header */
-    .site-back { display: inline-flex; align-items: center; gap: .45rem; font-size: .8rem; color: var(--dim); text-decoration: none; margin-bottom: 2.5rem; transition: color .2s; }
-    .site-back:hover { color: var(--purple-l); }
 
     .page-title {
       font-family: var(--font-px);
@@ -120,7 +116,27 @@
     body.lang-en .zh { display: none; }
     body.lang-en span.en { display: inline; }
     body.lang-en div.en  { display: block; }
-    .lang-toggle { position: fixed; top: 1rem; right: 1.2rem; z-index: 100; }
+
+    /* ── Fixed top header ── */
+    .tos-header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .6rem 1.2rem;
+      background: rgba(5,9,20,.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .site-back {
+      display: inline-flex; align-items: center; gap: .45rem;
+      font-size: .8rem; color: var(--dim); text-decoration: none;
+      transition: color .2s;
+    }
+    .site-back:hover { color: var(--purple-l); }
     .lang-btn {
       background: var(--card); border: 1px solid var(--border);
       color: var(--purple-l); padding: 5px 15px; border-radius: 20px;
@@ -132,11 +148,12 @@
 </head>
 <body>
   <div class="stars" id="stars"></div>
-  <div class="lang-toggle"><button class="lang-btn" onclick="toggleLang()"><span class="zh">EN</span><span class="en">中文</span></button></div>
+  <header class="tos-header">
+    <a class="site-back" href="index.html">⌂ <span class="zh">主頁</span><span class="en">Home</span></a>
+    <button class="lang-btn" onclick="toggleLang()"><span class="zh">EN</span><span class="en">中文</span></button>
+  </header>
 
   <div class="page">
-    <a class="site-back" href="index.html">⌂ <span class="zh">主頁</span><span class="en">Home</span></a>
-
     <div class="page-title"><span class="zh">使用條款</span><span class="en">Terms of Service</span></div>
     <!-- 1. Disclaimer -->
     <div class="section">
@@ -223,9 +240,9 @@
     <div class="section">
       <div class="section-title">⚖️ <span class="zh">法律聲明</span><span class="en">Legal Statement</span></div>
       <div class="section-body zh">
-        <p>本平台根據香港適用法律運營，包括但不限於《國家安全法》（NSL）及《個人資料（私隱）條例》。</p>
+        <p>本平台根據香港適用法律運營，包括但不限於《個人資料（私隱）條例》。</p>
         <ul>
-          <li>嚴禁發佈任何違反《國家安全法》或其他香港本地法律的內容。</li>
+          <li>嚴禁發佈任何違反香港本地法律的內容。</li>
           <li>我們保留在法律要求下向相關執法機構提供必要資料的權利。</li>
           <li>本平台不會主動收集或儲存用戶個人身份資料；所有漂流瓶及回聲均以匿名方式儲存。</li>
           <li>為防止濫用，系統會記錄請求 IP 地址以進行速率限制，相關資料不會超過 24 小時保留。</li>
@@ -233,9 +250,9 @@
         <p class="danger">如發現任何違法內容，請透過「舉報」功能向我們反映。</p>
       </div>
       <div class="section-body en">
-        <p>This platform operates in accordance with applicable Hong Kong laws, including but not limited to the National Security Law (NSL) and the Personal Data (Privacy) Ordinance.</p>
+        <p>This platform operates in accordance with applicable Hong Kong laws, including but not limited to the Personal Data (Privacy) Ordinance.</p>
         <ul>
-          <li>Prohibited: any content that violates the National Security Law or other applicable Hong Kong laws.</li>
+          <li>Prohibited: any content that violates applicable Hong Kong laws.</li>
           <li>We reserve the right to provide necessary information to relevant law enforcement agencies when required by law.</li>
           <li>This platform does not actively collect or store personally identifiable user data; all drift bottles and echoes are stored anonymously.</li>
           <li>To prevent misuse, the system logs request IP addresses for rate-limiting; such data is not retained for more than 24 hours.</li>
