@@ -1471,6 +1471,8 @@ html { scroll-behavior: smooth; }
     align-items: flex-start;
     justify-content: flex-start;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
     padding: 28px 16px 40px;
     gap: 18px;
   }
@@ -1496,6 +1498,8 @@ html { scroll-behavior: smooth; }
   justify-content: center;
   background: var(--bg-deep);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   padding: 60px 16px 80px;
 }
 #mirror-result.active { display: flex; }

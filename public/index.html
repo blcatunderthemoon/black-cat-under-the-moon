@@ -130,10 +130,12 @@
     if (window.location.hash === '#mode') {
       welcome.style.display = 'none';
       modeSelect.classList.add('active');
+      document.body.style.overflow = 'hidden';
     }
     welcome.addEventListener('click', function() {
       welcome.classList.add('hiding');
       modeSelect.classList.add('active');
+      document.body.style.overflow = 'hidden';
       setTimeout(function() {
         welcome.style.display = 'none';
       }, 800);
