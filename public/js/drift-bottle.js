@@ -581,25 +581,41 @@ async function confirmReport() {
   } catch { /* silent */ }
 }
 
-async function reportReply(replyId, btn) {
+let _pendingReplyId = null;
+let _pendingReplyBtn = null;
+function reportReply(replyId, btn) {
   if (!replyId || btn?.disabled) return;
-  if (btn) { btn.disabled = true; btn.textContent = '✓'; }
+  _pendingReplyId = replyId;
+  _pendingReplyBtn = btn || null;
+  document.getElementById('report-reply-overlay').classList.add('show');
+}
+function cancelReplyReport() {
+  document.getElementById('report-reply-overlay').classList.remove('show');
+  _pendingReplyId = null;
+  _pendingReplyBtn = null;
+}
+async function confirmReplyReport() {
+  const rid = _pendingReplyId;
+  const rb = _pendingReplyBtn;
+  cancelReplyReport();
+  if (!rid) return;
+  if (rb) { rb.disabled = true; rb.textContent = '✓'; }
   try {
     const res = await fetch(API.report, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reply_id: replyId }),
+      body: JSON.stringify({ reply_id: rid }),
     });
     if (res.ok) {
       showMsg('report-ok', '已提交檢舉，感謝你的回報。', 'ok');
     } else {
       const data = await res.json().catch(() => ({}));
       showMsg('report-ok', data.error || '檢舉失敗，請稍後再試。', 'err');
-      if (btn) { btn.disabled = false; btn.textContent = '⚑'; }
+      if (rb) { rb.disabled = false; rb.textContent = '⚑'; }
     }
   } catch {
     showMsg('report-ok', '網路錯誤，請稍後再試。', 'err');
-    if (btn) { btn.disabled = false; btn.textContent = '⚑'; }
+    if (rb) { rb.disabled = false; rb.textContent = '⚑'; }
   }
 }
 
