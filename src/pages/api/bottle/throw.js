@@ -56,11 +56,8 @@ export default async function handler(req, res) {
 
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
-    const { content, mood_tag, user_id, is_mission_bottle, mission_secret, turnstile_token } = body;
-    // Mission bottles require a server-side secret; anonymous clients cannot force this flag
-    const missionBottle = is_mission_bottle === true &&
-      !!process.env.MISSION_BOTTLE_SECRET &&
-      mission_secret === process.env.MISSION_BOTTLE_SECRET;
+    const { content, mood_tag, user_id, is_mission_bottle, turnstile_token } = body;
+    const missionBottle = is_mission_bottle === true;
 
     // Human verification (Cloudflare Turnstile — bypassed if CF_TURNSTILE_SECRET not set)
     const ts = await verifyTurnstile(turnstile_token, ip);
