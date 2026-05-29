@@ -46,9 +46,13 @@ document.querySelectorAll('.tab').forEach(btn => {
     btn.setAttribute('aria-selected', 'true');
     document.getElementById('panel-' + btn.dataset.panel).classList.add('active');
     document.body.dataset.tab = btn.dataset.panel;
-    if (btn.dataset.panel === 'random' && !randomLoaded) {
-      randomLoaded = true;
-      loadRandom();
+    if (btn.dataset.panel === 'random') {
+      const isEmpty = document.getElementById('rnd-empty').style.display !== 'none';
+      if (!randomLoaded || isEmpty) {
+        randomLoaded = true;
+        nextRandomAt = 0;
+        loadRandom();
+      }
     }
   });
 });
@@ -359,7 +363,7 @@ async function loadRandom() {
 
   try {
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 2000);
+    const timer = setTimeout(() => ctrl.abort(), 8000);
     const res  = await fetch(API.random, { signal: ctrl.signal });
     clearTimeout(timer);
     const data = await res.json();
