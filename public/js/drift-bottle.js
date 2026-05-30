@@ -262,6 +262,7 @@ function showMsg(id, msg, type) {
 var _cdTimers = {};
 function startCooldownHint(errElId, btnEl, ms) {
   if (_cdTimers[errElId]) clearInterval(_cdTimers[errElId]);
+  if (btnEl) { btnEl.disabled = true; }
   var remaining = Math.ceil(ms / 1000);
   function tick() {
     var el = document.getElementById(errElId);
@@ -441,6 +442,8 @@ async function loadRandom() {
   document.getElementById('rnd-loading').style.display = 'block';
   document.getElementById('rnd-empty').style.display   = 'none';
   document.getElementById('rnd-content').style.display = 'none';
+  // Cancel any lingering cooldown timer so it doesn't bleed onto the new bottle
+  if (_cdTimers['reply-err']) { clearInterval(_cdTimers['reply-err']); delete _cdTimers['reply-err']; }
   showMsg('reply-err', ''); showMsg('reply-ok', ''); showMsg('report-ok', '');
   document.getElementById('reply-content').value = '';
   document.getElementById('reply-count').textContent = '0 / 100';
