@@ -6,3 +6,9 @@ match-cards/
 .env
 *.local
 docs
+
+# Dashboard (internal use only)
+src/pages/dashboard/
+src/pages/api/dashboard/
+src/components/dashboard/
+src/styles/dashboard/
