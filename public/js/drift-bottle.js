@@ -607,9 +607,7 @@ function renderReplyList(replies, bottleId, listElId) {
     const subs = (r.sub_replies || []).map(function(s) {
       const isLocalSub = s.id && s.id.startsWith('local-');
       const subReport = isLocalSub ? '' :
-        '<div class="reply-actions" style="margin-top:3px">'
-        + '<button class="btn-report-reply" data-rid="' + s.id + '" title="檢舉留言">⚑</button>'
-        + '</div>';
+        '<button class="btn-report-reply" data-rid="' + s.id + '" title="檢舉留言">⚑</button>';
       return '<div class="reply-subitem">'
         + '<span class="reply-time">' + fmtDate(s.created_at) + '</span>'
         + '<span class="reply-body">' + esc(s.content) + '</span>'
@@ -637,7 +635,8 @@ function renderReplyList(replies, bottleId, listElId) {
     return '<div class="reply-item" id="reply-' + r.id + '">'
       + '<span class="reply-time">' + fmtDate(r.created_at) + '</span>'
       + '<span class="reply-body">' + esc(r.content) + '</span>'
-      + '<div class="reply-actions">' + replyBtn + reportBtn + '</div>'
+      + '<div class="reply-actions">' + replyBtn + '</div>'
+      + reportBtn
       + subs
       + subForm
       + '</div>';
