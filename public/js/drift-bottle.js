@@ -661,13 +661,15 @@ function renderReplyList(replies, bottleId, listElId) {
       const subLikeBtn = isLocalSub ? '' :
         '<button class="btn-like-reply' + (subLiked ? ' liked' : '') + '" data-rid="' + s.id + '"'
         + (subLiked ? ' disabled' : '') + '>♥ <span>' + (s.like_count || 0) + '</span></button>';
-            return '<div class="reply-subitem">'
+                  return '<div class="reply-subitem">'
         + '<div class="reply-header">'
         + '<span class="reply-time">' + fmtDate(s.created_at) + '</span>'
         + subReport
         + '</div>'
+        + '<div class="reply-body-row">'
         + '<span class="reply-body">' + esc(s.content) + '</span>'
-        + (isLocalSub ? '' : '<div class="reply-actions"><div class="reply-actions-left"></div>' + subLikeBtn + '</div>')
+        + (isLocalSub ? '' : subLikeBtn)
+        + '</div>'
         + '</div>';
     }).join('');
     const subForm = isLocal ? '' :

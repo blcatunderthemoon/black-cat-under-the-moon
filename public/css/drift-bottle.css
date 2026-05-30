@@ -561,17 +561,24 @@
     .btn-report-reply:hover { color: rgba(255,100,100,.7); }
 
         /* Sub-reply items (1-level nested) */
-    .reply-subitem {
-      background: rgba(0,0,0,.18);
-      border-left: 2px solid rgba(124,92,252,.38);
-      border-radius: 0 6px 6px 0;
-      padding: 5px 10px 5px 12px;
-      margin-top: 4px;
-      margin-left: 10px;
-      font-size: 12px; color: rgba(210,205,232,.78); line-height: 1.6; word-break: break-word;
-      position: relative;
-    }
-    .reply-subitem .reply-time { display: block; font-size: 10px; margin-top: 0; margin-bottom: 2px; }
+        .reply-subitem {
+          background: rgba(0,0,0,.22);
+          border: none;
+          border-radius: 6px;
+          padding: 6px 10px 6px 10px;
+          margin-top: 4px;
+          margin-left: 12px;
+          font-size: 12px; color: rgba(210,205,232,.78); line-height: 1.6; word-break: break-word;
+          position: relative;
+        }
+        .reply-subitem .reply-time { display: block; font-size: 10px; margin-top: 0; margin-bottom: 2px; }
+            /* Sub-reply: body + heart on same line, compact */
+            .reply-subitem .reply-body-row {
+              display: flex; align-items: flex-end; justify-content: space-between; gap: 6px;
+              margin-top: 0;
+            }
+            .reply-subitem .reply-body-row .reply-body { flex: 1; min-width: 0; }
+            .reply-subitem .reply-body-row .btn-like-reply { flex-shrink: 0; align-self: flex-end; padding: 0 2px; }
 
     /* Sub-reply form */
     .subreply-form {
