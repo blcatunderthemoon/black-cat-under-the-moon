@@ -32,31 +32,30 @@
     body[data-tab="find"]   { --panel-accent: #ffd700; }
 
     /* Stars */
-    .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
-    .star {
-      position: absolute; background: #fff; border-radius: 50%;
-      animation: twinkle var(--dur) ease-in-out infinite var(--delay),
-                 starDrift var(--drift-dur) ease-in-out infinite var(--drift-delay);
-      opacity: 0;
-    }
-    @keyframes twinkle {
-      0%, 100% { opacity: 0; transform: scale(.5); }
-      50% { opacity: var(--b); transform: scale(1); }
-    }
-    @keyframes starDrift {
-      0%, 100% { transform: translateX(0); }
-      50% { transform: translateX(var(--drift-x, 2px)); }
-    }
-
-    /* Phase 1: Particles */
-    .particle {
-      position: absolute; border-radius: 50%; pointer-events: none;
-      animation: particleDrift var(--p-dur) ease-in-out infinite var(--p-delay);
-    }
-    @keyframes particleDrift {
-      0%   { transform: translateY(0) translateX(0); opacity: 0; }
-      10%  { opacity: var(--p-opacity); }
-      90%  { opacity: var(--p-opacity); }
+      @media (max-width: 480px) {
+        .page-title { font-size: 1.2rem; }
+        .page-sub { font-size: 0.85rem; }
+        .tab { font-size: 0.8rem; padding: 0.5rem 0.2rem; }
+        .wstep-label { font-size: 0.8rem; }
+        .wizard-header { font-size: 1rem; }
+        .floating-textarea { font-size: 1rem; }
+        .char-count { font-size: 0.8rem; }
+        .mood-chips { gap: 0.4rem; }
+        .chip { font-size: 0.85rem; padding: 0.4rem 0.8rem; }
+        .mission-hint { font-size: 0.85rem; }
+        .field-label { font-size: 0.85rem; }
+        .bottle-body { font-size: 1.05rem; }
+        .bottle-meta, #rnd-time, #found-time { font-size: 0.8rem; }
+        .expires-hint { font-size: 0.8rem; }
+        .mood-badge { font-size: 0.8rem; }
+        .state { font-size: 0.9rem; }
+        .msg { font-size: 0.9rem; }
+        .card { padding: 0.9rem 0.8rem; }
+        .bottle-card { padding: 0.8rem 0.6rem 1.1rem; border-radius: 0.8rem; }
+        #btn-next-wrap { position: static; }
+        #btn-next-wrap::before { display: none; }
+        #btn-next { width: 100% !important; padding: 1.1rem 0 !important; border-radius: 1rem !important; font-size: 1.1rem; letter-spacing: .04em; }
+      }
       100% { transform: translateY(calc(var(--p-rise) * -1)) translateX(var(--p-sway)); opacity: 0; }
     }
 
@@ -76,7 +75,15 @@
     }
 
     /* Layout */
-    .page { max-width: 700px; margin: 0 auto; padding: 0 16px; position: relative; z-index: 1; }
+    .page {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 0 4vw;
+      position: relative;
+      z-index: 1;
+      box-sizing: border-box;
+      width: 100%;
+    }
 
     /* Header */
     .page-header { text-align: center; padding: 52px 0 44px; position: relative; }
@@ -153,7 +160,11 @@
       background: rgba(11,13,34,.72);
       backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
       border: 1px solid rgba(30,32,85,.9);
-      border-radius: 14px; padding: 22px; margin-bottom: 14px;
+      border-radius: 1rem;
+      padding: 1.3rem;
+      margin-bottom: 1rem;
+      max-width: 100vw;
+      box-sizing: border-box;
     }
     .section-tag {
       display: inline-flex; align-items: center; gap: 6px;
@@ -342,9 +353,11 @@
     /* Buttons */
     .btn {
       display: flex; align-items: center; justify-content: center;
-      gap: 7px; border: none; border-radius: 8px; cursor: pointer;
-      font: 700 14px/1 'Noto Sans TC', sans-serif;
-      padding: 13px 18px; transition: all .2s; width: 100%;
+      gap: 0.5rem; border: none; border-radius: 0.7rem; cursor: pointer;
+      font: 700 1rem/1 'Noto Sans TC', sans-serif;
+      padding: 0.9rem 1.2rem;
+      transition: all .2s; width: 100%;
+      box-sizing: border-box;
     }
     .btn:disabled { opacity: .4; cursor: not-allowed; transform: none !important; }
     .btn-purple {
@@ -365,6 +378,8 @@
       border: 1px solid rgba(0,229,255,.42) !important;
       color: rgba(0,229,255,.85);
       box-shadow: 0 0 16px rgba(0,229,255,.1), inset 0 0 20px rgba(0,229,255,.02);
+      font-size: 1rem;
+      border-radius: 0.9rem;
     }
     .btn-cyan:not(:disabled):hover {
       background: rgba(0,229,255,.09);
@@ -409,10 +424,14 @@
       -webkit-backdrop-filter: blur(14px);
       border: 1px solid rgba(45, 50, 128, 0.55);
       border-top: 1px solid rgba(0, 210, 255, 0.38);
-      border-radius: 16px;
-      padding: 16px 18px 24px; margin-bottom: 18px;
-      position: relative; overflow: hidden;
+      border-radius: 1.1rem;
+      padding: 1.1rem 1.2rem 1.5rem;
+      margin-bottom: 1.1rem;
+      position: relative;
+      overflow: hidden;
       box-shadow: 0 0 40px rgba(0, 80, 180, 0.1), 0 4px 24px rgba(0,0,0,.45);
+      max-width: 100vw;
+      box-sizing: border-box;
     }
     .bottle-card::before {
       content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
