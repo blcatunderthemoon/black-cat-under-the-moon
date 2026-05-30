@@ -1,4 +1,4 @@
-import '../styles/dashboard/globals.css';
+import '../styles/globals.css';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
