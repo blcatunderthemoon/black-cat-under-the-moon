@@ -548,7 +548,7 @@
       border: 1px solid rgba(45,50,128,.4); border-radius: 8px;
       padding: 6px 8px;
     }
-    .subreply-form textarea.reply-ta { min-height: 38px; resize: none; font-size: 13px; padding-right: 46px; padding-bottom: 28px; overflow-y: hidden; }
+    .subreply-form textarea.reply-ta { padding: 6px 46px 24px 10px; min-height: 50px; resize: none; font-size: 13px; line-height: 1.6; overflow-y: hidden; }
     .subreply-form .char-count { right: 42px; bottom: 8px; }
     .subreply-form .btn-round-send { width: 28px; height: 28px; font-size: 12px; bottom: 7px; right: 8px; }
     .subreply-form .msg { margin-top: 0; font-size: 11px; padding: 6px 10px; }
@@ -695,6 +695,15 @@
       .mood-badge { font-size: 12px; }
       .state { font-size: 14px; }
       .msg { font-size: 14px; }
+      /* Compact card padding on small screens */
+      .card { padding: 14px 16px; }
+      /* Keep 拋回大海 btn reachable when sub-reply form is open */
+      #btn-next-wrap { position: sticky; bottom: 14px; z-index: 5; }
+      #btn-next-wrap::before {
+        content: ''; position: absolute; inset: -24px -24px 0 -24px;
+        background: linear-gradient(to bottom, transparent, rgba(5,9,20,.88) 55%);
+        pointer-events: none; z-index: -1;
+      }
     }
 
 /* ========== MEDIA QUERIES ========== */
