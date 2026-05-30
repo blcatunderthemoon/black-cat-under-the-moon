@@ -755,23 +755,39 @@
     }
     .btn-like-bottle:hover:not(:disabled) { color: var(--pink); background: rgba(255,107,157,.08); }
     .btn-like-bottle.liked, .btn-like-bottle:disabled { color: var(--pink); cursor: default; opacity: .75; }
-          .btn-like-reply {
-    background: none; border: none; cursor: pointer;
-    font-size: 12px;
-    color: rgba(255,130,170,.78);
-    text-shadow: 0 0 5px rgba(255,107,157,.28);
-    padding: 2px 4px;
-    border-radius: 12px; line-height: 1; transition: color .2s, background .2s, text-shadow .2s;
-    font-family: 'Noto Sans TC', 'PingFang TC', sans-serif;
-    display: inline-flex; align-items: center; gap: 4px;
-    flex-shrink: 0;
-  }
-  .btn-like-reply:hover:not(:disabled) {
-    color: var(--pink);
-    background: rgba(255,107,157,.08);
-    text-shadow: 0 0 10px rgba(255,107,157,.6);
-  }
-  .btn-like-reply.liked, .btn-like-reply:disabled { color: var(--pink); cursor: default; opacity: .9; text-shadow: 0 0 8px rgba(255,107,157,.55); }
+
+/* 統一like按鈕與like數亮度 */
+.btn-like-reply, .btn-like-bottle, .like-count {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: rgba(255,130,170,.78);
+  text-shadow: 0 0 5px rgba(255,107,157,.28);
+  padding: 2px 6px;
+  border-radius: 12px;
+  line-height: 1;
+  transition: color .2s, background .2s, text-shadow .2s;
+  font-family: 'Noto Sans TC', 'PingFang TC', sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+.btn-like-reply:hover:not(:disabled), .btn-like-bottle:hover:not(:disabled) {
+  color: var(--pink);
+  background: rgba(255,107,157,.08);
+  text-shadow: 0 0 10px rgba(255,107,157,.6);
+}
+.btn-like-reply.liked, .btn-like-reply:disabled,
+.btn-like-bottle.liked, .btn-like-bottle:disabled,
+.like-count.liked {
+  color: var(--pink);
+  cursor: default;
+  opacity: .9;
+  text-shadow: 0 0 8px rgba(255,107,157,.55);
+}
 
     .btn-report-confirm {
       width: 100%; background: rgba(255,107,157,.12); border: 1px solid rgba(255,107,157,.4);
