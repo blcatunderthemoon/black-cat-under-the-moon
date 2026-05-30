@@ -618,12 +618,14 @@ function renderReplyList(replies, bottleId, listElId) {
     }).join('');
     const subForm = isLocal ? '' :
       '<div class="subreply-form" id="subreply-form-' + r.id + '" style="display:none">'
+      + '<div class="ta-wrap">'
       + '<textarea id="subreply-ta-' + r.id + '" data-subreply-for="' + r.id + '" class="reply-ta" maxlength="100" placeholder="回覆這條留言…" rows="1"></textarea>'
       + '<span class="char-count" id="subreply-count-' + r.id + '">0 / 100</span>'
       + '<button class="btn-round-send btn-subreply-send"'
       + ' data-reply-id="' + r.id + '" data-bottle-id="' + bottleId + '" data-list-id="' + listElId + '"'
       + ' onclick="sendSubReply(this.dataset.replyId,this.dataset.bottleId,this.dataset.listId)">'
       + SEND_SMALL + '</button>'
+      + '</div>'
       + '<span class="msg msg-err" id="subreply-err-' + r.id + '"></span>'
       + '</div>';
     const replyBtn = isLocal ? '' :
