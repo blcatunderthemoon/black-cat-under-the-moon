@@ -31,33 +31,10 @@
     body[data-tab="random"] { --panel-accent: var(--cyan); }
     body[data-tab="find"]   { --panel-accent: #ffd700; }
 
-    /* Stars */
-      @media (max-width: 480px) {
-        .page-title { font-size: 1.2rem; }
-        .page-sub { font-size: 0.85rem; }
-        .tab { font-size: 0.8rem; padding: 0.5rem 0.2rem; }
-        .wstep-label { font-size: 0.8rem; }
-        .wizard-header { font-size: 1rem; }
-        .floating-textarea { font-size: 1rem; }
-        .char-count { font-size: 0.8rem; }
-        .mood-chips { gap: 0.4rem; }
-        .chip { font-size: 0.85rem; padding: 0.4rem 0.8rem; }
-        .mission-hint { font-size: 0.85rem; }
-        .field-label { font-size: 0.85rem; }
-        .bottle-body { font-size: 1.05rem; }
-        .bottle-meta, #rnd-time, #found-time { font-size: 0.8rem; }
-        .expires-hint { font-size: 0.8rem; }
-        .mood-badge { font-size: 0.8rem; }
-        .state { font-size: 0.9rem; }
-        .msg { font-size: 0.9rem; }
-        .card { padding: 0.9rem 0.8rem; }
-        .bottle-card { padding: 0.8rem 0.6rem 1.1rem; border-radius: 0.8rem; }
-        #btn-next-wrap { position: static; }
-        #btn-next-wrap::before { display: none; }
-        #btn-next { width: 100% !important; padding: 1.1rem 0 !important; border-radius: 1rem !important; font-size: 1.1rem; letter-spacing: .04em; }
-      }
-      100% { transform: translateY(calc(var(--p-rise) * -1)) translateX(var(--p-sway)); opacity: 0; }
-    }
+        /* Stars */
+    .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .star  { position: absolute; border-radius: 50%; background: #fff; animation: twinkle var(--d,3s) infinite ease-in-out; opacity: 0; }
+    @keyframes twinkle { 0%,100%{opacity:0;transform:scale(.8)} 50%{opacity:var(--op,.6);transform:scale(1.1)} }
 
     /* Phase 1: Sea shimmer */
     .sea-shimmer {
