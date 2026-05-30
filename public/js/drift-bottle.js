@@ -6,6 +6,8 @@ const API = {
   reply:   '/api/bottle/reply',
   report:  '/api/bottle/report',
   replies: '/api/bottle/replies',
+  like:    '/api/bottle/like',
+  peek:    '/api/bottle/peek',
 };
 
 /* ─── Anonymous user ID ─────────────────────────── */
@@ -20,17 +22,38 @@ function uid() {
   return id;
 }
 
-/* ─── Replied-bottles tracker (localStorage) ────── */
-function getReplied() {
-  try { return JSON.parse(localStorage.getItem('bcm_replied') || '[]'); } catch { return []; }
+/* ─── 緣分暫存箱 stash (localStorage, max 5) ──── */
+const STASH_MAX = 5;
+function getStash() {
+  try { return JSON.parse(localStorage.getItem('bcm_stash') || '[]'); } catch { return []; }
 }
-function markReplied(id) {
-  const list = getReplied();
-  if (!list.includes(id)) {
-    list.push(id);
-    if (list.length > 200) list.splice(0, list.length - 200);
-    localStorage.setItem('bcm_replied', JSON.stringify(list));
-  }
+function addToStash(entry) {
+  try {
+    const list = getStash().filter(function(e) { return e.id !== entry.id; });
+    list.unshift(entry);
+    localStorage.setItem('bcm_stash', JSON.stringify(list.slice(0, STASH_MAX)));
+    renderStash();
+  } catch {}
+}
+
+/* ─── Like trackers (localStorage, one-way) ────── */
+function getLikedBottles() {
+  try { return new Set(JSON.parse(localStorage.getItem('bcm_liked_bottles') || '[]')); } catch { return new Set(); }
+}
+function markBottleLiked(id) {
+  try {
+    const list = [...getLikedBottles(), id].slice(-200);
+    localStorage.setItem('bcm_liked_bottles', JSON.stringify(list));
+  } catch {}
+}
+function getLikedReplies() {
+  try { return new Set(JSON.parse(localStorage.getItem('bcm_liked_replies') || '[]')); } catch { return new Set(); }
+}
+function markReplyLiked(id) {
+  try {
+    const list = [...getLikedReplies(), id].slice(-500);
+    localStorage.setItem('bcm_liked_replies', JSON.stringify(list));
+  } catch {}
 }
 
 /* ─── Session-seen tracker (sessionStorage, resets on tab close) ── */
@@ -302,6 +325,17 @@ function renderBottleCard(data, ids) {
     document.getElementById(ids.replies).textContent =
       '💬 已收到 ' + (data.reply_count || 0) + ' 個回應';
   }
+  if (ids.likeBtn) {
+    const lBtn = document.getElementById(ids.likeBtn);
+    const lCnt = document.getElementById(ids.likeCount);
+    if (lBtn && lCnt) {
+      lBtn.dataset.bottleId = data.id;
+      lCnt.textContent = data.like_count || 0;
+      const liked = getLikedBottles().has(data.id);
+      lBtn.disabled = liked;
+      lBtn.classList.toggle('liked', liked);
+    }
+  }
 }
 
 /* ─── Phase 5: 4-stage post-submit animation ─────── */
@@ -441,14 +475,6 @@ async function loadRandom() {
       return;
     }
 
-    // Check retry BEFORE hiding loading so the screen stays stable during retries
-    if (res.ok && getReplied().includes(data.id) && randomSkipCount < 8) {
-      randomSkipCount++;
-      nextRandomAt = 0; // bypass rate limit for retry
-      setTimeout(loadRandom, 350);
-      return;
-    }
-
     document.getElementById('rnd-loading').style.display = 'none';
     if (!res.ok) {
       document.getElementById('rnd-empty-icon').textContent = '🍾';
@@ -464,18 +490,12 @@ async function loadRandom() {
     renderBottleCard(data, {
       card: 'rnd-card', moonlight: 'rnd-moonlight', mood: 'rnd-mood',
       body: 'rnd-body', time: 'rnd-time', expires: 'rnd-expires',
+      likeBtn: 'rnd-like-btn', likeCount: 'rnd-like-count',
     });
     window.posthog?.capture('bottle_found', {
       bottle_type: data.bottle_type || 'normal',
       mood_tag:    data.mood_tag || null,
     });
-
-    // If still showing a replied bottle (exhausted retries), lock reply form
-    if (getReplied().includes(data.id)) {
-      const rb = document.getElementById('btn-reply');
-      rb.disabled = true; rb.textContent = '✓';
-      rb.classList.add('btn-success');
-    }
 
     // Always show toggle; label reflects reply count
     document.getElementById('rnd-toggle-label').textContent =
@@ -534,7 +554,6 @@ async function sendReply() {
     if (!res.ok) { showMsg('reply-err', data.error || '發生錯誤。', 'err'); return; }
     replied = true;
     setReplyTime(currentBottleId);
-    markReplied(currentBottleId);
     showMsg('reply-ok', '留言已送出 ✨', 'ok');
     window.posthog?.capture('reply_sent');
     window.turnstile?.reset('#reply-turnstile');
@@ -548,6 +567,16 @@ async function sendReply() {
     const newReply = { id: 'local-' + Date.now(), content, created_at: new Date().toISOString(), sub_replies: [] };
     prefetchedReplies = prefetchedReplies ? [...prefetchedReplies, newReply] : [newReply];
     if (repliesOpen) { renderReplyList(prefetchedReplies, currentBottleId, 'rnd-replies-list'); }
+    // 緣分暫存 — save to stash (no viewKey for random bottles)
+    addToStash({
+      id: currentBottleId,
+      viewKey: null,
+      preview: (document.getElementById('rnd-body').textContent || '').slice(0, 30),
+      moodTag: document.getElementById('rnd-mood').textContent || '',
+      bottleType: document.getElementById('rnd-card').classList.contains('mission') ? 'mission'
+        : document.getElementById('rnd-moonlight').classList.contains('show') ? 'moonlight' : 'normal',
+      repliedAt: new Date().toISOString(),
+    });
   } catch {
     showMsg('reply-err', '網路錯誤，請稍後再試。', 'err');
   } finally {
@@ -563,14 +592,21 @@ async function toggleReplies() {
   const expanded = document.getElementById('rnd-replies-expanded');
   const list     = document.getElementById('rnd-replies-list');
   const label    = document.getElementById('rnd-toggle-label');
-  repliesOpen = !repliesOpen;
-  if (!repliesOpen) {
+  if (!expanded || !list || !label) return;
+  // Use actual DOM state as source of truth to stay in sync
+  const isOpen = expanded.style.display === 'block';
+  if (isOpen) {
     expanded.style.display = 'none';
+    repliesOpen = false;
     const n = label.textContent.match(/\d+/)?.[0];
     label.textContent = n ? '💬 查看留言 (' + n + ')' : '💬 留下第一條留言';
     return;
   }
   expanded.style.display = 'block';
+  repliesOpen = true;
+  // Restore comment form in case toggleSubReplyForm hid it before user collapsed
+  var cf = document.getElementById('rnd-comment-form');
+  if (cf) cf.style.display = '';
   list.innerHTML = '';
   if (prefetchedReplies) {
     const replies = prefetchedReplies;
@@ -597,6 +633,7 @@ async function toggleReplies() {
     list.innerHTML = '<p style="font-size:12px;color:var(--text-dim)">載入失敗，請重試</p>';
     label.textContent = '💬 查看留言';
     repliesOpen = false;
+    expanded.style.display = 'none';
   }
 }
 function renderReplyList(replies, bottleId, listElId) {
@@ -608,10 +645,17 @@ function renderReplyList(replies, bottleId, listElId) {
       const isLocalSub = s.id && s.id.startsWith('local-');
       const subReport = isLocalSub ? '' :
         '<button class="btn-report-reply" data-rid="' + s.id + '" title="檢舉留言">⚑</button>';
+      const subLiked = !isLocalSub && getLikedReplies().has(s.id);
+      const subLikeBtn = isLocalSub ? '' :
+        '<button class="btn-like-reply' + (subLiked ? ' liked' : '') + '" data-rid="' + s.id + '"'
+        + (subLiked ? ' disabled' : '') + '>♥ <span>' + (s.like_count || 0) + '</span></button>';
       return '<div class="reply-subitem">'
+        + '<div class="reply-header">'
         + '<span class="reply-time">' + fmtDate(s.created_at) + '</span>'
-        + '<span class="reply-body">' + esc(s.content) + '</span>'
         + subReport
+        + '</div>'
+        + '<span class="reply-body">' + esc(s.content) + '</span>'
+        + (isLocalSub ? '' : '<div class="reply-actions">' + subLikeBtn + '</div>')
         + '</div>';
     }).join('');
     const subForm = isLocal ? '' :
@@ -629,14 +673,20 @@ function renderReplyList(replies, bottleId, listElId) {
     const replyBtn = isLocal ? '' :
       '<button class="btn-text-reply"'
       + ' data-toggle-id="' + r.id + '">↩ 回覆</button>';
+    const liked = !isLocal && getLikedReplies().has(r.id);
+    const likeBtn = isLocal ? '' :
+      '<button class="btn-like-reply' + (liked ? ' liked' : '') + '" data-rid="' + r.id + '"'
+      + (liked ? ' disabled' : '') + '>♥ <span>' + (r.like_count || 0) + '</span></button>';
     const reportBtn = isLocal ? '' :
       '<button class="btn-report-reply"'
       + ' data-rid="' + r.id + '" title="檢舉留言">⚑</button>';
     return '<div class="reply-item" id="reply-' + r.id + '">'
+      + '<div class="reply-header">'
       + '<span class="reply-time">' + fmtDate(r.created_at) + '</span>'
-      + '<span class="reply-body">' + esc(r.content) + '</span>'
-      + '<div class="reply-actions">' + replyBtn + '</div>'
       + reportBtn
+      + '</div>'
+      + '<span class="reply-body">' + esc(r.content) + '</span>'
+      + '<div class="reply-actions">' + replyBtn + likeBtn + '</div>'
       + subs
       + subForm
       + '</div>';
@@ -673,12 +723,75 @@ function toggleSubReplyForm(replyId) {
   el.addEventListener('click', function(e) {
     var btn = e.target.closest('.btn-text-reply');
     if (btn) { toggleSubReplyForm(btn.dataset.toggleId); return; }
+    var like = e.target.closest('.btn-like-reply');
+    if (like && !like.disabled) { likeReply(like.dataset.rid, like); return; }
     var rep = e.target.closest('.btn-report-reply');
     if (rep && !rep.disabled) { reportReply(rep.dataset.rid, rep); return; }
   });
 });
 
-/* ─── Reply: cooldown helpers ───────────────────── */
+/* ─── Like: bottle + reply ────────────────── */
+async function likeBottle(btn) {
+  const bottleId = btn.dataset.bottleId;
+  if (!bottleId || getLikedBottles().has(bottleId)) return;
+  // Optimistic update
+  btn.disabled = true;
+  btn.classList.add('liked');
+  const cnt = btn.querySelector('span');
+  const prevCount = parseInt(cnt?.textContent, 10) || 0;
+  if (cnt) cnt.textContent = prevCount + 1;
+  try {
+    const res = await fetch(API.like, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bottle_id: bottleId }),
+    });
+    if (res.ok) {
+      markBottleLiked(bottleId);
+    } else {
+      // Revert
+      btn.classList.remove('liked');
+      if (cnt) cnt.textContent = prevCount;
+      btn.disabled = false;
+    }
+  } catch {
+    // Revert
+    btn.classList.remove('liked');
+    if (cnt) cnt.textContent = prevCount;
+    btn.disabled = false;
+  }
+}
+async function likeReply(replyId, btn) {
+  if (getLikedReplies().has(replyId)) return;
+  // Optimistic update
+  btn.disabled = true;
+  btn.classList.add('liked');
+  const cnt = btn.querySelector('span');
+  const prevCount = parseInt(cnt?.textContent, 10) || 0;
+  if (cnt) cnt.textContent = prevCount + 1;
+  try {
+    const res = await fetch(API.like, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reply_id: replyId }),
+    });
+    if (res.ok) {
+      markReplyLiked(replyId);
+    } else {
+      // Revert
+      btn.classList.remove('liked');
+      if (cnt) cnt.textContent = prevCount;
+      btn.disabled = false;
+    }
+  } catch {
+    // Revert
+    btn.classList.remove('liked');
+    if (cnt) cnt.textContent = prevCount;
+    btn.disabled = false;
+  }
+}
+
+/* ─── Reply: cooldown helpers ─────────────────── */
 function getReplyCooldownMs(bottleId) {
   try {
     const times = JSON.parse(localStorage.getItem('bcm_reply_times') || '{}');
@@ -788,6 +901,18 @@ async function sendFindReply() {
     renderReplyList(findRepliesCache, foundBottleId, 'found-list');
     const total = findRepliesCache.length + findRepliesCache.reduce(function(s,r){return s+(r.sub_replies||[]).length;},0);
     document.getElementById('found-heading').textContent = '拾瓶人的回聲（' + total + '）';
+    // 緣分暫存 — save to stash with viewKey from key-boxes
+    var vKey = Array.from(document.querySelectorAll('#key-boxes .key-box'))
+      .map(function(b) { return (b.value || '').toUpperCase(); }).join('');
+    addToStash({
+      id: foundBottleId,
+      viewKey: vKey.length === 6 ? vKey : null,
+      preview: (document.getElementById('found-body').textContent || '').slice(0, 30),
+      moodTag: document.getElementById('found-mood').textContent || '',
+      bottleType: document.getElementById('found-card').classList.contains('mission') ? 'mission'
+        : document.getElementById('found-moonlight').classList.contains('show') ? 'moonlight' : 'normal',
+      repliedAt: new Date().toISOString(),
+    });
   } catch {
     showMsg('find-reply-err', '網路錯誤，請稍後再試。', 'err');
     btn.disabled = false; btn.innerHTML = SEND_ICON;
@@ -905,6 +1030,7 @@ async function findBottle() {
     renderBottleCard(data, {
       card: 'found-card', moonlight: 'found-moonlight', mood: 'found-mood',
       body: 'found-body', time: 'found-time', expires: 'found-expires',
+      likeBtn: 'found-like-btn', likeCount: 'found-like-count',
     });
 
     foundBottleId    = data.id;
@@ -993,6 +1119,110 @@ document.getElementById('overlay').addEventListener('click', function (e) {
   if (e.target === this) closeOverlay();
 });
 
+/* ─── 緣分暫存箱 — render, load ─────────────────── */
+function fmtRelative(iso) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1)   return '剛剛';
+  if (mins < 60)  return mins + ' 分鐘前';
+  const hrs = Math.floor(mins / 60);
+  if (hrs  < 24)  return hrs + ' 小時前';
+  return Math.floor(hrs / 24) + ' 天前';
+}
+function renderStashInto(wrapId, listId) {
+  const wrap = document.getElementById(wrapId);
+  const list = document.getElementById(listId);
+  if (!wrap || !list) return;
+  const stash = getStash();
+  if (!stash.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  list.innerHTML = stash.map(function(e, i) {
+    const mood = e.moodTag
+      ? '<span class="stash-mood">' + esc(e.moodTag) + '</span>'
+      : '';
+    const typeIcon = e.bottleType === 'moonlight' ? '🌙 '
+      : e.bottleType === 'mission' ? '🐈 ' : '';
+    const preview = esc((e.preview || '').trim()) || '…';
+    const previewFull = preview + ((e.preview || '').length >= 30 ? '…' : '');
+    return '<div class="stash-item" onclick="loadStashBottle(' + i + ')" role="button" tabindex="0" '
+      + 'onkeydown="if(event.key===\'Enter\'||event.key===\' \')loadStashBottle(' + i + ')" >'
+      + '<div class="stash-item-top">' + mood
+      + '<span class="stash-time">' + fmtRelative(e.repliedAt) + ' 留過言</span></div>'
+      + '<div class="stash-preview">' + typeIcon + previewFull + '</div>'
+      + '</div>';
+  }).join('');
+}
+function renderStash() {
+  renderStashInto('stash-wrap-rnd', 'stash-list-rnd');
+}
+function loadStashBottle(index) {
+  const entry = getStash()[index];
+  if (!entry) return;
+  document.querySelectorAll('.tab').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.panel === 'find');
+    b.setAttribute('aria-selected', b.dataset.panel === 'find');
+  });
+  document.querySelectorAll('.panel').forEach(function(p) {
+    p.classList.toggle('active', p.id === 'panel-find');
+  });
+  document.body.dataset.tab = 'find';
+  if (entry.viewKey) {
+    const boxes = Array.from(document.querySelectorAll('#key-boxes .key-box'));
+    entry.viewKey.split('').forEach(function(ch, i) {
+      if (boxes[i]) { boxes[i].value = ch; boxes[i].classList.add('filled'); }
+    });
+    setTimeout(findBottle, 60);
+  } else {
+    loadBottleById(entry.id);
+  }
+}
+async function loadBottleById(id) {
+  showMsg('find-err', '');
+  document.getElementById('found-wrap').classList.remove('found-visible');
+  document.querySelectorAll('.subreply-form').forEach(function(f) { f.style.display = 'none'; });
+  var fcf = document.getElementById('find-comment-form'); if (fcf) fcf.style.display = '';
+  try {
+    const res  = await fetch(API.peek + '?id=' + encodeURIComponent(id));
+    const data = await res.json();
+    if (!res.ok) { showMsg('find-err', data.error || '找不到這個瓶子。', 'err'); return; }
+    renderBottleCard(data, {
+      card: 'found-card', moonlight: 'found-moonlight', mood: 'found-mood',
+      body: 'found-body', time: 'found-time', expires: 'found-expires',
+      likeBtn: 'found-like-btn', likeCount: 'found-like-count',
+    });
+    foundBottleId    = data.id;
+    findRepliesCache = null;
+    document.getElementById('find-reply-content').value = '';
+    document.getElementById('find-reply-count').textContent = '0 / 100';
+    showMsg('find-reply-err', ''); showMsg('find-reply-ok', '');
+    const findBtn = document.getElementById('btn-find-reply');
+    findBtn.disabled = false; findBtn.innerHTML = SEND_ICON;
+    findBtn.classList.remove('btn-success');
+    window.turnstile?.reset('#find-reply-turnstile');
+    const reportBtn = document.getElementById('btn-find-report');
+    if (reportBtn) { reportBtn.disabled = false; reportBtn.textContent = '⚑'; }
+    document.getElementById('found-wrap').classList.add('found-visible');
+    const listEl = document.getElementById('found-list');
+    listEl.innerHTML = '<div class="no-replies" style="opacity:.5">載入中…</div>';
+    document.getElementById('found-heading').textContent = '拾瓶人的回聲';
+    const capturedId = foundBottleId;
+    fetch(API.replies + '?id=' + capturedId)
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(d) {
+        if (!d || foundBottleId !== capturedId) return;
+        findRepliesCache = d.replies || [];
+        renderReplyList(findRepliesCache, capturedId, 'found-list');
+        const total = findRepliesCache.length + findRepliesCache.reduce(function(s,r){return s+(r.sub_replies||[]).length;},0);
+        document.getElementById('found-heading').textContent =
+          total > 0 ? '拾瓶人的回聲（' + total + '）' : '拾瓶人的回聲';
+        if (!total) listEl.innerHTML = '<div class="no-replies">這個瓶子還沒有人回應。</div>';
+      })
+      .catch(function() { listEl.innerHTML = ''; });
+  } catch {
+    showMsg('find-err', '網路錯誤，請稍後再試。', 'err');
+  }
+}
+
 /* ─── Phase 1: Starfield ────────────────────────── */
 (function () {
   const c = document.getElementById('stars');
@@ -1048,6 +1278,7 @@ document.getElementById('overlay').addEventListener('click', function (e) {
 
 /* ─── URL param auto-load ───────────────────────── */
 (function () {
+  renderStash();
   const key = new URLSearchParams(location.search).get('key');
   if (!key || key.replace(/[A-Z0-9]/gi, '').length || key.length !== 6) return;
   const upper = key.toUpperCase();

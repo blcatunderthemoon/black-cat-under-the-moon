@@ -129,6 +129,13 @@
 
   <!-- ── Panel B: 撈瓶 ── -->
   <div class="panel" id="panel-random">
+
+    <!-- 緣分暫存箱 (撤瓶板) -->
+    <div id="stash-wrap-rnd" style="display:none;margin-bottom:18px">
+      <div class="stash-heading">💌 緣分暫存箱</div>
+      <div id="stash-list-rnd"></div>
+    </div>
+
     <div class="state" id="rnd-loading">
       <span class="state-icon">🌊</span>
       正在打撈漂流瓶…
@@ -158,6 +165,7 @@
         <div class="bottle-meta">
           <span id="rnd-time"></span>
           <div class="expires-hint" id="rnd-expires" style="margin-top:0;opacity:.75"></div>
+          <button id="rnd-like-btn" class="btn-like-bottle" data-bottle-id="" onclick="likeBottle(this)">♥ <span id="rnd-like-count">0</span></button>
         </div>
         <!-- Toggle: replies list + reply form unified -->
         <div id="rnd-replies-toggle" style="margin-top:16px">
@@ -236,7 +244,7 @@
           <button id="btn-find-report" class="btn-report-inline" onclick="reportBottle('find')" title="檢舉">⚑</button>
         </div>
         <div class="bottle-body" id="found-body"></div>
-        <div class="bottle-meta"><span id="found-time"></span><div class="expires-hint" id="found-expires" style="margin-top:0;opacity:.75"></div></div>
+        <div class="bottle-meta"><span id="found-time"></span><div class="expires-hint" id="found-expires" style="margin-top:0;opacity:.75"></div><button id="found-like-btn" class="btn-like-bottle" data-bottle-id="" onclick="likeBottle(this)">♥ <span id="found-like-count">0</span></button></div>
       </div>
       <div class="replies-section">
         <div class="replies-heading" id="found-heading"></div>

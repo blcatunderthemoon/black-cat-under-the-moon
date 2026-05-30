@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   try {
     const { data, error } = await supabase
       .from('replies')
-      .select('id, content, created_at, parent_reply_id')
+      .select('id, content, created_at, parent_reply_id, like_count')
       .eq('bottle_id', id)
       .eq('is_hidden', false)
       .order('created_at', { ascending: true })
@@ -31,9 +31,9 @@ export default async function handler(req, res) {
     for (const r of rows) {
       if (r.parent_reply_id) {
         if (!subMap[r.parent_reply_id]) subMap[r.parent_reply_id] = [];
-        subMap[r.parent_reply_id].push({ id: r.id, content: r.content, created_at: r.created_at });
+        subMap[r.parent_reply_id].push({ id: r.id, content: r.content, created_at: r.created_at, like_count: r.like_count || 0 });
       } else {
-        topLevel.push({ id: r.id, content: r.content, created_at: r.created_at });
+        topLevel.push({ id: r.id, content: r.content, created_at: r.created_at, like_count: r.like_count || 0 });
       }
     }
     const replies = topLevel.map(r => ({
