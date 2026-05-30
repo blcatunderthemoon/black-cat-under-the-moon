@@ -27,3 +27,9 @@ scripts/
 
 # Internal planning docs
 ritual-overhaul.md
+
+# DB schema (internal reference only)
+drift-bottle-setup.sql
+
+# Unreachable static pages (not in public/)
+promo-card.html
