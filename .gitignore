@@ -12,3 +12,12 @@ src/pages/dashboard/
 src/pages/api/dashboard/
 src/components/dashboard/
 src/styles/dashboard/
+src/lib/dashboard-fetch.js
+src/lib/intelligence.js
+src/lib/seed-data.js
+
+# Internal scripts
+scripts/
+
+# Internal planning docs
+ritual-overhaul.md
