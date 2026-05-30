@@ -1,6 +1,6 @@
 # 🌙 月光漂流瓶 × Black Cat Under The Moon — 完整系統介紹
 
-> 最後更新：2026-05-30｜版本：v4 智能引擎 + 月光漂流瓶 Phase 7（安全強化版）+ Vercel 部署修復
+> 最後更新：2026-05-30｜版本：v4 智能引擎 + 月光漂流瓶 Phase 8（巢狀回聲 + 行動端優化）
 
 ---
 
@@ -105,16 +105,18 @@ IP 爆發偵測（ip-guard）+ 速率限制
 ```
 用戶輸入回聲（max 100 字）
   ↓
-Cloudflare Turnstile 人機驗證
+Cloudflare Turnstile 人機驗證（頂層回聲；巢狀回覆跳過驗證）
   ↓
-IP 爆發偵測 + 速率限制
+IP 爆發偵測 + 速率限制（巢狀回覆跳過冷卻檢查）
   ↓
 內容過濾（content-filter）
   ↓
-已留言防護：同一瓶子同一 IP 曾回覆 → 提示跳過下一個
+已留言防護：同一瓶子同一 IP 曾回覆 → 提示跳過下一個（僅頂層）
   ↓
 寫入 Supabase `replies` 表
 ```
+
+**巢狀回覆（第二層）：** 每條頂層回聲下可新增最多一層子回覆（↩ 回覆），透過 `parent_reply_id` 關聯。子回覆不受冷卻限制、不需 Turnstile 驗證，但同樣經過內容過濾。前端每條回聲（含子回覆）均提供 ⚑ 舉報按鈕。
 
 **`replies` 表主要欄位：**
 
@@ -123,6 +125,7 @@ IP 爆發偵測 + 速率限制
 | `id` | UUID |
 | `bottle_id` | 關聯的瓶子 UUID |
 | `content` | 回聲正文 |
+| `parent_reply_id` | 父回聲 UUID（`null` 為頂層；非 `null` 為第二層子回覆）|
 | `report_count` | 累計舉報次數（≥ 3 自動隱藏）|
 | `is_hidden` | 是否被舉報隱藏 |
 
@@ -161,6 +164,8 @@ IP 爆發偵測 + 速率限制
 ```
 
 門檻 3 次：防止單一用戶惡意報復，需多人認定才隱藏。隱藏後管理員可在儀表板審核恢復。
+
+> 舉報功能同時覆蓋頂層回聲與第二層子回覆（均使用 `increment_reply_report` RPC，前端以事件委派統一處理）。
 
 ---
 
@@ -591,3 +596,43 @@ origin ('https://black-cat-under-the-moon.vercel.app').
 
 **根因：**  
 此為 Cloudflare Turnstile widget 初始化期間的 **內部通訊時序問題**，在 Turnstile iframe 完全載入前頁面發出 postMessage 導致。此警告不影響功能，屬 Cloudflare 內部已知問題，**無需在本專案修復**。
+
+---
+
+### 2026-05-30 — 巢狀回聲 UI + 行動端優化
+
+#### 功能：巢狀回覆（第二層留言）
+
+**新增功能：**
+- 每條頂層回聲新增 ↩ 回覆按鈕，點擊後展開子回覆輸入框（同時隱藏底部留言區）
+- 子回覆以縮排區塊呈現，紫色左邊線區分層級
+- 子回覆輸入框預設單行，輸入時自動撐高（`scrollHeight` 動態調整）
+- 字數計數器與送出按鈕浮於輸入框右下角內側
+- 同一時間只允許一個子回覆表單展開（切換時自動關閉其他）
+
+**DB migration（需在 Supabase 執行）：**
+```sql
+ALTER TABLE replies ADD COLUMN IF NOT EXISTS parent_reply_id UUID REFERENCES replies(id) ON DELETE CASCADE;
+CREATE INDEX IF NOT EXISTS idx_replies_parent ON replies(parent_reply_id);
+ALTER TABLE replies DROP CONSTRAINT IF EXISTS replies_bottle_id_user_id_key;
+```
+
+**Commits：**
+- `6288a70` — `fix: compact sub-reply UX, auto-expand textarea, tighter cards, report btn on nested replies, delegation for reply/report clicks, reset find-tab state on new search`
+
+---
+
+#### 功能：前端 UX 優化（行動端）
+
+**問題：**
+1. 子回覆輸入框高度過高（受全域 `textarea { padding: 11px }` 影響）
+2. 回聲留言卡片上下 padding 過大，內容少時仍佔大量空間
+3. 撈瓶頁「拋回大海」按鈕在留言展開後需大幅下滑才能觸及
+
+**修復：**
+1. 子回覆 `<textarea>` 全面覆寫 padding：`padding: 6px 46px 24px 10px`，移除繼承的 11px 頂部空間
+2. `.reply-item` 及 `.reply-subitem` padding / margin 縮減
+3. `@media (max-width: 480px)` 中：`.card { padding: 14px 16px }`，`#btn-next-wrap { position: sticky; bottom: 14px }`，確保按鈕隨時可見
+
+**Commits：**
+- `1571786` — `fix(mobile): compact subreply textarea, sticky 拋回大海 btn, tighter card padding on small screens`
