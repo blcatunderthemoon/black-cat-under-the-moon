@@ -5,6 +5,12 @@ match-cards/
 .next/
 .env
 *.local
+
+# VS Code local settings
+.vscode/
+
+# Root-level design assets (not served by Next.js; production copies belong in public/)
+*.png
 docs
 
 # Dashboard (internal use only)
