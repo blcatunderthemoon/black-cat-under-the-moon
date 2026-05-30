@@ -459,6 +459,7 @@ async function loadRandom() {
   prefetchedReplies = null;
   document.getElementById('rnd-replies-expanded').style.display = 'none';
   document.getElementById('rnd-replies-list').innerHTML = '';
+  var _tb = document.getElementById('rnd-toggle-btn'); if (_tb) _tb.style.display = 'none';
 
   try {
     const ctrl = new AbortController();
@@ -500,9 +501,14 @@ async function loadRandom() {
       mood_tag:    data.mood_tag || null,
     });
 
-    // Always show toggle; label reflects reply count
-    document.getElementById('rnd-toggle-label').textContent =
-      data.reply_count > 0 ? `💬 查看留言 (${data.reply_count})` : '💬 留下第一條留言';
+    // Show toggle button only when there are existing replies
+    var _tBtn = document.getElementById('rnd-toggle-btn');
+    if (data.reply_count > 0) {
+      document.getElementById('rnd-toggle-label').textContent = `💬 查看留言 (${data.reply_count})`;
+      if (_tBtn) { _tBtn.style.display = ''; _tBtn.style.opacity = '.6'; }
+    } else {
+      if (_tBtn) _tBtn.style.display = 'none';
+    }
 
     document.getElementById('rnd-content').style.display = 'block';
 
@@ -567,9 +573,15 @@ async function sendReply() {
     const lbl = document.getElementById('rnd-toggle-label');
     const prevNum = parseInt(lbl.textContent.match(/\d+/)?.[0] ?? '0', 10);
     lbl.textContent = '💬 收起留言 (' + (prevNum + 1) + ')';
+    // Show toggle btn + auto-expand so the new reply is immediately visible
+    var _tBtnS = document.getElementById('rnd-toggle-btn');
+    if (_tBtnS) { _tBtnS.style.display = ''; _tBtnS.style.opacity = '1'; }
+    var _expS = document.getElementById('rnd-replies-expanded');
+    if (_expS) _expS.style.display = 'block';
+    repliesOpen = true;
     const newReply = { id: 'local-' + Date.now(), content, created_at: new Date().toISOString(), sub_replies: [] };
     prefetchedReplies = prefetchedReplies ? [...prefetchedReplies, newReply] : [newReply];
-    if (repliesOpen) { renderReplyList(prefetchedReplies, currentBottleId, 'rnd-replies-list'); }
+    renderReplyList(prefetchedReplies, currentBottleId, 'rnd-replies-list');
     // 緣分暫存 — save to stash (no viewKey for random bottles)
     addToStash({
       id: currentBottleId,
@@ -607,10 +619,6 @@ async function toggleReplies() {
   }
   expanded.style.display = 'block';
   repliesOpen = true;
-  // Restore comment form in case toggleSubReplyForm hid it before user collapsed
-  var cf = document.getElementById('rnd-comment-form');
-  if (cf) cf.style.display = '';
-  list.innerHTML = '';
   if (prefetchedReplies) {
     const replies = prefetchedReplies;
     renderReplyList(replies, currentBottleId, 'rnd-replies-list');
@@ -618,7 +626,8 @@ async function toggleReplies() {
     label.textContent = '💬 收起留言 (' + total + ')';
     return;
   }
-  label.textContent = '⏳ 載入中…';
+  // Show loading indicator immediately — no blank flash
+  list.innerHTML = '<div class="no-replies" style="opacity:.55">⏳ 載入留言中…</div>';
   try {
     const res  = await fetch(API.replies + '?id=' + currentBottleId);
     const data = await res.json();

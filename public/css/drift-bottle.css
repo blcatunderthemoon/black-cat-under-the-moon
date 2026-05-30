@@ -756,13 +756,10 @@
       .msg { font-size: 14px; }
       /* Compact card padding on small screens */
       .card { padding: 14px 16px; }
-      /* Keep 拋回大海 btn reachable when sub-reply form is open */
-      #btn-next-wrap { position: sticky; bottom: 14px; z-index: 5; }
-      #btn-next-wrap::before {
-        content: ''; position: absolute; inset: -24px -24px 0 -24px;
-        background: linear-gradient(to bottom, transparent, rgba(5,9,20,.88) 55%);
-        pointer-events: none; z-index: -1;
-      }
+      /* 拋回大海 button: full-width on mobile, no sticky overlap */
+      #btn-next-wrap { position: static; }
+      #btn-next-wrap::before { display: none; }
+      #btn-next { width: 100% !important; padding: 14px 18px !important; border-radius: 14px !important; font-size: 15px; letter-spacing: .04em; }
     }
 
 /* ========== MEDIA QUERIES ========== */
