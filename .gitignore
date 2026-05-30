@@ -33,3 +33,4 @@ drift-bottle-setup.sql
 
 # Unreachable static pages (not in public/)
 promo-card.html
+src/pages/api/match.js
