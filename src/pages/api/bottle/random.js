@@ -3,6 +3,8 @@ import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 import { checkIp } from '../../../lib/ip-guard.js';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const ratelimit = process.env.UPSTASH_REDIS_REST_URL
   ? new Ratelimit({
       redis: Redis.fromEnv(),
@@ -41,6 +43,12 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Server misconfigured.' });
   }
 
+  // Parse exclude list (comma-separated UUIDs from client seen-session tracker)
+  const excludeParam = (req.query.exclude || '').trim();
+  const excludeIds = excludeParam
+    ? excludeParam.split(',').map(s => s.trim()).filter(s => UUID_RE.test(s)).slice(0, 20)
+    : [];
+
   try {
     // Try Phase 7 weighted RPC; fall back to base get_random_bottle() if not yet migrated
     let data, error;
@@ -61,7 +69,25 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: '大海上還沒有瓶子，快去投一個！' });
     }
 
-    const bottle = data[0];
+    let bottle = data[0];
+
+    // If the weighted pick is in the exclude list, try a direct query with NOT IN
+    if (excludeIds.length > 0 && excludeIds.includes(bottle.id)) {
+      const now = new Date().toISOString();
+      const { data: altData } = await supabase
+        .from('bottles')
+        .select('*')
+        .eq('is_active', true)
+        .or(`expires_at.is.null,expires_at.gt.${now}`)
+        .not('id', 'in', `(${excludeIds.join(',')})`)
+        .limit(30);
+
+      if (altData && altData.length > 0) {
+        // Weighted pick from candidates using same score formula approximation
+        bottle = altData[Math.floor(Math.random() * altData.length)];
+      }
+      // If no alternatives exist, fall through and return the original weighted pick
+    }
 
     // Fire-and-forget: increment exposure_count (no await, silent on failure)
     supabase

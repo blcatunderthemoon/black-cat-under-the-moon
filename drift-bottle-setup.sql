@@ -21,15 +21,24 @@ CREATE INDEX        IF NOT EXISTS idx_bottles_active   ON bottles(is_active) WHE
 
 -- 3. replies table
 CREATE TABLE IF NOT EXISTS replies (
-  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  bottle_id  UUID        NOT NULL REFERENCES bottles(id) ON DELETE CASCADE,
-  user_id    TEXT        NOT NULL,
-  content    TEXT        NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  UNIQUE(bottle_id, user_id)
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  bottle_id       UUID        NOT NULL REFERENCES bottles(id) ON DELETE CASCADE,
+  parent_reply_id UUID        REFERENCES replies(id) ON DELETE CASCADE,
+  user_id         TEXT        NOT NULL,
+  content         TEXT        NOT NULL,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  -- No UNIQUE(bottle_id, user_id) — multi-comment allowed; cooldown enforced by API
 );
 
 CREATE INDEX IF NOT EXISTS idx_replies_bottle_id ON replies(bottle_id);
+CREATE INDEX IF NOT EXISTS idx_replies_parent    ON replies(parent_reply_id);
+
+-- =============================================================================
+-- Migration (run once on existing DB):
+-- ALTER TABLE replies ADD COLUMN IF NOT EXISTS parent_reply_id UUID REFERENCES replies(id) ON DELETE CASCADE;
+-- CREATE INDEX IF NOT EXISTS idx_replies_parent ON replies(parent_reply_id);
+-- ALTER TABLE replies DROP CONSTRAINT IF EXISTS replies_bottle_id_user_id_key;
+-- =============================================================================
 
 -- 4. RPC: get_random_bottle() — picks one random active bottle
 CREATE OR REPLACE FUNCTION get_random_bottle()

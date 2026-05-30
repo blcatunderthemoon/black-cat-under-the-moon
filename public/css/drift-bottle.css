@@ -473,8 +473,8 @@
     .bottle-body { font-size: 17px; line-height: 2.0; color: #ffffff; font-style: normal; font-family: 'M PLUS Rounded 1c', 'Noto Sans TC', sans-serif; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; padding: 6px 0; }
     .bottle-card.mission .bottle-body { font-weight: 500; font-style: normal; }
     .bottle-meta {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-top: 14px; font-size: 11px; color: rgba(175,190,215,.85); flex-wrap: wrap; gap: 6px;
+      display: flex; align-items: center; justify-content: flex-start;
+      margin-top: 14px; font-size: 11px; color: rgba(175,190,215,.85); flex-wrap: wrap; gap: 10px;
     }
     #found-time, #rnd-time { font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif; font-size: 11px; line-height: 1.6; color: rgba(175,190,215,.82); }
     .reply-badge {
@@ -491,6 +491,7 @@
     .msg.show { display: block; }
     .msg-err { background: rgba(248,113,113,.08); border: 1px solid rgba(248,113,113,.3); color: #f87171; }
     .msg-ok  { background: rgba(0,229,255,.07);   border: 1px solid rgba(0,229,255,.25);  color: #00e5ff; }
+    .msg-cd  { background: rgba(100,120,200,.07); border: 1px solid rgba(120,140,220,.2); color: rgba(160,180,230,.8); font-size: 12px; padding: 6px 13px; margin-top: 4px; }
     #throw-err { background: transparent; border: none; font-size: 11px; padding: 2px 0; text-align: center; color: rgba(248,113,113,.8); }
 
     /* Replies */
@@ -505,11 +506,52 @@
       background: rgba(255,255,255,.025);
       border: 1px solid rgba(50,28,100,.3);
       border-left: 2px solid rgba(0,200,240,.28);
-      border-radius: 0 8px 8px 0; padding: 11px 13px; margin-bottom: 8px;
+      border-radius: 0 8px 8px 0; padding: 7px 10px; margin-bottom: 6px;
       font-size: 13px; line-height: 1.7; word-break: break-word;
     }
-    .reply-time { display: block; font-size: 10px; color: rgba(160,150,190,.65); margin-top: 5px; }
+    .reply-time { display: block; font-size: 10px; color: rgba(160,150,190,.65); margin-top: 0; margin-bottom: 4px; }
+    .reply-body { display: block; }
     .no-replies { padding: 14px 10px; color: rgba(150,160,190,.4); font-size: 11px; font-family: 'Noto Sans TC', 'PingFang TC', sans-serif; line-height: 1.8; letter-spacing: .03em; }
+
+    /* Reply actions row */
+    .reply-actions { display: flex; align-items: center; gap: 4px; margin-top: 6px; }
+    .btn-text-reply {
+      background: none; border: none; cursor: pointer;
+      font-size: 11px; color: rgba(155,170,200,.5);
+      font-family: 'Noto Sans TC', 'PingFang TC', sans-serif;
+      padding: 2px 7px; border-radius: 4px; line-height: 1;
+      transition: color .2s, background .2s;
+    }
+    .btn-text-reply:hover { color: var(--cyan); background: rgba(0,229,255,.06); }
+    .btn-report-reply {
+      background: none; border: none; cursor: pointer;
+      font-size: 13px; color: rgba(255,255,255,.15);
+      padding: 2px 5px; border-radius: 4px;
+      margin-left: auto; line-height: 1;
+      transition: color .2s;
+    }
+    .btn-report-reply:hover { color: rgba(255,100,100,.7); }
+
+    /* Sub-reply items (1-level nested) */
+    .reply-subitem {
+      background: rgba(255,255,255,.015);
+      border-left: 2px solid rgba(124,92,252,.25);
+      border-radius: 0 6px 6px 0; padding: 5px 8px; margin-top: 4px;
+      font-size: 12px; color: rgba(220,215,240,.8); line-height: 1.6; word-break: break-word;
+    }
+    .reply-subitem .reply-time { display: block; font-size: 10px; margin-top: 0; margin-bottom: 2px; }
+
+    /* Sub-reply form */
+    .subreply-form {
+      position: relative; margin-top: 8px;
+      background: rgba(255,255,255,.02);
+      border: 1px solid rgba(45,50,128,.4); border-radius: 8px;
+      padding: 6px 8px;
+    }
+    .subreply-form textarea.reply-ta { min-height: 38px; resize: none; font-size: 13px; padding-right: 46px; padding-bottom: 28px; overflow-y: hidden; }
+    .subreply-form .char-count { right: 42px; bottom: 8px; }
+    .subreply-form .btn-round-send { width: 28px; height: 28px; font-size: 12px; bottom: 7px; right: 8px; }
+    .subreply-form .msg { margin-top: 0; font-size: 11px; padding: 6px 10px; }
 
     /* Key input */
     #find-key {

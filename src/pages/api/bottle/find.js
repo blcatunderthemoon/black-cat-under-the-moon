@@ -51,7 +51,7 @@ export default async function handler(req, res) {
 
     const { data, error } = await supabase
       .from('bottles')
-      .select('*, replies(id, content, created_at)')
+      .select('*')
       .eq('view_key', upperKey)
       .eq('is_active', true)
       .single();
@@ -60,15 +60,10 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: '找不到這個瓶子，可能沉入深海了……' });
     }
 
-    // Strip sensitive fields from bottle and each reply
+    // Strip sensitive fields
     const { view_key: _vk, user_id: _uid, ...safeBottle } = data;
-    const safeReplies = (data.replies || []).map(({ id, content, created_at }) => ({
-      id,
-      content,
-      created_at,
-    }));
 
-    return res.status(200).json({ ...safeBottle, replies: safeReplies });
+    return res.status(200).json(safeBottle);
   } catch (err) {
     return res.status(500).json({ error: 'Internal server error.' });
   }

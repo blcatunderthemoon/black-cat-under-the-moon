@@ -173,7 +173,7 @@
           </div>
           <div id="rnd-replies-expanded" style="display:none;margin-top:14px">
             <div id="rnd-replies-list"></div>
-            <div style="margin-top:14px">
+            <div id="rnd-comment-form" style="margin-top:14px">
               <p style="font-size:11px;color:rgba(185,200,232,.90);margin:2px 0 10px;letter-spacing:.1em">✦ 留下你的話語</p>
               <!-- 方案二: textarea with embedded circular send button -->
               <div style="position:relative">
@@ -193,8 +193,8 @@
           </div>
         </div>
       </div>
-      <div class="msg msg-err" id="reply-err" style="margin-top:10px"></div>
-      <div class="msg msg-ok"  id="reply-ok" style="margin-top:10px"></div>
+      <div class="msg msg-err" id="reply-err"></div>
+      <div class="msg msg-ok"  id="reply-ok"></div>
       <div class="msg msg-ok"  id="report-ok" style="margin-top:10px"></div>
       <div style="margin:10px auto 0;text-align:center">
         <button class="btn btn-cyan" id="btn-next" onclick="skipBottle()" style="display:inline-flex;width:auto;padding:13px 44px">🌊 拋回大海</button>
@@ -233,6 +233,7 @@
           <div class="mission-card-badge">🐈 #召集貓隊友</div>
           <div class="moonlight-badge" id="found-moonlight">🌙 月光瓶</div>
           <span class="mood-badge" id="found-mood"></span>
+          <button id="btn-find-report" class="btn-report-inline" onclick="reportBottle('find')" title="檢舉">⚑</button>
         </div>
         <div class="bottle-body" id="found-body"></div>
         <div class="bottle-meta"><span id="found-time"></span><div class="expires-hint" id="found-expires" style="margin-top:0;opacity:.75"></div></div>
@@ -241,8 +242,26 @@
         <div class="replies-heading" id="found-heading"></div>
         <div id="found-list"></div>
       </div>
-    </div>
-  </div>
+      <!-- Reply form for 尋瓶 panel -->
+      <div id="find-comment-form" style="margin-top:14px">
+        <p style="font-size:11px;color:rgba(185,200,232,.90);margin:2px 0 10px;letter-spacing:.1em">✦ 留下你的話語</p>
+        <div style="position:relative">
+          <textarea id="find-reply-content" placeholder="寫下你想說的話，悄悄放進這只漂流瓶…" maxlength="100"
+                    style="min-height:90px;padding-bottom:30px;padding-right:56px;background:rgba(0,10,26,.5);border-color:rgba(0,140,190,.22)"></textarea>
+          <div class="char-count" id="find-reply-count">0 / 100</div>
+          <button id="btn-find-reply" onclick="sendFindReply()" class="btn-round-send"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="display:block"><path transform="rotate(-30,12,12) translate(2.6,0)" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+        </div>
+        <div class="cf-turnstile" id="find-reply-turnstile"
+             data-sitekey="0x4AAAAAADYg006rqWz6ukif"
+             data-theme="dark"
+             data-appearance="interaction-only"
+             data-size="flexible"
+             style="margin:8px 0 4px"></div>
+        <div class="msg msg-err" id="find-reply-err" style="margin-top:6px"></div>
+        <div class="msg msg-ok"  id="find-reply-ok"  style="margin-top:6px"></div>
+      </div>
+    </div><!-- /found-wrap -->
+  </div><!-- /panel-find -->
 
 </div><!-- /page -->
 

@@ -15,14 +15,33 @@ export default async function handler(req, res) {
   try {
     const { data, error } = await supabase
       .from('replies')
-      .select('id, content, created_at')
+      .select('id, content, created_at, parent_reply_id')
       .eq('bottle_id', id)
       .eq('is_hidden', false)
       .order('created_at', { ascending: true })
-      .limit(50);
+      .limit(100);
 
     if (error) return res.status(500).json({ error: error.message });
-    return res.status(200).json({ replies: data || [] });
+
+    const rows = data || [];
+
+    // Build one-level tree: top-level replies get a sub_replies array
+    const topLevel = [];
+    const subMap = {};
+    for (const r of rows) {
+      if (r.parent_reply_id) {
+        if (!subMap[r.parent_reply_id]) subMap[r.parent_reply_id] = [];
+        subMap[r.parent_reply_id].push({ id: r.id, content: r.content, created_at: r.created_at });
+      } else {
+        topLevel.push({ id: r.id, content: r.content, created_at: r.created_at });
+      }
+    }
+    const replies = topLevel.map(r => ({
+      ...r,
+      sub_replies: subMap[r.id] || [],
+    }));
+
+    return res.status(200).json({ replies });
   } catch (err) {
     return res.status(500).json({ error: 'Internal server error.' });
   }

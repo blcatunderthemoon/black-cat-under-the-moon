@@ -49,17 +49,51 @@ export default async function handler(req, res) {
 
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
-    const { bottle_id, content, user_id, turnstile_token } = body;
+    const { bottle_id, content, user_id, turnstile_token, parent_reply_id } = body;
 
-    // Human verification
-    const ts = await verifyTurnstile(turnstile_token, ip);
-    if (!ts.success) {
-      return res.status(403).json({ error: '人機驗證失敗，請重新整理頁面後再試。' });
-    }
-
+    // Validate bottle_id first (needed for cooldown check and parent validation)
     if (!bottle_id || typeof bottle_id !== 'string' || !UUID_RE.test(bottle_id)) {
       return res.status(400).json({ error: '無效的瓶子 ID。' });
     }
+    if (!user_id || typeof user_id !== 'string') {
+      return res.status(400).json({ error: '缺少用戶標識。' });
+    }
+
+    const isSubReply = !!parent_reply_id;
+
+    // Human verification — required for top-level comments, skipped for sub-replies
+    if (!isSubReply) {
+      const ts = await verifyTurnstile(turnstile_token, ip);
+      if (!ts.success) {
+        return res.status(403).json({ error: '人機驗證失敗，請重新整理頁面後再試。' });
+      }
+    }
+
+    // Validate parent_reply_id (sub-reply case)
+    if (isSubReply) {
+      if (typeof parent_reply_id !== 'string' || !UUID_RE.test(parent_reply_id)) {
+        return res.status(400).json({ error: '無效的回覆 ID。' });
+      }
+      // Parent must exist in the same bottle, be visible, and be top-level (no further nesting)
+      const { data: parent, error: pErr } = await supabase
+        .from('replies')
+        .select('id, bottle_id, parent_reply_id, is_hidden')
+        .eq('id', parent_reply_id)
+        .single();
+      if (pErr || !parent) {
+        return res.status(400).json({ error: '找不到要回覆的留言。' });
+      }
+      if (parent.bottle_id !== bottle_id) {
+        return res.status(400).json({ error: '留言不屬於此瓶子。' });
+      }
+      if (parent.is_hidden) {
+        return res.status(400).json({ error: '無法回覆已隱藏的留言。' });
+      }
+      if (parent.parent_reply_id !== null) {
+        return res.status(400).json({ error: '只能回覆頂層留言，不能再深一層。' });
+      }
+    }
+
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
       return res.status(400).json({ error: '留言不能為空。' });
     }
@@ -72,21 +106,35 @@ export default async function handler(req, res) {
     if (crisis)  return res.status(451).json({ error: 'crisis' });
     if (blocked) return res.status(400).json({ error: '內容包含不當字眼，無法發送。' });
 
-    if (!user_id || typeof user_id !== 'string') {
-      return res.status(400).json({ error: '缺少用戶標識。' });
+    // Cooldown check (30s per user per bottle, top-level only)
+    const safeUserId = String(user_id).slice(0, 64);
+    if (!isSubReply) {
+      const { data: lastReply } = await supabase
+        .from('replies')
+        .select('created_at')
+        .eq('bottle_id', bottle_id)
+        .eq('user_id', safeUserId)
+        .is('parent_reply_id', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (lastReply) {
+        const elapsed = Date.now() - new Date(lastReply.created_at).getTime();
+        const wait = Math.ceil((30000 - elapsed) / 1000);
+        if (wait > 0) {
+          return res.status(429).json({ error: `請等待 ${wait} 秒後再留言。`, wait });
+        }
+      }
     }
 
     const { error } = await supabase.from('replies').insert({
       bottle_id,
-      content: content.trim(),
-      user_id:  String(user_id).slice(0, 64),
+      content:         content.trim(),
+      user_id:         safeUserId,
+      parent_reply_id: isSubReply ? parent_reply_id : null,
     });
 
     if (error) {
-      // Unique constraint violation — already replied to this bottle
-      if (error.code === '23505') {
-        return res.status(409).json({ error: '你已經留過言了。' });
-      }
       return res.status(500).json({ error: error.message });
     }
 
