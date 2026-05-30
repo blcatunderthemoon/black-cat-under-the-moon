@@ -661,13 +661,13 @@ function renderReplyList(replies, bottleId, listElId) {
       const subLikeBtn = isLocalSub ? '' :
         '<button class="btn-like-reply' + (subLiked ? ' liked' : '') + '" data-rid="' + s.id + '"'
         + (subLiked ? ' disabled' : '') + '>♥ <span>' + (s.like_count || 0) + '</span></button>';
-      return '<div class="reply-subitem">'
+            return '<div class="reply-subitem">'
         + '<div class="reply-header">'
         + '<span class="reply-time">' + fmtDate(s.created_at) + '</span>'
         + subReport
         + '</div>'
         + '<span class="reply-body">' + esc(s.content) + '</span>'
-        + (isLocalSub ? '' : '<div class="reply-actions">' + subLikeBtn + '</div>')
+        + (isLocalSub ? '' : '<div class="reply-actions"><div class="reply-actions-left"></div>' + subLikeBtn + '</div>')
         + '</div>';
     }).join('');
     const subForm = isLocal ? '' :
@@ -692,13 +692,13 @@ function renderReplyList(replies, bottleId, listElId) {
     const reportBtn = isLocal ? '' :
       '<button class="btn-report-reply"'
       + ' data-rid="' + r.id + '" title="檢舉留言">⚑</button>';
-    return '<div class="reply-item" id="reply-' + r.id + '">'
+        return '<div class="reply-item" id="reply-' + r.id + '">'
       + '<div class="reply-header">'
       + '<span class="reply-time">' + fmtDate(r.created_at) + '</span>'
       + reportBtn
       + '</div>'
       + '<span class="reply-body">' + esc(r.content) + '</span>'
-      + '<div class="reply-actions">' + replyBtn + likeBtn + '</div>'
+      + '<div class="reply-actions"><div class="reply-actions-left">' + replyBtn + '</div>' + likeBtn + '</div>'
       + subs
       + subForm
       + '</div>';

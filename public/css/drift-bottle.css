@@ -31,10 +31,34 @@
     body[data-tab="random"] { --panel-accent: var(--cyan); }
     body[data-tab="find"]   { --panel-accent: #ffd700; }
 
-        /* Stars */
+            /* Stars & Particles */
     .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
-    .star  { position: absolute; border-radius: 50%; background: #fff; animation: twinkle var(--d,3s) infinite ease-in-out; opacity: 0; }
-    @keyframes twinkle { 0%,100%{opacity:0;transform:scale(.8)} 50%{opacity:var(--op,.6);transform:scale(1.1)} }
+    .star {
+      position: absolute; border-radius: 50%;
+      animation:
+        starTwinkle var(--dur, 3s) var(--delay, 0s) infinite ease-in-out,
+        starDrift   var(--drift-dur, 12s) var(--drift-delay, 0s) infinite ease-in-out alternate;
+      opacity: 0;
+    }
+    @keyframes starTwinkle {
+      0%, 100% { opacity: 0; transform: scale(.8); }
+      50%       { opacity: var(--b, .5); transform: scale(1.1); }
+    }
+    @keyframes starDrift {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(var(--drift-x, 2px)); }
+    }
+    .particle {
+      position: absolute; border-radius: 50%; pointer-events: none;
+      animation: particleRise var(--p-dur, 10s) var(--p-delay, 0s) infinite linear;
+      opacity: 0;
+    }
+    @keyframes particleRise {
+      0%   { transform: translateY(0) translateX(0); opacity: 0; }
+      10%  { opacity: var(--p-opacity, .12); }
+      90%  { opacity: var(--p-opacity, .12); }
+      100% { transform: translateY(calc(var(--p-rise, 120px) * -1)) translateX(var(--p-sway, 0px)); opacity: 0; }
+    }
 
     /* Phase 1: Sea shimmer */
     .sea-shimmer {
@@ -513,8 +537,13 @@
     .reply-body { display: block; }
     .no-replies { padding: 14px 10px; color: rgba(150,160,190,.4); font-size: 11px; font-family: 'Noto Sans TC', 'PingFang TC', sans-serif; line-height: 1.8; letter-spacing: .03em; }
 
-    /* Reply actions row */
-    .reply-actions { display: flex; align-items: center; gap: 4px; margin-top: 6px; }
+        /* Reply actions row */
+  .reply-actions {
+        display: flex; align-items: center;
+        justify-content: flex-start;
+        gap: 0; margin-top: 6px;
+  }
+  .reply-actions-left { display: flex; align-items: center; gap: 12px; }
     .btn-text-reply {
       background: none; border: none; cursor: pointer;
       font-size: 11px; color: rgba(155,170,200,.5);
@@ -531,12 +560,15 @@
     }
     .btn-report-reply:hover { color: rgba(255,100,100,.7); }
 
-    /* Sub-reply items (1-level nested) */
+        /* Sub-reply items (1-level nested) */
     .reply-subitem {
-      background: rgba(255,255,255,.015);
-      border-left: 2px solid rgba(124,92,252,.25);
-      border-radius: 0 6px 6px 0; padding: 5px 8px 5px 8px; margin-top: 4px;
-      font-size: 12px; color: rgba(220,215,240,.8); line-height: 1.6; word-break: break-word;
+      background: rgba(0,0,0,.18);
+      border-left: 2px solid rgba(124,92,252,.38);
+      border-radius: 0 6px 6px 0;
+      padding: 5px 10px 5px 12px;
+      margin-top: 4px;
+      margin-left: 10px;
+      font-size: 12px; color: rgba(210,205,232,.78); line-height: 1.6; word-break: break-word;
       position: relative;
     }
     .reply-subitem .reply-time { display: block; font-size: 10px; margin-top: 0; margin-bottom: 2px; }
@@ -716,15 +748,23 @@
     }
     .btn-like-bottle:hover:not(:disabled) { color: var(--pink); background: rgba(255,107,157,.08); }
     .btn-like-bottle.liked, .btn-like-bottle:disabled { color: var(--pink); cursor: default; opacity: .75; }
-    .btn-like-reply {
-      background: none; border: none; cursor: pointer;
-      font-size: 12px; color: rgba(255,160,160,.5); padding: 2px 6px;
-      border-radius: 12px; line-height: 1; transition: color .2s, background .2s;
-      font-family: 'Noto Sans TC', 'PingFang TC', sans-serif;
-      display: inline-flex; align-items: center; gap: 4px;
-    }
-    .btn-like-reply:hover:not(:disabled) { color: var(--pink); background: rgba(255,107,157,.08); }
-    .btn-like-reply.liked, .btn-like-reply:disabled { color: var(--pink); cursor: default; opacity: .75; }
+          .btn-like-reply {
+    background: none; border: none; cursor: pointer;
+    font-size: 12px;
+    color: rgba(255,130,170,.78);
+    text-shadow: 0 0 5px rgba(255,107,157,.28);
+    padding: 2px 4px;
+    border-radius: 12px; line-height: 1; transition: color .2s, background .2s, text-shadow .2s;
+    font-family: 'Noto Sans TC', 'PingFang TC', sans-serif;
+    display: inline-flex; align-items: center; gap: 4px;
+    flex-shrink: 0;
+  }
+  .btn-like-reply:hover:not(:disabled) {
+    color: var(--pink);
+    background: rgba(255,107,157,.08);
+    text-shadow: 0 0 10px rgba(255,107,157,.6);
+  }
+  .btn-like-reply.liked, .btn-like-reply:disabled { color: var(--pink); cursor: default; opacity: .9; text-shadow: 0 0 8px rgba(255,107,157,.55); }
 
     .btn-report-confirm {
       width: 100%; background: rgba(255,107,157,.12); border: 1px solid rgba(255,107,157,.4);
