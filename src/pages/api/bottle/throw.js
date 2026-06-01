@@ -56,7 +56,7 @@ export default async function handler(req, res) {
 
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
-    const { content, mood_tag, user_id, is_mission_bottle, turnstile_token } = body;
+    const { content, mood_tag, mood_tags, user_id, is_mission_bottle, turnstile_token } = body;
     const missionBottle = is_mission_bottle === true;
 
     // Human verification (Cloudflare Turnstile — bypassed if CF_TURNSTILE_SECRET not set)
@@ -77,7 +77,17 @@ export default async function handler(req, res) {
     if (crisis)   return res.status(451).json({ error: 'crisis' });
     if (blocked)  return res.status(400).json({ error: '內容包含不當字眼，無法發送。' });
 
-    if (mood_tag && String(mood_tag).length > 50) {
+    let normalizedTags = [];
+    if (Array.isArray(mood_tags)) {
+      normalizedTags = Array.from(new Set(
+        mood_tags
+          .map(t => String(t || '').trim())
+          .filter(Boolean)
+      )).slice(0, 3);
+    } else if (mood_tag) {
+      normalizedTags = [String(mood_tag).trim()];
+    }
+    if (normalizedTags.some(t => t.length > 50)) {
       return res.status(400).json({ error: '心情標籤不能超過 50 字。' });
     }
 
@@ -102,7 +112,8 @@ export default async function handler(req, res) {
     const { error } = await supabase.from('bottles').insert({
       view_key,
       content:           content.trim(),
-      mood_tag:          mood_tag ? String(mood_tag).trim() : null,
+      mood_tag:          normalizedTags[0] || null,
+      tags:              normalizedTags,
       user_id:           user_id  ? String(user_id).slice(0, 64) : null,
       is_mission_bottle: missionBottle,
     });

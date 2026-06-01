@@ -8,6 +8,7 @@ const API = {
   replies: '/api/bottle/replies',
   like:    '/api/bottle/like',
   peek:    '/api/bottle/peek',
+  topic:   '/api/bottle/topic',
 };
 
 /* ─── Anonymous user ID ─────────────────────────── */
@@ -76,6 +77,8 @@ function clearSeenSession() {
 
 /* ─── Phase 2: Tabs with atmosphere shift ────────── */
 let randomLoaded = false;
+// Active topic tag filter (set by topic banner click for official-type topics)
+let _topicTag = null;
 document.querySelectorAll('.tab').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach(b => {
@@ -165,37 +168,105 @@ document.addEventListener('input', function(e) {
 })();
 
 /* ─── Phase 4+5: Wizard state ───────────────────── */
-let selectedMood = '';
+const MAX_MOOD_TAGS = 3;
+let selectedMoods = [];
 let isMission    = false;
 let throwContent = '';
 let currentStep  = 1;
+let _preferNewOnNextRandom = false;
 
 /* Phase 4: Mood chips */
+function normMoodTag(v) {
+  return String(v || '').trim().slice(0, 20);
+}
+function updateMoodSelectedCount() {
+  const el = document.getElementById('mood-selected-count');
+  if (el) el.textContent = '已選 ' + selectedMoods.length + ' / ' + MAX_MOOD_TAGS;
+}
+function addMoodTag(tag) {
+  const mood = normMoodTag(tag);
+  if (!mood) return false;
+  if (selectedMoods.includes(mood)) return true;
+  if (selectedMoods.length >= MAX_MOOD_TAGS) return false;
+  selectedMoods.push(mood);
+  return true;
+}
+function removeMoodTag(tag) {
+  selectedMoods = selectedMoods.filter(m => m !== tag);
+}
+function removeCustomTagChips() {
+  document.querySelectorAll('.chip.chip-custom-added').forEach(el => el.remove());
+}
+function syncMoodChipUI() {
+  const atLimit = selectedMoods.length >= MAX_MOOD_TAGS;
+  document.querySelectorAll('.chip').forEach(chip => {
+    const isCustomPicker = chip.classList.contains('chip-custom');
+    const isSelected = selectedMoods.includes(chip.dataset.mood);
+    if (!isCustomPicker) chip.classList.toggle('chip-selected', isSelected);
+    chip.classList.toggle('chip-disabled', atLimit && !isSelected);
+  });
+  removeCustomTagChips();
+  const picker = document.querySelector('.chip.chip-custom');
+  const wrap = document.getElementById('mood-chips');
+  if (picker && wrap) {
+    selectedMoods.forEach(mood => {
+      const exists = Array.from(wrap.querySelectorAll('.chip:not(.chip-custom):not(.chip-custom-added)'))
+        .some(c => c.dataset.mood === mood);
+      if (exists) return;
+      const chip = document.createElement('div');
+      chip.className = 'chip chip-selected chip-custom-added';
+      chip.dataset.mood = mood;
+      chip.textContent = mood + ' ×';
+      chip.addEventListener('click', function () {
+        removeMoodTag(mood);
+        syncMoodChipUI();
+        updateMoodSelectedCount();
+      });
+      wrap.insertBefore(chip, picker);
+    });
+  }
+}
+
 document.querySelectorAll('.chip').forEach(chip => {
   chip.addEventListener('click', function () {
     const isCustom = this.classList.contains('chip-custom');
-    const input    = document.getElementById('chip-custom-input');
-    if (this.classList.contains('chip-selected') && !isCustom) {
-      this.classList.remove('chip-selected');
-      selectedMood = '';
+    const input = document.getElementById('chip-custom-input');
+    if (isCustom) {
+      input.classList.toggle('show');
+      if (input.classList.contains('show')) input.focus();
       return;
     }
-    document.querySelectorAll('.chip').forEach(c => c.classList.remove('chip-selected'));
-    this.classList.add('chip-selected');
-    if (isCustom) {
-      input.classList.add('show');
-      input.focus();
-      selectedMood = input.value.trim();
-    } else {
-      input.classList.remove('show');
-      selectedMood = this.dataset.mood;
+    // Hide the custom input box when switching to a regular chip
+    input.classList.remove('show');
+    const mood = this.dataset.mood;
+    if (selectedMoods.includes(mood)) {
+      removeMoodTag(mood);
+    } else if (!addMoodTag(mood)) {
+      showMsg('throw-err', '最多只可同時選 3 個標籤。', 'err');
     }
+    syncMoodChipUI();
+    updateMoodSelectedCount();
   });
 });
+
 document.getElementById('chip-custom-input').addEventListener('input', function () {
   if (this.value.length > 20) this.value = this.value.slice(0, 20);
-  selectedMood = this.value.trim();
 });
+document.getElementById('chip-custom-input').addEventListener('keydown', function (e) {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  const mood = normMoodTag(this.value);
+  if (!mood) return;
+  if (!addMoodTag(mood)) {
+    showMsg('throw-err', '最多只可同時選 3 個標籤。', 'err');
+    return;
+  }
+  this.value = '';
+  this.classList.remove('show');
+  syncMoodChipUI();
+  updateMoodSelectedCount();
+});
+updateMoodSelectedCount();
 
 /* Phase 8: Mission toggle */
 let _missionHintTimer = null;
@@ -231,8 +302,8 @@ function goStep(n) {
     document.getElementById('wp-content').textContent = throwContent;
     const moodEl    = document.getElementById('wp-mood');
     const missionEl = document.getElementById('wp-mission');
-    moodEl.textContent   = selectedMood ? '心情：' + selectedMood : '';
-    moodEl.style.display = selectedMood ? '' : 'none';
+    moodEl.textContent   = selectedMoods.length ? '心情：' + selectedMoods.join(' · ') : '';
+    moodEl.style.display = selectedMoods.length ? '' : 'none';
     missionEl.style.display = isMission ? '' : 'none';
   }
   currentStep = n;
@@ -311,8 +382,13 @@ function renderBottleCard(data, ids) {
   if (moonEl) moonEl.classList.toggle('show', data.bottle_type === 'moonlight');
 
   const moodEl = document.getElementById(ids.mood);
-  moodEl.textContent   = data.mood_tag || '';
-  moodEl.style.display = data.mood_tag ? '' : 'none';
+  const moodTags = Array.isArray(data.tags) && data.tags.length
+    ? data.tags
+    : (data.mood_tag ? [data.mood_tag] : []);
+  moodEl.innerHTML = moodTags.map(t =>
+    '<span class="mood-pill">' + esc(t) + '</span>'
+  ).join('');
+  moodEl.style.display = moodTags.length ? '' : 'none';
 
   document.getElementById(ids.body).textContent = data.content;
   if (ids.time) document.getElementById(ids.time).textContent = fmtDate(data.created_at);
@@ -385,7 +461,8 @@ async function throwBottle() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         content:           throwContent,
-        mood_tag:          selectedMood || null,
+        mood_tag:          selectedMoods[0] || null,
+        mood_tags:         selectedMoods,
         user_id:           uid(),
         is_mission_bottle: isMission,
         turnstile_token:   (window.turnstile?.getResponse('#throw-turnstile') ?? '') || '',
@@ -395,7 +472,8 @@ async function throwBottle() {
     if (res.status === 451) { showCrisisBanner(); return; }
     if (!res.ok) { showMsg('throw-err', data.error || '發生錯誤，請重試。', 'err'); return; }
     window.posthog?.capture('bottle_thrown', {
-      mood_tag:       selectedMood || null,
+      mood_tag:       selectedMoods[0] || null,
+      mood_tags:      selectedMoods,
       is_mission:     isMission,
       content_length: (throwContent || '').trim().length,
     });
@@ -404,10 +482,13 @@ async function throwBottle() {
     document.getElementById('throw-content').value = '';
     document.getElementById('throw-count').textContent = '0 / 200';
     document.querySelectorAll('.chip').forEach(c => c.classList.remove('chip-selected'));
+    removeCustomTagChips();
     document.getElementById('chip-custom-input').classList.remove('show');
     document.getElementById('chip-custom-input').value = '';
     if (isMission) toggleMission();
-    selectedMood = ''; throwContent = '';
+    selectedMoods = [];
+    updateMoodSelectedCount();
+    throwContent = '';
 
     currentKey = data.view_key;
     document.getElementById('ov-key').textContent = data.view_key;
@@ -465,8 +546,11 @@ async function loadRandom() {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 8000);
     const seen = getSeenSession();
-    const url  = seen.length ? API.random + '?exclude=' + seen.join(',') : API.random;
+    let url = _topicTag ? API.random + '?tag=' + encodeURIComponent(_topicTag) : API.random;
+    if (_preferNewOnNextRandom) url += (url.includes('?') ? '&' : '?') + 'prefer_new=1';
+    if (seen.length) url += (url.includes('?') ? '&' : '?') + 'exclude=' + seen.join(',');
     const res  = await fetch(url, { signal: ctrl.signal });
+    _preferNewOnNextRandom = false;
     clearTimeout(timer);
     const data = await res.json();
 
@@ -945,6 +1029,7 @@ function closeCrisisBanner() {
 
 /* ─── Panel B: Report bottle ─────────────────────── */function skipBottle() {
   window.posthog?.capture('bottle_skipped');
+  _preferNewOnNextRandom = true;
   loadRandom();
 }
 async function reportBottle(panel) {
@@ -1236,6 +1321,87 @@ async function loadBottleById(id) {
     showMsg('find-err', '網路錯誤，請稍後再試。', 'err');
   }
 }
+
+/* ─── Topic Banner ──────────────────────────────── */
+(function () {
+  /** Render the topic banner given a config object from /api/bottle/topic */
+  function renderTopicBanner(cfg) {
+    const banner = document.getElementById('topic-banner');
+    if (!banner || !cfg || !cfg.active) return;
+
+    // Set type-specific class + icon
+    banner.classList.remove('type-official', 'type-featured');
+    banner.classList.add(cfg.type === 'featured' ? 'type-featured' : 'type-official');
+
+    const icon = cfg.type === 'featured' ? '⭐' : '🌙';
+    document.getElementById('topic-banner-icon').textContent = icon;
+
+    // Label prefix (styled separately)
+    const prefix = cfg.type === 'featured' ? '精選漂流瓶' : '今日話題';
+    document.getElementById('topic-banner-label').textContent = prefix;
+    document.getElementById('topic-banner-body').textContent = cfg.text;
+
+    // Reply / response count badge
+    const countEl = document.getElementById('topic-banner-count');
+    if (cfg.count != null && cfg.count > 0) {
+      countEl.textContent = cfg.count + ' 則回應';
+      countEl.style.display = '';
+    } else {
+      countEl.style.display = 'none';
+    }
+
+    // Click handler — switches to appropriate panel
+    banner.addEventListener('click', function handleBannerClick() {
+      if (cfg.type === 'official' && cfg.tag) {
+        // Switch to 撈瓶 panel with tag filter active
+        _topicTag = cfg.tag;
+        clearSeenSession();
+        randomLoaded = false;
+        document.querySelectorAll('.tab').forEach(function (b) {
+          b.classList.remove('active');
+          b.setAttribute('aria-selected', 'false');
+        });
+        document.querySelectorAll('.panel').forEach(function (p) { p.classList.remove('active'); });
+        const rndTab = document.querySelector('.tab[data-panel="random"]');
+        if (rndTab) { rndTab.classList.add('active'); rndTab.setAttribute('aria-selected', 'true'); }
+        document.getElementById('panel-random').classList.add('active');
+        document.body.dataset.tab = 'random';
+        randomLoaded = true;
+        loadRandom();
+      } else if (cfg.type === 'featured' && cfg.bottleId) {
+        // Switch to 尋瓶 panel and load the featured bottle
+        _topicTag = null;
+        document.querySelectorAll('.tab').forEach(function (b) {
+          b.classList.remove('active');
+          b.setAttribute('aria-selected', 'false');
+        });
+        document.querySelectorAll('.panel').forEach(function (p) { p.classList.remove('active'); });
+        const findTab = document.querySelector('.tab[data-panel="find"]');
+        if (findTab) { findTab.classList.add('active'); findTab.setAttribute('aria-selected', 'true'); }
+        document.getElementById('panel-find').classList.add('active');
+        document.body.dataset.tab = 'find';
+        loadBottleById(cfg.bottleId);
+      }
+    }, { once: false });
+
+    // Show banner
+    banner.style.display = '';
+  }
+
+  /** Fetch topic config from API and render if active */
+  async function loadTopic() {
+    try {
+      const res = await fetch(API.topic, { cache: 'no-cache' });
+      if (!res.ok) return;
+      const cfg = await res.json();
+      renderTopicBanner(cfg);
+    } catch {
+      // Topic banner is non-critical; fail silently
+    }
+  }
+
+  loadTopic();
+})();
 
 /* ─── Phase 1: Starfield ────────────────────────── */
 (function () {

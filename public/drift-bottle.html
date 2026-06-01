@@ -41,6 +41,18 @@
     </div>
   </header>
 
+  <!-- Topic Banner (hidden until JS loads config) -->
+  <div id="topic-banner" class="topic-banner" style="display:none" role="complementary" aria-label="置頂話題">
+    <div class="topic-banner-inner">
+      <span class="topic-banner-icon" id="topic-banner-icon">🌙</span>
+      <span class="topic-banner-text" id="topic-banner-text">
+        <span class="topic-banner-label" id="topic-banner-label"></span><span class="topic-banner-body" id="topic-banner-body"></span>
+      </span>
+      <span class="topic-banner-count" id="topic-banner-count" style="display:none"></span>
+      <span class="topic-banner-arrow">›</span>
+    </div>
+  </div>
+
   <!-- Phase 2: Tab bar -->
   <div class="tabs" role="tablist">
     <button class="tab active" data-panel="throw"  role="tab" aria-selected="true">🌙 投瓶</button>
@@ -93,10 +105,21 @@
           <div class="chip" data-mood="🫧 快樂不起來">🫧 快樂不起來</div>
           <div class="chip" data-mood="🕯️ 有點想念誰">🕯️ 有點想念誰</div>
           <div class="chip" data-mood="🌊 漂浮感">🌊 漂浮感</div>
+          <div class="chip" data-mood="😵 壓力爆煲">😵 壓力爆煲</div>
+          <div class="chip" data-mood="🥺 需要陪伴">🥺 需要陪伴</div>
+          <div class="chip" data-mood="😶‍🌫️ 好迷惘">😶‍🌫️ 好迷惘</div>
+          <div class="chip" data-mood="🔥 情緒好滿">🔥 情緒好滿</div>
+          <div class="chip" data-mood="🧠 想太多">🧠 想太多</div>
+          <div class="chip" data-mood="💔 關係卡關">💔 關係卡關</div>
+          <div class="chip" data-mood="🫠 社交電量低">🫠 社交電量低</div>
+          <div class="chip" data-mood="📚 學業/工作煩惱">📚 學業/工作煩惱</div>
+          <div class="chip" data-mood="🌱 想重新開始">🌱 想重新開始</div>
+          <div class="chip" data-mood="✨ 有少少希望">✨ 有少少希望</div>
           <div class="chip chip-custom" data-mood="">✏️ 自定義…</div>
         </div>
         <input class="chip-custom-input" id="chip-custom-input"
-          placeholder="輸入你的心情…" maxlength="20">
+          placeholder="輸入自定義標籤後按 Enter（最多 3 個）" maxlength="20">
+        <div style="font-size:12px;color:rgba(185,200,232,.78);margin-top:8px" id="mood-selected-count">已選 0 / 3</div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:14px">
           <button class="btn-text" onclick="goStep(1)">← 返回</button>
           <button class="btn btn-purple" style="width:auto;padding:13px 32px;margin-left:auto" onclick="goStep(3)">繼續 →</button>

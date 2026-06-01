@@ -49,7 +49,79 @@ export default async function handler(req, res) {
     ? excludeParam.split(',').map(s => s.trim()).filter(s => UUID_RE.test(s)).slice(0, 20)
     : [];
 
+  // Optional mood-tag filter (set when topic banner is active)
+  const tagFilter = typeof req.query.tag === 'string' ? req.query.tag.slice(0, 40) : null;
+  const preferNew = req.query.prefer_new === '1';
+
   try {
+    const now = new Date().toISOString();
+    const recentIso = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+
+    async function finalizeBottle(bottle) {
+      // Fire-and-forget: increment exposure_count (no await, silent on failure)
+      supabase
+        .from('bottles')
+        .update({ exposure_count: (bottle.exposure_count ?? 0) + 1 })
+        .eq('id', bottle.id)
+        .then(() => {}).catch(() => {});
+
+      const { count } = await supabase
+        .from('replies')
+        .select('id', { count: 'exact', head: true })
+        .eq('bottle_id', bottle.id);
+
+      const { view_key: _vk, user_id: _uid, ...safeBottle } = bottle;
+      return res.status(200).json({ ...safeBottle, reply_count: count ?? 0 });
+    }
+
+    async function pickRecentBottle() {
+      let q = supabase
+        .from('bottles')
+        .select('*')
+        .eq('is_active', true)
+        .or(`expires_at.is.null,expires_at.gt.${now}`)
+        .gte('created_at', recentIso)
+        .order('created_at', { ascending: false })
+        .limit(24);
+      if (tagFilter) q = q.eq('mood_tag', tagFilter);
+      if (excludeIds.length > 0) q = q.not('id', 'in', `(${excludeIds.join(',')})`);
+      const { data: recentData, error: recentError } = await q;
+      if (recentError) return null;
+      if (!recentData || recentData.length === 0) return null;
+      const pool = recentData.slice(0, Math.min(10, recentData.length));
+      return pool[Math.floor(Math.random() * pool.length)] || null;
+    }
+
+    // If a tag filter is requested, bypass the RPC and do a direct filtered query
+    if (tagFilter) {
+      if (preferNew) {
+        const recent = await pickRecentBottle();
+        if (recent) return finalizeBottle(recent);
+      }
+      let q = supabase
+        .from('bottles')
+        .select('*')
+        .eq('is_active', true)
+        .eq('mood_tag', tagFilter)
+        .or(`expires_at.is.null,expires_at.gt.${now}`)
+        .limit(50);
+      if (excludeIds.length > 0) {
+        q = q.not('id', 'in', `(${excludeIds.join(',')})`);
+      }
+      const { data: tagData, error: tagError } = await q;
+      if (tagError) return res.status(500).json({ error: tagError.message });
+      if (!tagData || tagData.length === 0) {
+        return res.status(404).json({ error: '這個話題還沒有漂流瓶，快去投一個！' });
+      }
+      const bottle = tagData[Math.floor(Math.random() * tagData.length)];
+      return finalizeBottle(bottle);
+    }
+
+    if (preferNew) {
+      const recent = await pickRecentBottle();
+      if (recent) return finalizeBottle(recent);
+    }
+
     // Try Phase 7 weighted RPC; fall back to base get_random_bottle() if not yet migrated
     let data, error;
     const weighted = await supabase.rpc('get_weighted_bottle');
@@ -73,7 +145,6 @@ export default async function handler(req, res) {
 
     // If the weighted pick is in the exclude list, try a direct query with NOT IN
     if (excludeIds.length > 0 && excludeIds.includes(bottle.id)) {
-      const now = new Date().toISOString();
       const { data: altData } = await supabase
         .from('bottles')
         .select('*')
@@ -88,24 +159,7 @@ export default async function handler(req, res) {
       }
       // If no alternatives exist, fall through and return the original weighted pick
     }
-
-    // Fire-and-forget: increment exposure_count (no await, silent on failure)
-    supabase
-      .from('bottles')
-      .update({ exposure_count: (bottle.exposure_count ?? 0) + 1 })
-      .eq('id', bottle.id)
-      .then(() => {}).catch(() => {});
-
-    // Fetch reply count without loading all reply rows
-    const { count } = await supabase
-      .from('replies')
-      .select('id', { count: 'exact', head: true })
-      .eq('bottle_id', bottle.id);
-
-    // Strip view_key and user_id — never expose to the public
-    const { view_key: _vk, user_id: _uid, ...safeBottle } = bottle;
-
-    return res.status(200).json({ ...safeBottle, reply_count: count ?? 0 });
+    return finalizeBottle(bottle);
   } catch (err) {
     return res.status(500).json({ error: 'Internal server error.' });
   }
