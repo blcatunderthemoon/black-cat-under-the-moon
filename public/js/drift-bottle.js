@@ -1256,6 +1256,11 @@ function renderStashInto(wrapId, listId) {
 function renderStash() {
   renderStashInto('stash-wrap-rnd', 'stash-list-rnd');
 }
+function toggleStash() {
+  var wrap = document.getElementById('stash-wrap-rnd');
+  if (!wrap) return;
+  wrap.classList.toggle('stash-collapsed');
+}
 function loadStashBottle(index) {
   const entry = getStash()[index];
   if (!entry) return;

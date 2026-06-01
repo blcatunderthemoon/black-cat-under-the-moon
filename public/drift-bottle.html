@@ -155,7 +155,11 @@
 
     <!-- 緣分暫存箱 (撤瓶板) -->
     <div id="stash-wrap-rnd" style="display:none;margin-bottom:18px">
-      <div class="stash-heading">💌 緣分暫存箱</div>
+      <div class="stash-heading stash-heading-toggle" id="stash-toggle-rnd"
+           onclick="toggleStash()" role="button" tabindex="0"
+           onkeydown="if(event.key==='Enter'||event.key===' ')toggleStash()">
+        💌 緣分暫存箱 <span class="stash-arrow" id="stash-arrow-rnd">▾</span>
+      </div>
       <div id="stash-list-rnd"></div>
     </div>
 

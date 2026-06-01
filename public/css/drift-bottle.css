@@ -616,6 +616,26 @@
       border-left: 2px solid rgba(124,92,252,.55);
       line-height: 1;
     }
+    .stash-heading-toggle {
+      cursor: pointer; user-select: none;
+      display: flex; align-items: center; justify-content: space-between;
+      padding-right: 4px;
+      transition: color .18s;
+    }
+    .stash-heading-toggle:hover { color: rgba(210,200,240,1); }
+    .stash-heading-toggle:focus { outline: none; color: rgba(210,200,240,1); }
+    .stash-arrow {
+      font-size: 10px; color: rgba(160,150,200,.7);
+      transition: transform .22s ease;
+      display: inline-block;
+    }
+    .stash-collapsed .stash-arrow { transform: rotate(-90deg); }
+    #stash-list-rnd {
+      overflow: hidden;
+      transition: max-height .28s ease, opacity .22s ease;
+      max-height: 600px; opacity: 1;
+    }
+    .stash-collapsed #stash-list-rnd { max-height: 0; opacity: 0; }
     .stash-item {
       background: rgba(255,255,255,.03);
       border: 1px solid rgba(124,92,252,.18);
