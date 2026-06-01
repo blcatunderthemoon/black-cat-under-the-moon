@@ -88,12 +88,12 @@
 
     /* Header */
     /* ↓ Less top space */
-    .page-header { text-align: center; padding: 24px 0 24px; position: relative; }
+    .page-header { text-align: center; padding: 24px 0 20px; position: relative; }
     @media (max-width: 640px) {
-      .page-header { padding-top: 28px; }
+      .page-header { padding-top: 28px; padding-bottom: 14px; }
     }
     .page-header::after {
-      content: ''; display: block; margin-top: 22px; height: 1px;
+      content: ''; display: block; margin-top: 20px; height: 1px;
       background: linear-gradient(90deg, transparent, rgba(0,229,255,.3), rgba(124,92,252,.45), rgba(0,229,255,.3), transparent);
     }
     .back-link {
