@@ -49,11 +49,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid payload: JSON object expected' });
     }
 
-    const igRaw = (incoming.ig_username || '').toString().trim();
-    if (!igRaw || igRaw === '@') {
-      return res.status(400).json({ error: 'IG Username 為必填欄位。' });
-    }
-
     const normalizeValue = (value) => {
       if (value == null) {
         return '';
@@ -67,6 +62,18 @@ export default async function handler(req, res) {
     const getIncomingValue = (incoming, primaryKey, fallbackKey) => {
       return incoming?.[primaryKey] ?? incoming?.[fallbackKey] ?? null;
     };
+
+    const normalizeHandle = (value) => {
+      const raw = String(value || '').trim();
+      const withoutAt = raw.replace(/^@+/, '');
+      return withoutAt;
+    };
+
+    const igRaw = normalizeHandle(getIncomingValue(incoming, 'ig_username', 'ig_username'));
+    const tgRaw = normalizeHandle(getIncomingValue(incoming, 'tg_username', 'tg_username'));
+    if (!igRaw && !tgRaw) {
+      return res.status(400).json({ error: 'IG 或 TG Username 至少要填一項。' });
+    }
 
     const normalizeRange = (value, fallback) => {
       if (value === undefined) {
@@ -140,7 +147,8 @@ export default async function handler(req, res) {
       ideal_appearance: normalizeValue(getIncomingValue(incoming, 'ideal_appearance', 'ideal_appearance')),
       personal_traits: normalizeValue(getIncomingValue(incoming, 'personal_traits', 'personal_traits')),
       email: normalizeValue(getIncomingValue(incoming, 'email', 'email')),
-      ig_username: normalizeValue(getIncomingValue(incoming, 'ig_username', 'ig_username')),
+      ig_username: igRaw,
+      tg_username: tgRaw,
       feedback: normalizeValue(getIncomingValue(incoming, 'feedback', 'feedback'))
     };
 

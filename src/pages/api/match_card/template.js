@@ -243,13 +243,31 @@ function buildMatchCardHtml({ user, target, score, breakdown, intelligence }) {
     margin-top: 14px;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    gap: 6px 16px;
     font-size: 13px;
     color: #7a7590;
+    align-items: start;
+  }
+  .meta-col {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .meta-col > div {
+    display: flex;
+    align-items: flex-start;
+    flex-wrap: nowrap;
+  }
+  .meta-label {
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-right: 3px;
   }
   .meta span {
     color: #7dd8e4;
     font-weight: 700;
+    word-break: break-all;
+    min-width: 0;
   }
   /* 曬命模式：隱藏聯絡資料 */
   .card.privacy-on .meta { display: none; }
@@ -597,10 +615,16 @@ function buildMatchCardHtml({ user, target, score, breakdown, intelligence }) {
       <div class="match-line" style="display:flex;align-items:center;gap:14px;">${buildPixelCat(target.identity, 46, 46)}<div>${escHtml(target.name[0] || '')}${target.name.length > 1 ? `<span class="privacy-name-blur">${escHtml(target.name.slice(1))}</span>` : ''}<span style="color:#a89cc8;font-size:0.55em;font-weight:400;margin-left:10px;white-space:nowrap;">(${escHtml(target.identity || 'No Label')}${target.age ? ' · <span class="privacy-age-blur">' + target.age + '歲</span>' : ''})</span></div></div>
       <div class="score-tag">同步率 ${score}/100 ・ ${avgLabel}</div>
       <div class="meta">
-        <div>你的 Email：<span>${escHtml(user.email || '未填寫')}</span></div>
-        <div>對方 Email：<span>${escHtml(target.email || '未填寫')}</span></div>
-        <div>你的 IG：<span>${escHtml(user.ig_username || '未填寫')}</span></div>
-        <div>對方 IG：<span>${escHtml(target.ig_username || '未填寫')}</span></div>
+        <div class="meta-col">${[
+          user.email       ? `<div><span class="meta-label">你的 Email：</span><span>${escHtml(user.email)}</span></div>` : '',
+          user.ig_username ? `<div><span class="meta-label">你的 IG：</span><span>${escHtml(user.ig_username)}</span></div>` : '',
+          user.tg_username ? `<div><span class="meta-label">你的 TG：</span><span>${escHtml(user.tg_username)}</span></div>` : ''
+        ].filter(Boolean).join('')}</div>
+        <div class="meta-col">${[
+          target.email       ? `<div><span class="meta-label">對方 Email：</span><span>${escHtml(target.email)}</span></div>` : '',
+          target.ig_username ? `<div><span class="meta-label">對方 IG：</span><span>${escHtml(target.ig_username)}</span></div>` : '',
+          target.tg_username ? `<div><span class="meta-label">對方 TG：</span><span>${escHtml(target.tg_username)}</span></div>` : ''
+        ].filter(Boolean).join('')}</div>
       </div>
     </div>
 

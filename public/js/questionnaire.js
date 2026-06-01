@@ -257,9 +257,12 @@ const QUESTIONS = [
   },
   // ---- Part 7: 聯絡資訊 ----
   {
-    id:'ig_username', part:7, partTitle:'留下聯絡方式 Stay Connected',
-    text:'你的 IG Username 📸', type:'text',
-    placeholder:'@your_ig_handle', field:'ig_username'
+    id:'contact_choice', part:7, partTitle:'留下聯絡方式 Stay Connected',
+    text:'請至少選擇一種聯絡方式（可多選）：', type:'contact_options',
+    options: [
+      { id: 'ig', label: 'Instagram 📸', field: 'ig_username', placeholder: '@your_ig_handle' },
+      { id: 'tg', label: 'Telegram 📲', field: 'tg_username', placeholder: '@your_tg_handle' }
+    ]
   },
   {
     id:'email', part:7,
@@ -601,6 +604,16 @@ const $ptName      = document.getElementById('pt-name');
 const $shareThreadsBtn = document.getElementById('share-threads-btn');
 const $socialHandles = document.getElementById('social-handles');
 
+function normalizeHandleValue(raw) {
+  const trimmed = String(raw || '').trim();
+  const withoutAt = trimmed.replace(/^@+/, '');
+  return withoutAt;
+}
+
+function hasAnyContactHandle(igRaw, tgRaw) {
+  return Boolean(normalizeHandleValue(igRaw) || normalizeHandleValue(tgRaw));
+}
+
 function toFriendlyErrorMessage(raw) {
   const msg = String(raw || '').trim();
   const lower = msg.toLowerCase();
@@ -828,10 +841,20 @@ function renderQuestion(idx, fromPartTransition = false) {
       $nextBtn.textContent = idx === activeTotal - 1 ? (isMirrorMode ? '完成 ✦' : '提交 ✦') : '下一題 ▸';
       $backBtn.style.display = idx > 0 ? 'inline-block' : 'none';
       // Enable Next button based on question type
-      if (q.optional || q.type === 'select_pair') {
+      if (q.type === 'select_pair') {
         $nextBtn.disabled = false;
       } else if (q.type === 'single') {
         $nextBtn.disabled = !answers[q.field];
+      } else if (q.type === 'text') {
+        const textInp = $qAnswers.querySelector('.pixel-input');
+        if (textInp) textInp.dispatchEvent(new Event('input'));
+      } else if (q.type === 'textarea') {
+        const ta = $qAnswers.querySelector('.pixel-textarea');
+        if (ta) ta.dispatchEvent(new Event('input'));
+      } else if (q.type === 'contact_options') {
+        // validation already handled in buildContactOptions
+      } else if (q.optional) {
+        $nextBtn.disabled = false;
       }
       // Focus input
       const inp = $qAnswers.querySelector('.pixel-input') || $qAnswers.querySelector('.pixel-textarea');
@@ -868,11 +891,11 @@ function renderQuestion(idx, fromPartTransition = false) {
         }
       }
 
-      // IG username warning
-      if (q.field === 'ig_username') {
-        const igWarn = document.createElement('div');
-        igWarn.id = 'ig-warn-bubble';
-        igWarn.style.cssText = [
+      // Contact warning
+      if (q.type === 'contact_options') {
+        const contactWarn = document.createElement('div');
+        contactWarn.id = 'contact-warn-bubble';
+        contactWarn.style.cssText = [
           'position:fixed', 'bottom:120px', 'right:20px',
           'background:rgba(11,13,34,0.96)', 'border:2px solid var(--yellow)',
           'color:var(--yellow)', 'padding:14px 16px', 'font-size:0.78rem',
@@ -880,11 +903,11 @@ function renderQuestion(idx, fromPartTransition = false) {
           'z-index:50', 'max-width:220px', 'line-height:1.7',
           'animation:fadeInFloat 0.5s ease-out forwards'
         ].join(';');
-        igWarn.textContent = '📸 IG 名稱是配對關鍵！沒有填寫將大幅減少被配對的機會 🐈‍⬛';
-        document.body.appendChild(igWarn);
+        contactWarn.textContent = '📲 至少選擇一種聯絡方式，並填寫對應的帳號。';
+        document.body.appendChild(contactWarn);
         setTimeout(() => {
-          igWarn.style.animation = 'fadeOutFloat 0.5s ease-out forwards';
-          setTimeout(() => igWarn.remove(), 500);
+          contactWarn.style.animation = 'fadeOutFloat 0.5s ease-out forwards';
+          setTimeout(() => contactWarn.remove(), 500);
         }, 10000);
       }
     });
@@ -951,6 +974,8 @@ function buildAnswerArea(q) {
     buildSelectPair(q);
   } else if (q.type === 'range' || q.type === 'dual_range') {
     buildRangeInput(q);
+  } else if (q.type === 'contact_options') {
+    buildContactOptions(q);
   }
 }
 
@@ -1283,7 +1308,7 @@ function buildTextInput(q) {
 
   function validateTextInput() {
     const raw = inp.value.trim();
-    let valid = raw.length > 0;
+    let valid = q.optional ? true : raw.length > 0;
     warn.classList.remove('show');
     warn.style.display = 'none';
     warn.textContent = '';
@@ -1421,6 +1446,134 @@ function buildSelectPair(q) {
   $nextBtn.disabled = false; // always optional
 }
 
+function buildContactOptions(q) {
+  const wrap = document.createElement('div');
+  wrap.className = 'contact-options-wrap';
+  wrap.style.display = 'flex';
+  wrap.style.flexDirection = 'column';
+  wrap.style.gap = '20px';
+
+  const contactStates = {};
+  const contactInputs = {};
+
+  q.options.forEach(opt => {
+    const optWrap = document.createElement('div');
+    optWrap.className = 'contact-option-item';
+    optWrap.style.display = 'flex';
+    optWrap.style.flexDirection = 'column';
+    optWrap.style.gap = '10px';
+
+    // Checkbox row
+    const checkRow = document.createElement('div');
+    checkRow.style.display = 'flex';
+    checkRow.style.alignItems = 'center';
+    checkRow.style.gap = '10px';
+    checkRow.style.cursor = 'pointer';
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = 'contact-check-' + opt.id;
+    checkbox.className = 'pixel-checkbox';
+    checkbox.style.width = '20px';
+    checkbox.style.height = '20px';
+    checkbox.style.cursor = 'pointer';
+
+    const checkLabel = document.createElement('label');
+    checkLabel.setAttribute('for', 'contact-check-' + opt.id);
+    checkLabel.textContent = opt.label;
+    checkLabel.style.fontSize = '0.9rem';
+    checkLabel.style.color = 'var(--cream)';
+    checkLabel.style.cursor = 'pointer';
+    checkLabel.style.userSelect = 'none';
+
+    checkRow.appendChild(checkbox);
+    checkRow.appendChild(checkLabel);
+
+    // Input field (initially hidden)
+    const inputWrap = document.createElement('div');
+    inputWrap.className = 'contact-input-wrap';
+    inputWrap.style.display = 'none';
+    inputWrap.style.paddingLeft = '30px';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'pixel-input';
+    input.placeholder = opt.placeholder;
+    input.setAttribute('data-field', opt.field);
+
+    // Restore previous values
+    if (answers[opt.field]) {
+      checkbox.checked = true;
+      input.value = answers[opt.field];
+      inputWrap.style.display = 'block';
+    }
+
+    contactStates[opt.id] = checkbox;
+    contactInputs[opt.id] = { input, wrap: inputWrap, field: opt.field };
+
+    inputWrap.appendChild(input);
+    optWrap.appendChild(checkRow);
+    optWrap.appendChild(inputWrap);
+    wrap.appendChild(optWrap);
+
+    // Checkbox change handler
+    checkbox.addEventListener('change', () => {
+      if (checkbox.checked) {
+        inputWrap.style.display = 'block';
+        input.focus();
+      } else {
+        inputWrap.style.display = 'none';
+        input.value = '';
+        answers[opt.field] = '';
+      }
+      validateContactOptions();
+    });
+
+    // Input change handler
+    input.addEventListener('input', () => {
+      const raw = input.value.trim();
+      answers[opt.field] = normalizeHandleValue(raw);
+      validateContactOptions();
+    });
+
+    // Enter key handler
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !$nextBtn.disabled) {
+        e.preventDefault();
+        handleNext();
+      }
+    });
+  });
+
+  // Validation function
+  function validateContactOptions() {
+    const anyChecked = q.options.some(opt => contactStates[opt.id].checked);
+    if (!anyChecked) {
+      $nextBtn.disabled = true;
+      return;
+    }
+
+    // Check if all checked options have filled inputs
+    const allCheckedFilled = q.options.every(opt => {
+      if (!contactStates[opt.id].checked) return true;
+      const inputVal = contactInputs[opt.id].input.value.trim();
+      return inputVal.length > 0;
+    });
+
+    $nextBtn.disabled = !allCheckedFilled;
+  }
+
+  const note = document.createElement('div');
+  note.style.fontSize = '0.76rem';
+  note.style.color = 'var(--yellow)';
+  note.style.marginTop = '4px';
+  note.textContent = '✓ 至少選擇一種聯絡方式，並填寫對應的帳號';
+  wrap.appendChild(note);
+
+  $qAnswers.appendChild(wrap);
+  validateContactOptions();
+}
+
 function buildSingleChoice(q) {
   const wrap = document.createElement('div');
   wrap.className = 'choices';
@@ -1533,12 +1686,14 @@ function saveCurrentAnswer() {
   const q = activeQuestions[currentIdx];
   if (q.type === 'text') {
     const inp = $qAnswers.querySelector('.pixel-input');
-    if (inp && inp.value.trim()) answers[q.field] = inp.value.trim();
+    if (inp) answers[q.field] = inp.value.trim();
   } else if (q.type === 'textarea') {
     const ta = $qAnswers.querySelector('.pixel-textarea');
-    if (ta && ta.value.trim()) answers[q.field] = ta.value.trim();
+    if (ta) answers[q.field] = ta.value.trim();
   } else if (q.type === 'multi') {
     if (multiSelected.size > 0) answers[q.field] = Array.from(multiSelected).join(', ');
+  } else if (q.type === 'contact_options') {
+    // Contact options already saved via input handlers
   }
   // single: already saved on click; range/dual_range: already saved on input
 }
@@ -1557,8 +1712,10 @@ function handleNext(skipClickSound = false) {
   // Save answer
   if (q.type === 'text') {
     const inp = $qAnswers.querySelector('.pixel-input');
-    if (!inp || !inp.value.trim()) return;
-    answers[q.field] = inp.value.trim();
+    if (!inp) return;
+    const raw = inp.value.trim();
+    if (!raw && !q.optional) return;
+    answers[q.field] = raw;
   } else if (q.type === 'textarea') {
     const ta = $qAnswers.querySelector('.pixel-textarea');
     if (ta && ta.value.trim()) {
@@ -1573,6 +1730,8 @@ function handleNext(skipClickSound = false) {
     // sub-fields already saved on change; nothing extra needed
   } else if (q.type === 'range') {
     // already saved on input
+  } else if (q.type === 'contact_options') {
+    // Contact options already saved and validated
   }
   // single choice already saved on click
 
@@ -1676,7 +1835,8 @@ async function submitAnswers() {
     ideal_appearance: answers.ideal_appearance || '',
     personal_traits: answers.three_traits || '',
     email: answers.email || '',
-    ig_username: (answers.ig_username || '').trim().replace(/^@+/, '').replace(/^/, '@').replace(/^@$/, ''),
+    ig_username: normalizeHandleValue(answers.ig_username),
+    tg_username: normalizeHandleValue(answers.tg_username),
     feedback: answers.feedback || ''
   };
 
@@ -1921,10 +2081,10 @@ function showMirrorResult(scores, mainType, shadowType, hiddenTags) {
 
   // Cat image and glow maps
   var CAT_IMG_MAP = {
-    solitary: 'Solitary Moon（獨處貓）.png',
-    sunny:    'Sunny Tether（暖陽貓）.png',
-    mystical: 'Mystical Depth（秘境貓）.png',
-    sentinel: 'Eternal Sentinel（守護貓）.png'
+    solitary: 'Solitary_Moon.png',
+    sunny:    'Sunny_Tether.png',
+    mystical: 'Mystical_Depth.png',
+    sentinel: 'Eternal_Sentinel.png'
   };
   var CAT_GLOW_MAP = {
     solitary: '#9b6fff',

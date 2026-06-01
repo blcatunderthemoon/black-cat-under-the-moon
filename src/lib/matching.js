@@ -90,8 +90,19 @@ export function passesAgeFilter(user, candidate) {
   return true;
 }
 
+/**
+ * Check if user has acceptable conduct score (>= 50)
+ * Users with conduct_score < 50 are suspended from matching
+ */
+export function passesConductFilter(user) {
+  const score = user.conduct_score ?? 100;
+  return score >= 50;
+}
+
 export function passesHardFilter(user, candidate) {
   return (
+    passesConductFilter(user) &&
+    passesConductFilter(candidate) &&
     passesIdentityFilter(user, candidate) &&
     passesBodyTypeFilter(user, candidate) &&
     passesHeightFilter(user, candidate) &&

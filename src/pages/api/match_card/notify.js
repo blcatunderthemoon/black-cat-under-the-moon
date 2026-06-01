@@ -17,24 +17,43 @@ function escHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
+function formatHandle(value) {
+  const raw = String(value ?? '').trim();
+  return raw;
+}
+
+function buildContactList(partner) {
+  const parts = [];
+  if (partner.email) parts.push(`Email ${escHtml(partner.email)}`);
+  if (partner.ig_username) parts.push(`IG ${escHtml(partner.ig_username)}`);
+  if (partner.tg_username) parts.push(`TG ${escHtml(partner.tg_username)}`);
+  return parts.join(' / ') || '（未提供聯絡資料）';
+}
+
 function buildEmailHtml({ receiver, partner, score }) {
+  const contactInfo = buildContactList(partner);
   return `
   <div style="background:#07060e;padding:24px;color:#f0ebd8;font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;">
     <div style="max-width:680px;margin:0 auto;background:#12111d;border:2px solid #00e5ff;padding:20px;box-shadow:0 0 24px rgba(0,229,255,.2)">
       <h2 style="margin:0 0 12px;color:#ffe066;">每日靈魂配對通知</h2>
       <p style="line-height:1.8;margin:0 0 8px;">Hi ${escHtml(receiver.name)}，你同 ${escHtml(partner.name)} 配對成功。</p>
       <p style="line-height:1.8;margin:0 0 12px;">同步率：<span style="color:#00e5ff;font-weight:700;">${score}/100</span></p>
-      <p style="line-height:1.8;margin:0;">對方聯絡：${escHtml(partner.email || '未填寫')} / ${escHtml(partner.ig_username || '未填寫')}</p>
+      <p style="line-height:1.8;margin:0;">對方聯絡：${contactInfo}</p>
     </div>
   </div>`;
 }
 
 function buildText({ receiver, partner, score }) {
+  const parts = [];
+  if (partner.email) parts.push(`Email ${partner.email}`);
+  if (partner.ig_username) parts.push(`IG ${partner.ig_username}`);
+  if (partner.tg_username) parts.push(`TG ${partner.tg_username}`);
+  const contactInfo = parts.join(' / ') || '（未提供聯絡資料）';
   return [
     `Hi ${receiver.name},`,
     `你同 ${partner.name} 成功配對。`,
     `同步率：${score}/100`,
-    `對方聯絡：${partner.email || '未填寫'} / ${partner.ig_username || '未填寫'}`,
+    `對方聯絡：${contactInfo}`,
     'Black Cat Under The Moon',
   ].join('\n');
 }
@@ -83,7 +102,7 @@ export default async function handler(req, res) {
 
     const { data: rows, error } = await supabase
       .from('responses')
-      .select('id,name,email,ig_username,identity')
+      .select('id,name,email,ig_username,tg_username,identity')
       .in('id', [userAId, userBId]);
 
     if (error) {
@@ -138,8 +157,8 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       match_pair: {
-        userA: { id: userA.id, name: userA.name, email: userA.email, ig_username: userA.ig_username },
-        userB: { id: userB.id, name: userB.name, email: userB.email, ig_username: userB.ig_username },
+        userA: { id: userA.id, name: userA.name, email: userA.email, ig_username: userA.ig_username, tg_username: userA.tg_username },
+        userB: { id: userB.id, name: userB.name, email: userB.email, ig_username: userB.ig_username, tg_username: userB.tg_username },
       },
       match_score: score,
       notifications_preview: notifications,

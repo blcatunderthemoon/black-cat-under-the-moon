@@ -1140,11 +1140,11 @@ body::after {
 .overlay-screen.scrollable {
   overflow-y: auto;
   align-items: flex-start;
-  padding: 60px 16px 80px;
+  padding: 100px 16px 80px;
 }
 @media (max-width: 560px) {
   .overlay-screen.scrollable {
-    padding-top: 80px;
+    padding-top: 120px;
   }
 }
 .overlay-screen.scrollable .thankyou-content {

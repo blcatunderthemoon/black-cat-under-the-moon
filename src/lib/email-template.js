@@ -43,25 +43,39 @@ const DISCLAIMER_SECTION = `
     </div>`;
 
 /**
- * @param {{ name: string, email?: string, ig_username?: string }} params.receiver
- * @param {{ name: string, email?: string, ig_username?: string }} params.partner
+ * @param {{ name: string, email?: string, ig_username?: string, tg_username?: string }} params.receiver
+ * @param {{ name: string, email?: string, ig_username?: string, tg_username?: string }} params.partner
  * @param {number} params.score – 0–100
  */
 export function buildEmailHtml({ receiver, partner, score }) {
   const label = scoreLabel(score);
-  const contactRows = [];
-  if (receiver.email || partner.email) {
-    contactRows.push(`<tr>
-      <td style="padding:4px 12px 4px 0;font-size:13px;color:#8880a8;">你的 Email：<span style="color:#7dd8e4;font-weight:700;">${esc(receiver.email || '—')}</span></td>
-      <td style="padding:4px 0;font-size:13px;color:#8880a8;">對方 Email：<span style="color:#7dd8e4;font-weight:700;">${esc(partner.email || '—')}</span></td>
-    </tr>`);
+  const receiverIg = formatHandle(receiver.ig_username);
+  const partnerIg = formatHandle(partner.ig_username);
+  const receiverTg = formatHandle(receiver.tg_username);
+  const partnerTg = formatHandle(partner.tg_username);
+
+  // Build left column (receiver) and right column (partner) independently
+  // Each item uses display:table so label never wraps and value aligns on overflow
+  function mkItem(label, value) {
+    return `<div style="display:table;margin-bottom:6px;width:100%;">` +
+      `<span style="display:table-cell;white-space:nowrap;color:#8880a8;font-size:13px;vertical-align:top;padding-right:4px;">${label}</span>` +
+      `<span style="display:table-cell;color:#7dd8e4;font-weight:700;font-size:13px;word-break:break-all;vertical-align:top;">${value}</span>` +
+      `</div>`;
   }
-  if (receiver.ig_username || partner.ig_username) {
-    contactRows.push(`<tr>
-      <td style="padding:4px 12px 4px 0;font-size:13px;color:#8880a8;">你的 IG：<span style="color:#7dd8e4;font-weight:700;">${esc(receiver.ig_username || '—')}</span></td>
-      <td style="padding:4px 0;font-size:13px;color:#8880a8;">對方 IG：<span style="color:#7dd8e4;font-weight:700;">${esc(partner.ig_username || '—')}</span></td>
-    </tr>`);
-  }
+
+  const leftItems = [];
+  const rightItems = [];
+  if (receiver.email) leftItems.push(mkItem('你的 Email：', esc(receiver.email)));
+  if (partner.email)  rightItems.push(mkItem('對方 Email：', esc(partner.email)));
+  if (receiverIg)     leftItems.push(mkItem('你的 IG：', esc(receiverIg)));
+  if (partnerIg)      rightItems.push(mkItem('對方 IG：', esc(partnerIg)));
+  if (receiverTg)     leftItems.push(mkItem('你的 TG：', esc(receiverTg)));
+  if (partnerTg)      rightItems.push(mkItem('對方 TG：', esc(partnerTg)));
+
+  const contactTable = (leftItems.length || rightItems.length) ? `<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+      <td style="padding:4px 12px 4px 0;vertical-align:top;width:50%;">${leftItems.join('')}</td>
+      <td style="padding:4px 0;vertical-align:top;width:50%;">${rightItems.join('')}</td>
+    </tr></table>` : ''
 
   return `
 <div style="background:#07060e;padding:24px 16px;font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;color:#f0ebd8;">
@@ -81,7 +95,7 @@ export function buildEmailHtml({ receiver, partner, score }) {
     <div style="font-size:14px;margin-bottom:8px;">恭喜 <strong style="color:#ffe066;">${esc(receiver.name)}</strong> 成功配對：</div>
     <div style="font-size:34px;color:#00e5ff;font-weight:900;letter-spacing:1px;margin-bottom:10px;">${esc(partner.name)}</div>
     <div style="display:inline-block;padding:5px 14px;border:1px solid #ff6b9d;border-radius:3px;color:#ff6b9d;font-size:14px;font-weight:700;margin-bottom:14px;">同步率 ${score}/100 ・ ${label}</div>
-    ${contactRows.length ? `<table width="100%" cellpadding="0" cellspacing="0" border="0">${contactRows.join('')}</table>` : ''}
+    ${contactTable}
   </div>
 
   <!-- Attachment notice -->
@@ -108,6 +122,31 @@ export function buildEmailHtml({ receiver, partner, score }) {
 }
 
 export function buildTextEmail({ receiver, partner, score }) {
+  const receiverIg = formatHandle(receiver.ig_username);
+  const partnerIg = formatHandle(partner.ig_username);
+  const receiverTg = formatHandle(receiver.tg_username);
+  const partnerTg = formatHandle(partner.tg_username);
+  
+  const contactLines = [];
+  
+  // Email 成對
+  if (receiver.email || partner.email) {
+    if (receiver.email) contactLines.push(`你的 Email：${receiver.email}`);
+    if (partner.email) contactLines.push(`對方 Email：${partner.email}`);
+  }
+  
+  // IG 成對
+  if (receiverIg || partnerIg) {
+    if (receiverIg) contactLines.push(`你的 IG：${receiverIg}`);
+    if (partnerIg) contactLines.push(`對方 IG：${partnerIg}`);
+  }
+  
+  // TG 成對
+  if (receiverTg || partnerTg) {
+    if (receiverTg) contactLines.push(`你的 TG：${receiverTg}`);
+    if (partnerTg) contactLines.push(`對方 TG：${partnerTg}`);
+  }
+  
   return [
     `嗨 ${receiver.name}，`,
     '',
@@ -115,8 +154,9 @@ export function buildTextEmail({ receiver, partner, score }) {
     `靈魂同步率：${score}/100`,
     '',
     `配對對象：${partner.name}`,
-    partner.ig_username ? `Instagram：@${partner.ig_username}` : '',
-    partner.email       ? `Email：${partner.email}` : '',
+    '',
+    contactLines.length > 0 ? '聯絡資料：' : '',
+    ...contactLines,
     '',
     '📎 請下載並在瀏覽器中打開附件的配對卡片（.html 檔案），查看完整配對分析及靈魂雷達圖。',
     '',
@@ -130,5 +170,10 @@ export function buildTextEmail({ receiver, partner, score }) {
     '',
     'Black Cat Under The Moon',
     '此郵件由系統自動發送，請勿直接回覆。',
-  ].filter((l) => l !== undefined).join('\n');
+  ].filter((l) => l !== undefined && l !== '').join('\n');
+}
+
+function formatHandle(value) {
+  const raw = String(value ?? '').trim();
+  return raw;
 }
