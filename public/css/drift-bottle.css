@@ -612,22 +612,23 @@
     /* 緣分暫存箱 */
     .stash-heading {
       font-size: 11px; color: rgba(190,180,220,.9); letter-spacing: .12em;
-      margin-bottom: 10px; padding-left: 10px;
+      margin-bottom: 6px; padding: 3px 0 3px 10px;
       border-left: 2px solid rgba(124,92,252,.55);
       line-height: 1;
     }
     .stash-heading-toggle {
       cursor: pointer; user-select: none;
       display: flex; align-items: center; justify-content: space-between;
-      padding-right: 4px;
+      padding-right: 2px;
       transition: color .18s;
     }
     .stash-heading-toggle:hover { color: rgba(210,200,240,1); }
     .stash-heading-toggle:focus { outline: none; color: rgba(210,200,240,1); }
     .stash-arrow {
-      font-size: 10px; color: rgba(160,150,200,.7);
+      font-size: 15px; color: rgba(160,150,200,.85);
       transition: transform .22s ease;
       display: inline-block;
+      min-width: 24px; text-align: center;
     }
     .stash-collapsed .stash-arrow { transform: rotate(-90deg); }
     #stash-list-rnd {
@@ -994,7 +995,7 @@
     box-shadow: 0 0 18px rgba(124,92,252,.12), inset 0 0 0 1px rgba(0,229,255,.06);
     cursor: pointer;
     transition: border-color .2s, box-shadow .2s, transform .15s;
-    animation: topicPulse 4s ease-in-out infinite;
+    animation: topicPulse 8s ease-in-out infinite;
     position: relative;
     overflow: hidden;
   }
@@ -1002,14 +1003,14 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(90deg, transparent 0%, rgba(0,229,255,.04) 50%, transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, rgba(0,229,255,.02) 50%, transparent 100%);
     background-size: 200% 100%;
-    animation: topicShimmer 3s linear infinite;
+    animation: topicShimmer 6s linear infinite;
     pointer-events: none;
   }
   @keyframes topicPulse {
-    0%, 100% { box-shadow: 0 0 14px rgba(124,92,252,.12), inset 0 0 0 1px rgba(0,229,255,.06); }
-    50%       { box-shadow: 0 0 26px rgba(124,92,252,.28), inset 0 0 0 1px rgba(0,229,255,.15); }
+    0%, 100% { box-shadow: 0 0 14px rgba(124,92,252,.10), inset 0 0 0 1px rgba(0,229,255,.05); }
+    50%       { box-shadow: 0 0 20px rgba(124,92,252,.18), inset 0 0 0 1px rgba(0,229,255,.09); }
   }
   @keyframes topicShimmer {
     0%   { background-position: 200% 0; }

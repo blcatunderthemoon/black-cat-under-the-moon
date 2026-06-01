@@ -657,8 +657,6 @@ async function sendReply() {
     btn.innerHTML = SEND_ICON;
     startCooldownHint('reply-err', btn, 30000);
     const lbl = document.getElementById('rnd-toggle-label');
-    const prevNum = parseInt(lbl.textContent.match(/\d+/)?.[0] ?? '0', 10);
-    lbl.textContent = '💬 收起留言 (' + (prevNum + 1) + ')';
     // Show toggle btn + auto-expand so the new reply is immediately visible
     var _tBtnS = document.getElementById('rnd-toggle-btn');
     if (_tBtnS) { _tBtnS.style.display = ''; _tBtnS.style.opacity = '1'; }
@@ -668,6 +666,8 @@ async function sendReply() {
     const newReply = { id: 'local-' + Date.now(), content, created_at: new Date().toISOString(), sub_replies: [] };
     prefetchedReplies = prefetchedReplies ? [...prefetchedReplies, newReply] : [newReply];
     renderReplyList(prefetchedReplies, currentBottleId, 'rnd-replies-list');
+    const _total = prefetchedReplies.length + prefetchedReplies.reduce(function(s, r) { return s + (r.sub_replies || []).length; }, 0);
+    lbl.textContent = '💬 收起留言 (' + _total + ')';
     // 緣分暫存 — save to stash (no viewKey for random bottles)
     addToStash({
       id: currentBottleId,
