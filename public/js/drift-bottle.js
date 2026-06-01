@@ -78,7 +78,7 @@ function clearSeenSession() {
 /* ─── Phase 2: Tabs with atmosphere shift ────────── */
 let randomLoaded = false;
 // Active topic tag filter (set by topic banner click for official-type topics)
-let _topicTag = null;
+let _topicTags = [];
 document.querySelectorAll('.tab').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach(b => {
@@ -546,7 +546,9 @@ async function loadRandom() {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 8000);
     const seen = getSeenSession();
-    let url = _topicTag ? API.random + '?tag=' + encodeURIComponent(_topicTag) : API.random;
+    let url = _topicTags.length
+      ? API.random + '?' + _topicTags.map(t => 'tag=' + encodeURIComponent(t)).join('&')
+      : API.random;
     if (_preferNewOnNextRandom) url += (url.includes('?') ? '&' : '?') + 'prefer_new=1';
     if (seen.length) url += (url.includes('?') ? '&' : '?') + 'exclude=' + seen.join(',');
     const res  = await fetch(url, { signal: ctrl.signal });
@@ -1354,7 +1356,7 @@ async function loadBottleById(id) {
     banner.addEventListener('click', function handleBannerClick() {
       if (cfg.type === 'official' && cfg.tag) {
         // Switch to 撈瓶 panel with tag filter active
-        _topicTag = cfg.tag;
+        _topicTags = Array.isArray(cfg.tags) && cfg.tags.length ? cfg.tags : (cfg.tag ? [cfg.tag] : []);
         clearSeenSession();
         randomLoaded = false;
         document.querySelectorAll('.tab').forEach(function (b) {
@@ -1370,7 +1372,7 @@ async function loadBottleById(id) {
         loadRandom();
       } else if (cfg.type === 'featured' && cfg.bottleId) {
         // Switch to 尋瓶 panel and load the featured bottle
-        _topicTag = null;
+        _topicTags = [];
         document.querySelectorAll('.tab').forEach(function (b) {
           b.classList.remove('active');
           b.setAttribute('aria-selected', 'false');

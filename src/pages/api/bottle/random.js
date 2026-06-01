@@ -49,8 +49,9 @@ export default async function handler(req, res) {
     ? excludeParam.split(',').map(s => s.trim()).filter(s => UUID_RE.test(s)).slice(0, 20)
     : [];
 
-  // Optional mood-tag filter (set when topic banner is active)
-  const tagFilter = typeof req.query.tag === 'string' ? req.query.tag.slice(0, 40) : null;
+  // Optional mood-tag filter (supports multiple tags from topic banner)
+  const tagFilters = [].concat(req.query.tag || []).filter(Boolean).map(t => t.slice(0, 40));
+  const tagFilter = tagFilters.length > 0 ? tagFilters : null;
   const preferNew = req.query.prefer_new === '1';
 
   try {
@@ -83,7 +84,7 @@ export default async function handler(req, res) {
         .gte('created_at', recentIso)
         .order('created_at', { ascending: false })
         .limit(24);
-      if (tagFilter) q = q.eq('mood_tag', tagFilter);
+      if (tagFilter) q = tagFilter.length === 1 ? q.eq('mood_tag', tagFilter[0]) : q.in('mood_tag', tagFilter);
       if (excludeIds.length > 0) q = q.not('id', 'in', `(${excludeIds.join(',')})`);
       const { data: recentData, error: recentError } = await q;
       if (recentError) return null;
@@ -102,9 +103,13 @@ export default async function handler(req, res) {
         .from('bottles')
         .select('*')
         .eq('is_active', true)
-        .eq('mood_tag', tagFilter)
         .or(`expires_at.is.null,expires_at.gt.${now}`)
         .limit(50);
+      if (tagFilter.length === 1) {
+        q = q.eq('mood_tag', tagFilter[0]);
+      } else {
+        q = q.in('mood_tag', tagFilter);
+      }
       if (excludeIds.length > 0) {
         q = q.not('id', 'in', `(${excludeIds.join(',')})`);
       }

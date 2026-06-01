@@ -29,11 +29,21 @@ export default async function handler(req, res) {
     // If table exists and returned a row, use it
     if (!error && data) {
       if (!data.active) return res.status(200).json({ active: false });
+      const rawTag = data.tag || null;
+      let parsedTags = [];
+      if (rawTag) {
+        if (rawTag.startsWith('[')) {
+          try { parsedTags = JSON.parse(rawTag); } catch { parsedTags = [rawTag]; }
+        } else {
+          parsedTags = [rawTag];
+        }
+      }
       return res.status(200).json({
         active:   true,
         type:     data.type === 'featured' ? 'featured' : 'official',
         text:     data.text || '',
-        tag:      data.tag  || null,
+        tag:      parsedTags[0] || null,
+        tags:     parsedTags,
         bottleId: data.bottle_id || null,
         count:    Number.isFinite(Number(data.count)) ? Number(data.count) : null,
       });
