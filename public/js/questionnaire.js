@@ -891,25 +891,7 @@ function renderQuestion(idx, fromPartTransition = false) {
         }
       }
 
-      // Contact warning
-      if (q.type === 'contact_options') {
-        const contactWarn = document.createElement('div');
-        contactWarn.id = 'contact-warn-bubble';
-        contactWarn.style.cssText = [
-          'position:fixed', 'bottom:120px', 'right:20px',
-          'background:rgba(11,13,34,0.96)', 'border:2px solid var(--yellow)',
-          'color:var(--yellow)', 'padding:14px 16px', 'font-size:0.78rem',
-          'border-radius:4px', 'box-shadow:0 0 24px rgba(255,224,102,0.25)',
-          'z-index:50', 'max-width:220px', 'line-height:1.7',
-          'animation:fadeInFloat 0.5s ease-out forwards'
-        ].join(';');
-        contactWarn.textContent = '📲 至少選擇一種聯絡方式，並填寫對應的帳號。';
-        document.body.appendChild(contactWarn);
-        setTimeout(() => {
-          contactWarn.style.animation = 'fadeOutFloat 0.5s ease-out forwards';
-          setTimeout(() => contactWarn.remove(), 500);
-        }, 10000);
-      }
+
     });
 
     isTransitioning = false;

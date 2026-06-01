@@ -90,7 +90,7 @@
     /* ↓ Less top space */
     .page-header { text-align: center; padding: 24px 0 44px; position: relative; }
     @media (max-width: 640px) {
-      .page-header { padding-top: 12px; }
+      .page-header { padding-top: 28px; }
     }
     .page-header::after {
       content: ''; display: block; margin-top: 26px; height: 1px;
@@ -1002,7 +1002,7 @@
   }
   .topic-banner-inner {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 10px;
     padding: 11px 14px;
     position: relative;
@@ -1019,12 +1019,11 @@
     color: var(--cream);
     line-height: 1.55;
     letter-spacing: .02em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     display: flex;
+    flex-wrap: wrap;
     align-items: baseline;
-    gap: 8px;
+    gap: 4px 8px;
+    min-width: 0;
   }
   .topic-banner-label {
     font-size: 11px;
@@ -1042,10 +1041,9 @@
     color: var(--pink);
   }
   .topic-banner-body {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
     color: var(--cream);
+    word-break: break-word;
+    overflow-wrap: anywhere;
   }
   .topic-banner-count {
     flex-shrink: 0;
@@ -1091,5 +1089,6 @@
   }
   @media (max-width: 480px) {
     .topic-banner-text { font-size: 12px; }
+    .topic-banner-label { font-size: 10px; }
     .topic-banner-inner { padding: 10px 12px; gap: 8px; }
   }
