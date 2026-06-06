@@ -17,6 +17,7 @@ const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC
 const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: { persistSession: false },
 });
+const MAX_BOTTLE_CONTENT_LENGTH = 500;
 
 // 6-char key from unambiguous chars (no 0/O/1/I confusion)
 function generateKey() {
@@ -68,8 +69,8 @@ export default async function handler(req, res) {
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
       return res.status(400).json({ error: '瓶子裡沒有內容哦。' });
     }
-    if (content.trim().length > 200) {
-      return res.status(400).json({ error: '內容不能超過 200 字。' });
+    if (content.trim().length > MAX_BOTTLE_CONTENT_LENGTH) {
+      return res.status(400).json({ error: '內容不能超過 500 字。' });
     }
 
     // Content moderation (crisis → HTTP 451, blocked → HTTP 400)

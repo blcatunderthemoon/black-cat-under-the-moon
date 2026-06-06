@@ -72,7 +72,27 @@
 
       <!-- Step 1: Write -->
       <div class="wizard-step active" id="wstep-1">
-        <div class="wizard-header">今晚想讓海浪帶走什麼？</div>
+
+        <!-- 標題行：左側標題 + 右側「翻開答案之書」按鈕 -->
+        <div class="wizard-header-row">
+          <div class="wizard-header">今晚想讓海浪帶走什麼？</div>
+          <button class="btn-oracle" id="btn-oracle" onclick="drawOracle()" aria-expanded="false" aria-controls="oracle-card">
+            🔮 翻開答案之書
+          </button>
+        </div>
+
+        <!-- 神諭卡片（預設隱藏，由 drawOracle() 控制） -->
+        <div class="oracle-card" id="oracle-card" role="region" aria-label="月光神諭" aria-live="polite">
+          <div class="oracle-eyebrow">
+            <span class="oracle-eyebrow-icon">🌙</span>
+            月光神諭
+          </div>
+          <div class="oracle-text" id="oracle-text"></div>
+          <div class="oracle-divider"></div>
+          <div class="oracle-question-label">✦ 海浪提問</div>
+          <div class="oracle-question" id="oracle-question"></div>
+        </div>
+
         <!-- Phase 3: Floating writing area -->
         <div class="floating-writing-area">
           <div class="textarea-wrap">

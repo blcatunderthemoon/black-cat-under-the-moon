@@ -199,6 +199,153 @@
     }
     .wizard-header { font-size: 13px; color: #E2E8F0; margin-bottom: 8px; line-height: 1.7; }
 
+    /* ── Oracle Card（答案之書 / 月光神諭）── */
+
+    /* 標題行：左側標題 + 右側抽籤按鈕 */
+    .wizard-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .wizard-header-row .wizard-header {
+      margin-bottom: 0;   /* 覆蓋原始下邊距，由 row 控制 */
+      flex: 1;
+    }
+
+    /* 抽籤按鈕 */
+    .btn-oracle {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 13px;
+      border-radius: 20px;
+      border: 1px solid rgba(189,147,249,.45);
+      background: rgba(124,92,252,.10);
+      color: rgba(230,215,255,.85);
+      font: 600 11.5px/1 'Noto Sans TC', sans-serif;
+      cursor: pointer;
+      white-space: nowrap;
+      letter-spacing: .03em;
+      transition: all .22s;
+      /* 流光漸變發光效果 */
+      background-size: 200% 100%;
+      animation: oracleBtnPulse 8s ease-in-out infinite;
+    }
+    .btn-oracle:hover {
+      border-color: rgba(189,147,249,.85);
+      background: rgba(124,92,252,.22);
+      color: #fff;
+      box-shadow: 0 0 14px rgba(189,147,249,.35), 0 0 28px rgba(124,92,252,.18);
+      transform: translateY(-1px);
+    }
+    @keyframes oracleBtnPulse {
+      0%, 100% { box-shadow: 0 0 5px rgba(189,147,249,.14); }
+      50%       { box-shadow: 0 0 12px rgba(189,147,249,.28), 0 0 22px rgba(0,229,255,.08); }
+    }
+    @media (max-width: 420px) {
+      .wizard-header-row {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+      .btn-oracle {
+        align-self: flex-end;
+      }
+    }
+
+    /* 神諭卡片容器 */
+    .oracle-card {
+      display: none;          /* JS 控制顯示/隱藏 */
+      margin-bottom: 12px;
+      padding: 14px 16px 14px 18px;
+      background: rgba(8,6,28,.58);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 10px;
+      border: 1px solid rgba(124,92,252,.25);
+      border-left: 3px solid rgba(189,147,249,.65);
+      position: relative;
+      overflow: hidden;
+    }
+    /* 卡片背景星光暈 */
+    .oracle-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 60% at 10% 40%, rgba(124,92,252,.08) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 50% at 85% 20%, rgba(0,229,255,.05) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    /* 淡入動畫 */
+    .oracle-card.oracle-visible {
+      display: block;
+      animation: oracleFadeIn .4s cubic-bezier(.22,.68,0,1.2) forwards;
+    }
+    @keyframes oracleFadeIn {
+      from { opacity: 0; transform: translateY(-8px) scale(.98); }
+      to   { opacity: 1; transform: translateY(0)   scale(1); }
+    }
+
+    /* 神諭圖示行 */
+    .oracle-eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      color: rgba(189,147,249,.55);
+      letter-spacing: .12em;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+    .oracle-eyebrow-icon {
+      font-size: 13px;
+      animation: orbFloat 3.5s ease-in-out infinite;
+    }
+    @keyframes orbFloat {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-3px); }
+    }
+
+    /* 神諭正文（金黃發光字） */
+    .oracle-text {
+      font-size: 13.5px;
+      line-height: 1.9;
+      color: #fde68a;
+      text-shadow: 0 0 12px rgba(253,230,138,.35), 0 0 28px rgba(253,230,138,.12);
+      margin-bottom: 10px;
+      font-weight: 400;
+      position: relative;
+    }
+
+    /* 分隔線 */
+    .oracle-divider {
+      height: 1px;
+      margin: 8px 0 10px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(189,147,249,.25) 30%,
+        rgba(0,229,255,.18) 70%,
+        transparent 100%);
+    }
+
+    /* 海浪提問（較小、亮藍色） */
+    .oracle-question-label {
+      font-size: 9.5px;
+      color: rgba(0,229,255,.55);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+    .oracle-question {
+      font-size: 12.5px;
+      line-height: 1.85;
+      color: rgba(200,225,255,.82);
+      font-style: italic;
+    }
+
     /* Phase 3: Floating writing area */
     .floating-writing-area { position: relative; margin-bottom: 4px; }
     .textarea-wrap { position: relative; }
@@ -343,6 +490,7 @@
       font-size: 30px; opacity: .12; animation: bottleFloat 3s ease-in-out infinite;
     }
     .wp-content { font-size: 14px; line-height: 1.8; color: var(--cream); white-space: pre-wrap; word-break: break-word; }
+    .wp-content .oracle-answer-shell { font-size: 14px; }
     .wp-mood    { font-size: 11px; color: var(--pink); margin-top: 8px; }
     .wp-mission { font-size: 11px; color: #ffd700; margin-top: 4px; }
 
@@ -507,6 +655,54 @@
       box-sizing: border-box;
     }
     .bottle-body { font-size: 17px; line-height: 2.0; color: #ffffff; font-style: normal; font-family: 'M PLUS Rounded 1c', 'Noto Sans TC', sans-serif; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; padding: 6px 0; }
+    .oracle-answer-shell {
+      display: block;
+      white-space: normal;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+    .oracle-public-prompt {
+      position: relative;
+      padding: 2px 0 2px 14px;
+      margin: 0 0 16px;
+      border-left: 2px solid rgba(255,224,102,.48);
+    }
+    .oracle-public-prompt::before {
+      content: '';
+      position: absolute;
+      left: -2px;
+      top: 0;
+      width: 2px;
+      height: 26px;
+      background: linear-gradient(180deg, rgba(255,224,102,.95), rgba(189,147,249,.2));
+      box-shadow: 0 0 14px rgba(255,224,102,.24);
+    }
+    .oracle-public-label {
+      margin-bottom: 5px;
+      color: rgba(255,224,102,.72);
+      font-size: 11px;
+      line-height: 1.4;
+      letter-spacing: .08em;
+      text-shadow: 0 0 12px rgba(255,224,102,.16);
+    }
+    .oracle-public-question {
+      color: rgba(230,238,255,.82);
+      font-size: .86em;
+      line-height: 1.85;
+      font-weight: 400;
+    }
+    .oracle-public-divider {
+      width: 100%;
+      height: 1px;
+      margin: 2px 0 18px;
+      background: linear-gradient(90deg, transparent, rgba(0,229,255,.18), rgba(189,147,249,.20), transparent);
+    }
+    .oracle-public-answer {
+      color: #fff;
+      font-size: 1em;
+      line-height: 2.0;
+      white-space: pre-wrap;
+    }
     .bottle-card.mission .bottle-body { font-weight: 500; font-style: normal; }
     .bottle-meta {
       display: flex; align-items: center; justify-content: flex-start;
