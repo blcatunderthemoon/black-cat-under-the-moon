@@ -247,11 +247,32 @@
     }
     @media (max-width: 420px) {
       .wizard-header-row {
-        align-items: flex-start;
-        flex-direction: column;
+        align-items: center;
+        flex-direction: row;
+        gap: 8px;
+      }
+      .wizard-header-row .wizard-header {
+        min-width: 0;
+        font-size: 12.5px;
+        line-height: 1.45;
+        white-space: nowrap;
       }
       .btn-oracle {
-        align-self: flex-end;
+        padding: 6px 11px;
+        font-size: 11px;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .wizard-header-row {
+        gap: 6px;
+      }
+      .wizard-header-row .wizard-header {
+        font-size: 12px;
+      }
+      .btn-oracle {
+        padding: 6px 9px;
+        font-size: 10.5px;
       }
     }
 
