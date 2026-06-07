@@ -1299,7 +1299,6 @@ html { scroll-behavior: smooth; }
 .mode-card.mode-b .name-zh { color: var(--purple-light); text-shadow: 0 0 12px rgba(189,147,249,0.45); }
 .mode-card.mode-c .name-zh { color: var(--cyan); text-shadow: 0 0 12px rgba(0,229,255,0.45); }
 .mode-card.coming-soon .name-zh { color: rgba(255,224,102,0.55); text-shadow: 0 0 12px rgba(255,224,102,0.15); }
-.mode-card-name .name-en { display: block; font-size: 0.86rem; color: var(--text-dim); font-weight: 400; margin-top: 2px; }
 /* ── Drift Bottle entry ── */
 .drift-entry {
   display: flex;
