@@ -4,15 +4,7 @@
 export default function AuthBrandHeader({ tagline, subtitle, className = '' }) {
   return (
     <header className={`auth-brand${className ? ` ${className}` : ''}`}>
-      <img
-        src="/blackcatunderthemoonmark.png?v=20260710"
-        alt=""
-        className="auth-brand__mark"
-        width={72}
-        height={72}
-        aria-hidden="true"
-        draggable={false}
-      />
+      <span className="auth-brand__mark" aria-hidden="true" />
       <h1 className="auth-brand__title pixel-font">
         Black Cat
         <br />

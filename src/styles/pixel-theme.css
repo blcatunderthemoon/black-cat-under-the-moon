@@ -709,6 +709,7 @@
 
 /* ── Auth brand — site blue→purple→cyan gradient ── */
 .auth-brand {
+  --auth-brand-gradient: linear-gradient(135deg, #bd93f9 0%, #7c5cfc 45%, #00e5ff 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -722,10 +723,18 @@
   width: 72px;
   height: 72px;
   max-width: 72px;
-  object-fit: contain;
-  filter:
-    drop-shadow(0 0 10px rgba(255, 255, 255, 0.35))
-    drop-shadow(0 0 22px rgba(189, 147, 249, 0.42));
+  flex-shrink: 0;
+  background: var(--auth-brand-gradient);
+  -webkit-mask-image: url('/blackcatunderthemoonmark.png?v=20260710');
+  mask-image: url('/blackcatunderthemoonmark.png?v=20260710');
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  filter: drop-shadow(0 0 10px rgba(189, 147, 249, 0.35))
+    drop-shadow(0 0 22px rgba(124, 92, 252, 0.28));
   margin-bottom: 6px;
 }
 
@@ -737,7 +746,7 @@
   line-height: 2.2;
   text-align: center;
   margin: 0;
-  background: linear-gradient(135deg, #bd93f9 0%, #7c5cfc 45%, #00e5ff 100%);
+  background: var(--auth-brand-gradient);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -10571,6 +10580,8 @@
   .forum-mj-header-wrap {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+    height: 34px;
     position: relative;
     flex-shrink: 0;
   }
@@ -13814,6 +13825,7 @@ button.forum-tag-chip:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: auto;
   min-width: 22px;
   height: 18px;
   font-family: 'Press Start 2P', monospace;
@@ -13822,6 +13834,7 @@ button.forum-tag-chip:hover {
   letter-spacing: 0.02em;
   color: rgba(255, 224, 102, 0.95);
   text-shadow: 0 0 6px rgba(255, 224, 102, 0.28);
+  transform: translateY(2px);
 }
 
 .forum-header-name-group > .app-header__nav-link {

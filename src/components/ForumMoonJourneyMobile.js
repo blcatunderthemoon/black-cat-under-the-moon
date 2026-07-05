@@ -74,7 +74,7 @@ export default function ForumMoonJourneyMobile({
         title={`月光旅程 · Lv${level}`}
         aria-label={`月光旅程 Lv${level}`}
       >
-        <span className="forum-mj-header-btn__lv" aria-hidden="true">Lv{level}</span>
+        <span className="app-header__nav-icon forum-mj-header-btn__lv" aria-hidden="true">Lv{level}</span>
         {pendingCheckIn && (
           <span className="forum-mj-header-btn__dot" aria-label="今日尚未打卡" />
         )}

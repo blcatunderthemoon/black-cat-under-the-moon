@@ -122,6 +122,7 @@
   }
 
   function injectNav(innerHtml, logoutCb) {
+    unmountIndexGreetingFromNav();
     clearAuthNav();
     var slot = getHeaderSlot();
     var wrap = document.createElement('div');
@@ -517,7 +518,6 @@
       mountIndexGreetingInNav();
     } else if (!profilePending) {
       updateWelcomeGreeting('', isPremium);
-      unmountIndexGreetingFromNav();
     }
   }
 
