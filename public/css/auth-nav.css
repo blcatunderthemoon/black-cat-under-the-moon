@@ -872,8 +872,8 @@ body[data-automode="mirror"]:not(.quiz-viewport) {
   padding-bottom: calc(var(--quiz-footer-reserve, 54px) + env(safe-area-inset-bottom, 0px));
 }
 
-body[data-automode="match"]:not(.quiz-viewport):not(.match-results-active) .main-container,
-body[data-automode="mirror"]:not(.quiz-viewport):not(.match-results-active) .main-container {
+body[data-automode="match"]:not(.quiz-viewport):not(.match-results-active):not(:has(#thankyou-screen.active)) .main-container,
+body[data-automode="mirror"]:not(.quiz-viewport):not(.match-results-active):not(:has(#thankyou-screen.active)) .main-container {
   overflow: visible;
   display: block;
   flex: none;
@@ -881,8 +881,8 @@ body[data-automode="mirror"]:not(.quiz-viewport):not(.match-results-active) .mai
   padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
 }
 
-body[data-automode="match"]:not(.quiz-viewport):not(.match-results-active) .q-card,
-body[data-automode="mirror"]:not(.quiz-viewport):not(.match-results-active) .q-card {
+body[data-automode="match"]:not(.quiz-viewport):not(.match-results-active):not(:has(#thankyou-screen.active)) .q-card,
+body[data-automode="mirror"]:not(.quiz-viewport):not(.match-results-active):not(:has(#thankyou-screen.active)) .q-card {
   overflow: visible;
   min-height: 0;
   max-height: none;

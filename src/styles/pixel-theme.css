@@ -764,19 +764,69 @@
 }
 
 /* Signup — headline below brand mark */
+.pixel-card--signup {
+  overflow: visible;
+  padding: 34px 36px 30px;
+}
+
+.signup-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.signup-hero__copy {
+  width: 100%;
+  margin-top: 2px;
+}
+
 .pixel-card--signup .auth-brand {
   margin-bottom: 0;
 }
 
+.pixel-card--signup .auth-brand__mark {
+  width: min(64px, 16vw);
+  max-width: 68px;
+}
+
+.pixel-card--signup .auth-brand__title {
+  font-size: 9px;
+  line-height: 2;
+}
+
 .pixel-card--signup .auth-brand__headline {
-  margin: 6px 0 3px;
+  margin: 8px 0 0;
   font-family: var(--font-zh);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--yellow);
   text-shadow: 0 0 12px rgba(255, 224, 102, 0.32);
   letter-spacing: 0.05em;
   line-height: 1.45;
+}
+
+.signup-hero__tag.auth-welcome-tag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 8px 0 0;
+  font-family: var(--font-zh);
+  font-size: 11.5px;
+  font-weight: 400;
+  color: rgba(200, 195, 210, 0.58);
+  letter-spacing: 0.1em;
+  text-align: center;
+  line-height: 1.7;
+}
+
+.signup-hero__tag.auth-welcome-tag::before,
+.signup-hero__tag.auth-welcome-tag::after {
+  content: '';
+  flex: 0 0 1.4em;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(200, 195, 210, 0.35), transparent);
 }
 
 .pixel-card--signup .auth-brand__desc {
@@ -789,8 +839,122 @@
   line-height: 1.5;
 }
 
-.pixel-card--signup .pixel-form {
-  margin-top: 20px;
+.pixel-form--signup {
+  margin-top: 22px !important;
+  width: 100%;
+  max-width: min(320px, 100%);
+  margin-left: auto;
+  margin-right: auto;
+  gap: 14px;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.auth-field__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+}
+
+.auth-field__head .pixel-label {
+  margin-top: 0;
+}
+
+.auth-field .pixel-label {
+  margin-top: 0;
+}
+
+.auth-field .pixel-char-count {
+  flex-shrink: 0;
+  font-size: 10px;
+  color: rgba(200, 195, 210, 0.5);
+  letter-spacing: 0.02em;
+}
+
+.auth-field-group--password {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 12px 10px;
+  border: 1px solid rgba(189, 147, 249, 0.14);
+  border-radius: var(--r-lg);
+  background: rgba(7, 6, 14, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.pixel-card--signup .password-requirements--signup {
+  margin: 4px 0 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2px;
+}
+
+.pixel-card--signup .password-requirements--signup .password-requirements__item {
+  margin-bottom: 0;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.auth-terms {
+  margin-top: 2px;
+  padding: 10px 12px;
+  border-radius: var(--r-lg);
+  background: rgba(7, 6, 14, 0.18);
+  border: 1px solid rgba(189, 147, 249, 0.1);
+  line-height: 1.55;
+}
+
+.pixel-btn--signup {
+  margin-top: 4px !important;
+  width: 100%;
+}
+
+.pixel-card--signup .pixel-footer-text {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(189, 147, 249, 0.12);
+  width: 100%;
+  max-width: min(320px, 100%);
+}
+
+.pixel-card--signup-success {
+  padding-bottom: 34px;
+}
+
+.signup-success__icon {
+  margin: 4px 0 0;
+  font-size: 36px;
+  line-height: 1;
+}
+
+.signup-success__body {
+  margin: 10px 0 0;
+  line-height: 1.75;
+  font-size: 1rem;
+  font-weight: 400;
+  color: rgba(240, 235, 216, 0.82);
+}
+
+.signup-success__email {
+  display: block;
+  margin: 6px 0;
+  color: var(--purple-light);
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.pixel-card--signup-success .pixel-btn--signup {
+  margin-top: 22px !important;
+  max-width: min(320px, 100%);
+  text-decoration: none;
 }
 
 /* ── Auth logo (legacy pages: forgot-password, etc.) ── */
@@ -1175,15 +1339,49 @@
   }
 
   .pixel-card--signup .auth-brand__headline {
-    font-size: 14px;
+    font-size: 15px;
   }
 
-  .pixel-card--signup .auth-brand__desc {
+  .signup-hero__tag.auth-welcome-tag {
     font-size: 11px;
+    letter-spacing: 0.08em;
+    gap: 8px;
   }
 
-  .pixel-card--signup .pixel-form {
-    margin-top: 18px;
+  .signup-hero__tag.auth-welcome-tag::before,
+  .signup-hero__tag.auth-welcome-tag::after {
+    flex-basis: 1.1em;
+  }
+
+  .pixel-card--signup {
+    padding: 28px 22px 24px;
+  }
+
+  .pixel-form--signup {
+    max-width: 100%;
+    margin-top: 18px !important;
+    gap: 12px;
+  }
+
+  .auth-field-group--password {
+    padding: 10px 10px 8px;
+    gap: 10px;
+  }
+
+  .pixel-card--signup .pixel-footer-text {
+    max-width: 100%;
+    margin-top: 14px;
+    padding-top: 14px;
+  }
+
+  .app-page--signup.app-page--centered {
+    padding: 20px 16px 0;
+  }
+
+  .app-page--signup.app-page--centered > main {
+    justify-content: flex-start;
+    padding-top: 8px;
+    padding-bottom: 24px;
   }
 
   .pixel-card--auth .pixel-subtitle {

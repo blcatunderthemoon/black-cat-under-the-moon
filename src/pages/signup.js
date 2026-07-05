@@ -115,16 +115,21 @@ export default function SignupPage() {
     return (
       <>
         <Head><title>確認 Email — Black Cat Under The Moon</title></Head>
-        <AppShell centered hideHeader>
-          <div className="pixel-card pixel-card--auth">
-            <div style={{ fontSize: 40 }}>✉️</div>
-            <h1 className="pixel-title">確認你的 Email</h1>
-            <p className="pixel-subtitle" style={{ lineHeight: 1.8 }}>
-              我們已發送確認信至<br />
-              <strong style={{ color: 'var(--purple-light)' }}>{email}</strong><br />
-              請點擊信中連結完成註冊。
-            </p>
-            <Link href={`/login${redirectQuery}`} className="pixel-btn pixel-btn--primary" style={{ textDecoration: 'none' }}>
+        <AppShell centered hideHeader pageClassName="app-page--signup">
+          <div className="pixel-card pixel-card--auth pixel-card--signup pixel-card--signup-success">
+            <div className="signup-hero">
+              <AuthBrandHeader />
+              <div className="signup-hero__copy">
+                <p className="signup-success__icon" aria-hidden="true">✉️</p>
+                <h2 className="auth-brand__headline">確認你的 Email</h2>
+                <p className="signup-success__body pixel-subtitle">
+                  我們已發送確認信至
+                  <strong className="signup-success__email">{email}</strong>
+                  請點擊信中連結完成註冊。
+                </p>
+              </div>
+            </div>
+            <Link href={`/login${redirectQuery}`} className="pixel-btn pixel-btn--primary pixel-btn--signup">
               返回登入
             </Link>
           </div>
@@ -136,61 +141,84 @@ export default function SignupPage() {
   return (
     <>
       <Head><title>註冊 — Black Cat Under The Moon</title></Head>
-      <AppShell centered hideHeader>
+      <AppShell centered hideHeader pageClassName="app-page--signup">
         <div className="pixel-card pixel-card--auth pixel-card--signup">
-          <AuthBrandHeader />
-          <h2 className="auth-brand__headline">加入月光社群</h2>
-          <p className="auth-brand__desc">安全、溫暖、找到同頻的她</p>
+          <div className="signup-hero">
+            <AuthBrandHeader />
+            <div className="signup-hero__copy">
+              <h2 className="auth-brand__headline">加入月光社群</h2>
+              <p className="signup-hero__tag auth-welcome-tag">安全、溫暖、找到同頻的她</p>
+            </div>
+          </div>
 
-          <form onSubmit={handleSubmit} className="pixel-form">
-            <label className="pixel-label">站內暱稱</label>
-            <input
-              type="text"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="最多 20 字"
-              maxLength={DISPLAY_NAME_MAX_LENGTH}
-              className="pixel-input"
-              disabled={submitting}
-            />
-            <span className="pixel-char-count" style={{ textAlign: 'right' }}>{displayName.length}/{DISPLAY_NAME_MAX_LENGTH}</span>
+          <form onSubmit={handleSubmit} className="pixel-form pixel-form--signup" noValidate>
+            <div className="auth-field">
+              <div className="auth-field__head">
+                <label className="pixel-label" htmlFor="signup-display-name">站內暱稱</label>
+                <span className="pixel-char-count" aria-live="polite">
+                  {displayName.length}/{DISPLAY_NAME_MAX_LENGTH}
+                </span>
+              </div>
+              <input
+                id="signup-display-name"
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="最多 20 字"
+                maxLength={DISPLAY_NAME_MAX_LENGTH}
+                className="pixel-input"
+                disabled={submitting}
+                autoComplete="nickname"
+              />
+            </div>
 
-            <label className="pixel-label">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="your@email.com"
-              autoComplete="email"
-              className="pixel-input"
-              disabled={submitting}
-            />
+            <div className="auth-field">
+              <label className="pixel-label" htmlFor="signup-email">Email</label>
+              <input
+                id="signup-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your@email.com"
+                autoComplete="email"
+                className="pixel-input"
+                disabled={submitting}
+              />
+            </div>
 
-            <label className="pixel-label">密碼</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder={PASSWORD_PLACEHOLDER}
-              minLength={PASSWORD_MIN_LENGTH}
-              autoComplete="new-password"
-              className="pixel-input"
-              disabled={submitting}
-            />
-            <PasswordRequirementsChecklist password={password} />
+            <div className="auth-field-group auth-field-group--password">
+              <div className="auth-field">
+                <label className="pixel-label" htmlFor="signup-password">密碼</label>
+                <input
+                  id="signup-password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={PASSWORD_PLACEHOLDER}
+                  minLength={PASSWORD_MIN_LENGTH}
+                  autoComplete="new-password"
+                  className="pixel-input"
+                  disabled={submitting}
+                />
+                <PasswordRequirementsChecklist password={password} className="password-requirements--signup" />
+              </div>
 
-            <label className="pixel-label">確認密碼</label>
-            <input
-              type="password"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              placeholder="再輸入一次密碼"
-              autoComplete="new-password"
-              className="pixel-input"
-              disabled={submitting}
-            />
+              <div className="auth-field">
+                <label className="pixel-label" htmlFor="signup-confirm">確認密碼</label>
+                <input
+                  id="signup-confirm"
+                  type="password"
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  placeholder="再輸入一次密碼"
+                  autoComplete="new-password"
+                  className="pixel-input"
+                  disabled={submitting}
+                />
+              </div>
+            </div>
 
-            <label className="pixel-check-row">
+            <label className="pixel-check-row auth-terms">
               <input
                 type="checkbox"
                 checked={agreed}
@@ -208,7 +236,7 @@ export default function SignupPage() {
 
             {error && <p className="pixel-error">{error}</p>}
 
-            <button type="submit" className="pixel-btn pixel-btn--primary" disabled={submitting}>
+            <button type="submit" className="pixel-btn pixel-btn--primary pixel-btn--signup" disabled={submitting}>
               {submitting ? '處理中…' : '立即註冊'}
             </button>
           </form>

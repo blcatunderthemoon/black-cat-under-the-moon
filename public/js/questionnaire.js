@@ -3105,6 +3105,7 @@ async function submitAnswers() {
     setTimeout(() => {
       $loading.classList.remove('active');
       suppressHomeConfirm = true;
+      document.body.classList.add('match-results-active');
       $thankyou.classList.add('active');
       $progressFill.style.width = '100%';
       // Trigger confetti and animations
