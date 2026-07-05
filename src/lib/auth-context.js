@@ -4,7 +4,8 @@
  * Manages the Supabase session on the client.
  */
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import { useRouter } from 'next/router';
 import { createClient } from '@supabase/supabase-js';
 import { resolveBrowserSession, readStoredAuthSession, sessionFromStored } from './browser-session.js';
 import { resolveDisplayName } from './display-name.js';
@@ -35,8 +36,37 @@ function getSiteOrigin() {
 }
 
 export function AuthProvider({ children }) {
+  const router = useRouter();
   const [session, setSession] = useState(undefined); // undefined = loading
   const [profile, setProfile] = useState(null);
+  const [profileHydrated, setProfileHydrated] = useState(false);
+  const sessionRef = useRef(session);
+  sessionRef.current = session;
+
+  const refreshProfile = useCallback(async () => {
+    const s = sessionRef.current;
+    if (!s?.access_token || !s?.user?.id) return null;
+    const userId = s.user.id;
+    try {
+      const r = await fetch('/api/me', {
+        headers: { Authorization: `Bearer ${s.access_token}` },
+        cache: 'no-store',
+      });
+      if (r.status === 401) {
+        clearMeCache();
+        clearInboxThreadsCache();
+        clearMoonJourneyCache();
+        return null;
+      }
+      if (!r.ok) return null;
+      const data = await r.json();
+      setProfile(data);
+      writeMeCache(userId, data);
+      return data;
+    } catch {
+      return null;
+    }
+  }, []);
 
   useEffect(() => {
     const client = getBrowserClient();
@@ -97,9 +127,13 @@ export function AuthProvider({ children }) {
 
   // Fetch /api/me when session changes
   useEffect(() => {
-    if (session === undefined) return;
+    if (session === undefined) {
+      setProfileHydrated(false);
+      return;
+    }
     if (!session?.access_token) {
       setProfile(null);
+      setProfileHydrated(true);
       return;
     }
     const userId = session.user?.id;
@@ -108,8 +142,10 @@ export function AuthProvider({ children }) {
 
     const token = session.access_token;
     let cancelled = false;
+    setProfileHydrated(false);
     fetch('/api/me', {
       headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
     })
       .then(async (r) => {
         if (r.status === 401) {
@@ -133,9 +169,32 @@ export function AuthProvider({ children }) {
       })
       .catch(() => {
         if (!cancelled && !cached) setProfile(null);
+      })
+      .finally(() => {
+        if (!cancelled) setProfileHydrated(true);
       });
     return () => { cancelled = true; };
   }, [session?.access_token, session?.user?.id]);
+
+  // Revalidate profile after in-app navigation (e.g. account → inbox) and tab focus.
+  useEffect(() => {
+    if (!session?.access_token) return;
+
+    const onRoute = () => { refreshProfile(); };
+    const onVisible = () => {
+      if (document.visibilityState && document.visibilityState !== 'visible') return;
+      refreshProfile();
+    };
+
+    router.events.on('routeChangeComplete', onRoute);
+    window.addEventListener('focus', onVisible);
+    window.addEventListener('pageshow', onVisible);
+    return () => {
+      router.events.off('routeChangeComplete', onRoute);
+      window.removeEventListener('focus', onVisible);
+      window.removeEventListener('pageshow', onVisible);
+    };
+  }, [session?.access_token, router.events, refreshProfile]);
 
   const signIn = async (email, password) => {
     const client = getBrowserClient();
@@ -178,10 +237,11 @@ export function AuthProvider({ children }) {
     return client.auth.resetPasswordForEmail(email, { redirectTo });
   };
 
-  const displayName = session ? resolveDisplayName(session, profile) : null;
+  const meData = profile ?? (session?.user?.id ? readMeCache(session.user.id) : null);
+  const displayName = session ? resolveDisplayName(session, meData) : null;
 
   return (
-    <AuthContext.Provider value={{ session, profile, displayName, signIn, signUp, signOut, resetPassword, loading: session === undefined }}>
+    <AuthContext.Provider value={{ session, profile, profileHydrated, displayName, refreshProfile, signIn, signUp, signOut, resetPassword, loading: session === undefined }}>
       {children}
     </AuthContext.Provider>
   );

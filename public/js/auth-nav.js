@@ -220,7 +220,7 @@
       el.textContent = '';
       return;
     }
-    el.textContent = getWelcomeGreetingPrefix() + '。' + name + ' 🌙';
+    el.textContent = getWelcomeGreetingPrefix() + '。 ' + name + ' 🌙';
     el.hidden = false;
   }
 
@@ -268,31 +268,82 @@
     );
   }
 
+  function computePremiumMoonPopoverPosition(badgeRect, popoverW, popoverH, preferAbove) {
+    var gap = 6;
+    var pad = 8;
+    var vw = window.innerWidth;
+    var vh = window.innerHeight;
+    var safeW = Math.min(popoverW, vw - pad * 2);
+    var top = preferAbove ? badgeRect.top - popoverH - gap : badgeRect.bottom + gap;
+    if (!preferAbove && top + popoverH > vh - pad) {
+      var aboveTop = badgeRect.top - popoverH - gap;
+      if (aboveTop >= pad) top = aboveTop;
+    }
+    top = Math.max(pad, Math.min(top, vh - popoverH - pad));
+    var badgeCenter = badgeRect.left + badgeRect.width / 2;
+    var left = badgeCenter < vw / 2 ? badgeRect.left : badgeRect.right - safeW;
+    left = Math.max(pad, Math.min(left, vw - safeW - pad));
+    return { top: top, left: left, width: safeW };
+  }
+
+  function attachPremiumMoonPopoverPortal(wrap, popover) {
+    if (!wrap || !popover || popover.parentNode === document.body) return;
+    popover._premiumMoonHome = wrap;
+    document.body.appendChild(popover);
+    popover.classList.add('premium-moon-popover--portal');
+  }
+
+  function detachPremiumMoonPopoverPortal(popover) {
+    if (!popover) return;
+    var home = popover._premiumMoonHome;
+    popover.classList.remove('premium-moon-popover--portal');
+    popover.style.position = '';
+    popover.style.top = '';
+    popover.style.right = '';
+    popover.style.left = '';
+    popover.style.width = '';
+    popover.style.zIndex = '';
+    if (home && popover.parentNode === document.body) {
+      home.appendChild(popover);
+    }
+    popover._premiumMoonHome = null;
+  }
+
   function closeAllPremiumMoonPopovers() {
     document.querySelectorAll('.header-premium-moon-wrap--open').forEach(function(wrap) {
       wrap.classList.remove('header-premium-moon-wrap--open');
       var btn = wrap.querySelector('.premium-moon-badge--interactive');
       if (btn) btn.setAttribute('aria-expanded', 'false');
-      var popover = wrap.querySelector('.premium-moon-popover');
-      if (popover) {
-        popover.style.position = '';
-        popover.style.top = '';
-        popover.style.right = '';
-        popover.style.left = '';
-        popover.style.zIndex = '';
+      var popover = document.querySelector('.premium-moon-popover--portal');
+      if (popover && popover._premiumMoonHome === wrap) {
+        detachPremiumMoonPopoverPortal(popover);
       }
     });
   }
 
+  function getPremiumMoonPopover(wrap) {
+    var inWrap = wrap.querySelector('.premium-moon-popover');
+    if (inWrap) return inWrap;
+    var portaled = document.querySelector('.premium-moon-popover--portal');
+    if (portaled && portaled._premiumMoonHome === wrap) return portaled;
+    return null;
+  }
+
   function positionPremiumMoonPopover(wrap) {
     var badge = wrap.querySelector('.premium-moon-badge, .auth-nav-badge__moon');
-    var popover = wrap.querySelector('.premium-moon-popover');
+    var popover = getPremiumMoonPopover(wrap);
     if (!badge || !popover) return;
+    attachPremiumMoonPopoverPortal(wrap, popover);
     var rect = badge.getBoundingClientRect();
+    var popoverW = popover.offsetWidth || 210;
+    var popoverH = popover.offsetHeight || 72;
+    var preferAbove = Boolean(wrap.closest('.auth-nav-badge--user-toolbar'));
+    var pos = computePremiumMoonPopoverPosition(rect, popoverW, popoverH, preferAbove);
     popover.style.position = 'fixed';
-    popover.style.top = (rect.bottom + 6) + 'px';
-    popover.style.right = (window.innerWidth - rect.right) + 'px';
-    popover.style.left = 'auto';
+    popover.style.top = pos.top + 'px';
+    popover.style.left = pos.left + 'px';
+    popover.style.width = pos.width + 'px';
+    popover.style.right = 'auto';
     popover.style.zIndex = '10005';
   }
 
@@ -315,10 +366,12 @@
           wrap.classList.add('header-premium-moon-wrap--open');
           btn.setAttribute('aria-expanded', 'true');
           positionPremiumMoonPopover(wrap);
+          requestAnimationFrame(function() { positionPremiumMoonPopover(wrap); });
         }
         return;
       }
-      if (!e.target.closest('.header-premium-moon-wrap')) {
+      if (!e.target.closest('.header-premium-moon-wrap')
+        && !e.target.closest('.premium-moon-popover--portal')) {
         closeAllPremiumMoonPopovers();
       }
     }, true);
@@ -333,7 +386,8 @@
   }
 
   function updatePremiumMoonContent(data) {
-    var popover = document.querySelector('#' + NAV_ID + ' .premium-moon-popover');
+    var popover = document.querySelector('#' + NAV_ID + ' .premium-moon-popover')
+      || document.querySelector('.premium-moon-popover--portal');
     if (popover) popover.innerHTML = buildPopoverInnerHtml(data);
   }
 

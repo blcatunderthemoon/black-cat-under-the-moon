@@ -907,6 +907,7 @@ function shouldSkipHomeConfirm() {
 
 function resetQuizTopBarState() {
   suppressHomeConfirm = false;
+  document.body.classList.remove('match-results-active');
   setMirrorResultActive(false);
   if ($progressWrap) $progressWrap.classList.remove('mode-top-bar--result');
   if ($progressText) $progressText.classList.remove('mode-top-bar__center--zh');
@@ -1218,42 +1219,26 @@ function getLocalMatchSubmittedEmail() {
 }
 
 async function userHasMatchSubmission() {
-  var accountEmail = await resolveMatchAccountEmail();
   var token = await ensureSupabaseAuthToken();
-  var authedChecked = false;
-  var authedSubmitted = false;
+  // Revisit screen is only for logged-in users confirmed by the server.
+  if (!token) return false;
 
-  if (token) {
-    try {
-      var statusResp = await fetchMatchStatusAuthed(token);
-      authedChecked = statusResp.ok;
-      if (statusResp.ok) {
-        var statusData = await statusResp.json().catch(function() { return {}; });
-        authedSubmitted = !!statusData.has_submitted;
-        if (authedSubmitted) {
-          markMatchSubmittedLocally(accountEmail || getLocalMatchSubmittedEmail() || '');
-          return true;
-        }
+  var accountEmail = await resolveMatchAccountEmail();
+
+  try {
+    var statusResp = await fetchMatchStatusAuthed(token);
+    if (statusResp.ok) {
+      var statusData = await statusResp.json().catch(function() { return {}; });
+      if (statusData.has_submitted) {
+        markMatchSubmittedLocally(accountEmail || getLocalMatchSubmittedEmail() || '');
+        return true;
       }
-    } catch (e) {}
-  }
-
-  var emailsToCheck = [];
-  if (accountEmail) emailsToCheck.push(String(accountEmail).toLowerCase().trim());
-  var storedEmail = getLocalMatchSubmittedEmail();
-  if (storedEmail && emailsToCheck.indexOf(storedEmail) === -1) emailsToCheck.push(storedEmail);
-
-  for (var i = 0; i < emailsToCheck.length; i++) {
-    var found = await fetchMatchStatusByEmail(emailsToCheck[i]);
-    if (found) {
-      markMatchSubmittedLocally(emailsToCheck[i]);
-      return true;
+      clearLocalMatchSubmission();
+      return false;
     }
-  }
+  } catch (e) {}
 
-  if (authedChecked && !authedSubmitted) {
-    clearLocalMatchSubmission();
-  } else if (!authedChecked && hasLocalMatchSubmission()) {
+  if (hasLocalMatchSubmission()) {
     clearLocalMatchSubmission();
   }
   return false;
@@ -1604,12 +1589,14 @@ function renderMatchResultsOnMatchPage(matches) {
 async function showMatchAlreadySubmitted(prefetchedMatches) {
   suppressHomeConfirm = true;
   setQuizViewport(false);
+  document.body.classList.add('match-results-active');
   $main.style.display = 'none';
   hideQuizSiteHeader();
   $loading.classList.add('active');
 
   var staticView = document.getElementById('already-submitted-static');
   var resultsPanel = document.getElementById('match-results-panel');
+  var premiumBlock = staticView ? staticView.querySelector('.already-submitted-premium') : null;
   var $already = document.getElementById('already-screen');
   if (staticView) staticView.style.display = 'none';
   if (resultsPanel) resultsPanel.style.display = 'none';
@@ -1618,6 +1605,28 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
   var token = getSupabaseAuthToken();
   var isPremium = false;
   var matches = [];
+
+  if (!token) {
+    $progressWrap.style.display = 'block';
+    $progressWrap.classList.add('mode-top-bar--result');
+    if ($progressFill) $progressFill.style.width = '100%';
+    if ($progressText) {
+      $progressText.textContent = '月下緣份';
+      $progressText.classList.add('mode-top-bar__center--zh');
+    }
+    if (staticView) staticView.style.display = '';
+    if (premiumBlock) premiumBlock.style.display = 'none';
+    if (resultsPanel) resultsPanel.style.display = 'none';
+    if ($already) {
+      $already.classList.remove('overlay-screen--match-results');
+      $already.classList.add('active');
+    }
+    $loading.classList.remove('active');
+    finishQuizPageBoot();
+    return;
+  }
+
+  if (premiumBlock) premiumBlock.style.display = '';
 
   if (prefetchedMatches && Array.isArray(prefetchedMatches.matches)) {
     matches = prefetchedMatches.matches;
@@ -1670,7 +1679,7 @@ async function startMatchMode() {
 
   var token = getSupabaseAuthToken();
   var matchesPrefetch = null;
-  if (token && (hasLocalMatchSubmission() || getLoggedInAccountEmailFromStorage())) {
+  if (token) {
     matchesPrefetch = fetch('/api/matches', {
       headers: { Authorization: 'Bearer ' + token },
       cache: 'no-store',
@@ -1679,7 +1688,7 @@ async function startMatchMode() {
       .catch(function() { return null; });
   }
 
-  if (await userHasMatchSubmission()) {
+  if (token && await userHasMatchSubmission()) {
     quizInitialRevealPending = false;
     var prefetched = matchesPrefetch ? await matchesPrefetch : null;
     await showMatchAlreadySubmitted(prefetched);

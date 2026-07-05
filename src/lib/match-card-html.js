@@ -173,7 +173,22 @@ function buildMatchCardHtml({ user, target, score, breakdown, intelligence, site
     border-radius: 4px;
     box-shadow: 0 0 28px rgba(0,229,255,0.18);
     position: relative;
-    overflow: visible;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    border-radius: 2px;
+    background:
+      radial-gradient(circle at 88% 10%, rgba(255,224,102,0.08), transparent 32%),
+      radial-gradient(circle at 14% 22%, rgba(255,255,255,0.04), transparent 24%);
+  }
+  .card > *:not(#card-stars) {
+    position: relative;
+    z-index: 1;
   }
   @media (max-width: 520px) {
     body { padding: 4px 10px calc(20px + env(safe-area-inset-bottom, 0px)); }
@@ -673,26 +688,7 @@ function buildMatchCardHtml({ user, target, score, breakdown, intelligence, site
 <body>
   <div class="card${rarityClass}">
     <!-- Animated starfield canvas -->
-    <canvas id="card-stars" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;border-radius:2px"></canvas>
-    <!-- Decorative overlays (moon / sparkles / cat silhouette) -->
-    <svg aria-hidden="true" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;overflow:hidden;border-radius:4px" viewBox="0 0 760 900" preserveAspectRatio="xMidYMid slice">
-      <!-- crescent moon top-right -->
-      <path d="M690 55 A40 40 0 1 1 720 110 A26 26 0 1 0 690 55 Z" fill="rgba(255,224,102,0.05)"/>
-      <!-- 4-pointed sparkle stars (hand-placed, no compound transforms) -->
-      <g fill="rgba(255,255,255,0.12)">
-        <!-- top-left sparkle -->
-        <path d="M60 70 L62 78 L70 80 L62 82 L60 90 L58 82 L50 80 L58 78 Z"/>
-        <!-- top-right area -->
-        <path d="M620 35 L621.5 40 L627 41.5 L621.5 43 L620 48 L618.5 43 L613 41.5 L618.5 40 Z"/>
-        <!-- mid-left -->
-        <path d="M28 420 L29.5 425 L35 426.5 L29.5 428 L28 433 L26.5 428 L21 426.5 L26.5 425 Z"/>
-        <!-- mid-right -->
-        <path d="M735 400 L736.5 405 L742 406.5 L736.5 408 L735 413 L733.5 408 L728 406.5 L733.5 405 Z"/>
-        <!-- lower area -->
-        <path d="M110 750 L111.5 755 L117 756.5 L111.5 758 L110 763 L108.5 758 L103 756.5 L108.5 755 Z"/>
-      </g>
-
-    </svg>
+    <canvas id="card-stars" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;border-radius:2px;opacity:0.55"></canvas>
     ${rarityShineHtml}
     <!-- Pixel Cat Header -->
     <div class="card-header" style="position:relative;z-index:1">
@@ -871,17 +867,17 @@ function buildMatchCardHtml({ user, target, score, breakdown, intelligence, site
       canvas.width = card.offsetWidth;
       canvas.height = card.offsetHeight;
       var stars = [];
-      for (var i = 0; i < 80; i++) {
+      for (var i = 0; i < 48; i++) {
         stars.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          size: Math.random() < 0.3 ? 2 : 1,
-          speed: Math.random() * 0.15 + 0.05,
+          size: Math.random() < 0.25 ? 2 : 1,
+          speed: Math.random() * 0.12 + 0.04,
           phase: Math.random() * Math.PI * 2,
-          twinkle: Math.random() * 0.015 + 0.005
+          twinkle: Math.random() * 0.012 + 0.004
         });
       }
-      var colors = ['255,255,255', '200,180,255', '180,230,255', '255,220,180'];
+      var colors = ['255,255,255', '200,180,255', '180,230,255'];
       var paused = false;
       function draw(time) {
         if (!paused) {
@@ -889,7 +885,7 @@ function buildMatchCardHtml({ user, target, score, breakdown, intelligence, site
           stars.forEach(function(s) {
             s.y += s.speed;
             if (s.y > canvas.height + 2) { s.y = -2; s.x = Math.random() * canvas.width; }
-            var alpha = 0.25 + 0.35 * Math.sin(time * s.twinkle + s.phase);
+            var alpha = 0.18 + 0.22 * Math.sin(time * s.twinkle + s.phase);
             var c = colors[(s.size + Math.floor(s.x)) % colors.length];
             ctx.fillStyle = 'rgba(' + c + ',' + alpha.toFixed(2) + ')';
             ctx.fillRect(Math.floor(s.x), Math.floor(s.y), s.size, s.size);
@@ -919,10 +915,12 @@ function buildMatchCardHtml({ user, target, score, breakdown, intelligence, site
 
       if (typeof window._cardStarsPause === 'function') window._cardStarsPause(true);
 
+      var rect = card.getBoundingClientRect();
+      var exportW = Math.max(Math.round(rect.width), 280);
+      var exportH = Math.max(Math.ceil(rect.height), card.scrollHeight, 480);
       var exportCard = card.cloneNode(true);
-      var exportH = Math.max(card.scrollHeight, card.offsetHeight, 480);
       exportCard.style.cssText =
-        'position:fixed;left:-10000px;top:0;width:760px;height:' + exportH + 'px;min-height:auto;margin:0;z-index:-1;overflow:visible;';
+        'position:fixed;left:-10000px;top:0;width:' + exportW + 'px;height:' + exportH + 'px;min-height:auto;margin:0;z-index:-1;overflow:hidden;box-sizing:border-box;';
       document.body.appendChild(exportCard);
 
       var exportStars = exportCard.querySelector('#card-stars');
@@ -976,9 +974,9 @@ function buildMatchCardHtml({ user, target, score, breakdown, intelligence, site
           useCORS: true,
           allowTaint: false,
           logging: false,
-          width: 760,
+          width: exportW,
           height: exportH,
-          windowWidth: 760,
+          windowWidth: exportW,
           windowHeight: exportH,
         });
       }).then(function(canvas) {

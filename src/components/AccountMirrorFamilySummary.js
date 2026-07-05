@@ -1,11 +1,53 @@
+import { Fragment } from 'react';
 import Link from 'next/link';
 import {
   PERSONALITY_TYPES,
   CAT_IMG_MAP,
   CAT_GLOW_MAP,
   MIRROR_EMOJI,
+  getPublicProfile,
+  formatZodiacDisplay,
+  splitPcardMixedText,
 } from '../lib/mirror-personality.js';
 import PixelMixedLabel from './PixelMixedLabel.js';
+
+function MirrorMetaValue({ value }) {
+  const parts = splitPcardMixedText(value);
+  return (
+    <span className="account-mirror-family__meta-val">
+      {parts.map(({ text, zh }, i) => (
+        <span
+          key={`${i}-${text}`}
+          className={zh ? 'account-mirror-family__meta-zh' : 'account-mirror-family__meta-en'}
+        >
+          {text}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function AccountMirrorIdentityMeta({ basicAnswers }) {
+  const profile = getPublicProfile(basicAnswers);
+  const parts = [
+    profile.label,
+    profile.mbti,
+    formatZodiacDisplay(profile.zodiac),
+  ].filter(Boolean);
+  if (!parts.length) return null;
+  return (
+    <div className="account-mirror-family__meta" aria-label="鏡像身份">
+      {parts.map((val, i) => (
+        <Fragment key={val}>
+          {i > 0 ? (
+            <span className="account-mirror-family__meta-dot" aria-hidden="true">·</span>
+          ) : null}
+          <MirrorMetaValue value={val} />
+        </Fragment>
+      ))}
+    </div>
+  );
+}
 
 function familyDescExcerpt(desc, maxLen = 72) {
   const text = String(desc || '').trim();
@@ -17,7 +59,7 @@ function familyDescExcerpt(desc, maxLen = 72) {
   return `${text.slice(0, end).trim()}…`;
 }
 
-export default function AccountMirrorFamilySummary({ card }) {
+export default function AccountMirrorFamilySummary({ card, displayName }) {
   const mainType = card?.mirror_type;
   const family = mainType ? PERSONALITY_TYPES[mainType] : null;
   if (!family) return null;
@@ -62,6 +104,12 @@ export default function AccountMirrorFamilySummary({ card }) {
           />
         </h2>
         <p className="account-mirror-family__name-en">{family.nameEn}</p>
+
+        <AccountMirrorIdentityMeta basicAnswers={card?.basic_answers} />
+
+        {displayName ? (
+          <p className="account-mirror-family__username">{displayName}</p>
+        ) : null}
 
         {excerpt ? (
           <p className="account-mirror-family__desc">{excerpt}</p>

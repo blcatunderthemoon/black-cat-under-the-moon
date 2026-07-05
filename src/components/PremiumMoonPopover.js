@@ -1,8 +1,20 @@
+import { forwardRef } from 'react';
+
 /** Popover below header premium moon (hover desktop / tap mobile). */
-export default function PremiumMoonPopover({ statusMessage, quotaLine, style = undefined }) {
+const PremiumMoonPopover = forwardRef(function PremiumMoonPopover({
+  statusMessage,
+  quotaLine,
+  style = undefined,
+  portaled = false,
+}, ref) {
   if (!statusMessage) return null;
   return (
-    <div className="premium-moon-popover" role="tooltip" style={style}>
+    <div
+      ref={ref}
+      className={`premium-moon-popover${portaled ? ' premium-moon-popover--portal' : ''}`}
+      role="tooltip"
+      style={style}
+    >
       <p className="premium-moon-popover__line premium-moon-popover__line--status">
         <span className="premium-moon-popover__glyph" aria-hidden="true">🌙</span>
         {statusMessage}
@@ -14,4 +26,6 @@ export default function PremiumMoonPopover({ statusMessage, quotaLine, style = u
       )}
     </div>
   );
-}
+});
+
+export default PremiumMoonPopover;

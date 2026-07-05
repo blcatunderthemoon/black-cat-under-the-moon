@@ -64,6 +64,7 @@ html:has(.mode-top-bar--quiz) {
   justify-self: end;
   display: flex;
   align-items: center;
+  flex-wrap: nowrap;
   gap: 10px;
   min-width: 0;
   max-width: 100%;
@@ -79,15 +80,18 @@ html:has(.mode-top-bar--quiz) {
   padding: 0 2px;
   font-family: 'Zpix', 'Press Start 2P', monospace;
   font-size: 11px;
-  line-height: 1.4;
+  line-height: 1.45;
   letter-spacing: 0.03em;
   color: var(--welcome-moon-cream, #f5e6c8);
   text-shadow: 0 0 12px rgba(255, 224, 102, 0.28);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: min(240px, 42vw);
+  min-width: 0;
+  max-width: min(220px, 38vw);
+  flex: 0 1 auto;
   flex-shrink: 1;
+  text-align: right;
   animation: none;
 }
 
@@ -510,7 +514,9 @@ html:has(.mode-top-bar--quiz) {
   left: auto;
   z-index: 10002;
   min-width: 210px;
+  max-width: min(280px, calc(100vw - 16px));
   padding: 8px 10px;
+  box-sizing: border-box;
   background: linear-gradient(165deg, rgba(15, 14, 34, 0.98) 0%, rgba(7, 6, 14, 0.99) 100%);
   border: 1px solid rgba(189, 147, 249, 0.42);
   box-shadow:
@@ -524,15 +530,25 @@ html:has(.mode-top-bar--quiz) {
   transition: opacity 0.14s ease, visibility 0.14s ease, transform 0.14s ease;
 }
 
+.premium-moon-popover--portal {
+  position: fixed;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+  transition: none;
+  z-index: 10005;
+}
+
 .header-premium-moon-wrap:hover,
 .header-premium-moon-wrap:focus-within,
 .header-premium-moon-wrap--open {
   z-index: 10003;
 }
 
-.header-premium-moon-wrap:hover .premium-moon-popover,
-.header-premium-moon-wrap:focus-within .premium-moon-popover,
-.header-premium-moon-wrap--open .premium-moon-popover {
+.header-premium-moon-wrap:hover .premium-moon-popover:not(.premium-moon-popover--portal),
+.header-premium-moon-wrap:focus-within .premium-moon-popover:not(.premium-moon-popover--portal),
+.header-premium-moon-wrap--open .premium-moon-popover:not(.premium-moon-popover--portal) {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
@@ -545,15 +561,17 @@ html:has(.mode-top-bar--quiz) {
   font-size: 10px;
   letter-spacing: 0.04em;
   line-height: 1.55;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
   color: rgba(232, 238, 255, 0.92);
   text-shadow: 0 0 10px rgba(180, 200, 255, 0.35);
 }
 
 .premium-moon-popover__line--status {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
+  flex-wrap: wrap;
 }
 
 .premium-moon-popover__line--quota {
@@ -679,6 +697,30 @@ html:has(.mode-top-bar--quiz) {
     padding: 6px 8px;
     gap: 6px;
   }
+
+  .mode-top-bar--index .mode-top-bar__header-end {
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .mode-top-bar--index .mode-top-bar__nav-slot {
+    flex: 0 0 auto;
+    max-width: none;
+  }
+
+  .mode-top-bar--index .welcome-greeting:not([hidden]) {
+    flex: 0 1 auto;
+    order: 0;
+    max-width: min(150px, 34vw);
+    font-size: 9px;
+    line-height: 1.4;
+    padding-top: 0;
+  }
+
   .mode-header-chip {
     font-size: 10px;
     padding: 0 6px;
@@ -830,8 +872,8 @@ body[data-automode="mirror"]:not(.quiz-viewport) {
   padding-bottom: calc(var(--quiz-footer-reserve, 54px) + env(safe-area-inset-bottom, 0px));
 }
 
-body[data-automode="match"]:not(.quiz-viewport) .main-container,
-body[data-automode="mirror"]:not(.quiz-viewport) .main-container {
+body[data-automode="match"]:not(.quiz-viewport):not(.match-results-active) .main-container,
+body[data-automode="mirror"]:not(.quiz-viewport):not(.match-results-active) .main-container {
   overflow: visible;
   display: block;
   flex: none;
@@ -839,8 +881,8 @@ body[data-automode="mirror"]:not(.quiz-viewport) .main-container {
   padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
 }
 
-body[data-automode="match"]:not(.quiz-viewport) .q-card,
-body[data-automode="mirror"]:not(.quiz-viewport) .q-card {
+body[data-automode="match"]:not(.quiz-viewport):not(.match-results-active) .q-card,
+body[data-automode="mirror"]:not(.quiz-viewport):not(.match-results-active) .q-card {
   overflow: visible;
   min-height: 0;
   max-height: none;
@@ -1346,10 +1388,13 @@ body.lang-en .mode-top-bar--legal .home-back-btn .en {
 
   .welcome-screen .site-footer--embedded,
   .mode-select-screen.active .site-footer--embedded {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     width: 100%;
     flex-shrink: 0;
     scroll-margin-bottom: env(safe-area-inset-bottom, 0);
+    text-align: center;
   }
 
   .welcome-scroll-end,

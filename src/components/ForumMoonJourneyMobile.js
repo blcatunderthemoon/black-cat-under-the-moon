@@ -61,6 +61,8 @@ export default function ForumMoonJourneyMobile({
 
   const pendingCheckIn = journey && !journey.checked_in_today;
 
+  const level = journey?.level ?? 1;
+
   return (
     <span className="forum-mj-header-wrap" ref={rootRef}>
       <button
@@ -69,9 +71,10 @@ export default function ForumMoonJourneyMobile({
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
         aria-controls="forum-mj-dropdown"
-        title="月光旅程"
+        title={`月光旅程 · Lv${level}`}
+        aria-label={`月光旅程 Lv${level}`}
       >
-        <span className="app-header__nav-icon forum-mj-header-btn__icon" aria-hidden="true">🌙</span>
+        <span className="forum-mj-header-btn__lv" aria-hidden="true">Lv{level}</span>
         {pendingCheckIn && (
           <span className="forum-mj-header-btn__dot" aria-label="今日尚未打卡" />
         )}

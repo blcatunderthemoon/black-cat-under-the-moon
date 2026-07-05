@@ -455,13 +455,19 @@ export function MoonJourneyAccountCard({ moonJourney, accessToken, onJourneyUpda
 
       <div className="moon-journey-account__hero">
         <div className="moon-journey-account__moon-orbit" aria-hidden="true">
-          <PixelMoonIcon size={44} />
+          <span className="moon-journey-account__emoji">{moonJourney.emoji || '🌑'}</span>
         </div>
         <div className="moon-journey-account__identity">
           <p className="moon-journey-account__level">
-            Lv{moonJourney.level} {moonJourney.title_zh}
+            <span className="moon-journey-account__level-tag">Lv{moonJourney.level}</span>
+            {moonJourney.title_zh}
           </p>
           <p className="moon-journey-account__level-en">{moonJourney.title_en}</p>
+          {(moonJourney.checkin_streak ?? 0) > 0 && (
+            <p className="moon-journey-account__streak">
+              🔥 連續打卡 <strong>{moonJourney.checkin_streak}</strong> 天
+            </p>
+          )}
         </div>
       </div>
 
@@ -478,6 +484,10 @@ export function MoonJourneyAccountCard({ moonJourney, accessToken, onJourneyUpda
 
       {!moonJourney.is_max_level && (
         <div className="moon-journey-account__progress-wrap">
+          <div className="moon-journey-account__progress-head">
+            <span className="moon-journey-account__progress-label">升級進度</span>
+            <span className="moon-journey-account__progress-pct">{progressPct}%</span>
+          </div>
           <div
             className="moon-journey-account__progress"
             role="progressbar"
@@ -488,13 +498,16 @@ export function MoonJourneyAccountCard({ moonJourney, accessToken, onJourneyUpda
           >
             <div
               className="moon-journey-account__progress-fill"
-              style={{ width: `${progressPct}%` }}
+              style={{ width: `${Math.max(progressPct, moonJourney.exp > 0 ? 6 : 0)}%` }}
             />
           </div>
           {progress && (
             <p className="moon-journey-account__next">
-              距 Lv{progress.nextLevel}（{moonJourney.next_title_zh || moonJourney.next_title_en}）還差{' '}
-              <strong>{progress.expToNext} EXP</strong>
+              距 Lv{progress.nextLevel}
+              <span className="moon-journey-account__next-title">
+                {moonJourney.next_title_zh || moonJourney.next_title_en}
+              </span>
+              還差 <strong>{progress.expToNext} EXP</strong>
             </p>
           )}
         </div>

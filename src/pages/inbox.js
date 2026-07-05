@@ -33,7 +33,7 @@ function timeAgo(dateStr) {
 }
 
 export default function InboxPage() {
-  const { session, profile, loading } = useAuth();
+  const { session, profile, profileHydrated, loading } = useAuth();
   const router = useRouter();
   const clientReady = useClientReady();
   const didRedirect = useRef(false);
@@ -146,6 +146,7 @@ export default function InboxPage() {
   const meData = profile ?? (userId ? readMeCache(userId) : null);
   const isPremium = isPremiumUser(meData);
   const inboxReady = !threadsLoading && threads !== null;
+  const pageReady = inboxReady && profileHydrated;
 
   const handleInboxUpdated = useCallback(() => {
     lastFetchedTokenRef.current = null;
@@ -173,7 +174,7 @@ export default function InboxPage() {
     );
   }
 
-  if (!inboxReady) {
+  if (!pageReady) {
     return (
       <>
         <Head><title>收件箱 — Black Cat Under The Moon</title></Head>
@@ -182,7 +183,6 @@ export default function InboxPage() {
           headerVariant="account"
           pageClassName="app-page--inbox app-page--inbox-loading"
           maxWidth="680px"
-          nav={<AppHeaderAuth redirectPath="/inbox" />}
         >
           <MoonLoading label="載入收件箱…" variant="hero" className="inbox-page-loading" />
         </AppShell>

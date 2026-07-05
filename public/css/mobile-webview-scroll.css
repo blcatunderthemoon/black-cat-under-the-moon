@@ -121,12 +121,15 @@ body::-webkit-scrollbar {
   .welcome-screen .site-footer--embedded,
   .mode-select-screen.active .site-footer--embedded,
   .site-footer.site-footer--app {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     width: 100%;
     flex-shrink: 0;
     scroll-margin-bottom: env(safe-area-inset-bottom, 0);
     padding-bottom: calc(var(--mobile-footer-inner-pad) + env(safe-area-inset-bottom, 0)) !important;
     margin-bottom: 0;
+    text-align: center;
   }
 
   .welcome-scroll-end,
@@ -163,8 +166,8 @@ body::-webkit-scrollbar {
     touch-action: pan-y;
   }
 
-  body[data-automode="match"]:not(.quiz-viewport) .main-container,
-  body[data-automode="mirror"]:not(.quiz-viewport) .main-container,
+  body[data-automode="match"]:not(.quiz-viewport):not(.match-results-active) .main-container,
+  body[data-automode="mirror"]:not(.quiz-viewport):not(.match-results-active) .main-container,
   body[data-automode="match"].quiz-viewport .main-container,
   body[data-automode="mirror"].quiz-viewport .main-container {
     overflow: visible !important;
@@ -174,8 +177,8 @@ body::-webkit-scrollbar {
     padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
   }
 
-  body[data-automode="match"]:not(.quiz-viewport) .q-card,
-  body[data-automode="mirror"]:not(.quiz-viewport) .q-card,
+  body[data-automode="match"]:not(.quiz-viewport):not(.match-results-active) .q-card,
+  body[data-automode="mirror"]:not(.quiz-viewport):not(.match-results-active) .q-card,
   body[data-automode="match"].quiz-viewport .q-card,
   body[data-automode="mirror"].quiz-viewport .q-card {
     overflow: visible !important;

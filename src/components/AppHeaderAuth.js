@@ -8,6 +8,7 @@ import { useAuth } from '../lib/auth-context.js';
 import { NavLink } from './AppShell.js';
 import PixelMixedLabel from './PixelMixedLabel.js';
 import HeaderPremiumMoon from './HeaderPremiumMoon.js';
+import { readMeCache } from '../lib/me-cache.js';
 import { isPremiumUser } from '../lib/premium.js';
 
 function NavSep() {
@@ -37,9 +38,10 @@ export default function AppHeaderAuth({ redirectPath, hideInbox: hideInboxProp, 
     );
   }
 
+  const meData = profile ?? (session.user?.id ? readMeCache(session.user.id) : null);
   const name = displayName || '貓咪';
-  const unread = profile?.unread_inbox_count || 0;
-  const isPremium = isPremiumUser(profile);
+  const unread = meData?.unread_inbox_count || 0;
+  const isPremium = isPremiumUser(meData);
 
   return (
     <>
@@ -57,7 +59,7 @@ export default function AppHeaderAuth({ redirectPath, hideInbox: hideInboxProp, 
                 </Link>
               )}
               {isPremium && (
-                <HeaderPremiumMoon profile={profile} className="auth-nav-badge__moon" />
+                <HeaderPremiumMoon profile={meData} className="auth-nav-badge__moon" />
               )}
             </span>
           )}

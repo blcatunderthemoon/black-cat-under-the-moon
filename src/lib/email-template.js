@@ -24,8 +24,7 @@ const SAFETY_SECTION = `
     <div style="margin-top:20px;border-left:3px solid #f87171;padding:14px 16px;background:rgba(248,113,113,0.06);border-radius:0 8px 8px 0;">
       <div style="font-size:13px;font-weight:700;color:#f87171;margin-bottom:10px;">🛡️ 黑貓的守護提醒（社交安全）</div>
       <div style="font-size:12px;color:#c9bfe8;line-height:1.9;">
-        本站為線上交流社群。如您與任何線上認識的成員進行私下互動，請務必提高警覺，注意個人隱私與人身安全。
-        <p style="margin:10px 0 0 0;">在你們開始了解彼此之前，請務必閱讀以下安全指引，保護好自己：</p>
+        本站為線上交流社群。在你們開始了解彼此之前，請務必閱讀以下安全指引，保護好自己：
         <ul style="margin:8px 0 0 0;padding-left:18px;">
           <li><strong style="color:#f0ebd8;">保護個人隱私：</strong>在建立足夠信任前，請勿向對方透露過多敏感資訊（如屋企地址、公司具體位置、身份證號碼或銀行資料）。</li>
           <li style="margin-top:6px;"><strong style="color:#f0ebd8;">初次見面安排：</strong>若決定見面，請務必約在人多、明亮的公眾場合（如餐廳或咖啡廳），切勿前往對方的私人住所或偏僻地方。</li>
@@ -162,8 +161,7 @@ export function buildTextEmail({ receiver, partner, score }) {
     '📎 請下載並在瀏覽器中打開附件的共鳴分析卡（.html 檔案），查看完整心靈契合度分析及靈魂雷達圖。',
     '',
     '🛡️ 黑貓的守護提醒（社交安全）',
-    '本站為線上交流社群。如您與任何線上認識的成員進行私下互動，請務必提高警覺，注意個人隱私與人身安全。',
-    '在你們開始了解彼此之前，請務必閱讀以下安全指引，保護好自己：',
+    '本站為線上交流社群。在你們開始了解彼此之前，請務必閱讀以下安全指引，保護好自己：',
     '・保護個人隱私：在建立足夠信任前，請勿向對方透露過多敏感資訊（如屋企地址、公司具體位置、身份證號碼或銀行資料）。',
     '・初次見面安排：若決定見面，請務必約在人多、明亮的公眾場合（如餐廳或咖啡廳），切勿前往對方的私人住所或偏僻地方。',
     '・告知親友：出發前將約會的時間、地點及對方基本資料告知身邊信任的朋友或家人。',

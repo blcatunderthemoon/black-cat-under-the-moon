@@ -2368,7 +2368,9 @@
   left: auto;
   z-index: 10002;
   min-width: 210px;
+  max-width: min(280px, calc(100vw - 16px));
   padding: 8px 10px;
+  box-sizing: border-box;
   background: linear-gradient(165deg, rgba(15, 14, 34, 0.98) 0%, rgba(7, 6, 14, 0.99) 100%);
   border: 1px solid rgba(189, 147, 249, 0.42);
   box-shadow:
@@ -2382,15 +2384,27 @@
   transition: opacity 0.14s ease, visibility 0.14s ease, transform 0.14s ease;
 }
 
+.premium-moon-popover--portal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+  transition: none;
+  z-index: 10005;
+}
+
 .header-premium-moon-wrap:hover,
 .header-premium-moon-wrap:focus-within,
 .header-premium-moon-wrap--open {
   z-index: 10003;
 }
 
-.header-premium-moon-wrap:hover .premium-moon-popover,
-.header-premium-moon-wrap:focus-within .premium-moon-popover,
-.header-premium-moon-wrap--open .premium-moon-popover {
+.header-premium-moon-wrap:hover .premium-moon-popover:not(.premium-moon-popover--portal),
+.header-premium-moon-wrap:focus-within .premium-moon-popover:not(.premium-moon-popover--portal),
+.header-premium-moon-wrap--open .premium-moon-popover:not(.premium-moon-popover--portal) {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
@@ -2403,7 +2417,8 @@
   font-size: 10px;
   letter-spacing: 0.04em;
   line-height: 1.55;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
   color: rgba(232, 238, 255, 0.92);
   text-shadow: 0 0 10px rgba(180, 200, 255, 0.35);
   -webkit-font-smoothing: none;
@@ -2413,8 +2428,9 @@
 
 .premium-moon-popover__line--status {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
+  flex-wrap: wrap;
 }
 
 .premium-moon-popover__line--quota {
@@ -3286,13 +3302,79 @@
 }
 
 .account-mirror-family__name-en {
-  margin: 0 0 10px;
+  margin: 0 0 8px;
   font-family: 'Press Start 2P', monospace;
   font-size: 6px;
   letter-spacing: 0.08em;
   color: var(--text-dim);
   text-transform: uppercase;
   line-height: 1.5;
+}
+
+.account-mirror-family__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin: 0 0 10px;
+  line-height: 1;
+  text-align: center;
+}
+
+.account-mirror-family__meta-val {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--yellow);
+  line-height: 1.2;
+  text-shadow: 0 0 12px rgba(255, 224, 102, 0.35);
+}
+
+.account-mirror-family__meta-zh,
+.account-mirror-family__meta-en {
+  font-family: 'Zpix', 'Press Start 2P', monospace;
+  font-size: 10px;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.account-mirror-family__meta-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-family: 'Zpix', 'Press Start 2P', monospace;
+  font-size: 10px;
+  line-height: 1;
+  color: rgba(255, 224, 102, 0.55);
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.account-mirror-family__username {
+  margin: 0 0 12px;
+  padding: 7px 12px;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: var(--yellow);
+  letter-spacing: 0.5px;
+  line-height: 1.7;
+  text-align: center;
+  border: 1px solid color-mix(in srgb, var(--family-glow) 45%, transparent);
+  background: color-mix(in srgb, var(--family-glow) 10%, rgba(0, 0, 0, 0.35));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 12px color-mix(in srgb, var(--family-glow) 18%, transparent);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--family-glow) 55%, transparent);
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
 }
 
 .account-mirror-family__desc {
@@ -3382,8 +3464,9 @@
 .app-page--account .account-mirror-section .mirror-public-card,
 .app-page--account .account-mirror-section #personality-card {
   width: 100%;
-  max-width: 360px;
+  max-width: min(360px, 100%);
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .account-mirror-empty {
@@ -8192,9 +8275,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 28px;
-  min-height: 28px;
-  padding: 4px 6px;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
   color: rgba(255, 255, 255, 0.72);
 }
 
@@ -8205,8 +8288,9 @@
 .forum-header-bookmark-btn {
   background: none;
   border: none;
-  padding: 4px 6px;
-  min-height: 28px;
+  padding: 0;
+  min-height: 32px;
+  min-width: 32px;
   cursor: pointer;
   font: inherit;
   line-height: 1;
@@ -8223,7 +8307,7 @@
 }
 
 .forum-header-bookmark-btn__icon {
-  font-size: 0.85rem;
+  font-size: 15px;
   filter: drop-shadow(0 0 6px rgba(244, 114, 182, 0.65));
   transition: filter 0.2s, transform 0.15s;
 }
@@ -8257,7 +8341,7 @@
 }
 
 .app-header--forum .app-header__nav-icon {
-  font-size: 0.875rem;
+  font-size: 15px;
   line-height: 1;
 }
 
@@ -8314,8 +8398,8 @@
   align-items: center;
   justify-content: center;
   align-self: center;
-  min-height: 28px;
-  min-width: 28px;
+  min-height: 32px;
+  min-width: 32px;
 }
 
 .forum-compose-btn {
@@ -10323,11 +10407,6 @@
 
   .forum-header-icon-group .forum-mj-header-btn {
     position: relative;
-    min-width: 34px;
-    min-height: 34px;
-    width: 34px;
-    height: 34px;
-    padding: 0;
     border: none;
     border-radius: 8px;
     background: transparent;
@@ -10339,11 +10418,6 @@
     background: rgba(189, 147, 249, 0.16);
     color: #e9d5ff;
     box-shadow: inset 0 0 0 1px rgba(189, 147, 249, 0.32);
-  }
-
-  .forum-mj-header-btn__icon {
-    font-size: 15px;
-    line-height: 1;
   }
 
   .forum-mj-header-btn__dot {
@@ -12451,6 +12525,7 @@ button.forum-tag-chip:hover {
 .moon-journey-account {
   position: relative;
   overflow: hidden;
+  gap: 0;
 }
 
 .moon-journey-account::before {
@@ -12458,8 +12533,26 @@ button.forum-tag-chip:hover {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 70% 55% at 12% 0%, rgba(189, 147, 249, 0.14) 0%, transparent 58%),
-    radial-gradient(ellipse 50% 40% at 100% 100%, rgba(255, 224, 102, 0.06) 0%, transparent 55%);
+    radial-gradient(ellipse 75% 60% at 8% -5%, rgba(189, 147, 249, 0.18) 0%, transparent 58%),
+    radial-gradient(ellipse 55% 45% at 100% 105%, rgba(255, 224, 102, 0.1) 0%, transparent 55%);
+  pointer-events: none;
+}
+
+.moon-journey-account::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(189, 147, 249, 0.45) 20%,
+    rgba(255, 224, 102, 0.65) 50%,
+    rgba(189, 147, 249, 0.45) 80%,
+    transparent 100%
+  );
   pointer-events: none;
 }
 
@@ -12482,117 +12575,204 @@ button.forum-tag-chip:hover {
 
 .moon-journey-account__lv-badge {
   flex-shrink: 0;
-  padding: 3px 8px;
-  border: 1px solid rgba(255, 224, 102, 0.45);
-  background: rgba(255, 224, 102, 0.08);
+  padding: 4px 9px;
+  border: 1px solid rgba(255, 224, 102, 0.5);
+  background: linear-gradient(165deg, rgba(255, 224, 102, 0.14) 0%, rgba(255, 224, 102, 0.05) 100%);
   font-family: 'Press Start 2P', monospace;
   font-size: 8px;
   line-height: 1.5;
   color: #ffe066;
   letter-spacing: 0.04em;
+  box-shadow: 0 0 12px rgba(255, 224, 102, 0.15);
 }
 
 .moon-journey-account__hero {
   display: flex;
   align-items: center;
   gap: 14px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(189, 147, 249, 0.22);
+  background: rgba(8, 6, 16, 0.45);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .moon-journey-account__moon-orbit {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 58px;
-  height: 58px;
+  width: 62px;
+  height: 62px;
   flex-shrink: 0;
   border-radius: 50%;
-  border: 1px solid rgba(189, 147, 249, 0.35);
-  background: radial-gradient(circle at 35% 30%, rgba(189, 147, 249, 0.22) 0%, rgba(12, 10, 22, 0.9) 72%);
-  box-shadow: 0 0 18px rgba(189, 147, 249, 0.2);
+  border: 1px solid rgba(189, 147, 249, 0.42);
+  background: radial-gradient(circle at 35% 30%, rgba(189, 147, 249, 0.28) 0%, rgba(12, 10, 22, 0.92) 72%);
+  box-shadow:
+    0 0 20px rgba(189, 147, 249, 0.25),
+    inset 0 0 14px rgba(189, 147, 249, 0.08);
+  animation: moon-journey-orbit-pulse 3.5s ease-in-out infinite;
+}
+
+@keyframes moon-journey-orbit-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(189, 147, 249, 0.25), inset 0 0 14px rgba(189, 147, 249, 0.08); }
+  50% { box-shadow: 0 0 28px rgba(189, 147, 249, 0.38), inset 0 0 18px rgba(255, 224, 102, 0.12); }
 }
 
 .moon-journey-account__identity {
   min-width: 0;
+  flex: 1;
 }
 
 .moon-journey-account__emoji {
-  font-size: 32px;
+  font-size: 30px;
   line-height: 1;
+  filter: drop-shadow(0 0 8px rgba(255, 224, 102, 0.35));
 }
 
 .moon-journey-account__level {
   margin: 0;
-  font-size: 17px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 8px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--cream);
   line-height: 1.35;
 }
 
+.moon-journey-account__level-tag {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: #ffe066;
+  flex-shrink: 0;
+}
+
 .moon-journey-account__level-en {
-  margin: 4px 0 0;
-  font-size: 12px;
-  color: rgba(189, 147, 249, 0.92);
-  letter-spacing: 0.02em;
+  margin: 5px 0 0;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  letter-spacing: 0.06em;
+  color: rgba(189, 147, 249, 0.88);
+  text-transform: uppercase;
+}
+
+.moon-journey-account__streak {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: rgba(255, 180, 120, 0.92);
+  line-height: 1.4;
+}
+
+.moon-journey-account__streak strong {
+  color: #ffb86c;
+  font-weight: 700;
 }
 
 .moon-journey-account__stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .moon-journey-account__stat {
-  padding: 10px 12px;
-  border: 1px solid rgba(189, 147, 249, 0.24);
-  background: rgba(8, 6, 16, 0.55);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+  padding: 11px 12px;
+  border: 1px solid rgba(189, 147, 249, 0.28);
+  background: linear-gradient(165deg, rgba(12, 10, 22, 0.75) 0%, rgba(8, 6, 16, 0.55) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 0 0 1px rgba(189, 147, 249, 0.06);
 }
 
 .moon-journey-account__stat-label {
   display: block;
+  font-family: var(--font-zh);
   font-size: 11px;
   color: var(--text-dim);
-  margin-bottom: 5px;
+  margin-bottom: 6px;
+  letter-spacing: 0.02em;
 }
 
 .moon-journey-account__stat-value {
   font-family: 'Press Start 2P', monospace;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.5;
   font-weight: 700;
   color: #ffe066;
+  text-shadow: 0 0 10px rgba(255, 224, 102, 0.25);
 }
 
 .moon-journey-account__progress-wrap {
-  margin-bottom: 14px;
+  margin-bottom: 16px;
+  padding: 12px 12px 10px;
+  border: 1px solid rgba(189, 147, 249, 0.2);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.moon-journey-account__progress-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.moon-journey-account__progress-label {
+  font-family: var(--font-zh);
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.02em;
+}
+
+.moon-journey-account__progress-pct {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: rgba(255, 224, 102, 0.9);
+  letter-spacing: 0.04em;
 }
 
 .moon-journey-account__progress {
-  height: 7px;
-  border: 1px solid rgba(189, 147, 249, 0.28);
-  background: rgba(0, 0, 0, 0.35);
+  height: 9px;
+  border: 1px solid rgba(189, 147, 249, 0.32);
+  background: rgba(0, 0, 0, 0.4);
   overflow: hidden;
+  border-radius: 1px;
 }
 
 .moon-journey-account__progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #7c5cfc 0%, #bd93f9 55%, #ffe066 100%);
-  box-shadow: 0 0 10px rgba(189, 147, 249, 0.45);
+  min-width: 0;
+  background: linear-gradient(90deg, #7c5cfc 0%, #bd93f9 50%, #ffe066 100%);
+  box-shadow: 0 0 12px rgba(189, 147, 249, 0.5);
   transition: width 0.35s ease;
 }
 
 .moon-journey-account__next {
-  margin: 8px 0 0;
+  margin: 10px 0 0;
+  font-family: var(--font-zh);
   font-size: 12px;
   color: var(--text-dim);
-  line-height: 1.6;
+  line-height: 1.65;
+  text-align: center;
+}
+
+.moon-journey-account__next-title {
+  display: inline-block;
+  margin: 0 4px;
+  padding: 1px 6px;
+  border: 1px solid rgba(189, 147, 249, 0.35);
+  background: rgba(189, 147, 249, 0.1);
+  color: rgba(212, 181, 255, 0.95);
+  font-size: 11px;
+  line-height: 1.5;
+  vertical-align: baseline;
 }
 
 .moon-journey-account__next strong {
-  color: rgba(255, 224, 102, 0.92);
-  font-weight: 600;
+  color: rgba(255, 224, 102, 0.95);
+  font-weight: 700;
 }
 
 .moon-journey-account__max {
@@ -12603,25 +12783,29 @@ button.forum-tag-chip:hover {
 }
 
 .moon-journey-account__actions {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: center;
-  gap: 10px 14px;
+  gap: 10px 12px;
 }
 
 .moon-journey-account__checkin {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 9px 14px;
-  border: 1px solid rgba(189, 147, 249, 0.45);
-  background: linear-gradient(135deg, rgba(124, 92, 252, 0.35) 0%, rgba(88, 56, 160, 0.25) 100%);
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 14px;
+  border: 1px solid rgba(189, 147, 249, 0.5);
+  background: linear-gradient(135deg, rgba(124, 92, 252, 0.42) 0%, rgba(88, 56, 160, 0.28) 100%);
   color: var(--cream);
   font-family: 'Noto Sans TC', sans-serif;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, transform 0.12s ease;
+  box-shadow: 0 0 16px rgba(124, 92, 252, 0.12);
 }
 
 .moon-journey-account__checkin:hover:not(:disabled) {
@@ -12679,12 +12863,17 @@ button.forum-tag-chip:hover {
 }
 
 .moon-journey-account__guide-link {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 4px;
   font-family: 'Noto Sans TC', sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: #bd93f9;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .moon-journey-account__guide-link:hover {
@@ -13285,6 +13474,8 @@ button.forum-tag-chip:hover {
   letter-spacing: 0.04em;
   font-family: var(--font-zh);
   line-height: 1.5;
+  width: 100%;
+  text-align: center;
 }
 
 .app-page--forum .site-footer.site-footer--app {
@@ -13419,6 +13610,48 @@ button.forum-tag-chip:hover {
   align-items: center;
   gap: 2px;
   flex-shrink: 0;
+}
+
+/* Forum toolbar — equal hit targets + glyph box for bookmark / inbox / settings / journey */
+.forum-header-icon-group .app-header__nav-link--icon,
+.forum-header-icon-group .forum-header-bookmark-btn,
+.forum-header-icon-group .forum-mj-header-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.forum-header-icon-group .app-header__nav-icon,
+.forum-header-icon-group .forum-header-bookmark-btn__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.forum-header-icon-group .forum-mj-header-btn__lv {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 18px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: rgba(255, 224, 102, 0.95);
+  text-shadow: 0 0 6px rgba(255, 224, 102, 0.28);
 }
 
 .forum-header-name-group > .app-header__nav-link {

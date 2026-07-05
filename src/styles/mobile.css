@@ -549,29 +549,20 @@
     border: 1px solid rgba(255, 159, 67, 0.18);
   }
 
-  .app-header--forum:not(.app-header--breadcrumbs) .forum-header-icon-group .app-header__nav-link--icon,
-  .app-header--forum:not(.app-header--breadcrumbs) .forum-header-icon-group .forum-header-bookmark-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 34px;
-    min-height: 34px;
+  .forum-header-icon-group .app-header__nav-link--icon,
+  .forum-header-icon-group .forum-header-bookmark-btn,
+  .forum-header-icon-group .forum-mj-header-btn {
     width: 34px;
     height: 34px;
-    padding: 0;
-    border: none;
+    min-width: 34px;
+    min-height: 34px;
+  }
+
+  .app-header--forum:not(.app-header--breadcrumbs) .forum-header-icon-group .app-header__nav-link--icon,
+  .app-header--forum:not(.app-header--breadcrumbs) .forum-header-icon-group .forum-header-bookmark-btn {
     border-radius: 8px;
     background: transparent;
     color: rgba(255, 255, 255, 0.78);
-  }
-
-  .app-header--forum:not(.app-header--breadcrumbs) .forum-header-icon-group .app-header__nav-icon {
-    font-size: 15px;
-    line-height: 1;
-  }
-
-  .app-header--forum:not(.app-header--breadcrumbs) .forum-header-icon-group .forum-header-bookmark-btn__icon {
-    font-size: 14px;
   }
 
   .app-header--forum:not(.app-header--breadcrumbs) .forum-compose-btn {
@@ -1011,6 +1002,43 @@
 
   .app-page--account .account-mirror-section {
     margin-top: 0;
+  }
+
+  .moon-journey-account__actions {
+    grid-template-columns: 1fr;
+  }
+
+  .moon-journey-account__guide-link {
+    justify-content: center;
+    min-height: 36px;
+    padding-top: 2px;
+  }
+
+  .moon-journey-account__hero {
+    padding: 10px 12px;
+    gap: 12px;
+  }
+
+  .moon-journey-account__moon-orbit {
+    width: 56px;
+    height: 56px;
+  }
+
+  .moon-journey-account__emoji {
+    font-size: 26px;
+  }
+
+  .moon-journey-account__level {
+    font-size: 15px;
+  }
+
+  .moon-journey-account__stat-value {
+    font-size: 11px;
+  }
+
+  .moon-journey-account__next {
+    font-size: 11px;
+    line-height: 1.7;
   }
 
   /* Inbox — compact two-row header (row 1 matches account) */

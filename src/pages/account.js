@@ -4,7 +4,6 @@
 
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
-import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuth, getBrowserClient } from '../lib/auth-context.js';
 import AppShell from '../components/AppShell.js';
@@ -28,7 +27,7 @@ import {
 
 export default function AccountPage() {
   const router = useRouter();
-  const { session, profile, loading } = useAuth();
+  const { session, profile, loading, refreshProfile } = useAuth();
 
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
@@ -150,6 +149,7 @@ export default function AccountPage() {
       if (r.ok) {
         setSaveOk(true);
         setSaveMsg('✅ 已儲存！');
+        await refreshProfile();
       } else {
         setSaveOk(false);
         setSaveMsg(data.error || '儲存失敗，請重試。');
@@ -222,7 +222,10 @@ export default function AccountPage() {
           ) : mirrorCard ? (
             <>
               <h2 className="pixel-section-title">// 貓家族</h2>
-              <AccountMirrorFamilySummary card={mirrorCard} />
+              <AccountMirrorFamilySummary
+                card={mirrorCard}
+                displayName={profile?.profile?.display_name}
+              />
             </>
           ) : (
             <div className="pixel-empty account-mirror-empty">

@@ -45,6 +45,11 @@
     var walking = false;
     var margin = 36;
     var bottomPad = 64;
+    var mobileMq = window.matchMedia('(max-width: 768px)');
+
+    function isMobile() {
+      return mobileMq.matches;
+    }
 
     function catSize() {
       if (!figure) return { w: 48, h: 48 };
@@ -55,20 +60,60 @@
     function bounds() {
       var size = catSize();
       var totalH = size.h;
+      var halfW = size.w * 0.5;
       var feetY = window.innerHeight - bottomPad;
+      var minX = margin + halfW;
+      var maxX = Math.max(minX + 1, window.innerWidth - margin - halfW);
+      var catTop = feetY - totalH;
+
+      document.querySelectorAll('.site-footer--legal').forEach(function (footer) {
+        var r = footer.getBoundingClientRect();
+        if (!r.width || !r.height) return;
+        if (r.bottom <= catTop + 4 || r.top >= feetY + 6) return;
+        maxX = Math.min(maxX, Math.max(minX, r.left - halfW - 12));
+      });
+
+      if (isMobile()) {
+        maxX = Math.min(maxX, window.innerWidth - margin - halfW - 56);
+      }
+
       return {
-        minX: margin + size.w * 0.5,
-        maxX: Math.max(margin + size.w * 0.5 + 1, window.innerWidth - margin - size.w * 0.5),
+        minX: minX,
+        maxX: maxX,
         feetY: feetY,
         minFeetY: feetY - 12,
         maxFeetY: feetY,
         totalH: totalH,
-        halfW: size.w * 0.5,
+        halfW: halfW,
       };
+    }
+
+    function resolveFooterOverlap() {
+      var size = catSize();
+      var halfW = size.w * 0.5;
+      var h = size.h;
+      document.querySelectorAll('.site-footer--legal').forEach(function (footer) {
+        var r = footer.getBoundingClientRect();
+        if (!r.width || !r.height) return;
+        var left = pos.x - halfW;
+        var right = pos.x + halfW;
+        var top = pos.y - h;
+        var bottom = pos.y;
+        if (right <= r.left + 4 || left >= r.right - 4 || bottom <= r.top + 4 || top >= r.bottom - 4) return;
+        var liftY = r.top - 8;
+        if (liftY < pos.y) pos.y = liftY;
+        var slideX = r.left - halfW - 12;
+        var b = bounds();
+        if (slideX >= b.minX) pos.x = Math.min(pos.x, slideX);
+      });
     }
 
     function clampPos() {
       var b = bounds();
+      pos.x = Math.min(b.maxX, Math.max(b.minX, pos.x));
+      pos.y = Math.min(b.maxFeetY, Math.max(b.minFeetY, pos.y));
+      resolveFooterOverlap();
+      b = bounds();
       pos.x = Math.min(b.maxX, Math.max(b.minX, pos.x));
       pos.y = Math.min(b.maxFeetY, Math.max(b.minFeetY, pos.y));
     }
@@ -91,8 +136,9 @@
 
     function setStartPos() {
       var b = bounds();
-      pos.x = b.minX + (b.maxX - b.minX) * 0.78;
+      pos.x = b.minX + (b.maxX - b.minX) * (isMobile() ? 0.22 : 0.78);
       pos.y = b.feetY;
+      clampPos();
       applyPos(false);
     }
 
@@ -168,10 +214,13 @@
       scheduleWander(12000 + Math.random() * 6000);
     }
 
-    window.addEventListener('resize', function () {
+    function onLayoutChange() {
       clampPos();
       applyPos(false);
-    }, { passive: true });
+    }
+
+    window.addEventListener('resize', onLayoutChange, { passive: true });
+    window.addEventListener('scroll', onLayoutChange, { passive: true });
 
     btn.addEventListener('mouseenter', function () {
       pauseUntil = Date.now() + 5000;
