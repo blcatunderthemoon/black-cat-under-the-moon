@@ -4,6 +4,7 @@
  */
 
 import { getAdminClient } from './server-auth.js';
+import { databaseNowIso } from './hong-kong-time.js';
 import { isProduction } from './production-guard.js';
 
 const SANDBOX_BASE = 'https://api-m.sandbox.paypal.com';
@@ -167,7 +168,7 @@ export async function syncPayPalSubscriptionToDb(sub, { userId: userIdOverride }
       status,
       current_period_start: start,
       current_period_end: end,
-      updated_at: new Date().toISOString(),
+      updated_at: databaseNowIso(),
     },
     { onConflict: 'user_id,provider' },
   );
@@ -175,7 +176,7 @@ export async function syncPayPalSubscriptionToDb(sub, { userId: userIdOverride }
   const isPremium = status === 'active' || status === 'past_due';
   await admin.from('profiles').update({
     subscription_tier: isPremium ? 'premium' : 'free',
-    updated_at: new Date().toISOString(),
+    updated_at: databaseNowIso(),
   }).eq('id', userId);
 
   return { userId, status, isPremium };

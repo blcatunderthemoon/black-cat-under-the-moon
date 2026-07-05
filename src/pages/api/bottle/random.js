@@ -2,6 +2,7 @@
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 import { checkIp } from '../../../lib/ip-guard.js';
+import { databaseNowIso } from '../../../lib/hong-kong-time.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -55,7 +56,7 @@ export default async function handler(req, res) {
   const preferNew = req.query.prefer_new === '1';
 
   try {
-    const now = new Date().toISOString();
+    const now = databaseNowIso();
     const recentIso = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
 
     async function finalizeBottle(bottle) {

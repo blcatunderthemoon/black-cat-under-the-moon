@@ -44,17 +44,12 @@ export const MOON_JOURNEY_LEVELS = [
   { level: 7, minExp: 1000, emoji: '🌌', titleZh: '月夜賢者', titleEn: 'Moon Sage' },
 ];
 
-const HK_TZ = 'Asia/Hong_Kong';
+import {
+  getHongKongDateString,
+  getYesterdayHongKongDateString,
+} from './hong-kong-time.js';
 
-export function getHongKongDateString(date = new Date()) {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: HK_TZ }).format(date);
-}
-
-export function getYesterdayHongKongDateString(date = new Date()) {
-  const d = new Date(date);
-  d.setDate(d.getDate() - 1);
-  return getHongKongDateString(d);
-}
+export { getHongKongDateString, getYesterdayHongKongDateString };
 
 export function getLevelFromExp(exp) {
   const safeExp = Math.max(0, Number(exp) || 0);

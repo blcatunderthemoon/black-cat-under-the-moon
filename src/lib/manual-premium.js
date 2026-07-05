@@ -3,6 +3,7 @@
  */
 
 import { getAdminClient, ensureProfile } from './server-auth.js';
+import { databaseNowIso } from './hong-kong-time.js';
 
 export async function applyManualPremiumAction({ user_id, action, days = 30, note = '' }) {
   const admin = getAdminClient();
@@ -29,9 +30,9 @@ export async function applyManualPremiumAction({ user_id, action, days = 30, not
           user_id,
           provider: 'manual',
           status: 'manual',
-          current_period_start: now.toISOString(),
+          current_period_start: databaseNowIso(now),
           current_period_end: end.toISOString(),
-          updated_at: now.toISOString(),
+          updated_at: databaseNowIso(now),
         },
         { onConflict: 'user_id,provider' }
       );
@@ -41,7 +42,7 @@ export async function applyManualPremiumAction({ user_id, action, days = 30, not
 
     await admin
       .from('profiles')
-      .update({ subscription_tier: 'premium', updated_at: now.toISOString() })
+      .update({ subscription_tier: 'premium', updated_at: databaseNowIso(now) })
       .eq('id', user_id);
 
     console.info(`[manual-premium] GRANT user_id=${user_id} days=${days} note="${note}"`);
@@ -50,7 +51,7 @@ export async function applyManualPremiumAction({ user_id, action, days = 30, not
 
   const { error } = await admin
     .from('subscriptions')
-    .update({ status: 'cancelled', current_period_end: now.toISOString(), updated_at: now.toISOString() })
+    .update({ status: 'cancelled', current_period_end: databaseNowIso(), updated_at: databaseNowIso() })
     .eq('user_id', user_id)
     .in('status', ['manual', 'active']);
 
@@ -60,7 +61,7 @@ export async function applyManualPremiumAction({ user_id, action, days = 30, not
 
   await admin
     .from('profiles')
-    .update({ subscription_tier: 'free', updated_at: now.toISOString() })
+    .update({ subscription_tier: 'free', updated_at: databaseNowIso() })
     .eq('id', user_id);
 
   console.info(`[manual-premium] REVOKE user_id=${user_id} note="${note}"`);

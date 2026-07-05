@@ -4,6 +4,7 @@
  * All IDs are profiles.id (UUID). No WebSocket, no real-time.
  */
 
+import { databaseNowIso } from './hong-kong-time.js';
 import { getAdminClient, getSubscriptionTier, getSubscriptionTiers } from './server-auth.js';
 import { filterContent } from './content-filter.js';
 import { isBlocked, canSendActiveLetter, assertAndConsumeQuota, getQuotaUsage } from './permissions.js';
@@ -269,7 +270,7 @@ export async function getThread(threadId, userId) {
   if (unreadIds.length > 0) {
     admin
       .from('inbox_messages')
-      .update({ read_at: new Date().toISOString() })
+      .update({ read_at: databaseNowIso() })
       .in('id', unreadIds)
       .then(() => {})
       .catch(() => {});
@@ -526,7 +527,7 @@ export async function sendLetter({
           participant_a: senderId,
           participant_b: recipientId,
           source_type: 'direct',
-          last_message_at: new Date().toISOString(),
+          last_message_at: databaseNowIso(),
         })
         .select('id')
         .single();
@@ -565,7 +566,7 @@ export async function sendLetter({
   // Update thread's last_message_at
   await admin
     .from('inbox_threads')
-    .update({ last_message_at: new Date().toISOString() })
+    .update({ last_message_at: databaseNowIso() })
     .eq('id', threadId);
 
   // Notify recipient silently
@@ -623,7 +624,7 @@ export async function deliverMatchCard({
 
   const userAId = rowA.user_id;
   const userBId = rowB.user_id;
-  const now = new Date().toISOString();
+  const now = databaseNowIso();
 
   // Find or create match thread
   const { data: existingThread } = await admin
@@ -745,7 +746,7 @@ async function findOrCreateDirectThread(admin, userIdA, userIdB) {
       participant_a: userIdA,
       participant_b: userIdB,
       source_type: 'direct',
-      last_message_at: new Date().toISOString(),
+      last_message_at: databaseNowIso(),
     })
     .select('id')
     .single();
@@ -773,7 +774,7 @@ async function findOrCreatePhotoExchangeThread(admin, userIdA, userIdB) {
       participant_a: userIdA,
       participant_b: userIdB,
       source_type: 'photo_exchange',
-      last_message_at: new Date().toISOString(),
+      last_message_at: databaseNowIso(),
     })
     .select('id')
     .single();
@@ -793,7 +794,7 @@ export async function deliverPhotoExchangeRequest({
   requesterSlug,
 }) {
   const admin = getAdminClient();
-  const now = new Date().toISOString();
+  const now = databaseNowIso();
 
   const existing = await findPhotoExchangeInboxMessage(admin, exchangeId);
   if (existing) {

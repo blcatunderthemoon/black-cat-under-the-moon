@@ -717,6 +717,32 @@
   margin-bottom: 4px;
 }
 
+.auth-brand__mark-btn {
+  display: block;
+  margin: 0;
+  padding: 2px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 14px;
+  line-height: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: box-shadow 0.24s ease;
+}
+
+.auth-brand__mark-btn:focus-visible {
+  outline: 2px solid rgba(189, 147, 249, 0.55);
+  outline-offset: 4px;
+}
+
+.auth-brand__mark-btn:active,
+.auth-brand__mark-btn--glow {
+  box-shadow:
+    0 0 12px rgba(255, 215, 120, 0.42),
+    0 0 26px rgba(189, 147, 249, 0.48),
+    0 0 40px rgba(124, 92, 252, 0.26);
+}
+
 .auth-brand__mark {
   display: block;
   width: min(72px, 18vw);
@@ -729,12 +755,23 @@
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
   transform: translateZ(0);
+  transition: filter 0.24s ease;
   /* Soul white-gold — warmer yellow tint */
   filter:
     brightness(0) invert(1)
     sepia(0.48) saturate(2.1) hue-rotate(14deg) brightness(1.03) contrast(0.94)
     drop-shadow(0 0 6px rgba(255, 215, 120, 0.4))
     drop-shadow(0 0 12px rgba(255, 200, 90, 0.22));
+}
+
+.auth-brand__mark-btn:active .auth-brand__mark,
+.auth-brand__mark-btn--glow .auth-brand__mark {
+  filter:
+    brightness(0) invert(1)
+    sepia(0.5) saturate(2.35) hue-rotate(14deg) brightness(1.1) contrast(0.94)
+    drop-shadow(0 0 10px rgba(255, 224, 140, 0.82))
+    drop-shadow(0 0 20px rgba(189, 147, 249, 0.58))
+    drop-shadow(0 0 32px rgba(124, 92, 252, 0.34));
 }
 
 .auth-brand__title {

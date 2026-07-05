@@ -907,10 +907,33 @@ function shouldSkipHomeConfirm() {
 
 function resetQuizTopBarState() {
   suppressHomeConfirm = false;
-  document.body.classList.remove('match-results-active');
+  document.body.classList.remove('match-results-active', 'quiz-complete-active');
   setMirrorResultActive(false);
   if ($progressWrap) $progressWrap.classList.remove('mode-top-bar--result');
   if ($progressText) $progressText.classList.remove('mode-top-bar__center--zh');
+}
+
+/** Remove questionnaire chrome after submit — thank-you / already-submitted only. */
+function hideQuizQuestionnaireUi() {
+  document.body.classList.add('match-results-active', 'quiz-complete-active');
+  if ($main) {
+    $main.style.setProperty('display', 'none', 'important');
+    $main.hidden = true;
+    $main.setAttribute('aria-hidden', 'true');
+  }
+  if ($card) {
+    $card.style.setProperty('display', 'none', 'important');
+    $card.hidden = true;
+    $card.setAttribute('aria-hidden', 'true');
+  }
+  if ($progressWrap) {
+    $progressWrap.style.display = 'none';
+  }
+  if ($partTrans) {
+    $partTrans.classList.remove('active', 'fade-out');
+    $partTrans.style.display = 'none';
+  }
+  hideQuizSiteHeader();
 }
 
 // Read the Supabase JWT from localStorage (written by @supabase/supabase-js v2).
@@ -1589,9 +1612,7 @@ function renderMatchResultsOnMatchPage(matches) {
 async function showMatchAlreadySubmitted(prefetchedMatches) {
   suppressHomeConfirm = true;
   setQuizViewport(false);
-  document.body.classList.add('match-results-active');
-  $main.style.display = 'none';
-  hideQuizSiteHeader();
+  hideQuizQuestionnaireUi();
   $loading.classList.add('active');
 
   var staticView = document.getElementById('already-submitted-static');
@@ -3006,9 +3027,7 @@ function resetQuestionState(preserveDOM = false) {
 // ===================== SUBMIT =====================
 async function submitAnswers() {
   setQuizViewport(false);
-  $main.style.display = 'none';
-  hideQuizSiteHeader();
-  $progressWrap.style.display = 'none';
+  hideQuizQuestionnaireUi();
   $loading.classList.add('active');
   if ($errorDetail) {
     $errorDetail.textContent = '';
@@ -3105,8 +3124,9 @@ async function submitAnswers() {
     setTimeout(() => {
       $loading.classList.remove('active');
       suppressHomeConfirm = true;
-      document.body.classList.add('match-results-active');
+      hideQuizQuestionnaireUi();
       $thankyou.classList.add('active');
+      window.scrollTo(0, 0);
       $progressFill.style.width = '100%';
       // Trigger confetti and animations
       setTimeout(() => {

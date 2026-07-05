@@ -8,6 +8,7 @@
  */
 
 import { getAdminClient } from './server-auth.js';
+import { databaseNowIso } from './hong-kong-time.js';
 
 /**
  * Find unclaimed responses matching the user's verified email.
@@ -117,7 +118,7 @@ export async function confirmLegacyClaim(userId, verifiedEmail) {
 
   const activeResponseId = candidates[0].id;
   const duplicateIds = candidates.slice(1).map((r) => r.id);
-  const now = new Date().toISOString();
+  const now = databaseNowIso();
 
   // Claim the latest response
   const { error: claimError } = await admin
@@ -190,7 +191,7 @@ export async function disputeLegacyClaim(userId, verifiedEmail) {
     status: 'rejected',
     matched_email: normalized,
     review_note: 'User indicated this is not their data',
-    resolved_at: new Date().toISOString(),
+    resolved_at: databaseNowIso(),
   });
 
   return { success: true };
@@ -212,7 +213,7 @@ export async function adminResolveClaim(claimId, action, reviewNote = '') {
   if (!claim) return { success: false, error: 'claim_not_found' };
   if (claim.status !== 'pending') return { success: false, error: 'claim_not_pending' };
 
-  const now = new Date().toISOString();
+  const now = databaseNowIso();
 
   if (action === 'approve') {
     // Link response to user

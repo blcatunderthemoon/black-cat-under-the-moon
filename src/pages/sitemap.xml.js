@@ -1,4 +1,5 @@
 import { getAdminClient } from '../lib/server-auth.js';
+import { getHongKongDateString } from '../lib/hong-kong-time.js';
 import {
   STATIC_SITEMAP_PATHS,
   absoluteUrl,
@@ -72,7 +73,7 @@ function SitemapPage() {
 }
 
 export async function getServerSideProps({ res }) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getHongKongDateString();
   const staticEntries = STATIC_SITEMAP_PATHS.map(({ path, changefreq, priority }) => ({
     loc: absoluteUrl(path),
     lastmod: today,

@@ -6,6 +6,13 @@
 
 import { getAdminClient, getSubscriptionTier } from './server-auth.js';
 import { getChannelState } from './inbox-channel.js';
+import {
+  databaseNowIso,
+  getHongKongDayEnd,
+  getHongKongDayStart,
+  getHongKongMonthEnd,
+  getHongKongMonthStart,
+} from './hong-kong-time.js';
 
 // ── Mirror Card visibility ─────────────────────────────────────────────────
 
@@ -403,17 +410,15 @@ export async function consumeQuota(userId, quotaType) {
 
   const now = new Date();
 
-  // Determine period boundaries
-  let periodStart, periodEnd;
+  // Determine period boundaries (Hong Kong calendar)
+  let periodStart;
+  let periodEnd;
   if (quotaType === 'forum_post_daily') {
-    periodStart = new Date(now);
-    periodStart.setHours(0, 0, 0, 0);
-    periodEnd = new Date(periodStart);
-    periodEnd.setDate(periodEnd.getDate() + 1);
+    periodStart = getHongKongDayStart(now);
+    periodEnd = getHongKongDayEnd(now);
   } else {
-    // Monthly: use calendar month
-    periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    periodStart = getHongKongMonthStart(now);
+    periodEnd = getHongKongMonthEnd(now);
   }
 
   // Upsert quota row
@@ -434,7 +439,7 @@ export async function consumeQuota(userId, quotaType) {
       .update({
         used_count: existing.used_count + 1,
         limit_count: limit,
-        updated_at: new Date().toISOString(),
+        updated_at: databaseNowIso(),
       })
       .eq('id', existing.id)
       .select('used_count, limit_count')
@@ -478,13 +483,11 @@ export async function getQuotaUsage(userId, quotaType) {
   let periodStart;
   let periodEnd;
   if (quotaType === 'forum_post_daily') {
-    periodStart = new Date(now);
-    periodStart.setHours(0, 0, 0, 0);
-    periodEnd = new Date(periodStart);
-    periodEnd.setDate(periodEnd.getDate() + 1);
+    periodStart = getHongKongDayStart(now);
+    periodEnd = getHongKongDayEnd(now);
   } else {
-    periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    periodStart = getHongKongMonthStart(now);
+    periodEnd = getHongKongMonthEnd(now);
   }
 
   const { data } = await admin

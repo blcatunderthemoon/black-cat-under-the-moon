@@ -11,6 +11,7 @@ import { isDisplayNameTaken } from '../../lib/display-name-uniqueness.js';
 import { getQuotaUsage } from '../../lib/permissions.js';
 import { normalizeLetterPrefs } from '../../lib/letter-gameplay.js';
 import { buildMoonJourneySummary } from '../../lib/moon-journey.js';
+import { databaseNowIso } from '../../lib/hong-kong-time.js';
 
 export default async function handler(req, res) {
   if (req.method === 'GET') return handleGet(req, res);
@@ -171,7 +172,7 @@ async function handlePatch(req, res) {
   const admin = getAdminClient();
   const { data, error } = await admin
     .from('profiles')
-    .update({ ...updates, updated_at: new Date().toISOString() })
+    .update({ ...updates, updated_at: databaseNowIso() })
     .eq('id', user.id)
     .select('display_name, bio, avatar_style, status, subscription_tier')
     .single();

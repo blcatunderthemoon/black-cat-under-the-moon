@@ -2,6 +2,7 @@
  * Premium photo exchange — request / respond / view state.
  */
 
+import { databaseNowIso } from './hong-kong-time.js';
 import { getAdminClient, getSubscriptionTier } from './server-auth.js';
 import {
   assertAndConsumeQuota,
@@ -19,7 +20,7 @@ function pairFilter(userIdA, userIdB) {
 }
 
 async function expireStaleExchanges(admin, userIdA, userIdB) {
-  const now = new Date().toISOString();
+  const now = databaseNowIso();
   await admin
     .from('photo_exchanges')
     .update({ status: 'expired', updated_at: now })
@@ -221,7 +222,7 @@ export async function saveExchangePhotoUrl(userId, photoUrl) {
   }
 
   const admin = getAdminClient();
-  const now = new Date().toISOString();
+  const now = databaseNowIso();
   const { error } = await admin
     .from('profiles')
     .update({
@@ -309,7 +310,7 @@ export async function getPhotoExchangeRequestAvailability(requesterId, recipient
     .select('id')
     .or(pairFilter(requesterId, recipientId))
     .eq('status', 'completed')
-    .gt('expires_at', new Date().toISOString())
+    .gt('expires_at', databaseNowIso())
     .maybeSingle();
 
   if (activeCompleted) {
@@ -376,7 +377,7 @@ export async function requestPhotoExchange(requesterId, { recipientSlug, recipie
     .eq('id', requesterId)
     .maybeSingle();
 
-  const now = new Date().toISOString();
+  const now = databaseNowIso();
   const { data: inserted, error } = await admin
     .from('photo_exchanges')
     .insert({
@@ -512,7 +513,7 @@ export async function cancelPhotoExchange(requesterId, exchangeId) {
     return { ok: false, status: 403, error: '無權取消此邀請。' };
   }
 
-  const now = new Date().toISOString();
+  const now = databaseNowIso();
   const { error } = await admin
     .from('photo_exchanges')
     .update({ status: 'cancelled', updated_at: now })

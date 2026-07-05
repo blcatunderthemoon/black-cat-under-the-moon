@@ -20,42 +20,12 @@ import {
 
 } from '../../../lib/forum-categories.js';
 
+import { getStartOfWeekHongKongIso } from '../../../lib/hong-kong-time.js';
 import { getMoonJourneyForUser } from '../../../lib/moon-journey.js';
-
-
 
 const HOT_POST_LIMIT = 3;
 
-
-
-function startOfWeekHongKongIso() {
-
-  const now = new Date();
-
-  const hkOffsetMs = 8 * 60 * 60 * 1000;
-
-  const hkNow = new Date(now.getTime() + hkOffsetMs);
-
-  const daysSinceMonday = (hkNow.getUTCDay() + 6) % 7;
-
-  const hkMonday = new Date(Date.UTC(
-
-    hkNow.getUTCFullYear(),
-
-    hkNow.getUTCMonth(),
-
-    hkNow.getUTCDate() - daysSinceMonday,
-
-  ));
-
-  return new Date(hkMonday.getTime() - hkOffsetMs).toISOString();
-
-}
-
-
-
 export default async function handler(req, res) {
-
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
 
@@ -76,7 +46,7 @@ export default async function handler(req, res) {
 
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-  const startOfWeek = startOfWeekHongKongIso();
+  const startOfWeek = getStartOfWeekHongKongIso();
 
 
 

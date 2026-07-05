@@ -3,11 +3,12 @@
  * Free users: 3 matches per calendar month. Premium: unlimited.
  */
 
+import { getHongKongMonthStart } from './hong-kong-time.js';
+
 export const FREE_MONTHLY_MATCH_LIMIT = 3;
 
 export function getCurrentMonthStart() {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), 1);
+  return getHongKongMonthStart();
 }
 
 /**

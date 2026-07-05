@@ -5,6 +5,7 @@
 
 import { requireUser, sendAuthError, getAdminClient } from '../../../lib/server-auth.js';
 import { shouldAutoHide } from '../../../lib/moderation.js';
+import { databaseNowIso } from '../../../lib/hong-kong-time.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -33,7 +34,7 @@ export default async function handler(req, res) {
   }
 
   const newCount = (card.report_count || 0) + 1;
-  const patch = { report_count: newCount, updated_at: new Date().toISOString() };
+  const patch = { report_count: newCount, updated_at: databaseNowIso() };
   if (shouldAutoHide(newCount)) {
     patch.is_published = false;
   }

@@ -8,6 +8,7 @@
 
 import { requireUser, ensureProfile, getAdminClient, sendAuthError } from '../../../lib/server-auth.js';
 import { isAllowedProfilePhotoUrl } from '../../../lib/cloudinary-profile-upload.js';
+import { databaseNowIso } from '../../../lib/hong-kong-time.js';
 
 export default async function handler(req, res) {
   let user;
@@ -100,7 +101,7 @@ export default async function handler(req, res) {
     if (existing) {
       const { data: updated, error: updateError } = await admin
         .from('mirror_cards')
-        .update({ ...updates, updated_at: new Date().toISOString() })
+        .update({ ...updates, updated_at: databaseNowIso() })
         .eq('id', existing.id)
         .select()
         .single();

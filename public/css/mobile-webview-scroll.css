@@ -166,10 +166,10 @@ body::-webkit-scrollbar {
     touch-action: pan-y;
   }
 
-  body[data-automode="match"]:not(.quiz-viewport):not(.match-results-active):not(:has(#thankyou-screen.active)) .main-container,
-  body[data-automode="mirror"]:not(.quiz-viewport):not(.match-results-active):not(:has(#thankyou-screen.active)) .main-container,
-  body[data-automode="match"].quiz-viewport .main-container,
-  body[data-automode="mirror"].quiz-viewport .main-container {
+  body[data-automode="match"]:not(.quiz-viewport):not(.match-results-active):not(.quiz-complete-active):not(:has(#thankyou-screen.active)) .main-container,
+  body[data-automode="mirror"]:not(.quiz-viewport):not(.match-results-active):not(.quiz-complete-active):not(:has(#thankyou-screen.active)) .main-container,
+  body[data-automode="match"].quiz-viewport:not(.match-results-active):not(.quiz-complete-active):not(:has(#thankyou-screen.active)) .main-container,
+  body[data-automode="mirror"].quiz-viewport:not(.match-results-active):not(.quiz-complete-active):not(:has(#thankyou-screen.active)) .main-container {
     overflow: visible !important;
     flex: none !important;
     min-height: 0 !important;
@@ -177,10 +177,10 @@ body::-webkit-scrollbar {
     padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
   }
 
-  body[data-automode="match"]:not(.quiz-viewport):not(.match-results-active):not(:has(#thankyou-screen.active)) .q-card,
-  body[data-automode="mirror"]:not(.quiz-viewport):not(.match-results-active):not(:has(#thankyou-screen.active)) .q-card,
-  body[data-automode="match"].quiz-viewport .q-card,
-  body[data-automode="mirror"].quiz-viewport .q-card {
+  body[data-automode="match"]:not(.quiz-viewport):not(.match-results-active):not(.quiz-complete-active):not(:has(#thankyou-screen.active)) .q-card,
+  body[data-automode="mirror"]:not(.quiz-viewport):not(.match-results-active):not(.quiz-complete-active):not(:has(#thankyou-screen.active)) .q-card,
+  body[data-automode="match"].quiz-viewport:not(.match-results-active):not(.quiz-complete-active):not(:has(#thankyou-screen.active)) .q-card,
+  body[data-automode="mirror"].quiz-viewport:not(.match-results-active):not(.quiz-complete-active):not(:has(#thankyou-screen.active)) .q-card {
     overflow: visible !important;
     min-height: 0 !important;
     max-height: none !important;
@@ -373,4 +373,30 @@ body::-webkit-scrollbar {
     flex-direction: column;
     align-items: stretch;
   }
+}
+
+/* Post-submit: thank-you / already-submitted — quiz chrome must not appear (all breakpoints). */
+body.quiz-complete-active #main-content,
+body.quiz-complete-active #q-card,
+body.quiz-complete-active #progress-wrap,
+body.quiz-complete-active #part-transition,
+body.match-results-active #main-content,
+body.match-results-active #q-card,
+body.match-results-active #progress-wrap,
+body.match-results-active #part-transition,
+body:has(#thankyou-screen.active) #main-content,
+body:has(#thankyou-screen.active) #q-card,
+body:has(#thankyou-screen.active) #progress-wrap,
+body:has(#thankyou-screen.active) #part-transition {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  border: 0 !important;
 }

@@ -4,6 +4,7 @@
  */
 
 import { getAdminClient, getSubscriptionTiers } from './server-auth.js';
+import { databaseNowIso } from './hong-kong-time.js';
 
 function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -24,7 +25,7 @@ export async function buildMatchResponsePremiumContext(responses) {
   const profileUserIds = rows.map((r) => r.user_id).filter(Boolean);
   const tierByUserId = await getSubscriptionTiers(profileUserIds);
 
-  const nowIso = new Date().toISOString();
+  const nowIso = databaseNowIso();
   const { data: subs } = await admin
     .from('subscriptions')
     .select('user_id, status, current_period_end')

@@ -1924,7 +1924,11 @@ body[data-automode="mirror"] .part-label .part-label-en {
 }
 
 body.match-results-active #main-content,
-body:has(#thankyou-screen.active) #main-content {
+body.quiz-complete-active #main-content,
+body:has(#thankyou-screen.active) #main-content,
+body.match-results-active #q-card,
+body.quiz-complete-active #q-card,
+body:has(#thankyou-screen.active) #q-card {
   display: none !important;
   visibility: hidden !important;
   height: 0 !important;
@@ -1932,6 +1936,18 @@ body:has(#thankyou-screen.active) #main-content {
   margin: 0 !important;
   padding: 0 !important;
   overflow: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
+
+body.match-results-active #progress-wrap,
+body.quiz-complete-active #progress-wrap,
+body:has(#thankyou-screen.active) #progress-wrap,
+body.match-results-active #part-transition,
+body.quiz-complete-active #part-transition,
+body:has(#thankyou-screen.active) #part-transition {
+  display: none !important;
+  visibility: hidden !important;
   pointer-events: none !important;
 }
 .already-submitted-title {

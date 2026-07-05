@@ -1,4 +1,6 @@
 /** Active rows: legacy null, unclaimed, or already claimed — not duplicate/disputed. */
+import { databaseNowIso } from './hong-kong-time.js';
+
 const ACTIVE_CLAIM_OR = 'claim_status.is.null,claim_status.eq.unclaimed,claim_status.eq.claimed';
 
 const LEGACY_LINKABLE_OR = 'claim_status.is.null,claim_status.eq.unclaimed';
@@ -82,7 +84,7 @@ export async function autoLinkLegacyMatchResponses(admin, userId, email) {
 
   if (error || !candidates?.length) return false;
 
-  const now = new Date().toISOString();
+  const now = databaseNowIso();
   const [primary, ...dupes] = candidates;
 
   const { error: claimError } = await admin
