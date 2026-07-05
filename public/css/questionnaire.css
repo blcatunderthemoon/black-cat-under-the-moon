@@ -36,6 +36,7 @@ html::-webkit-scrollbar {
   --cream-dim: #a09c8c;
   --green: #50fa7b;
   --purple-light: #bd93f9;
+  --moon-send-gradient: linear-gradient(155deg, var(--cyan) 0%, #7c5cfc 52%, var(--purple-light) 100%);
   --text: #f0ebd8;
   --text-dim: #7a7590;
   --shadow: rgba(0,0,0,0.5);
@@ -344,7 +345,8 @@ body[data-automode="mirror"] .header-art {
   line-height: 1.2;
 }
 .mirror-auth-modal__title {
-  margin: 0 0 14px;
+  margin: 0 0 10px;
+  padding: 12px 0 14px;
   font-size: var(--ma-title-size);
   color: #e8d070;
   text-shadow: 0 0 10px rgba(255, 224, 102, 0.22);
@@ -1074,6 +1076,10 @@ body[data-automode="mirror"] .part-label .part-label-en {
 }
 .overlay-screen.active { display: flex; }
 
+#loading-screen.overlay-screen {
+  gap: 8px;
+}
+
 .loading-cat {
   font-size: 36px;
   animation: cat-bounce 0.6s ease-in-out infinite;
@@ -1087,6 +1093,20 @@ body[data-automode="mirror"] .part-label .part-label-en {
   font-size: 9px;
   color: var(--cyan);
   animation: pulse-text 1.2s ease-in-out infinite;
+}
+#loading-screen .loading-text {
+  background: var(--moon-send-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+#loading-screen .loading-text .loading-dots::after {
+  background: var(--moon-send-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 @keyframes pulse-text {
   0%, 100% { opacity: 0.5; }
@@ -1199,7 +1219,7 @@ body[data-automode="mirror"] .part-label .part-label-en {
 /* ========== WELCOME SCREEN ========== */
 .welcome-screen {
   position: fixed;
-  top: calc(var(--mode-top-bar-h, 44px) + env(safe-area-inset-top, 0));
+  top: calc(var(--mode-top-bar-h, 44px) + var(--site-safe-top, env(safe-area-inset-top, 0px)));
   left: 0;
   right: 0;
   bottom: 0;

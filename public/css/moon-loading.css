@@ -29,16 +29,48 @@
   opacity: 0.92;
 }
 
-.moon-loading--hero .moon-loading__img,
-#loading-screen .moon-loading__img {
+.moon-loading--hero .moon-loading__img {
   width: 56px;
   height: 56px;
   filter: brightness(0) invert(1);
   opacity: 0.95;
 }
 
+/* Echo / Mirror submit — blue→purple gradient (mask tracks moon phase frames) */
 #loading-screen .moon-loading {
-  gap: 16px;
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  gap: 0;
+}
+
+#loading-screen .moon-loading::before {
+  content: '';
+  grid-area: 1 / 1;
+  width: 56px;
+  height: 56px;
+  background: var(--moon-send-gradient, linear-gradient(155deg, #00e5ff 0%, #7c5cfc 52%, #bd93f9 100%));
+  -webkit-mask-image: var(--moon-mask-url);
+  mask-image: var(--moon-mask-url);
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+#loading-screen .moon-loading__img {
+  grid-area: 1 / 1;
+  width: 56px;
+  height: 56px;
+  opacity: 0;
+  pointer-events: none;
+  filter: none;
 }
 
 /* Forum warm pages — keep soft tint, no halo */

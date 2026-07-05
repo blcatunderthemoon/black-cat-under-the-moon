@@ -14,6 +14,11 @@
     });
   }
 
+  function syncSubmitMoonMask(el, src) {
+    if (!el.closest('#loading-screen')) return;
+    el.style.setProperty('--moon-mask-url', 'url("' + src + '")');
+  }
+
   function startMoonLoading(el) {
     if (el.dataset.moonLoadingInit === '1') return;
     el.dataset.moonLoadingInit = '1';
@@ -33,10 +38,12 @@
 
     var frameIndex = 0;
     img.src = FRAMES[frameIndex];
+    syncSubmitMoonMask(el, FRAMES[frameIndex]);
 
     window.setInterval(function () {
       frameIndex = (frameIndex + 1) % FRAMES.length;
       img.src = FRAMES[frameIndex];
+      syncSubmitMoonMask(el, FRAMES[frameIndex]);
     }, INTERVAL_MS);
   }
 

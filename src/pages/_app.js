@@ -128,7 +128,7 @@ export default function App({ Component, pageProps }) {
       <MobileKeyboardGuard />
       {!isDashboard && !isAuthPage && <PostHogAnalytics />}
       {!isDashboard && (
-        <Script src="/js/mobile-document-scroll.js" strategy="afterInteractive" />
+        <Script src="/js/mobile-document-scroll.js?v=20260710a" strategy="afterInteractive" />
       )}
       <AppErrorBoundary>
       {isDashboard ? (

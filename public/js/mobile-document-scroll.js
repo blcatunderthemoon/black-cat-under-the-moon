@@ -15,6 +15,52 @@
     return window.matchMedia(MOBILE_MQ).matches;
   }
 
+  /** Threads / IG / LINE in-app browsers often inflate env(safe-area-inset-top). */
+  function isInAppBrowser() {
+    var ua = navigator.userAgent || '';
+    if (/\b(FBAN|FBAV|Instagram|Threads|Barcelona|Line\/|MicroMessenger|TikTok|Snapchat|Twitter)\b/i.test(ua)) {
+      return true;
+    }
+    if (/Android/i.test(ua) && /\bwv\b/i.test(ua)) return true;
+    if (/iPhone|iPad|iPod/i.test(ua) && /AppleWebKit/i.test(ua) && !/Version\/|CriOS|FxiOS|EdgiOS/i.test(ua)) {
+      if (!/Safari/i.test(ua)) return true;
+    }
+    return false;
+  }
+
+  function readSafeAreaInsetTop() {
+    if (!document.body) return 0;
+    var probe = document.createElement('div');
+    probe.setAttribute('aria-hidden', 'true');
+    probe.style.cssText =
+      'position:fixed;top:0;left:0;width:0;height:0;visibility:hidden;pointer-events:none;' +
+      'padding-top:env(safe-area-inset-top,0px);';
+    document.body.appendChild(probe);
+    var px = parseFloat(window.getComputedStyle(probe).paddingTop) || 0;
+    probe.parentNode.removeChild(probe);
+    return px;
+  }
+
+  function initSiteSafeTop() {
+    var root = document.documentElement;
+    var raw = readSafeAreaInsetTop();
+    var inApp = isInAppBrowser();
+    var top = raw;
+
+    if (inApp) {
+      top = 0;
+      root.classList.add('in-app-webview');
+    } else if (isMobileCoarse() && raw > 50) {
+      /* Unrecognized WebView with bogus safe-area (common from social in-app browsers). */
+      top = 0;
+      root.classList.add('in-app-webview');
+    } else {
+      top = Math.min(raw, 47);
+    }
+
+    root.style.setProperty('--site-safe-top', top + 'px');
+  }
+
   function removeLegacyScrollArtifacts() {
     var root = document.documentElement;
     root.style.removeProperty('--landing-scroll-h');
@@ -288,8 +334,12 @@
   }
 
   function bootMobileScroll() {
+    initSiteSafeTop();
     initMobileWebviewScroll();
     observeLandingPanels();
+    window.addEventListener('orientationchange', function () {
+      setTimeout(initSiteSafeTop, 120);
+    });
   }
 
   if (document.readyState === 'loading') {

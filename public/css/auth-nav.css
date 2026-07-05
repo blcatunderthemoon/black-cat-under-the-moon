@@ -12,6 +12,14 @@
   --mode-top-bar-row-h: 44px;
   --mode-top-bar-progress-h: 0px;
   --mode-top-bar-h: calc(var(--mode-top-bar-row-h) + var(--mode-top-bar-progress-h));
+  /* Capped in mobile-document-scroll.js for in-app browsers (Threads, IG, etc.) */
+  --site-safe-top: env(safe-area-inset-top, 0px);
+  --mode-top-bar-row-pad-y: 16px;
+  --mode-top-bar-clearance: calc(var(--site-safe-top) + var(--mode-top-bar-h) + var(--mode-top-bar-row-pad-y));
+}
+
+html.in-app-webview {
+  --site-safe-top: 0px;
 }
 
 html:has(.mode-top-bar--quiz) {
@@ -30,7 +38,7 @@ html:has(.mode-top-bar--quiz) {
   left: 0;
   right: 0;
   z-index: 10001;
-  padding-top: env(safe-area-inset-top, 0);
+  padding-top: var(--site-safe-top, env(safe-area-inset-top, 0px));
   background: #0a0912;
   border-bottom: 1px solid rgba(189, 147, 249, 0.22);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
@@ -321,7 +329,7 @@ html:has(.mode-top-bar--quiz) {
 }
 
 .mode-top-bar--index ~ .welcome-screen {
-  padding-top: 72px;
+  padding-top: calc(var(--mode-top-bar-clearance) + 8px);
   justify-content: flex-start;
 }
 
@@ -331,8 +339,12 @@ html:has(.mode-top-bar--quiz) {
 }
 
 @media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  :root {
+    --mode-top-bar-row-pad-y: 12px;
+  }
+
   body.welcome-active .mode-top-bar--index ~ .welcome-screen {
-    padding-top: calc(var(--mode-top-bar-h, 44px) + env(safe-area-inset-top, 0) + 64px);
+    padding-top: calc(var(--mode-top-bar-clearance) + 8px);
   }
 
   body.welcome-active .mode-top-bar--index ~ .welcome-screen .welcome-bottom {
@@ -354,6 +366,10 @@ html:has(.mode-top-bar--quiz) {
 }
 
 @media (max-width: 520px) {
+  :root {
+    --mode-top-bar-row-pad-y: 12px;
+  }
+
   html,
   body {
     overflow-x: clip;

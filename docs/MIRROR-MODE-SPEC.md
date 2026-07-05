@@ -1,14 +1,17 @@
 # 靈魂鏡像 Mirror Mode — 問題與計分邏輯說明
 
-**版本**：v2.4（2026-07-05）— v3 Trait 計分已上線；**卡片敘事 v4（固定 + 動態模組）為下一階段**  
+**版本**：v2.5（2026-07-06）— **v3 Trait 計分**與 **v4 敘事模組（部分）** 已上線  
 **問卷入口**：`index.html` → Mirror Mode → **`/mirror.html`**  
 **Trait 計分主線**：[`MIRROR-MODE-V3-DESIGN.md`](./MIRROR-MODE-V3-DESIGN.md)（**已上線**）  
-**敘事模組規格**：本文件 **§2.1**（v4 方向；尚未全面實作）  
+**敘事模組**：本文件 **§2.1**（L1–L2、L5、三段式 Warning、月光提醒 **已實作**；L3 Shadow、L4 擴充 **待做**）  
 **程式來源**：
-- 問卷與計分：`public/js/questionnaire.js`（`MIRROR_QUESTIONS`、`computeAndShowMirrorResult`）
-- 卡片資料與 helper：`src/lib/mirror-personality.js`（Next.js 公開頁共用）
+- 問卷與計分：`public/js/questionnaire.js`（`computeAndShowMirrorResult`）；v3 題庫 bundle：`public/js/mirror-v3.js`（`npm run build:mirror-v3`）
+- v3 計分：`src/lib/mirror-scoring-v3.js`
+- 敘事組裝：`src/lib/mirror-narratives/` → `assembleNarrative()`；瀏覽器 bundle：`public/js/mirror-narratives.js`
+- 卡片資料與 helper：`src/lib/mirror-personality.js`；React 卡：`src/components/MirrorPersonalityCard.js`
 - 公開卡片頁：`/mirror-card/[slug]`、`/mirror-card/me`
-- 家族介紹：`/cat-families`
+- 家族介紹：`/cat-families`（`CatFamiliesGuide.js`）
+- 提交／載入動畫：月相序列 `public/loading/*.png` + `public/css/moon-loading.css`（白線月相，無光暈圈）
 
 ---
 
@@ -20,19 +23,19 @@ Mirror Mode（靈魂鏡像）是一個**自我探索型問卷**，共 15 題（5
 | 項目 | 內容 |
 |------|------|
 | 基本資料題 | 5 題（Label / MBTI 星座 / 喜好 / 音樂 / 電影），**不計分**（P2、P3–P5 可跳過）|
-| 心理測驗題 | 10 題（每題單選，4 個選項；欄位 `m_q1`–`m_q10`）|
-| 領域數 | 3 個領域（親密節奏 3 題、情感語言 4 題、安全感基礎 3 題）|
+| 心理測驗題 | 10 題（v3：跨場景 Trait 混合；v2 fallback：每題 4 選項對應一貓）|
+| 領域數 | v3：跨場景（戀愛／工作／朋友等）；v2：親密節奏 3 + 情感語言 4 + 安全感 3 |
 | 輸出類型 | 主類型（1 個）＋影子類型（可選，最多 1 個）|
-| 計分單位 | 每題加 2 分給對應類型；10 題合計分配 **20 分**，單類最高 **20 分** |
+| 計分單位 | **v3**：6 Trait 累積 → `traitToCat()`；**v2 fallback**：每題 +2 分給對應貓類，10 題合計 20 分 |
 
-> **已知局限（v3 將修正）**：現行 10 題多數測量「理想伴侶需求」而非多角人格；同質題幹易導致單軸作答（尤其 Q7 選項近似四貓 slogan）。見 [`MIRROR-MODE-V3-DESIGN.md`](./MIRROR-MODE-V3-DESIGN.md)。
+> **v2 legacy**：`mirror-v3.js` 載入失敗時回退舊題庫 `MIRROR_QUESTIONS`（直接 Cat 計分）。新測驗一律走 v3，見 [`MIRROR-MODE-V3-DESIGN.md`](./MIRROR-MODE-V3-DESIGN.md)。
 
 ### 1.1 體驗模式（`/mirror.html` 進入時）
 
 | 模式 | 結果卡 | 儲存 | 分享 |
 |------|--------|------|------|
-| **登入用戶** | 完整 Mirror Card（三層資訊、隱藏 tag、靈魂成分等）| 自動 `PATCH /api/mirror-card/me` | 公開 slug 如 `/mirror-card/moon-xxxxxx` |
-| **訪客** | 簡易卡（家族名、身份 meta、世界觀描述、炸毛預警、3 個 hashtag；無混血標題／隱藏 tag／需求光譜）| 不儲存 | 僅可下載 PNG |
+| **登入用戶** | 完整 Mirror Card（`assembleNarrative` 全層含月光提醒、需求光譜、隱藏 tag、鏡像英雄句等）| 自動 `PATCH /api/mirror-card/me` | 公開 slug 如 `/mirror-card/moon-xxxxxx` |
+| **訪客** | 簡易卡（L1 世界觀 + L2 Insight + L5 被誤解 + 動態三段式 Warning；無月光提醒／混血標題／隱藏 tag／需求光譜）| 不儲存 | 僅可下載 PNG；可登入承接 `sessionStorage` pending |
 
 > **鎖定規則**：帳號一旦成功寫入 Mirror 結果（`mirror_type` 已存在），`mirror_type`、`shadow_type`、`mirror_scores`、`basic_answers` **不可再改**，僅能更新可見度設定或卡片圖片等欄位（API 回傳 `409 mirror_card_locked`）。
 
@@ -50,10 +53,9 @@ Mirror Mode（靈魂鏡像）是一個**自我探索型問卷**，共 15 題（5
 卡片光暈色（`CAT_GLOW_MAP`）略深於主色：`#9b6fff` / `#ff6b9d` / `#00d4ff` / `#50fa7b`。  
 貓咪 PNG：`/Solitary_Moon.png`、`/Sunny_Tether.png`、`/Mystical_Depth.png`、`/Eternal_Sentinel.png`。
 
-### 2.1 卡片敘事架構（v4 方向：固定 + 動態）
+### 2.1 卡片敘事架構（v4：固定 + 動態）
 
-> **現況**：卡片仍使用下方 **§2.2 固定文案**（每家族 1 段 `desc` + 1 段 `warning`）。  
-> **目標**：改為 **模組化組裝**——同一隻 Sentinel，不同 Trait 組合可產生完全不同的洞察、炸毛模式與修復方式。
+> **現況（2026-07-06）**：`assembleNarrative()` 已上線。L1 仍取自 `PERSONALITY_TYPES.desc`；L2／L5／三段式 Warning 由 Trait 與答題驅動；登入卡另含 **月光提醒**。L3 Shadow Influence、L4 內在拉扯擴充仍待實作。
 
 #### 設計原則
 
@@ -81,8 +83,8 @@ Description
 |------|------|----------|----------|------|
 | **L1** | 世界觀 Worldview | 每家族 **1 段** | 主類型 `mirror_type` | ✅ 已上線（= 現行 `desc`） |
 | **L2** | Mirror Insight | 每家族 × **3–5 段** | 主 Trait + 次高 Trait | ✅ v4.0（`mirror-narratives/data/insights.js`） |
-| **L3** | Shadow Influence | 主 × Shadow **12 組合**各 1–2 段 | `mirror_type` + `shadow_type` | ⏳ 待實作 |
-| **L4** | 內在拉扯 Tension | **8–12 段** | 主 Trait × Shadow 或答題矛盾對 | 🟡 部分（v3 `tension_narratives`，3 條規則；登入完整卡） |
+| **L3** | Shadow Influence | 主 × Shadow **12 組合**各 1–2 段 | `mirror_type` + `shadow_type` | ⏳ 待實作（月光提醒已用 Shadow 鍵） |
+| **L4** | 內在拉扯 Tension | **8–12 段** | 主 Trait × Shadow 或答題矛盾對 | 🟡 部分（`detectTensions()` 3 條規則；登入完整卡） |
 | **L5** | 被誤解 Misread | 每家族 **1 段** | 主類型 | ✅ v4.0 |
 
 **L1 世界觀（固定，保留）** — 例：守護貓
@@ -119,11 +121,9 @@ Description
 | solitary | 很多人以為你不需要任何人。其實你只是希望，靠近你的人也尊重你的節奏。 |
 | sunny | 很多人以為你愛得很高調。其實你只是希望，不需要猜測自己在對方心中的位置。 |
 
-#### Warning 區塊（v4：三段式動態）
+#### Warning 區塊（v4：三段式動態 — **已上線**）
 
-現行每家族 **1 段固定 warning**（見 §2.2）——所有 Sentinel 玩家看到相同「遲到、臨時改行程、300%」，個人化不足。
-
-**改為「黑貓炸毛模式」三段式**（`pcard-warning` 區）：
+舊版每家族 **1 段固定 warning**（見 §2.2）僅作 v2 fallback；v3 卡使用 **Trigger · Behaviour · Recovery**（`mirror-narratives/data/warnings.js`，Q9 可錨定 Trigger）。
 
 | 段落 | 鍵名 | 選取邏輯 | 數量目標 |
 |------|------|----------|----------|
@@ -143,7 +143,7 @@ Behaviour — 你會開始變得很安靜。不是因為不生氣，而是開始
 Recovery — 如果有人願意坦白原因，你的護盾其實比想像中容易放下。
 ```
 
-#### 月光提醒（v4 新增區塊）
+#### 月光提醒（v4 — **登入完整卡已上線**）
 
 不稱「建議」，而稱 **🌙 月光提醒**——成長方向，玩家易記、易分享。
 
@@ -203,22 +203,22 @@ const moonlight = pickMoonlight(mirror_type, shadow_type, topTraits);
 
 #### 與 v3 現有實作的對照
 
-| 項目 | v3 現況 | v4 目標 |
-|------|---------|---------|
-| `PERSONALITY_TYPES.desc` | 固定 1 段 | → `WORLDVIEW` 模組 L1 ✅ |
-| `PERSONALITY_TYPES.warning` | 固定 1 段 | → 三段式 Trigger / Behaviour / Recovery ✅ |
-| L2 Insight | — | ✅ `assembleNarrative()` |
+| 項目 | v3 底層 | v4 敘事（2026-07） |
+|------|---------|-------------------|
+| `PERSONALITY_TYPES.desc` | 固定 1 段 | → L1 世界觀 ✅ |
+| `PERSONALITY_TYPES.warning` | 固定 1 段 | → v2 fallback；v3 用三段式 ✅ |
+| L2 Insight | — | ✅ `pickInsight()` |
 | L5 被誤解 | — | ✅ 訪客＋登入卡 |
-| 月光提醒 | — | ✅ 登入完整卡（`pcard-moonlight`） |
-| `detectTensions()` | 3 條答題規則 | → 擴充至 8–12 段 + Trait×Shadow |
-| `tension_narratives` DB 欄位 | 存生成結果 | 可擴充存 `narrative_bundle`（含 warning 三段、moonlight） |
-| 訪客卡 | 固定 desc + warning | ✅ L1 + L2 + L5 + 動態 warning |
+| 月光提醒 | — | ✅ 僅登入（`includeMoonlight`） |
+| `detectTensions()` | 3 條答題規則 | → 擴充至 8–12 段 ⏳ |
+| L3 Shadow Influence | — | ⏳（除 `MOONLIGHT_SHADOW` 外） |
+| 訪客卡 | — | ✅ L1 + L2 + L5 + 動態 warning |
 
 ---
 
-### 2.2 現行固定文案（v3 上線中，待 v4 模組化取代）
+### 2.2 Legacy 固定文案（v2 fallback / L1 世界觀來源）
 
-**世界觀 `desc`（= v4 L1）**
+**世界觀 `desc`**（= v4 L1，仍由 `PERSONALITY_TYPES` 提供）
 
 **獨處貓家族**  
 > 你是一隻住在月亮上的貓，愛情對你來說是點綴，而不是全部。你不是不愛，只是你的愛需要空間才能呼吸。
@@ -241,7 +241,7 @@ const moonlight = pickMoonlight(mirror_type, shadow_type, topTraits);
 | mystical | `#只想被懂不想被講道理` `#靈魂頻率對了才開門` `#沉默也是對話` |
 | sentinel | `#PlanB狂魔` `#計劃內的浪漫最動人` `#訊息不回會內心扣分` |
 
-### 黑貓炸毛預警（現行固定版，v4 見 §2.1 Warning 三段式）
+### 黑貓炸毛預警（v2 單段固定版；v3 見 §2.1 三段式）
 
 | 類型 | 預警文案（單段；所有同家族玩家相同） |
 |------|--------------------------------------|
@@ -277,10 +277,12 @@ const moonlight = pickMoonlight(mirror_type, shadow_type, topTraits);
 
 ---
 
-### 第二部分：心理測驗（Q1–Q10，計分）
+### 第二部分：心理測驗（Q1–Q10）
 
-選項固定順序：① solitary　② sunny　③ mystical　④ sentinel，每選一題對應類型加 **2 分**。  
-內部欄位名：`m_q1` … `m_q10`。
+> ⚠️ **v3 主線題庫**在 `src/lib/mirror-questions-v3.js`（跨場景、Trait 混合向量、選項 shuffle）。以下為 **v2 legacy fallback** 題目與選項對照；僅在 `mirror-v3.js` 未載入時使用。
+
+選項固定順序（v2）：① solitary　② sunny　③ mystical　④ sentinel，每選一題對應類型加 **2 分**。  
+內部欄位名：`m_q1` … `m_q10`（v3 存 `option.key`）。
 
 #### 領域一：親密與相處節奏（Q1–Q3）
 
@@ -352,7 +354,10 @@ const moonlight = pickMoonlight(mirror_type, shadow_type, topTraits);
 
 ## 四、計分機制
 
-### 4.1 分數累積
+> **現行主線（v3）**：10 題 → `trait_scores`（6 Trait）→ `traitToCat()` 得主／影類型 → `detectTensions()` → `assembleNarrative()` → 渲染卡片。流程與題庫見 [`MIRROR-MODE-V3-DESIGN.md`](./MIRROR-MODE-V3-DESIGN.md)。  
+> **下列 §4.1–§4.7** 描述 **v2 legacy fallback** 的直接 Cat 計分；主類型／影子／混血標題／百分比等**輸出規則兩版共用**（v3 的 Cat 分數由 Trait 映射產生）。
+
+### 4.1 分數累積（v2 legacy）
 
 ```
 每題：選中選項對應的類型 += 2 分
@@ -485,37 +490,36 @@ Lv = 20 + round((主類型分數 ÷ 四類總分) × 77)
 ## 五、輸出：性格卡片
 
 計算完成後渲染 `#personality-card`。登入用戶為完整卡；訪客為 `mirror-simple-card` 精簡版。  
-**敘事模組化規格見 §2.1**；以下為 **v3 現行 UI 區塊** 與 v4 對照。
+敘事由 `assembleNarrative()` 組裝（§2.1）；以下為卡片 **UI 區塊** 對照。
 
 ### Layer 1 — Identity Core（身份核心）
 
-| 欄位 | 說明 | v4 |
-|------|------|-----|
-| 品牌標題 | `BLACK CAT / UNDER THE MOON` | 不變 |
-| 模式標籤 | `靈魂鏡像 · MIRROR MODE` | 不變 |
-| 貓咪圖片 | 主類型 PNG（類型光暈 `--type-col`） | 不變 |
-| 混血標題（選填）| 12 種 `HYBRID_TITLES` + 動態 Lv（**僅登入**） | 不變 |
-| 中文／英文家族名 | 如 `守護貓家族` / `The Eternal Sentinel` | 不變 |
-| 身份 meta（選填）| `TB · INFJ · 天蠍座`（P1 / P2） | 不變 |
+| 欄位 | 說明 |
+|------|------|
+| 品牌標題 | `BLACK CAT / UNDER THE MOON` |
+| 模式標籤 | `靈魂鏡像 · MIRROR MODE` |
+| 貓咪圖片 | 主類型 PNG（類型光暈 `--type-col`） |
+| 混血標題（選填）| 12 種 `HYBRID_TITLES` + 動態 Lv（**僅登入**） |
+| 中文／英文家族名 | 如 `守護貓家族` / `The Eternal Sentinel` |
+| 身份 meta（選填）| `TB · INFJ · 天蠍座`（P1 / P2） |
+| 鏡像英雄句 | 每家族固定 verdict／hero（`MIRROR_HEROES`；登入完整卡） |
 
 ### Layer 2 — Description（主敘事，`pcard-family-desc`）
 
-| 欄位 | v3 現況 | v4 目標 |
-|------|---------|---------|
-| 世界觀 | 固定 `desc` 1 段 | L1 保留 |
-| Mirror Insight | — | L2 Trait 組合 |
-| Shadow Influence | — | L3 主 + Shadow |
-| 內在拉扯 | 登入卡：`tension_narratives`（最多 3 條規則） | L4 擴充 |
-| 被誤解 | — | L5 每家族 1 段 |
-
-> **訪客簡易卡（2026-07）**：已顯示 L1 世界觀 + 固定 warning；v4 起加入 L2、動態 warning、L5。
+| 層級 | 訪客 | 登入 |
+|------|------|------|
+| L1 世界觀 | ✅ | ✅ |
+| L2 Mirror Insight | ✅ | ✅ |
+| L3 Shadow Influence | — | —（待實作） |
+| L4 內在拉扯 | — | ✅（`detectTensions`，最多 3 句） |
+| L5 被誤解 | ✅ | ✅ |
 
 ### Layer 3 — Warning（`pcard-warning`）
 
-| 欄位 | v3 現況 | v4 目標 |
-|------|---------|---------|
-| 黑貓炸毛 | 固定 1 段 / 家族 | **Trigger · Behaviour · Recovery** 三段式 |
-| 月光提醒 | — | 新區塊 `pcard-moonlight`（**僅完整卡**或 Premium 取捨待定） |
+| 欄位 | 訪客 | 登入 |
+|------|------|------|
+| 三段式炸毛（Trigger／Behaviour／Recovery） | ✅（v3） | ✅ |
+| 月光提醒 `pcard-moonlight` | — | ✅ |
 
 ### Layer 4 — Psych Profile（心理側寫）
 
@@ -560,7 +564,8 @@ Lv = 20 + round((主類型分數 ÷ 四類總分) × 77)
 ```
 PATCH /api/mirror-card/me
 {
-  mirror_type, shadow_type, mirror_scores, basic_answers
+  mirror_type, shadow_type, mirror_scores, basic_answers,
+  trait_scores, scoring_version, tension_narratives   // v3
 }
 ```
 
@@ -589,33 +594,31 @@ PATCH /api/mirror-card/me
 ## 八、完整計分流程圖
 
 ```
-進入 /mirror.html → 選登入或訪客
+進入 /mirror.html → 選登入或訪客（或已存卡直接顯示結果）
         ↓
-使用者填寫基本資料（5 題，不計分）
+P1–P5 基本資料（不計分）
         ↓
-使用者作答 10 題心理測驗（每題單選）
+10 題心理測驗（v3 主線；失敗則 v2 fallback）
         ↓
-每題：找出選項 index → 對應 scores 陣列 → 該類型 += 2
+v3：option.key → Trait delta 累積 → trait_scores
+v2：每題 += 2 至對應 Cat
         ↓
-四類型原始分數：{ solitary, sunny, mystical, sentinel }
+traitToCat() 或 v2 排序 → 主類型 + 影子類型（規則見 §4.3）
         ↓
-排序找最高分 → 主類型
+detectTensions(answers) → 內在拉扯句（登入）
         ↓
-第二高分是否 ≥ 主類型分數 - 2 且 > 0？
-  ├── 是 → 影子類型 + 混血標題（登入）
-  └── 否 → 不顯示影子類型
+assembleNarrative() → L1–L5 + 三段式 Warning + 月光提醒（登入）
         ↓
-computeHiddenTags → 最多 3 個隱藏 tag（登入；v2）
+computeHiddenTags → 隱藏 tag（登入；v2 規則）
         ↓
-v3：trait_scores + detectTensions
-v4（計劃）：assembleNarrative（§2.1 模組選文）
-        ↓
-各類型百分比 / Trait 佔比 → 需求光譜
+需求光譜（v3 Trait 條）／靈魂成分（v2 fallback）
         ↓
 渲染性格卡片（訪客簡易 / 登入完整）
         ↓
-登入：自動 PATCH mirror-card/me │ 皆可下載 PNG
+登入：PATCH mirror-card/me │ 皆可下載 PNG
 ```
+
+提交／載入時顯示 **月相 loading**（`moon-loading.js` 輪播 `public/loading/*.png`，CSS 白線反相，無底圈光暈）。
 
 ---
 
