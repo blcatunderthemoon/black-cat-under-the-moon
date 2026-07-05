@@ -11,20 +11,24 @@ const API = {
   topic:   '/api/bottle/topic',
 };
 
-/* ─── Cloudflare Turnstile (single shared widget — never inside display:none panels) ── */
+/* ─── Cloudflare Turnstile (single shared widget) ── */
 const BOTTLE_TURNSTILE = '#bottle-turnstile';
 const TURNSTILE_NOT_READY = '人機驗證未就緒，請重新整理頁面後再試。';
+const TURNSTILE_ACQUIRE_MS = 7000;
 let _turnstileWidgetId = null;
 let _turnstileTokenCache = '';
 let turnstileSiteKey = null;
+let _turnstileVerification = null; // 'required' | 'optional'
 
 function turnstileTarget() {
   return _turnstileWidgetId || BOTTLE_TURNSTILE;
 }
 
 function getTurnstileToken() {
-  if (window.turnstile && _turnstileWidgetId) {
-    var live = window.turnstile.getResponse(_turnstileWidgetId) || '';
+  if (window.turnstile) {
+    var live = '';
+    if (_turnstileWidgetId) live = window.turnstile.getResponse(_turnstileWidgetId) || '';
+    if (!live) live = window.turnstile.getResponse(BOTTLE_TURNSTILE) || '';
     if (live) _turnstileTokenCache = live;
   }
   return _turnstileTokenCache || '';
@@ -35,7 +39,7 @@ function isTurnstileApiAvailable() {
 }
 
 function waitForTurnstileApi(timeoutMs) {
-  var limit = timeoutMs || 10000;
+  var limit = timeoutMs || 8000;
   return new Promise(function (resolve) {
     if (isTurnstileApiAvailable()) { resolve(true); return; }
     if (window.turnstile?.ready) {
@@ -65,32 +69,44 @@ function waitForTurnstileApi(timeoutMs) {
   });
 }
 
-async function fetchTurnstileSiteKey() {
-  if (turnstileSiteKey) return turnstileSiteKey;
+async function fetchTurnstileConfig() {
+  if (turnstileSiteKey && _turnstileVerification) {
+    return { siteKey: turnstileSiteKey, verification: _turnstileVerification };
+  }
   var siteKey = '0x4AAAAAADYg006rqWz6ukif';
+  var verification = 'required';
   try {
     var res = await fetch('/api/turnstile/site-key');
     if (res.ok) {
       var data = await res.json();
       if (data.siteKey) siteKey = data.siteKey;
+      if (data.verification === 'optional') verification = 'optional';
     }
   } catch (e) {}
   turnstileSiteKey = siteKey;
-  return siteKey;
+  _turnstileVerification = verification;
+  return { siteKey: siteKey, verification: verification };
+}
+
+function turnstileOptional() {
+  return _turnstileVerification === 'optional';
 }
 
 async function ensureTurnstileWidget() {
+  if (turnstileOptional()) return true;
   if (_turnstileWidgetId) return true;
   var el = document.querySelector(BOTTLE_TURNSTILE);
   if (!el) return false;
 
-  var apiOk = await waitForTurnstileApi(10000);
+  var config = await fetchTurnstileConfig();
+  if (config.verification === 'optional') return true;
+
+  var apiOk = await waitForTurnstileApi(8000);
   if (!apiOk) return false;
 
-  var siteKey = await fetchTurnstileSiteKey();
   try {
     _turnstileWidgetId = window.turnstile.render(BOTTLE_TURNSTILE, {
-      sitekey: siteKey,
+      sitekey: config.siteKey,
       theme: 'dark',
       size: 'invisible',
       callback: function (token) {
@@ -113,7 +129,8 @@ function waitMs(ms) {
   return new Promise(function (resolve) { setTimeout(resolve, ms); });
 }
 
-function executeTurnstile() {
+function executeTurnstile(timeoutMs) {
+  var limit = timeoutMs || TURNSTILE_ACQUIRE_MS;
   return new Promise(function (resolve) {
     var existing = getTurnstileToken();
     if (existing) { resolve(existing); return; }
@@ -124,7 +141,7 @@ function executeTurnstile() {
       if (settled) return;
       settled = true;
       resolve(getTurnstileToken() || '');
-    }, 25000);
+    }, limit);
 
     try {
       window.turnstile.execute(turnstileTarget(), {
@@ -156,91 +173,84 @@ function resetTurnstileWidget() {
 }
 
 async function waitForTurnstileToken(maxMs) {
-  var deadline = Date.now() + (maxMs || 15000);
+  var deadline = Date.now() + (maxMs || TURNSTILE_ACQUIRE_MS);
   while (Date.now() < deadline) {
     var token = getTurnstileToken();
     if (token) return token;
-    await waitMs(100);
+    await waitMs(80);
   }
   return '';
 }
 
 function warmTurnstileWidget() {
+  if (turnstileOptional()) return;
   ensureTurnstileWidget().then(function (ok) {
-    if (!ok) return;
-    if (!getTurnstileToken()) executeTurnstile();
+    if (!ok || getTurnstileToken()) return;
+    executeTurnstile(5000);
   });
 }
 
-/** Wait on a single user action — do not return early and force another click. */
 async function acquireTurnstileToken(maxWaitMs) {
-  var ready = await ensureTurnstileWidget();
-  var token = getTurnstileToken();
-  if (!token && ready) token = await waitForTurnstileToken(Math.min(maxWaitMs || 15000, 8000));
-  if (!token && ready) token = await executeTurnstile();
-  if (!token && ready) token = await waitForTurnstileToken(maxWaitMs || 15000);
+  await fetchTurnstileConfig();
+  if (turnstileOptional()) return { ok: true, turnstileToken: '' };
 
-  if (!token && !isTurnstileApiAvailable()) {
-    return { ok: true, turnstileToken: '' };
-  }
+  var limit = maxWaitMs || TURNSTILE_ACQUIRE_MS;
+  var ready = await ensureTurnstileWidget();
+  if (!ready) return { ok: false, message: TURNSTILE_NOT_READY };
+
+  var token = getTurnstileToken();
+  if (!token) token = await waitForTurnstileToken(Math.min(limit, 3000));
+  if (!token) token = await executeTurnstile(limit);
+  if (!token) token = await waitForTurnstileToken(1500);
+
   if (!token) {
-    return {
-      ok: false,
-      message: ready ? '人機驗證逾時，請再按一次送出。' : TURNSTILE_NOT_READY,
-    };
+    return { ok: false, message: '人機驗證失敗，請重新整理頁面後再試。' };
   }
   return { ok: true, turnstileToken: token };
 }
 
 async function initTurnstileWidgets() {
-  await fetchTurnstileSiteKey();
-  await waitForTurnstileApi(10000);
+  await fetchTurnstileConfig();
+  if (turnstileOptional()) return;
+  await waitForTurnstileApi(8000);
   await ensureTurnstileWidget();
   warmTurnstileWidget();
 }
 
-async function postBottleThrow(body) {
-  for (var attempt = 0; attempt < 2; attempt++) {
-    var check = await acquireTurnstileToken(attempt === 0 ? 18000 : 15000);
-    if (!check.ok) return { ok: false, error: check.message, status: 0 };
+async function postWithTurnstile(url, body) {
+  var check = await acquireTurnstileToken(TURNSTILE_ACQUIRE_MS);
+  if (!check.ok) return { ok: false, error: check.message, status: 0, data: {} };
 
-    var res = await fetch(API.throw, {
+  var res = await fetch(url, {
+    method: 'POST',
+    headers: jsonHeaders(),
+    body: JSON.stringify(Object.assign({}, body, { turnstile_token: check.turnstileToken })),
+  });
+  var data = await parseApiJson(res);
+
+  if (res.status === 403 && !turnstileOptional()) {
+    resetTurnstileWidget();
+    warmTurnstileWidget();
+    await waitMs(400);
+    check = await acquireTurnstileToken(5000);
+    if (!check.ok) return { ok: false, error: check.message, status: 0, data: {} };
+    res = await fetch(url, {
       method: 'POST',
       headers: jsonHeaders(),
       body: JSON.stringify(Object.assign({}, body, { turnstile_token: check.turnstileToken })),
     });
-    var data = await parseApiJson(res);
-
-    if (res.status === 403 && attempt === 0) {
-      resetTurnstileWidget();
-      warmTurnstileWidget();
-      continue;
-    }
-    return { ok: res.ok, status: res.status, data: data };
+    data = await parseApiJson(res);
   }
-  return { ok: false, error: '人機驗證失敗，請重新整理頁面後再試。', status: 403 };
+
+  return { ok: res.ok, status: res.status, data: data };
+}
+
+async function postBottleThrow(body) {
+  return postWithTurnstile(API.throw, body);
 }
 
 async function postBottleReply(body) {
-  for (var attempt = 0; attempt < 2; attempt++) {
-    var check = await acquireTurnstileToken(attempt === 0 ? 18000 : 15000);
-    if (!check.ok) return { ok: false, error: check.message, status: 0 };
-
-    var res = await fetch(API.reply, {
-      method: 'POST',
-      headers: jsonHeaders(),
-      body: JSON.stringify(Object.assign({}, body, { turnstile_token: check.turnstileToken })),
-    });
-    var data = await parseApiJson(res);
-
-    if (res.status === 403 && attempt === 0) {
-      resetTurnstileWidget();
-      warmTurnstileWidget();
-      continue;
-    }
-    return { ok: res.ok, status: res.status, data: data };
-  }
-  return { ok: false, error: '人機驗證失敗，請重新整理頁面後再試。', status: 403 };
+  return postWithTurnstile(API.reply, body);
 }
 
 function jsonHeaders(extra) {

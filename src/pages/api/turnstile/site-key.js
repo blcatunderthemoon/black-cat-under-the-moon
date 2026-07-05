@@ -9,8 +9,11 @@ export default function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  res.setHeader('Cache-Control', 'public, max-age=300');
+  const hasSecret = !!process.env.CF_TURNSTILE_SECRET;
+  res.setHeader('Cache-Control', 'public, max-age=60');
   return res.status(200).json({
     siteKey: process.env.NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY || DEFAULT_SITE_KEY,
+    // optional = server accepts empty token (local dev without CF_TURNSTILE_SECRET)
+    verification: hasSecret ? 'required' : 'optional',
   });
 }

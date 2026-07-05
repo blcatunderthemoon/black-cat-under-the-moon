@@ -25,7 +25,8 @@
       img.alt = '';
       img.decoding = 'async';
       img.draggable = false;
-      img.width = el.classList.contains('moon-loading--hero') ? 44 : 28;
+      img.width = el.classList.contains('moon-loading--hero') ? 56 : 28;
+      img.height = img.width;
       img.height = img.width;
       el.appendChild(img);
     }
