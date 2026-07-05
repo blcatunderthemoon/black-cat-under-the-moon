@@ -1,0 +1,846 @@
+{
+  "generated": "2026-07-04T14:26:41.474Z",
+  "distribution": {
+    "solitary": 24.82,
+    "sunny": 25.04,
+    "mystical": 24.95,
+    "sentinel": 25.19
+  },
+  "profile_hit_rate": 100,
+  "prototypes": {
+    "solitary": {
+      "autonomy": 15,
+      "validation": 5,
+      "emotional_resonance": 4,
+      "predictability": 6,
+      "expressiveness": 3,
+      "commitment": 4
+    },
+    "sunny": {
+      "autonomy": 0,
+      "validation": 8,
+      "emotional_resonance": 2,
+      "predictability": 7,
+      "expressiveness": 7,
+      "commitment": 6
+    },
+    "mystical": {
+      "autonomy": 7,
+      "validation": 4,
+      "emotional_resonance": 15,
+      "predictability": 2,
+      "expressiveness": 1,
+      "commitment": 1
+    },
+    "sentinel": {
+      "autonomy": 6,
+      "validation": 2,
+      "emotional_resonance": 1,
+      "predictability": 13,
+      "expressiveness": 4,
+      "commitment": 5
+    }
+  },
+  "profiles": [
+    {
+      "id": "solitary_canonical",
+      "cat": "solitary",
+      "answers": {
+        "m_q1": "reprioritize",
+        "m_q2": "reserve_time",
+        "m_q3": "go_anyway",
+        "m_q4": "keep_doing",
+        "m_q5": "solo_study",
+        "m_q6": "need_time",
+        "m_q7": "wants_quiet",
+        "m_q8": "accept_trust",
+        "m_q9": "keep_freedom",
+        "m_q10": "career_rhythm"
+      }
+    },
+    {
+      "id": "solitary_v1",
+      "cat": "solitary",
+      "answers": {
+        "m_q1": "reprioritize",
+        "m_q2": "reserve_time",
+        "m_q3": "go_anyway",
+        "m_q4": "keep_doing",
+        "m_q5": "study_plan",
+        "m_q6": "need_time",
+        "m_q7": "wants_quiet",
+        "m_q8": "accept_trust",
+        "m_q9": "keep_freedom",
+        "m_q10": "career_rhythm"
+      }
+    },
+    {
+      "id": "solitary_v2",
+      "cat": "solitary",
+      "answers": {
+        "m_q1": "reprioritize",
+        "m_q2": "reserve_time",
+        "m_q3": "follow_mood",
+        "m_q4": "want_heads_up",
+        "m_q5": "solo_study",
+        "m_q6": "need_time",
+        "m_q7": "wants_quiet",
+        "m_q8": "accept_trust",
+        "m_q9": "keep_freedom",
+        "m_q10": "career_rhythm"
+      }
+    },
+    {
+      "id": "solitary_v3",
+      "cat": "solitary",
+      "answers": {
+        "m_q1": "reprioritize",
+        "m_q2": "reserve_time",
+        "m_q3": "reschedule",
+        "m_q4": "keep_doing",
+        "m_q5": "solo_study",
+        "m_q6": "need_time",
+        "m_q7": "wants_quiet",
+        "m_q8": "accept_trust",
+        "m_q9": "keep_freedom",
+        "m_q10": "stable_family"
+      }
+    },
+    {
+      "id": "solitary_v4",
+      "cat": "solitary",
+      "answers": {
+        "m_q1": "reprioritize",
+        "m_q2": "plan_ahead",
+        "m_q3": "go_anyway",
+        "m_q4": "keep_doing",
+        "m_q5": "solo_study",
+        "m_q6": "need_time",
+        "m_q7": "daily_spot",
+        "m_q8": "accept_trust",
+        "m_q9": "keep_freedom",
+        "m_q10": "career_rhythm"
+      }
+    },
+    {
+      "id": "solitary_v5",
+      "cat": "solitary",
+      "answers": {
+        "m_q1": "hurry_plan",
+        "m_q2": "reserve_time",
+        "m_q3": "follow_mood",
+        "m_q4": "keep_doing",
+        "m_q5": "solo_study",
+        "m_q6": "schedule_talk",
+        "m_q7": "wants_quiet",
+        "m_q8": "accept_trust",
+        "m_q9": "keep_freedom",
+        "m_q10": "career_rhythm"
+      }
+    },
+    {
+      "id": "solitary_v6",
+      "cat": "solitary",
+      "answers": {
+        "m_q1": "reprioritize",
+        "m_q2": "reserve_time",
+        "m_q3": "follow_mood",
+        "m_q4": "keep_doing",
+        "m_q5": "study_plan",
+        "m_q6": "need_time",
+        "m_q7": "wants_quiet",
+        "m_q8": "accept_trust",
+        "m_q9": "keep_freedom",
+        "m_q10": "stable_family"
+      }
+    },
+    {
+      "id": "solitary_v7",
+      "cat": "solitary",
+      "answers": {
+        "m_q1": "reprioritize",
+        "m_q2": "reserve_time",
+        "m_q3": "go_anyway",
+        "m_q4": "want_heads_up",
+        "m_q5": "solo_study",
+        "m_q6": "need_time",
+        "m_q7": "wants_quiet",
+        "m_q8": "accept_trust",
+        "m_q9": "keep_freedom",
+        "m_q10": "career_rhythm"
+      }
+    },
+    {
+      "id": "solitary_v8",
+      "cat": "solitary",
+      "answers": {
+        "m_q1": "reprioritize",
+        "m_q2": "reserve_time",
+        "m_q3": "reschedule",
+        "m_q4": "keep_doing",
+        "m_q5": "solo_study",
+        "m_q6": "need_time",
+        "m_q7": "wants_quiet",
+        "m_q8": "accept_trust",
+        "m_q9": "keep_freedom",
+        "m_q10": "career_rhythm"
+      }
+    },
+    {
+      "id": "solitary_v9",
+      "cat": "solitary",
+      "answers": {
+        "m_q1": "reprioritize",
+        "m_q2": "plan_ahead",
+        "m_q3": "follow_mood",
+        "m_q4": "keep_doing",
+        "m_q5": "solo_study",
+        "m_q6": "need_time",
+        "m_q7": "wants_quiet",
+        "m_q8": "accept_trust",
+        "m_q9": "keep_freedom",
+        "m_q10": "stable_family"
+      }
+    },
+    {
+      "id": "solitary_v10",
+      "cat": "solitary",
+      "answers": {
+        "m_q1": "hurry_plan",
+        "m_q2": "reserve_time",
+        "m_q3": "go_anyway",
+        "m_q4": "keep_doing",
+        "m_q5": "solo_study",
+        "m_q6": "need_time",
+        "m_q7": "wants_quiet",
+        "m_q8": "accept_trust",
+        "m_q9": "keep_freedom",
+        "m_q10": "career_rhythm"
+      }
+    },
+    {
+      "id": "solitary_v11",
+      "cat": "solitary",
+      "answers": {
+        "m_q1": "reprioritize",
+        "m_q2": "reserve_time",
+        "m_q3": "follow_mood",
+        "m_q4": "keep_doing",
+        "m_q5": "solo_study",
+        "m_q6": "need_time",
+        "m_q7": "wants_quiet",
+        "m_q8": "accept_trust",
+        "m_q9": "keep_freedom",
+        "m_q10": "career_rhythm"
+      }
+    },
+    {
+      "id": "solitary_v12",
+      "cat": "solitary",
+      "answers": {
+        "m_q1": "reprioritize",
+        "m_q2": "reserve_time",
+        "m_q3": "follow_mood",
+        "m_q4": "keep_doing",
+        "m_q5": "solo_study",
+        "m_q6": "need_time",
+        "m_q7": "wants_quiet",
+        "m_q8": "accept_trust",
+        "m_q9": "keep_freedom",
+        "m_q10": "stable_family"
+      }
+    },
+    {
+      "id": "sunny_canonical",
+      "cat": "sunny",
+      "answers": {
+        "m_q1": "discuss_team",
+        "m_q2": "all_day_together",
+        "m_q3": "want_early_notice",
+        "m_q4": "ping_when_free",
+        "m_q5": "learn_with_friends",
+        "m_q6": "talk_tonight",
+        "m_q7": "waiting_owner",
+        "m_q8": "want_comfort",
+        "m_q9": "keep_companionship",
+        "m_q10": "plan_together"
+      }
+    },
+    {
+      "id": "sunny_v1",
+      "cat": "sunny",
+      "answers": {
+        "m_q1": "discuss_team",
+        "m_q2": "all_day_together",
+        "m_q3": "reschedule",
+        "m_q4": "ping_when_free",
+        "m_q5": "solo_study",
+        "m_q6": "doubt_love",
+        "m_q7": "waiting_owner",
+        "m_q8": "say_need_you",
+        "m_q9": "keep_companionship",
+        "m_q10": "deep_bond"
+      }
+    },
+    {
+      "id": "sunny_v2",
+      "cat": "sunny",
+      "answers": {
+        "m_q1": "discuss_team",
+        "m_q2": "reserve_time",
+        "m_q3": "want_early_notice",
+        "m_q4": "want_heads_up",
+        "m_q5": "study_plan",
+        "m_q6": "talk_tonight",
+        "m_q7": "waiting_owner",
+        "m_q8": "want_comfort",
+        "m_q9": "keep_companionship",
+        "m_q10": "plan_together"
+      }
+    },
+    {
+      "id": "sunny_v3",
+      "cat": "sunny",
+      "answers": {
+        "m_q1": "hurry_plan",
+        "m_q2": "all_day_together",
+        "m_q3": "go_anyway",
+        "m_q4": "worry_mood",
+        "m_q5": "learn_with_friends",
+        "m_q6": "talk_tonight",
+        "m_q7": "wants_quiet",
+        "m_q8": "feel_unheard",
+        "m_q9": "keep_companionship",
+        "m_q10": "stable_family"
+      }
+    },
+    {
+      "id": "sunny_v4",
+      "cat": "sunny",
+      "answers": {
+        "m_q1": "discuss_team",
+        "m_q2": "plan_ahead",
+        "m_q3": "reschedule",
+        "m_q4": "ping_when_free",
+        "m_q5": "learn_with_friends",
+        "m_q6": "doubt_love",
+        "m_q7": "deep_thoughts",
+        "m_q8": "say_need_you",
+        "m_q9": "keep_companionship",
+        "m_q10": "plan_together"
+      }
+    },
+    {
+      "id": "sunny_v5",
+      "cat": "sunny",
+      "answers": {
+        "m_q1": "reprioritize",
+        "m_q2": "reserve_time",
+        "m_q3": "want_early_notice",
+        "m_q4": "ping_when_free",
+        "m_q5": "study_plan",
+        "m_q6": "schedule_talk",
+        "m_q7": "waiting_owner",
+        "m_q8": "want_comfort",
+        "m_q9": "keep_companionship",
+        "m_q10": "plan_together"
+      }
+    },
+    {
+      "id": "sunny_v6",
+      "cat": "sunny",
+      "answers": {
+        "m_q1": "hurry_plan",
+        "m_q2": "all_day_together",
+        "m_q3": "want_early_notice",
+        "m_q4": "worry_mood",
+        "m_q5": "solo_study",
+        "m_q6": "talk_tonight",
+        "m_q7": "wants_quiet",
+        "m_q8": "say_need_you",
+        "m_q9": "keep_companionship",
+        "m_q10": "stable_family"
+      }
+    },
+    {
+      "id": "sunny_v7",
+      "cat": "sunny",
+      "answers": {
+        "m_q1": "discuss_team",
+        "m_q2": "all_day_together",
+        "m_q3": "reschedule",
+        "m_q4": "want_heads_up",
+        "m_q5": "learn_with_friends",
+        "m_q6": "doubt_love",
+        "m_q7": "waiting_owner",
+        "m_q8": "say_need_you",
+        "m_q9": "keep_companionship",
+        "m_q10": "plan_together"
+      }
+    },
+    {
+      "id": "sunny_v8",
+      "cat": "sunny",
+      "answers": {
+        "m_q1": "discuss_team",
+        "m_q2": "reserve_time",
+        "m_q3": "go_anyway",
+        "m_q4": "ping_when_free",
+        "m_q5": "study_plan",
+        "m_q6": "talk_tonight",
+        "m_q7": "waiting_owner",
+        "m_q8": "want_comfort",
+        "m_q9": "keep_companionship",
+        "m_q10": "plan_together"
+      }
+    },
+    {
+      "id": "sunny_v9",
+      "cat": "sunny",
+      "answers": {
+        "m_q1": "hurry_plan",
+        "m_q2": "plan_ahead",
+        "m_q3": "want_early_notice",
+        "m_q4": "worry_mood",
+        "m_q5": "learn_with_friends",
+        "m_q6": "talk_tonight",
+        "m_q7": "wants_quiet",
+        "m_q8": "say_need_you",
+        "m_q9": "keep_companionship",
+        "m_q10": "stable_family"
+      }
+    },
+    {
+      "id": "sunny_v10",
+      "cat": "sunny",
+      "answers": {
+        "m_q1": "reprioritize",
+        "m_q2": "all_day_together",
+        "m_q3": "reschedule",
+        "m_q4": "ping_when_free",
+        "m_q5": "learn_with_friends",
+        "m_q6": "doubt_love",
+        "m_q7": "waiting_owner",
+        "m_q8": "say_need_you",
+        "m_q9": "keep_companionship",
+        "m_q10": "plan_together"
+      }
+    },
+    {
+      "id": "sunny_v11",
+      "cat": "sunny",
+      "answers": {
+        "m_q1": "discuss_team",
+        "m_q2": "reserve_time",
+        "m_q3": "want_early_notice",
+        "m_q4": "ping_when_free",
+        "m_q5": "study_plan",
+        "m_q6": "talk_tonight",
+        "m_q7": "waiting_owner",
+        "m_q8": "want_comfort",
+        "m_q9": "keep_companionship",
+        "m_q10": "deep_bond"
+      }
+    },
+    {
+      "id": "sunny_v12",
+      "cat": "sunny",
+      "answers": {
+        "m_q1": "hurry_plan",
+        "m_q2": "all_day_together",
+        "m_q3": "want_early_notice",
+        "m_q4": "worry_mood",
+        "m_q5": "learn_with_friends",
+        "m_q6": "talk_tonight",
+        "m_q7": "wants_quiet",
+        "m_q8": "say_need_you",
+        "m_q9": "keep_companionship",
+        "m_q10": "stable_family"
+      }
+    },
+    {
+      "id": "mystical_canonical",
+      "cat": "mystical",
+      "answers": {
+        "m_q1": "understand_why",
+        "m_q2": "mood_decide",
+        "m_q3": "follow_mood",
+        "m_q4": "worry_mood",
+        "m_q5": "try_first",
+        "m_q6": "doubt_love",
+        "m_q7": "deep_thoughts",
+        "m_q8": "feel_unheard",
+        "m_q9": "keep_understanding",
+        "m_q10": "deep_bond"
+      }
+    },
+    {
+      "id": "mystical_v1",
+      "cat": "mystical",
+      "answers": {
+        "m_q1": "understand_why",
+        "m_q2": "mood_decide",
+        "m_q3": "go_anyway",
+        "m_q4": "worry_mood",
+        "m_q5": "learn_with_friends",
+        "m_q6": "doubt_love",
+        "m_q7": "deep_thoughts",
+        "m_q8": "want_comfort",
+        "m_q9": "keep_understanding",
+        "m_q10": "stable_family"
+      }
+    },
+    {
+      "id": "mystical_v2",
+      "cat": "mystical",
+      "answers": {
+        "m_q1": "understand_why",
+        "m_q2": "mood_decide",
+        "m_q3": "follow_mood",
+        "m_q4": "ping_when_free",
+        "m_q5": "try_first",
+        "m_q6": "doubt_love",
+        "m_q7": "deep_thoughts",
+        "m_q8": "feel_unheard",
+        "m_q9": "keep_understanding",
+        "m_q10": "deep_bond"
+      }
+    },
+    {
+      "id": "mystical_v3",
+      "cat": "mystical",
+      "answers": {
+        "m_q1": "understand_why",
+        "m_q2": "mood_decide",
+        "m_q3": "want_early_notice",
+        "m_q4": "worry_mood",
+        "m_q5": "try_first",
+        "m_q6": "doubt_love",
+        "m_q7": "deep_thoughts",
+        "m_q8": "want_comfort",
+        "m_q9": "keep_understanding",
+        "m_q10": "deep_bond"
+      }
+    },
+    {
+      "id": "mystical_v4",
+      "cat": "mystical",
+      "answers": {
+        "m_q1": "understand_why",
+        "m_q2": "all_day_together",
+        "m_q3": "go_anyway",
+        "m_q4": "worry_mood",
+        "m_q5": "try_first",
+        "m_q6": "doubt_love",
+        "m_q7": "deep_thoughts",
+        "m_q8": "want_comfort",
+        "m_q9": "keep_understanding",
+        "m_q10": "deep_bond"
+      }
+    },
+    {
+      "id": "mystical_v5",
+      "cat": "mystical",
+      "answers": {
+        "m_q1": "discuss_team",
+        "m_q2": "mood_decide",
+        "m_q3": "follow_mood",
+        "m_q4": "worry_mood",
+        "m_q5": "try_first",
+        "m_q6": "talk_tonight",
+        "m_q7": "deep_thoughts",
+        "m_q8": "feel_unheard",
+        "m_q9": "keep_understanding",
+        "m_q10": "deep_bond"
+      }
+    },
+    {
+      "id": "mystical_v6",
+      "cat": "mystical",
+      "answers": {
+        "m_q1": "understand_why",
+        "m_q2": "mood_decide",
+        "m_q3": "follow_mood",
+        "m_q4": "worry_mood",
+        "m_q5": "learn_with_friends",
+        "m_q6": "doubt_love",
+        "m_q7": "deep_thoughts",
+        "m_q8": "want_comfort",
+        "m_q9": "keep_understanding",
+        "m_q10": "deep_bond"
+      }
+    },
+    {
+      "id": "mystical_v7",
+      "cat": "mystical",
+      "answers": {
+        "m_q1": "understand_why",
+        "m_q2": "mood_decide",
+        "m_q3": "go_anyway",
+        "m_q4": "ping_when_free",
+        "m_q5": "try_first",
+        "m_q6": "doubt_love",
+        "m_q7": "deep_thoughts",
+        "m_q8": "want_comfort",
+        "m_q9": "keep_understanding",
+        "m_q10": "deep_bond"
+      }
+    },
+    {
+      "id": "mystical_v8",
+      "cat": "mystical",
+      "answers": {
+        "m_q1": "understand_why",
+        "m_q2": "mood_decide",
+        "m_q3": "want_early_notice",
+        "m_q4": "worry_mood",
+        "m_q5": "try_first",
+        "m_q6": "doubt_love",
+        "m_q7": "deep_thoughts",
+        "m_q8": "feel_unheard",
+        "m_q9": "keep_understanding",
+        "m_q10": "deep_bond"
+      }
+    },
+    {
+      "id": "mystical_v9",
+      "cat": "mystical",
+      "answers": {
+        "m_q1": "understand_why",
+        "m_q2": "all_day_together",
+        "m_q3": "follow_mood",
+        "m_q4": "worry_mood",
+        "m_q5": "try_first",
+        "m_q6": "doubt_love",
+        "m_q7": "deep_thoughts",
+        "m_q8": "want_comfort",
+        "m_q9": "keep_understanding",
+        "m_q10": "deep_bond"
+      }
+    },
+    {
+      "id": "mystical_v10",
+      "cat": "mystical",
+      "answers": {
+        "m_q1": "discuss_team",
+        "m_q2": "mood_decide",
+        "m_q3": "go_anyway",
+        "m_q4": "worry_mood",
+        "m_q5": "try_first",
+        "m_q6": "doubt_love",
+        "m_q7": "deep_thoughts",
+        "m_q8": "want_comfort",
+        "m_q9": "keep_understanding",
+        "m_q10": "deep_bond"
+      }
+    },
+    {
+      "id": "mystical_v11",
+      "cat": "mystical",
+      "answers": {
+        "m_q1": "understand_why",
+        "m_q2": "mood_decide",
+        "m_q3": "follow_mood",
+        "m_q4": "worry_mood",
+        "m_q5": "try_first",
+        "m_q6": "doubt_love",
+        "m_q7": "deep_thoughts",
+        "m_q8": "feel_unheard",
+        "m_q9": "keep_understanding",
+        "m_q10": "stable_family"
+      }
+    },
+    {
+      "id": "sentinel_canonical",
+      "cat": "sentinel",
+      "answers": {
+        "m_q1": "hurry_plan",
+        "m_q2": "plan_ahead",
+        "m_q3": "reschedule",
+        "m_q4": "want_heads_up",
+        "m_q5": "study_plan",
+        "m_q6": "schedule_talk",
+        "m_q7": "daily_spot",
+        "m_q8": "say_need_you",
+        "m_q9": "keep_stability",
+        "m_q10": "stable_family"
+      }
+    },
+    {
+      "id": "sentinel_v1",
+      "cat": "sentinel",
+      "answers": {
+        "m_q1": "hurry_plan",
+        "m_q2": "plan_ahead",
+        "m_q3": "want_early_notice",
+        "m_q4": "want_heads_up",
+        "m_q5": "learn_with_friends",
+        "m_q6": "talk_tonight",
+        "m_q7": "daily_spot",
+        "m_q8": "accept_trust",
+        "m_q9": "keep_stability",
+        "m_q10": "career_rhythm"
+      }
+    },
+    {
+      "id": "sentinel_v2",
+      "cat": "sentinel",
+      "answers": {
+        "m_q1": "hurry_plan",
+        "m_q2": "all_day_together",
+        "m_q3": "reschedule",
+        "m_q4": "ping_when_free",
+        "m_q5": "solo_study",
+        "m_q6": "schedule_talk",
+        "m_q7": "daily_spot",
+        "m_q8": "say_need_you",
+        "m_q9": "keep_stability",
+        "m_q10": "stable_family"
+      }
+    },
+    {
+      "id": "sentinel_v3",
+      "cat": "sentinel",
+      "answers": {
+        "m_q1": "reprioritize",
+        "m_q2": "plan_ahead",
+        "m_q3": "go_anyway",
+        "m_q4": "keep_doing",
+        "m_q5": "study_plan",
+        "m_q6": "schedule_talk",
+        "m_q7": "waiting_owner",
+        "m_q8": "feel_unheard",
+        "m_q9": "keep_stability",
+        "m_q10": "plan_together"
+      }
+    },
+    {
+      "id": "sentinel_v4",
+      "cat": "sentinel",
+      "answers": {
+        "m_q1": "hurry_plan",
+        "m_q2": "reserve_time",
+        "m_q3": "want_early_notice",
+        "m_q4": "want_heads_up",
+        "m_q5": "study_plan",
+        "m_q6": "talk_tonight",
+        "m_q7": "wants_quiet",
+        "m_q8": "accept_trust",
+        "m_q9": "keep_stability",
+        "m_q10": "stable_family"
+      }
+    },
+    {
+      "id": "sentinel_v5",
+      "cat": "sentinel",
+      "answers": {
+        "m_q1": "discuss_team",
+        "m_q2": "all_day_together",
+        "m_q3": "reschedule",
+        "m_q4": "want_heads_up",
+        "m_q5": "solo_study",
+        "m_q6": "need_time",
+        "m_q7": "daily_spot",
+        "m_q8": "say_need_you",
+        "m_q9": "keep_stability",
+        "m_q10": "stable_family"
+      }
+    },
+    {
+      "id": "sentinel_v6",
+      "cat": "sentinel",
+      "answers": {
+        "m_q1": "reprioritize",
+        "m_q2": "plan_ahead",
+        "m_q3": "reschedule",
+        "m_q4": "keep_doing",
+        "m_q5": "learn_with_friends",
+        "m_q6": "schedule_talk",
+        "m_q7": "waiting_owner",
+        "m_q8": "accept_trust",
+        "m_q9": "keep_stability",
+        "m_q10": "plan_together"
+      }
+    },
+    {
+      "id": "sentinel_v7",
+      "cat": "sentinel",
+      "answers": {
+        "m_q1": "hurry_plan",
+        "m_q2": "plan_ahead",
+        "m_q3": "want_early_notice",
+        "m_q4": "ping_when_free",
+        "m_q5": "study_plan",
+        "m_q6": "talk_tonight",
+        "m_q7": "daily_spot",
+        "m_q8": "accept_trust",
+        "m_q9": "keep_stability",
+        "m_q10": "stable_family"
+      }
+    },
+    {
+      "id": "sentinel_v8",
+      "cat": "sentinel",
+      "answers": {
+        "m_q1": "hurry_plan",
+        "m_q2": "all_day_together",
+        "m_q3": "go_anyway",
+        "m_q4": "want_heads_up",
+        "m_q5": "solo_study",
+        "m_q6": "schedule_talk",
+        "m_q7": "daily_spot",
+        "m_q8": "say_need_you",
+        "m_q9": "keep_stability",
+        "m_q10": "stable_family"
+      }
+    },
+    {
+      "id": "sentinel_v9",
+      "cat": "sentinel",
+      "answers": {
+        "m_q1": "reprioritize",
+        "m_q2": "reserve_time",
+        "m_q3": "reschedule",
+        "m_q4": "keep_doing",
+        "m_q5": "study_plan",
+        "m_q6": "schedule_talk",
+        "m_q7": "waiting_owner",
+        "m_q8": "accept_trust",
+        "m_q9": "keep_stability",
+        "m_q10": "plan_together"
+      }
+    },
+    {
+      "id": "sentinel_v10",
+      "cat": "sentinel",
+      "answers": {
+        "m_q1": "discuss_team",
+        "m_q2": "plan_ahead",
+        "m_q3": "want_early_notice",
+        "m_q4": "want_heads_up",
+        "m_q5": "study_plan",
+        "m_q6": "talk_tonight",
+        "m_q7": "daily_spot",
+        "m_q8": "accept_trust",
+        "m_q9": "keep_stability",
+        "m_q10": "stable_family"
+      }
+    },
+    {
+      "id": "sentinel_v11",
+      "cat": "sentinel",
+      "answers": {
+        "m_q1": "hurry_plan",
+        "m_q2": "all_day_together",
+        "m_q3": "reschedule",
+        "m_q4": "want_heads_up",
+        "m_q5": "solo_study",
+        "m_q6": "schedule_talk",
+        "m_q7": "daily_spot",
+        "m_q8": "say_need_you",
+        "m_q9": "keep_stability",
+        "m_q10": "career_rhythm"
+      }
+    }
+  ]
+}

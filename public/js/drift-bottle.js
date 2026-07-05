@@ -11,6 +11,53 @@ const API = {
   topic:   '/api/bottle/topic',
 };
 
+/* ─── Cloudflare Turnstile ──────────────────────── */
+const TURNSTILE_SELECTORS = ['#throw-turnstile', '#reply-turnstile', '#find-reply-turnstile'];
+const TURNSTILE_NOT_READY = '人機驗證未就緒，請重新整理頁面後再試。';
+
+function getTurnstileToken(selector) {
+  return (window.turnstile?.getResponse(selector) ?? '') || '';
+}
+
+function requireTurnstileToken(selector) {
+  const token = getTurnstileToken(selector);
+  if (!token) return { ok: false, message: TURNSTILE_NOT_READY };
+  return { ok: true, token };
+}
+
+async function initTurnstileWidgets() {
+  let siteKey = '0x4AAAAAADYg006rqWz6ukif';
+  try {
+    const res = await fetch('/api/turnstile/site-key');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.siteKey) siteKey = data.siteKey;
+    }
+  } catch {}
+
+  const renderAll = function () {
+    TURNSTILE_SELECTORS.forEach(function (sel) {
+      if (!document.querySelector(sel)) return;
+      window.turnstile.render(sel, {
+        sitekey: siteKey,
+        theme: 'dark',
+        appearance: 'interaction-only',
+        size: 'flexible',
+      });
+    });
+  };
+
+  if (window.turnstile?.ready) {
+    window.turnstile.ready(renderAll);
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initTurnstileWidgets);
+} else {
+  initTurnstileWidgets();
+}
+
 /* ─── Anonymous user ID ─────────────────────────── */
 function uid() {
   let id = localStorage.getItem('bcm_uid');
@@ -23,7 +70,7 @@ function uid() {
   return id;
 }
 
-/* ─── 緣分暫存箱 stash (localStorage, max 5) ──── */
+/* ─── 漂流瓶暫存箱 stash (localStorage, max 5) ──── */
 const STASH_MAX = 5;
 function getStash() {
   try { return JSON.parse(localStorage.getItem('bcm_stash') || '[]'); } catch { return []; }
@@ -607,11 +654,15 @@ function runSubmitAnimation() {
 
 /* ─── Panel A: Throw bottle ─────────────────────── */
 let currentKey = '';
+
 async function throwBottle() {
   showMsg('throw-err', '');
   const btn = document.getElementById('btn-throw');
   const submittedContent = formatOracleAnswerContent(throwContent);
+  const ts = requireTurnstileToken('#throw-turnstile');
+  if (!ts.ok) { showMsg('throw-err', ts.message, 'err'); return; }
   btn.disabled = true; btn.textContent = '🌊 投放中…';
+
   try {
     const res  = await fetch(API.throw, {
       method: 'POST',
@@ -620,9 +671,8 @@ async function throwBottle() {
         content:           submittedContent,
         mood_tag:          selectedMoods[0] || null,
         mood_tags:         selectedMoods,
-        user_id:           uid(),
         is_mission_bottle: isMission,
-        turnstile_token:   (window.turnstile?.getResponse('#throw-turnstile') ?? '') || '',
+        turnstile_token:   ts.token,
       }),
     });
     const data = await res.json();
@@ -694,12 +744,15 @@ async function loadRandom() {
   document.getElementById('btn-report').disabled = false;
   document.getElementById('btn-report').textContent = '⚑';
   document.getElementById('btn-report').style.color = 'rgba(255,255,255,.18)';
-  // Reset replies panel
+  // Reset replies panel + comment form visibility
   repliesOpen = false;
   prefetchedReplies = null;
   document.getElementById('rnd-replies-expanded').style.display = 'none';
   document.getElementById('rnd-replies-list').innerHTML = '';
   var _tb = document.getElementById('rnd-toggle-btn'); if (_tb) _tb.style.display = 'none';
+  var _rs = document.getElementById('rnd-replies-section'); if (_rs) _rs.style.display = 'none';
+  var _cf = document.getElementById('rnd-comment-form'); if (_cf) _cf.style.display = '';
+  document.querySelectorAll('.subreply-form').forEach(function(f) { f.style.display = 'none'; });
 
   try {
     const ctrl = new AbortController();
@@ -746,24 +799,37 @@ async function loadRandom() {
       mood_tag:    data.mood_tag || null,
     });
 
-    // Show toggle button only when there are existing replies
-    var _tBtn = document.getElementById('rnd-toggle-btn');
-    if (data.reply_count > 0) {
-      document.getElementById('rnd-toggle-label').textContent = `💬 查看留言 (${data.reply_count})`;
-      if (_tBtn) { _tBtn.style.display = ''; _tBtn.style.opacity = '.6'; }
-    } else {
-      if (_tBtn) _tBtn.style.display = 'none';
-    }
-
     document.getElementById('rnd-content').style.display = 'block';
 
-    // Pre-fetch replies in background so toggle is instant
+    // Show replies section when others have already commented
+    var _replySection = document.getElementById('rnd-replies-section');
+    var _replyHeading = document.getElementById('rnd-replies-heading');
+    var _tBtn = document.getElementById('rnd-toggle-btn');
     if (data.reply_count > 0) {
+      if (_replySection) _replySection.style.display = '';
+      if (_replyHeading) _replyHeading.textContent = '拾瓶人的回聲（' + data.reply_count + '）';
+      document.getElementById('rnd-toggle-label').textContent = '💬 查看留言 (' + data.reply_count + ')';
+      if (_tBtn) { _tBtn.style.display = ''; _tBtn.style.opacity = '.6'; }
+      // Pre-fetch and auto-expand so comments are visible without an extra tap
       const prefetchId = data.id;
       fetch(`${API.replies}?id=${prefetchId}`)
         .then(r => r.ok ? r.json() : null)
-        .then(d => { if (d?.replies && currentBottleId === prefetchId) prefetchedReplies = d.replies; })
+        .then(d => {
+          if (!d?.replies || currentBottleId !== prefetchId) return;
+          prefetchedReplies = d.replies;
+          repliesOpen = true;
+          document.getElementById('rnd-replies-expanded').style.display = 'block';
+          renderReplyList(prefetchedReplies, prefetchId, 'rnd-replies-list');
+          const total = prefetchedReplies.length + prefetchedReplies.reduce(function(s, r) {
+            return s + (r.sub_replies || []).length;
+          }, 0);
+          document.getElementById('rnd-toggle-label').textContent = '💬 收起留言 (' + total + ')';
+          if (_replyHeading) _replyHeading.textContent = '拾瓶人的回聲（' + total + '）';
+        })
         .catch(() => {});
+    } else {
+      if (_replySection) _replySection.style.display = 'none';
+      if (_tBtn) _tBtn.style.display = 'none';
     }
   } catch {
     document.getElementById('rnd-loading').style.display = 'none';
@@ -789,6 +855,9 @@ async function sendReply() {
   const cdMs = getReplyCooldownMs(currentBottleId);
   if (cdMs > 0) { startCooldownHint('reply-err', document.getElementById('btn-reply'), cdMs); return; }
 
+  const ts = requireTurnstileToken('#reply-turnstile');
+  if (!ts.ok) { showMsg('reply-err', ts.message, 'err'); return; }
+
   const btn = document.getElementById('btn-reply');
   btn.disabled = true; btn.textContent = '⏳';
   let replied = false;
@@ -800,7 +869,7 @@ async function sendReply() {
         bottle_id: currentBottleId,
         content,
         user_id: uid(),
-        turnstile_token: (window.turnstile?.getResponse('#reply-turnstile') ?? '') || '',
+        turnstile_token: ts.token,
       }),
     });
     const data = await res.json();
@@ -816,7 +885,9 @@ async function sendReply() {
     btn.innerHTML = SEND_ICON;
     startCooldownHint('reply-err', btn, 30000);
     const lbl = document.getElementById('rnd-toggle-label');
-    // Show toggle btn + auto-expand so the new reply is immediately visible
+    // Show replies section + auto-expand so the new reply is immediately visible
+    var _replySection = document.getElementById('rnd-replies-section');
+    if (_replySection) _replySection.style.display = '';
     var _tBtnS = document.getElementById('rnd-toggle-btn');
     if (_tBtnS) { _tBtnS.style.display = ''; _tBtnS.style.opacity = '1'; }
     var _expS = document.getElementById('rnd-replies-expanded');
@@ -827,7 +898,9 @@ async function sendReply() {
     renderReplyList(prefetchedReplies, currentBottleId, 'rnd-replies-list');
     const _total = prefetchedReplies.length + prefetchedReplies.reduce(function(s, r) { return s + (r.sub_replies || []).length; }, 0);
     lbl.textContent = '💬 收起留言 (' + _total + ')';
-    // 緣分暫存 — save to stash (no viewKey for random bottles)
+    var _replyHeading = document.getElementById('rnd-replies-heading');
+    if (_replyHeading) _replyHeading.textContent = '拾瓶人的回聲（' + _total + '）';
+    // 漂流瓶暫存 — save to stash (no viewKey for random bottles)
     addToStash({
       id: currentBottleId,
       viewKey: null,
@@ -1131,6 +1204,9 @@ async function sendFindReply() {
   const cdMs = getReplyCooldownMs(foundBottleId);
   if (cdMs > 0) { startCooldownHint('find-reply-err', document.getElementById('btn-find-reply'), cdMs); return; }
 
+  const ts = requireTurnstileToken('#find-reply-turnstile');
+  if (!ts.ok) { showMsg('find-reply-err', ts.message, 'err'); return; }
+
   const btn = document.getElementById('btn-find-reply');
   btn.disabled = true; btn.textContent = '⏳';
   try {
@@ -1141,7 +1217,7 @@ async function sendFindReply() {
         bottle_id: foundBottleId,
         content,
         user_id: uid(),
-        turnstile_token: (window.turnstile?.getResponse('#find-reply-turnstile') ?? '') || '',
+        turnstile_token: ts.token,
       }),
     });
     const data = await res.json();
@@ -1160,7 +1236,7 @@ async function sendFindReply() {
     renderReplyList(findRepliesCache, foundBottleId, 'found-list');
     const total = findRepliesCache.length + findRepliesCache.reduce(function(s,r){return s+(r.sub_replies||[]).length;},0);
     document.getElementById('found-heading').textContent = '拾瓶人的回聲（' + total + '）';
-    // 緣分暫存 — save to stash with viewKey from key-boxes
+    // 漂流瓶暫存 — save to stash with viewKey from key-boxes
     var vKey = Array.from(document.querySelectorAll('#key-boxes .key-box'))
       .map(function(b) { return (b.value || '').toUpperCase(); }).join('');
     addToStash({
@@ -1181,11 +1257,11 @@ async function sendFindReply() {
 /* ─── Crisis Intervention Banner ─────────────────── */
 function showCrisisBanner() {
   document.getElementById('crisis-banner').style.display = 'flex';
-  document.body.style.overflow = 'hidden';
+  document.body.classList.add('body-scroll-locked');
 }
 function closeCrisisBanner() {
   document.getElementById('crisis-banner').style.display = 'none';
-  document.body.style.overflow = '';
+  document.body.classList.remove('body-scroll-locked');
 }
 
 /* ─── Panel B: Report bottle ─────────────────────── */function skipBottle() {
@@ -1303,7 +1379,7 @@ async function findBottle() {
     findBtn.classList.remove('btn-success');
     window.turnstile?.reset('#find-reply-turnstile');
     const reportBtn = document.getElementById('btn-find-report');
-    if (reportBtn) { reportBtn.disabled = false; reportBtn.textContent = '⚑'; }
+    if (reportBtn) { reportBtn.disabled = false; reportBtn.textContent = '⚑'; reportBtn.style.color = 'rgba(255,255,255,.18)'; }
 
     document.getElementById('found-wrap').classList.add('found-visible');
 
@@ -1379,7 +1455,7 @@ document.getElementById('overlay').addEventListener('click', function (e) {
   if (e.target === this) closeOverlay();
 });
 
-/* ─── 緣分暫存箱 — render, load ─────────────────── */
+/* ─── 漂流瓶暫存箱 — render, load ─────────────────── */
 function fmtRelative(iso) {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
@@ -1465,7 +1541,7 @@ async function loadBottleById(id) {
     findBtn.classList.remove('btn-success');
     window.turnstile?.reset('#find-reply-turnstile');
     const reportBtn = document.getElementById('btn-find-report');
-    if (reportBtn) { reportBtn.disabled = false; reportBtn.textContent = '⚑'; }
+    if (reportBtn) { reportBtn.disabled = false; reportBtn.textContent = '⚑'; reportBtn.style.color = 'rgba(255,255,255,.18)'; }
     document.getElementById('found-wrap').classList.add('found-visible');
     const listEl = document.getElementById('found-list');
     listEl.innerHTML = '<div class="no-replies" style="opacity:.5">載入中…</div>';

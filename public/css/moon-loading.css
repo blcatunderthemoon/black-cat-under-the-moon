@@ -1,0 +1,53 @@
+/* Moon-phase loading animation */
+.moon-loading {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+}
+
+.moon-loading--centered {
+  width: 100%;
+  justify-content: center;
+}
+
+.moon-loading__img {
+  display: block;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background: transparent;
+  mix-blend-mode: lighten;
+}
+
+.moon-loading--hero .moon-loading__img,
+#loading-screen .moon-loading__img {
+  width: 44px;
+  height: 44px;
+}
+
+#loading-screen .moon-loading {
+  gap: 16px;
+}
+
+/* Forum warm glow */
+.moon-loading--forum .moon-loading__img {
+  filter: drop-shadow(0 0 10px rgba(255, 159, 67, 0.55));
+}
+
+/* Dark pages — purple / blue glow */
+.moon-loading--night .moon-loading__img {
+  filter:
+    drop-shadow(0 0 10px rgba(124, 92, 252, 0.5))
+    drop-shadow(0 0 16px rgba(0, 229, 255, 0.22))
+    hue-rotate(-18deg)
+    saturate(1.12);
+}
+
+.moon-loading__label {
+  margin: 0;
+  text-align: center;
+}

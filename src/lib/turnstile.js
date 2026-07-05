@@ -3,15 +3,19 @@
  * Cloudflare Turnstile server-side token verification.
  *
  * Setup (one-time, free):
- *   1. https://dash.cloudflare.com → Turnstile → Add site
- *   2. Domain: blackcatunderthemoon.vercel.app  (also add localhost for dev)
+ *   1. https://dash.cloudflare.com → Turnstile → Add site (or edit existing)
+ *   2. Hostnames: every domain users visit (e.g. www.example.com, example.com, localhost)
+ *      Turnstile only issues tokens for listed hostnames — domain changes need this updated.
  *   3. Mode: Managed | Theme: Dark
- *   4. Copy Secret Key → Vercel env var: CF_TURNSTILE_SECRET
- *   5. Copy Site Key → replace TURNSTILE_SITE_KEY placeholder in drift-bottle.html
+ *   4. Copy Secret Key → Vercel env: CF_TURNSTILE_SECRET
+ *   5. Copy Site Key → Vercel env: NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY
+ *      (drift-bottle.html loads it via /api/turnstile/site-key)
  *
- * If CF_TURNSTILE_SECRET is not set (local dev without the env var),
- * verifyTurnstile() returns { success: true } so development is not blocked.
+ * Production: CF_TURNSTILE_SECRET required (fail-closed).
+ * Local dev without secret: verifyTurnstile() returns { success: true }.
  */
+
+import { isProduction } from './production-guard.js';
 
 const VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 
@@ -25,8 +29,10 @@ const VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 export async function verifyTurnstile(token, ip) {
   const secret = process.env.CF_TURNSTILE_SECRET;
 
-  // Bypass in development when secret is not configured
-  if (!secret) return { success: true };
+  if (!secret) {
+    if (isProduction()) return { success: false };
+    return { success: true };
+  }
 
   // Missing token → fail
   if (!token || typeof token !== 'string' || token.trim() === '') {

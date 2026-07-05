@@ -1,12 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
+import { checkDashboardAuth } from '../../../lib/dashboard-auth.js';
+import { getAdminClient } from '../../../lib/server-auth.js';
 
-const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const deliveryWebhook = process.env.MATCH_NOTIFICATION_WEBHOOK || '';
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: { persistSession: false },
-});
 
 function escHtml(str) {
   return String(str ?? '')
@@ -15,11 +10,6 @@ function escHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
-}
-
-function formatHandle(value) {
-  const raw = String(value ?? '').trim();
-  return raw;
 }
 
 function buildContactList(partner) {
@@ -35,8 +25,8 @@ function buildEmailHtml({ receiver, partner, score }) {
   return `
   <div style="background:#07060e;padding:24px;color:#f0ebd8;font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;">
     <div style="max-width:680px;margin:0 auto;background:#12111d;border:2px solid #00e5ff;padding:20px;box-shadow:0 0 24px rgba(0,229,255,.2)">
-      <h2 style="margin:0 0 12px;color:#ffe066;">每日靈魂配對通知</h2>
-      <p style="line-height:1.8;margin:0 0 8px;">Hi ${escHtml(receiver.name)}，你同 ${escHtml(partner.name)} 配對成功。</p>
+      <h2 style="margin:0 0 12px;color:#ffe066;">每日靈魂共鳴連線通知</h2>
+      <p style="line-height:1.8;margin:0 0 8px;">Hi ${escHtml(receiver.name)}，你同 ${escHtml(partner.name)} 連線成功。</p>
       <p style="line-height:1.8;margin:0 0 12px;">同步率：<span style="color:#00e5ff;font-weight:700;">${score}/100</span></p>
       <p style="line-height:1.8;margin:0;">對方聯絡：${contactInfo}</p>
     </div>
@@ -51,7 +41,7 @@ function buildText({ receiver, partner, score }) {
   const contactInfo = parts.join(' / ') || '（未提供聯絡資料）';
   return [
     `Hi ${receiver.name},`,
-    `你同 ${partner.name} 成功配對。`,
+    `你同 ${partner.name} 成功連線。`,
     `同步率：${score}/100`,
     `對方聯絡：${contactInfo}`,
     'Black Cat Under The Moon',
@@ -86,9 +76,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed. Use POST.' });
   }
 
-  if (!supabaseUrl || !supabaseServiceKey) {
-    return res.status(500).json({ error: 'Server misconfigured: missing Supabase credentials' });
-  }
+  if (!checkDashboardAuth(req, res)) return;
 
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
@@ -100,7 +88,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'userAId and userBId are required' });
     }
 
-    const { data: rows, error } = await supabase
+    const admin = getAdminClient();
+    const { data: rows, error } = await admin
       .from('responses')
       .select('id,name,email,ig_username,tg_username,identity')
       .in('id', [userAId, userBId]);
@@ -120,14 +109,14 @@ export default async function handler(req, res) {
       {
         to: userA.email,
         to_user_id: userA.id,
-        subject: `你與 ${userB.name} 配對成功 | Black Cat Under The Moon`,
+        subject: `你與 ${userB.name} 連線成功 | Black Cat Under The Moon`,
         html: buildEmailHtml({ receiver: userA, partner: userB, score }),
         text: buildText({ receiver: userA, partner: userB, score }),
       },
       {
         to: userB.email,
         to_user_id: userB.id,
-        subject: `你與 ${userA.name} 配對成功 | Black Cat Under The Moon`,
+        subject: `你與 ${userA.name} 連線成功 | Black Cat Under The Moon`,
         html: buildEmailHtml({ receiver: userB, partner: userA, score }),
         text: buildText({ receiver: userB, partner: userA, score }),
       },
@@ -136,13 +125,17 @@ export default async function handler(req, res) {
     const deliveries = [];
     for (const note of notifications) {
       const delivery = await deliver(note);
-      deliveries.push({ to_user_id: note.to_user_id, ...delivery });
+      deliveries.push({
+        to_user_id: note.to_user_id,
+        delivered: delivery.delivered,
+        status: delivery.status,
+        reason: delivery.reason,
+      });
     }
 
-    // ---- Auto-log to sent_matches (normalise pair order: smaller id first) ----
     const [normA, normB] = userAId <= userBId ? [userAId, userBId] : [userBId, userAId];
     const anyDelivered = deliveries.some((d) => d.delivered);
-    await supabase
+    await admin
       .from('sent_matches')
       .upsert(
         {
@@ -151,17 +144,16 @@ export default async function handler(req, res) {
           match_score: score,
           notes: anyDelivered ? '自動記錄（通知已發送）' : '自動記錄（通知發送失敗）',
         },
-        { onConflict: 'user_a_id,user_b_id', ignoreDuplicates: false }
+        { onConflict: 'user_a_id,user_b_id', ignoreDuplicates: false },
       );
 
     return res.status(200).json({
       success: true,
       match_pair: {
-        userA: { id: userA.id, name: userA.name, email: userA.email, ig_username: userA.ig_username, tg_username: userA.tg_username },
-        userB: { id: userB.id, name: userB.name, email: userB.email, ig_username: userB.ig_username, tg_username: userB.tg_username },
+        userA: { id: userA.id, name: userA.name },
+        userB: { id: userB.id, name: userB.name },
       },
       match_score: score,
-      notifications_preview: notifications,
       deliveries,
     });
   } catch (err) {

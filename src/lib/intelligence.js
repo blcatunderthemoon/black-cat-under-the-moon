@@ -244,7 +244,7 @@ function rankDims(scores) {
 function buildSummary(scores, finalScore, penalty) {
   const { strongest, weakest } = rankDims(scores);
   let type;
-  if (finalScore >= 80) type = '靈魂伴侶候選';
+  if (finalScore >= 80) type = '靈魂同頻者候選';
   else if (finalScore >= 65) type = '\u9ad8\u5ea6\u5951\u5408';
   else if (finalScore >= 50) type = '\u5024\u5f97\u6df1\u5165\u4e86\u89e3';
   else if (finalScore >= 35) type = '\u6709\u6f5b\u529b\uff0c\u9700\u78e8\u5408';
@@ -261,9 +261,9 @@ function buildSummary(scores, finalScore, penalty) {
   if (scores.communication <= 8)   risks.push('溝通節奏稍有不同，找到專屬你們的相處默契需要一點時間');
   if (scores.emotional <= 8)       risks.push('表達愛的方式各有不同，試著主動說出你的需求，對方更容易接住');
   if (penalty >= 10)               risks.push('外在條件有小差異，但這恰恰是讓兩人互相探索的有趣起點');
-  if (risks.length === 0)          risks.push('基礎已很穩固！主要的考驗將是如何在日常生活中持續滋養這段緣分');
+  if (risks.length === 0)          risks.push('基礎已很穩固！主要的考驗將是如何在社群交流中持續滋養這段連結');
 
-  const action = finalScore >= 65 ? '建議積極推進見面'
+  const action = finalScore >= 65 ? '建議在社群內積極交流'
                : finalScore >= 45 ? '可先嘗試線上交流了解'
                : '需要更多了解彼此再決定';
 
@@ -275,7 +275,7 @@ function buildSummary(scores, finalScore, penalty) {
   if (finalScore >= 80) {
     textPool = [
       `這對靈魂在月光下產生了強烈共振！你們在${sl}的契合度簡直是天作之合，靈貓都忍不住多看了一眼🐈‍⬛✨ 雙方基礎相容度 ${finalScore} 分，${action}。`,
-      `靈魂伴侶候選！靈貓認證：你們在${sl}方面的共鳴是本季最高紀錄${wPart}。雙方基礎相容度 ${finalScore} 分，${action}。`,
+      `靈魂同頻者候選！靈貓認證：你們在${sl}方面的共鳴是本季最高紀錄${wPart}。雙方基礎相容度 ${finalScore} 分，${action}。`,
       `月光下的相遇，命中注定。在${sl}方面你們幾乎像同一個靈魂的兩半${wPart}。雙方基礎相容度 ${finalScore} 分，${action}。`,
       `${type}。你們在${sl}方面的頻率幾乎完美對齊，是極為罕見的靈魂共振${wPart}。雙方基礎相容度 ${finalScore} 分，${action}。`,
     ];
@@ -288,7 +288,7 @@ function buildSummary(scores, finalScore, penalty) {
   } else if (finalScore >= 50) {
     textPool = [
       `${type}。在${sl}方面有不錯的共鳴${wPart}，多幾次交流就能更了解彼此。雙方基礎相容度 ${finalScore} 分，${action}。`,
-      `這段緣分值得你們細細品味✨ ${sl}方面的契合令靈貓印象深刻${wPart}。雙方基礎相容度 ${finalScore} 分，${action}。`,
+      `這段共鳴值得你們細細品味✨ ${sl}方面的契合令靈貓印象深刻${wPart}。雙方基礎相容度 ${finalScore} 分，${action}。`,
       `${type}。在${sl}方面你們有共同的出發點${wPart}，慢慢磨合可能擦出意外的火花。雙方基礎相容度 ${finalScore} 分，${action}。`,
     ];
   } else if (finalScore >= 35) {
@@ -300,7 +300,7 @@ function buildSummary(scores, finalScore, penalty) {
   } else {
     textPool = [
       `${type}。目前在${sl}方面的共鳴相對有限${wPart}，但每一次了解都是有意義的嘗試。雙方基礎相容度 ${finalScore} 分，${action}。`,
-      `${type}。你們的頻率在${sl}方面有一絲交集${wPart}，相識已是緣分，其餘交由時間。雙方基礎相容度 ${finalScore} 分，${action}。`,
+      `${type}。你們的頻率在${sl}方面有一絲交集${wPart}，相識已是共鳴，其餘交由時間。雙方基礎相容度 ${finalScore} 分，${action}。`,
     ];
   }
   const text = textPool[Math.floor(Math.random() * textPool.length)];

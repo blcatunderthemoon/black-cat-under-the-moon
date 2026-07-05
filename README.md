@@ -1,288 +1,357 @@
-# 🌙 Black Cat Under The Moon — 靈魂配對系統
+# 🌙 Black Cat Under The Moon — 月下靈魂社群
 
-> 一個專為女同志社群設計的靈魂配對問卷平台。透過多維度問題探索你的性格、生活方式與愛情觀，再用算法找出最合拍的靈魂伴侶。
+> 專為女同志社群設計的靈魂配對與社群平台。
+
+**Live：** [www.blackcatunderthemoon.com](https://www.blackcatunderthemoon.com)  
+參與本平台即表示同意[使用條款](/tos.html)與[私隱政策](/privacy.html)。
+
+本 README 以**開發者入門**為主。產品規格見 [docs/PRODUCT-COMMERCIALIZATION-PRD.md](docs/PRODUCT-COMMERCIALIZATION-PRD.md)；漂流瓶／安全機制見 [docs/SYSTEM-OVERVIEW.md](docs/SYSTEM-OVERVIEW.md)；配對計分見 [docs/SCORING.md](docs/SCORING.md)；**Mobile WebView 捲動與頁尾**見 [docs/MOBILE-WEBVIEW-SCROLL.md](docs/MOBILE-WEBVIEW-SCROLL.md)。
 
 ---
 
-## 專案簡介
+## 目錄
 
-本平台提供以下功能：
+- [功能總覽](#功能總覽)
+- [系統架構](#系統架構)
+- [技術棧](#技術棧)
+- [專案結構](#專案結構)
+- [首次設定](#首次設定)
+- [快速啟動](#快速啟動)
+- [頁面一覽](#頁面一覽)
+- [API 模組](#api-模組)
+- [環境變數](#環境變數)
+- [配額一覽](#配額一覽)
+- [配對系統](#配對系統)
+- [資料庫遷移](#資料庫遷移)
+- [開發工具](#開發工具)
+- [疑難排解](#疑難排解)
+- [法律與聯絡](#法律與聯絡)
 
-- **靈魂配對問卷** — 多維度性格探索，涵蓋愛情觀、生活節奏、溝通方式等面向
-- **智能配對算法** — 多層篩選 + 六維度相容性評分，找出最合拍的靈魂伴侶
-- **漂流瓶** — 匿名心靈漂流空間，隨機拾起陌生人的心聲並留下回聲
-- **配對通知** — 成功配對後以電子郵件通知雙方
+---
+
+## 功能總覽
+
+| 模組 | 說明 | 入口 |
+|---|---|---|
+| 💫 **Echo Mode** | 多維度靈魂配對問卷，六維度相容性評分，配對成功後 Inbox + Email 通知 | `/echo.html` |
+| 🪞 **Mirror Mode** | 15 題性格探索，四大貓家族 + 12 種混合標題，生成可分享 Mirror Card | `/mirror.html` |
+| 🐾 **四大貓家族** | Mirror 測驗家族介紹 | `/cat-families` |
+| 🌊 **月光漂流瓶** | 完全匿名：投瓶、撈瓶、回聲、愛心、神秘鑰匙 | `/drift-bottle.html` |
+| 🔥 **黑貓樹洞** | 論壇：分類、留言、愛心、書籤、同族排序、舉報 | `/forum` |
+| ✉️ **Inbox** | 配對通知、主動投信（信紙／郵票玩法）、交換相邀請、頻道狀態敘事 | `/inbox` |
+| 📷 **交換相** | Moonlight Passport 真人相片交換邀請，成功後 7 日可見 | `/exchange-photo`、`/mirror-card/[slug]` |
+| 👤 **帳戶** | 顯示名稱、密碼、通知偏好、訂閱、Mirror Card、交換相相片 | `/account` |
+| 🌙 **Moonlight Passport** | PayPal 或 PayMe／FPS 人手付款；PayMe QR 於付款步驟 popup 顯示 | `/premium` |
+| 💌 **聯絡我們** | 意見箱寫入資料庫（非 mailto）、社群連結 | `contact.html` |
+| 📋 **法律頁** | 條款、私隱、退款、關於 | `/tos.html` 等 |
+
+**Moonlight Passport 權益：** 詳細 Mirror Card、每月 **3** 封主動投信、每月 3 次交換相邀請、**連線即時通知**（Inbox 高亮 + Email，配對通知無上限）、論壇發文不限（免費每日 3 篇）；Free 用戶每月配對通知 **3 次**。
+
+**帳號：** Supabase Auth、Legacy Match Claim（Email 認領舊問卷）、Mirror Card 三級可見度（`public` → `basic` → `detailed`）；論壇顯示名稱即時同步與唯一性檢查。
+
+**管理儀表板（`/dashboard`，gitignore）：**
+
+- **郵件自動化** — 全域配對、Free「本月 n/3」／Passport「🌙 無限制」、Moonlight Passport 分頁與**即時發送（Email + Inbox）**
+- **Moonlight Passport 管理** — 人手授予／撤銷（PayMe／FPS 核對）
+- 月光旅程監控、論壇／Inbox 監控、配對分析等
+
+**內容安全：** 關鍵字過濾、3 次舉報自動隱藏、Turnstile（漂流瓶）、Upstash 速率限制。
+
+---
+
+## 系統架構
+
+```mermaid
+flowchart LR
+  subgraph static [public 靜態頁]
+    IDX[index.html]
+    ECHO[echo.html]
+    MIRROR[mirror.html]
+    BOTTLE[drift-bottle.html]
+  end
+
+  subgraph next [Next.js 頁面]
+    FORUM[/forum]
+    INBOX[/inbox]
+    MCARD[/mirror-card]
+    ACCOUNT[/account]
+  end
+
+  subgraph api [API Routes]
+    SUBMIT[/api/submit]
+    BAPI[/api/bottle/*]
+    FAPI[/api/forum/*]
+    IAPI[/api/inbox/*]
+    PAPI[/api/photo-exchange/*]
+    CAPI[/api/contact-feedback]
+  end
+
+  DB[(Supabase)]
+
+  IDX --> ECHO & MIRROR & BOTTLE
+  ECHO & MIRROR --> SUBMIT --> DB
+  BOTTLE --> BAPI --> DB
+  FORUM & INBOX & MCARD --> FAPI & IAPI --> DB
+  ACCOUNT --> DB
+```
+
+靜態問卷／漂流瓶用 Vanilla JS；論壇、Inbox、帳戶等用 React（`src/pages/`）。兩者共用 `src/pages/api/` 後端。
+
+---
 
 ## 技術棧
 
-- **前端**：HTML / CSS / Vanilla JS（問卷、漂流瓶）
-- **後端**：Next.js API Routes，部署於 Vercel
-- **資料庫**：Supabase（PostgreSQL）
-
-## 使用條款
-
-參與本平台即表示同意[使用條款](/tos.html)，包括資料收集與配對披露聲明。
-
-
-> 一個專為女同志社群設計的靈魂配對問卷平台。透過多維度問題探索你的性格、生活方式與愛情觀，再用算法找出最合拍的靈魂伴侶。
+| 層級 | 技術 |
+|---|---|
+| 框架 | Next.js 15（Pages Router）+ React 18 |
+| 靜態前端 | `public/` HTML + Vanilla JS |
+| 樣式 | `pixel-theme.css`、`auth-nav.css`、`questionnaire.css`、Zpix 字體 |
+| 資料庫／Auth | Supabase（PostgreSQL + Auth） |
+| 付款 | PayPal Subscriptions／Webhook；PayMe／FPS 人手核對 |
+| 速率限制 | Upstash Redis |
+| 郵件 | Gmail SMTP（`nodemailer`） |
+| 分析 | PostHog（全站 pageview、登入識別、Mirror/Echo/漂流瓶事件；session recording 遮罩輸入） |
+| 部署 | Vercel |
 
 ---
 
 ## 專案結構
 
-本專案分為兩個獨立區域，各自對應不同用途：
-
 ```
 BlackCatUnderTheMoon/
-├── index.html              # 🌐 問卷網站前端（HTML + CSS + Vanilla JS）
-├── promo-card.html         # 🌐 宣傳頁面
-├── api/
-│   └── submit.js           # 🌐 Vercel 函數 — POST /api/submit（問卷提交）
-│
-├── src/                    # 📊 管理儀表板（Next.js 應用）
-│   ├── pages/
-│   │   ├── _app.js
-│   │   ├── api/
-│   │   │   ├── match.js
-│   │   │   ├── match_card/
-│   │   │   │   ├── template.js     # 配對卡片 HTML 引擎
-│   │   │   │   └── notify.js
-│   │   │   └── dashboard/          # 儀表板 API 端點
-│   │   └── dashboard/              # 儀表板頁面
+├── public/                 # 靜態頁（index、match、mirror、漂流瓶、法律頁）
+├── src/
+│   ├── pages/              # Next.js 頁面 + api/
 │   ├── components/
-│   │   └── dashboard/              # React 元件
+│   ├── lib/                # intelligence、matching、permissions、match-delivery-quota、match-response-premium、match-notify-send…
 │   ├── styles/
-│   │   └── dashboard/              # CSS Modules + globals.css
-│   └── lib/                        # 共用函式庫
-│       ├── intelligence.js         # 6 維度相容性引擎
-│       ├── matching.js             # 配對純函數庫
-│       ├── seed-data.js            # 測試用戶生成器
-│       └── email-template.js       # 郵件模板產生器
-│
-├── scripts/                # 🧪 開發 / 測試工具
-├── emailautomation/        # 📧 郵件素材（Logo、範本）
-├── docs/                   # 📄 技術文件
-│   ├── SCORING.md
-│   ├── MATCH-CARD-DESIGN.md
-│   ├── MIRROR-MODE-SPEC.md
-│   └── questionaire.md
-├── package.json
-└── README.md
+│   └── middleware.js       # 保護 /api/dashboard/*（x-dashboard-key）
+├── src/pages/dashboard/    # 管理儀表板 UI（gitignore，本地開發用）
+├── src/pages/api/dashboard/ # 管理員 API（gitignore）
+├── supabase/migrations/
+├── scripts/                # seed、配對測試、匯出、create-admin-user
+├── docs/                   # 深度技術文件
+├── .env.example
+└── package.json
 ```
+
+---
+
+## 首次設定
+
+開始寫 code 前，建議依序完成：
+
+1. **環境：** Node.js **18+**、npm
+2. **Supabase：** 建立 project → Authentication 開啟 Email provider → 在 SQL Editor **依序執行** `supabase/migrations/*.sql` → **URL Configuration** 設 `Site URL` 為正式網域（如 `https://www.blackcatunderthemoon.com`），並在 **Redirect URLs** 加入：
+   - `https://www.blackcatunderthemoon.com/auth/confirm`
+   - `https://www.blackcatunderthemoon.com/auth/reset-password`
+   - `http://localhost:3000/auth/confirm`（本地開發）
+   - 換 domain 後若驗證信／重設密碼信收不到或連結失效，多數是此處未更新
+3. **環境變數：** 複製 `.env.example` → `.env.local`，至少填入：
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`（伺服器 API 必需）
+4. **啟動：** `npm run dev`
+5. **驗證：**
+   - 首頁 → `http://localhost:3000/index.html`
+   - 註冊登入 → `/signup`、`/forum`
+   - 問卷提交 → `/mirror.html`（需 Supabase 寫入權限）
+
+選填：PayPal（見 [docs/paypal-onboarding.md](docs/paypal-onboarding.md)）、Upstash、Turnstile、Gmail。
+
+> **安全：** 切勿將 `SUPABASE_SERVICE_ROLE_KEY`、`PAYPAL_CLIENT_SECRET`、`DASHBOARD_SECRET` 提交至 git。
 
 ---
 
 ## 快速啟動
 
-| 區域 | 指令 | 說明 |
-|---|---|---|
-| 🌐 問卷網站 | `npm run website` | 啟動完整 Vercel 本地環境（問卷 + Submit API） |
-| 📊 管理儀表板 | `npm run dashboard` | 啟動 Next.js（`localhost:3000/dashboard`） |
-| 🧪 測試工具 | 見下方測試指令 | 資料植入、配對測試、卡片生成、匯出 Excel |
-
----
-
-## 🌐 問卷網站
-
-**對象：** 一般用戶  
-**功能：** 填寫靈魂配對問卷，答案提交至 Supabase
-
-```bash
-npm run website          # 啟動 Vercel 本地環境
-```
-
-> 需先安裝 Vercel CLI：`npm i -g vercel`  
-> 啟動後開啟 `index.html` 或 `http://localhost:3000`
-
-**相關檔案：**
-
-```
-index.html               # 問卷前端介面（HTML + CSS + Vanilla JS）
-api/
-└── submit.js            # POST /api/submit — 接收並寫入問卷答案
-```
-
----
-
-## 📊 管理儀表板
-
-**對象：** 內部營運人員  
-**功能：** 配對數據總覽、分析、探索、匯出、實驗室
-
-```bash
-npm run dashboard        # 啟動 Next.js dev server
-```
-
-開啟 `http://localhost:3000/dashboard`
-
-| 頁面 | 路徑 | 說明 |
-|---|---|---|
-| 總覽 | `/dashboard` | KPI 卡片、身份 / 年齡 / 愛語分佈圖 |
-| 配對分析 | `/dashboard/matching-analytics` | 分數分佈、漏斗、熱力圖 |
-| 配對探索 | `/dashboard/match-explorer` | 篩選用戶、查看配對詳情、生成 6 維度配對卡片（×2 PNG） |
-| 匯出下載 | `/dashboard/export` | 下載 HTML / XLSX / ZIP |
-| 實驗室 | `/dashboard/experiment-lab` | 調整計分權重、對比排名變化 |
-| 資料管理 | `/dashboard/test-data` | 植入測試資料；顯示 SQL 一鍵複製（貼至 Supabase SQL Editor 清除） |
-
-**相關檔案：**
-
-```
-src/
-├── pages/
-│   ├── _app.js
-│   ├── dashboard/
-│   │   ├── index.js             # 總覽
-│   │   ├── matching-analytics.js
-│   │   ├── match-explorer.js
-│   │   ├── export.js
-│   │   ├── experiment-lab.js
-│   │   ├── sent-pairs.js
-│   │   ├── email-automation.js  # 郵件管理（發送 / 草稿）
-│   │   └── test-data.js         # 植入 / 清除測試資料
-│   └── api/
-│       ├── match.js             # GET /api/match — 配對核心 API
-│       ├── test.js              # GET /api/test — 健康檢查
-│       ├── match_card/
-│       │   ├── template.js      # 配對卡片 HTML 模板引擎
-│       │   └── notify.js
-│       └── dashboard/
-│           ├── stats.js
-│           ├── distributions.js
-│           ├── matching-analytics.js
-│           ├── match-explorer.js
-│           ├── experiment.js
-│           ├── export.js
-│           ├── seed.js          # 測試資料植入 / 清除
-│           ├── send-emails.js   # 發送配對郵件（SMTP）
-│           ├── create-gmail-drafts.js  # 存為 Gmail 草稿（IMAP）
-│           ├── email-automation.js
-│           └── intelligence.js  # POST — 6 維度相容性分析
-├── components/
-│   └── dashboard/               # Layout、Sidebar、Header、KPICard、MatchDetailPanel 等
-├── styles/
-│   └── dashboard/               # CSS Modules + 設計 token（globals.css）
-└── lib/
-    ├── matching.js              # 配對純函數庫（所有 API 共用）
-    ├── intelligence.js          # 6 維度相容性引擎（computeCompatibility / interpretScores）
-    ├── seed-data.js             # 測試用戶生成器（generateUser）
-    └── email-template.js        # 郵件 HTML / 純文字產生器
-```
-
----
-
-## 🧪 測試工具
-
-**對象：** 開發人員  
-**功能：** 植入測試資料、執行配對算法、生成卡片、匯出結果
-
-### 植入測試資料
-
-```bash
-npm run seed                              # 產生 20 個模擬用戶
-npm run seed:clear                        # 清除舊資料後重新產生
-node scripts/seed-test-data.mjs --count=30 --clear   # 自訂數量
-```
-
-### 執行配對測試
-
-```bash
-npm run test:match                        # 對第一個用戶執行配對
-npm run test:cards                        # 同上 + 生成 HTML 配對卡片
-node scripts/test-matching.mjs --userId=5 --generateCards
-```
-
-### 生成配對卡片
-
-```bash
-npm run generate:card -- --userA=1 --userB=5    # 指定兩個用戶 ID
-```
-
-產生的 HTML 卡片存放於 `match-cards/`，可直接用瀏覽器開啟。
-
-> 儀表板「配對探索」頁面亦可直接點擊配對記錄，透過「🃏 下載配對卡片 (×2 PNG)」按鈕生成兩張 PNG 卡片（A→B 及 B→A），自動呼叫 6 維度智能分析並以六邊形雷達圖呈現。
-
-### 匯出 Excel
-
-```bash
-npm run export:excel                      # 匯出所有配對（預設 ≥ 60 分）
-node scripts/export-matches.mjs --threshold=50   # 自訂門檻
-```
-
-產生的 `.xlsx` 存放於 `match-results/`，每個用戶一個 sheet。
-
-**相關檔案：**
-
-```
-scripts/
-├── seed-test-data.mjs       # 產生模擬用戶（TB/TBG/Pure/Bi/No Label）
-├── test-matching.mjs        # 配對算法測試與分析
-├── generate-matches.mjs     # 手動指定兩用戶生成配對卡片
-└── export-matches.mjs       # 全體用戶配對結果匯出至 Excel
-match-cards/                 # 生成的 HTML 配對卡片
-match-results/               # 匯出的 Excel 配對結果
-```
-
----
-
-## 環境設定
-
 ```bash
 npm install
+cp .env.example .env.local    # macOS / Linux / Git Bash
+npm run dev
 ```
 
-建立 `.env.local`：
+**Windows（PowerShell）：**
 
-```
-NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbG...
-SUPABASE_URL=https://xxxxx.supabase.co
-SUPABASE_ANON_KEY=eyJhbG...
+```powershell
+npm install
+Copy-Item .env.example .env.local
+npm run dev
 ```
 
-> 同樣需在 Vercel 的 Project Settings → Environment Variables 中設定。
+| 指令 | 說明 |
+|---|---|
+| `npm run dev` | 本地開發（推薦，`localhost:3000`） |
+| `npm run build` / `npm start` | 正式建置與啟動 |
+| `npm run website` | `vercel dev`（模擬 Vercel 路由／環境） |
+| `npm run seed` | 植入測試用戶 |
+| `npm run test:match` | 配對算法測試 |
+
+**PayPal 本地 webhook（選填）：**
+
+本地需用 [ngrok](https://ngrok.com/) 等工具將 `https://xxxx.ngrok.app/api/billing/webhook` 登記至 PayPal Developer Dashboard。詳見 [docs/paypal-onboarding.md](docs/paypal-onboarding.md)。
 
 ---
 
-## 配對系統架構
+## 頁面一覽
 
-### Step 0 — Hard Filter（門檻篩選）
-
-在計分前進行 **四層雙向篩選**，任何一層不通過即直接排除：
-
-| 篩選層 | 通過條件 |
-|---|---|
-| 身份屬性 | 雙方 `identity` 互相在對方 `ideal_identity` 清單內（或填「冇所謂」） |
-| 體型 | 雙方 `body_type` 互相在對方 `ideal_appearance` 清單內（或冇填 / 「冇所謂」） |
-| 身高差 | 雙向高度差落在對方 `ideal_height_gap [min, max]` 範圍內（或 `null`） |
-| 年齡差 | 雙向年齡差落在對方 `ideal_age_gap [min, max]` 範圍內（或 `null`） |
-
-### 智能相容性引擎（`src/lib/intelligence.js`）— 0–100 分制
-
-所有配對分數由 `computeCompatibility(userA, userB)` 計算，輸出 6 維度分數（各 0–20）及加權後的最終分（0–100）。
-
-| 維度（雷達圖標籤） | 計分要素 | 權重 |
+| 路徑 | 類型 | 說明 |
 |---|---|---|
-| 🔥 火花（attraction） | 床上角色互補程度 | 15% |
-| 💞 情感共鳴（emotional） | 愛語重疊 + 安全感需求 + 日常儀式 | 20% |
-| 📅 生活步調（lifestyle） | 社交能量 + 週末模式 + 興趣 + 旅遊 | 15% |
-| 💬 溝通價值（communication） | 溝通風格 + 消費觀 + 同住意願 | 15% |
-| 💑 關係期望（relationship） | 關係目標相容矩陣 + 時間投入差距 | 20% |
-| ⚠️ 衝突風險（risk） | 地雷行為違規 + 溝通地雷偵測 | 15% |
+| `/index.html` | 靜態 | 首頁、模式選擇 |
+| `/echo.html` | 靜態 | Echo Mode 問卷 |
+| `/mirror.html` | 靜態 | Mirror Mode 問卷 |
+| `/drift-bottle.html` | 靜態 | 月光漂流瓶 |
+| `/tos.html` `/privacy.html` `/refund.html` `/contact.html` `/about.html` | 靜態 | 法律、聯絡與關於我們 |
+| `/forum` `/forum/[postId]` | Next.js | 黑貓樹洞 |
+| `/inbox` `/inbox/[threadId]` | Next.js | 收件箱 |
+| `/mirror-card/me` `/mirror-card/[slug]` | Next.js | Mirror Card |
+| `/matches` | Next.js | 配對列表（**Moonlight Passport only**） |
+| `/account` `/premium` `/cat-families` `/exchange-photo` | Next.js | 帳戶、訂閱、家族介紹、交換相管理 |
+| `/login` `/signup` `/billing/success` | Next.js | 登入、註冊、付款成功 |
+| `/dashboard/*` | Next.js（gitignore） | 內部管理儀表板（含郵件自動化） |
 
-**非線性調整：**
-- 情感 ≥ 16 且溝通 ≥ 16 → +5
-- 關係期望 ≤ 4 → × 0.75（目標嚴重不合）
-- 風險 ≤ 5 → −7（高衝突警告）
-- 軟性偏好懲罰：最多 −12 分
+---
 
-**分數對應等級：**
+## API 模組
 
-| 分數 | 類型 |
+完整端點見 `src/pages/api/`。按模組分類：
+
+| 模組 | 路徑前綴 | 重點 |
+|---|---|---|
+| 問卷／配對 | `/api/submit`、`/api/match*`、`/api/matches*` | 問卷提交、配對計分、卡片 |
+| Mirror Card | `/api/mirror-card/*` | 公開卡片、圖片匯出、舉報 |
+| 黑貓樹洞 | `/api/forum/*` | 貼文、留言、meta、舉報 |
+| 漂流瓶 | `/api/bottle/*` | 投瓶、撈瓶、回聲、舉報 |
+| Inbox | `/api/inbox/*` | 對話、發信、封鎖、用戶搜尋 |
+| 交換相 | `/api/photo-exchange/*`、`/api/profile/exchange-photo` | 邀請、回應、取消、上傳 |
+| 帳戶 | `/api/me`、`/api/auth/*` | Profile、init-profile、refresh-session |
+| 付款 | `/api/billing/*` | PayPal 訂閱、webhook、人手核對 |
+| 聯絡 | `POST /api/contact-feedback` | 意見箱寫入 `contact_feedback` |
+
+**管理員 API**（Header：`x-dashboard-key: <DASHBOARD_SECRET>`）：
+
+- `GET /api/dashboard/email-automation` — 全域配對、草稿佇列、配額／Passport 標註（`premium_only=1` 篩選）
+- `POST /api/dashboard/send-emails` — Gmail 發送配對通知、寫入 `sent_matches`；Body 可含 `deliver_inbox`、`skip_quota_check`
+- `POST /api/dashboard/create-gmail-drafts` — 存入 Gmail 草稿
+- `POST /api/match/deliver-inbox` — 僅投送 Inbox 連線卡
+- `POST /api/billing/manual-verify` — 人手付款核對（授予／撤銷 Passport）
+- `GET /api/dashboard/premium` — 訂閱列表與人手授予
+- `POST /api/admin/match/legacy-claim/resolve` — Legacy 問卷認領爭議
+
+本地未設定 `DASHBOARD_SECRET` 時，middleware 不攔截。
+
+---
+
+## 環境變數
+
+複製 `.env.example` 為 `.env.local` 並填入。欄位說明見該檔案註解。
+
+| 變數 | 必填 | 用途 |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_*` | ✅ | 客戶端 Auth |
+| `SUPABASE_SERVICE_ROLE_KEY` | ✅ | 伺服器寫入／權限 |
+| `NEXT_PUBLIC_SITE_URL` | 建議 | Canonical、sitemap、PayPal 回傳 URL |
+| `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | 選填 | Google Search Console HTML 驗證 |
+| `NEXT_PUBLIC_POSTHOG_KEY` | 選填 | PostHog 專案 key（未設定則分析關閉） |
+| `NEXT_PUBLIC_POSTHOG_HOST` | 選填 | PostHog API host（預設 `https://us.i.posthog.com`） |
+| `PAYPAL_*` | 選填 | Moonlight Passport 自動訂閱 |
+| `UPSTASH_*` | 選填 | API 速率限制 |
+| `CF_TURNSTILE_SECRET` / `NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY` | 選填 | 漂流瓶人機驗證；換 domain 須在 Cloudflare Turnstile 加入新 hostname |
+| `GMAIL_*` | 選填 | 配對／投信 Email |
+| `DASHBOARD_SECRET` | 選填 | 管理員 API |
+| `NEXT_PUBLIC_PAYME_QR_URL` | 選填 | PayMe QR 圖（預設 `/PayCode.jpg`） |
+
+同樣需在 Vercel Project Settings → Environment Variables 設定。
+
+---
+
+## 配額一覽
+
+| 配額 | 免費 | Moonlight Passport |
+|---|---|---|
+| 論壇每日發文 | 3 | 不限 |
+| 每月主動投信 | 0 | 3 |
+| 每月交換相邀請 | 0 | 3 |
+| 每月配對通知 | 3 | 無限制 |
+
+定義於 `src/lib/permissions.js`（`QUOTA_LIMITS`）。  
+**Dashboard 郵件自動化**使用 `src/lib/match-delivery-quota.js` 計數；Passport 識別見 `src/lib/match-response-premium.js`（已認領 `user_id` 或問卷 Email 對照 Auth 帳號）。發送邏輯集中於 `src/lib/match-notify-send.js`。
+
+| Dashboard 顯示 | Free | Moonlight Passport |
+|---|---|---|
+| 配額 badge | 本月 n/3 | 🌙 無限制 |
+| 即時連線 | — | Email + Inbox（`deliver_inbox: true`） |
+
+任一方 Free 且本月已滿 3 次則 `quota_blocked`，不可勾選發送。
+
+---
+
+## 配對系統
+
+1. **Hard Filter** — 身份、體型、身高差、年齡差四層雙向篩選（不通過即排除）
+2. **六維度引擎** — `src/lib/intelligence.js` 的 `computeCompatibility()`：火花、情感、生活、溝通、關係期望、衝突風險 → 0–100 分
+3. **等級** — 80+ 靈魂伴侶候選｜65+ 高度契合｜50+ 值得了解｜35+ 需磨合｜以下差異較大
+
+完整權重、非線性調整、地雷矩陣 → [docs/SCORING.md](docs/SCORING.md)  
+Mirror 測驗規格 → [docs/MIRROR-MODE-SPEC.md](docs/MIRROR-MODE-SPEC.md)
+
+---
+
+## 資料庫遷移
+
+`supabase/migrations/` 含論壇、Inbox、Mirror Card、漂流瓶、**交換相**、**投信玩法偏好**、**意見箱**等。**新環境請依檔名順序**在 Supabase SQL Editor 執行。
+
+近期重要 migration：
+
+| 檔案 | 說明 |
 |---|---|
-| 80–100 | 靈魂伴侶候選 🟢 |
-| 65–79 | 高度契合 🟢 |
-| 50–64 | 值得深入了解 🟡 |
-| 35–49 | 有潛力，需磨合 🟡 |
-| 0–34 | 差異較大 🔴 |
+| `20250628000000_photo_exchange.sql` | 交換相表與 profile 相片欄位 |
+| `20250628000004_letter_gameplay_prefs.sql` | 投信信紙／郵票偏好 |
+| `20250701000000_contact_feedback.sql` | 聯絡頁意見箱 `contact_feedback` |
+| `20250705000000_moon_journey.sql` | 月光旅程 EXP／打卡 |
+| `20250706000000_mirror_v3_trait_scores.sql` | Mirror v3 `trait_scores` 等欄位 |
+| `20250707000000_forum_posts_rls_anon_public_only.sql` | 論壇匿名僅讀公開帖 RLS |
 
-> 完整計分細節請參閱 [docs/SCORING.md](docs/SCORING.md)
+---
+
+## 開發工具
+
+```bash
+npm run seed                              # 植入 20 個模擬用戶
+npm run seed:clear                        # 清除後重新植入
+node scripts/seed-test-data.mjs --count=30 --clear
+npm run test:match                        # 配對算法測試
+npm run test:cards                        # 配對測試 + HTML 卡片
+npm run generate:card -- --userA=1 --userB=5
+npm run export:excel                      # 匯出配對 Excel（≥ 60 分）
+node scripts/create-admin-user.mjs        # 建立管理員帳號
+```
+
+---
+
+## 疑難排解
+
+| 問題 | 處理 |
+|---|---|
+| `Cannot find module './chunks/...'` 或頁面 500 | 停止 dev server → 刪除 `.next` 資料夾 → `npm run dev` |
+| OneDrive 下路徑 hot reload 異常 | 專案已在 `next.config.js` 啟用 webpack polling；仍異常可移出 OneDrive 同步資料夾 |
+| 論壇／Inbox 401 | 確認已登入；檢查 `init-profile` 是否成功建立 `profiles` row |
+| 問卷提交失敗 | 確認 `SUPABASE_SERVICE_ROLE_KEY`；檢查 `responses` 表權限 |
+| Moonlight Passport 付款無反應 | 確認 `PAYPAL_*` 已設且 `PAYPAL_MODE=live`；正式站需設定 Webhook，見 [docs/paypal-onboarding.md](docs/paypal-onboarding.md) |
+| 意見箱提交失敗 | 確認已執行 `20250701000000_contact_feedback.sql`；API 路徑為 `POST /api/contact-feedback` |
+| Dashboard 郵件自動化 API 500 | 刪除 `.next` 後重啟 dev server；深層巢狀 API 路徑可能需改為扁平路徑 |
+| Passport 即時連線 Inbox 未投送 | 確認雙方問卷已認領（`responses.user_id`）；Dashboard 需勾選 Passport 分頁或 `deliver_inbox: true` |
+| PayMe QR 不顯示 | 檢查 `NEXT_PUBLIC_PAYME_QR_URL` 或 `public/PayCode.jpg`；QR 僅在 `/premium` 付款步驟 popup 內 |
+| Mobile WebView 無法捲動／看不到 footer | 見 [docs/MOBILE-WEBVIEW-SCROLL.md](docs/MOBILE-WEBVIEW-SCROLL.md) |
+| 管理員 API 401 | 請求加 header `x-dashboard-key`，值同 `DASHBOARD_SECRET` |
+
+---
+
+## 法律與聯絡
+
+- [關於我們](/about.html) · [使用條款](/tos.html) · [私隱政策](/privacy.html) · [退款與取消政策](/refund.html) · [聯絡我們](/contact.html)
+- Instagram [@blackcatunderthemoonhk](https://www.instagram.com/blackcatunderthemoonhk/)
+- Threads [@blackcatunderthemoonhk](https://www.threads.net/@blackcatunderthemoonhk)
+- Ko-fi [blackcatunderthemoon](https://ko-fi.com/blackcatunderthemoon)
+
+© 2026 Black Cat Under The Moon. All rights reserved.

@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 import { checkIp } from '../../lib/ip-guard.js';
+import { getOptionalUser } from '../../lib/server-auth.js';
 
 const ratelimit = process.env.UPSTASH_REDIS_REST_URL
   ? new Ratelimit({
@@ -151,6 +152,50 @@ export default async function handler(req, res) {
       tg_username: tgRaw,
       feedback: normalizeValue(getIncomingValue(incoming, 'feedback', 'feedback'))
     };
+
+    const authUser = await getOptionalUser(req);
+    if (authUser) {
+      const accountEmail = (authUser.email || '').trim();
+      if (accountEmail && !payload.email) {
+        payload.email = accountEmail;
+      }
+    }
+
+    // Set normalized_email for legacy claim matching
+    const rawEmail = payload.email || '';
+    const normalizedEmail = rawEmail ? rawEmail.toLowerCase().trim() : '';
+    if (normalizedEmail) {
+      payload.normalized_email = normalizedEmail;
+    }
+
+    // Check for duplicate email submission before inserting.
+    // Match on normalized_email (new rows) OR the raw email column (legacy rows
+    // that were inserted before normalized_email was populated).
+    // claim_status IS NULL means unclaimed — treat same as 'active'; only skip
+    // rows that have been explicitly marked as duplicate.
+    if (normalizedEmail) {
+      const { data: existing } = await supabase
+        .from('responses')
+        .select('id, created_at')
+        .or(`normalized_email.eq.${normalizedEmail},email.ilike.${rawEmail}`)
+        .or('claim_status.neq.duplicate,claim_status.is.null')
+        .limit(1)
+        .maybeSingle();
+
+      if (existing) {
+        return res.status(200).json({
+          already_submitted: true,
+          submitted_at: existing.created_at,
+        });
+      }
+    }
+
+    if (authUser) {
+      payload.user_id = authUser.id;
+      payload.source = 'logged_in_match_form';
+    } else {
+      payload.source = 'legacy_match_form';
+    }
 
     // Insert mapped object directly; do not wrap in { data: ... }.
     const { data, error } = await supabase.from('responses').insert(payload).select();

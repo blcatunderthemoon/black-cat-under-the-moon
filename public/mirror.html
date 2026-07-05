@@ -2,17 +2,44 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#0a0a1a">
 <title>🔮 Black Cat Under The Moon：靈魂鏡像 Mirror Mode</title>
 <meta name="description" content="Black Cat Under The Moon 靈魂鏡像 — Mirror Mode，15 題探索你的貓家族人格，並生成專屬性格卡片。">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' shape-rendering='crispEdges'%3E%3Crect width='32' height='32' rx='6' fill='%2307060e'/%3E%3Crect x='6' y='4' width='4' height='4' fill='%232a2640'/%3E%3Crect x='8' y='2' width='2' height='2' fill='%232a2640'/%3E%3Crect x='22' y='4' width='4' height='4' fill='%232a2640'/%3E%3Crect x='22' y='2' width='2' height='2' fill='%232a2640'/%3E%3Crect x='6' y='8' width='20' height='12' fill='%232a2640'/%3E%3Crect x='8' y='6' width='16' height='2' fill='%232a2640'/%3E%3Crect x='10' y='12' width='4' height='2' fill='%2350fa7b'/%3E%3Crect x='18' y='12' width='4' height='2' fill='%2350fa7b'/%3E%3Crect x='12' y='12' width='2' height='2' fill='%23111'/%3E%3Crect x='20' y='12' width='2' height='2' fill='%23111'/%3E%3Crect x='15' y='15' width='2' height='2' fill='%23ff79c6'/%3E%3Crect x='8' y='20' width='16' height='6' fill='%232a2640'/%3E%3Crect x='10' y='26' width='4' height='2' fill='%232a2640'/%3E%3Crect x='18' y='26' width='4' height='2' fill='%232a2640'/%3E%3Crect x='26' y='3' width='2' height='2' fill='%23ffe066'/%3E%3Crect x='28' y='5' width='2' height='4' fill='%23ffe066'/%3E%3Crect x='26' y='9' width='2' height='2' fill='%23ffe066'/%3E%3C/svg%3E">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<link rel="canonical" href="https://www.blackcatunderthemoon.com/mirror.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Black Cat Under The Moon">
+<meta property="og:title" content="靈魂鏡像 Mirror Mode — Black Cat Under The Moon">
+<meta property="og:description" content="15 題探索你的貓家族人格，並生成專屬 Mirror Card 性格卡片。">
+<meta property="og:url" content="https://www.blackcatunderthemoon.com/mirror.html">
+<meta property="og:locale" content="zh_Hant">
+<meta property="og:image" content="https://www.blackcatunderthemoon.com/favicon.svg">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="靈魂鏡像 Mirror Mode — Black Cat Under The Moon">
+<meta name="twitter:description" content="15 題探索你的貓家族人格，並生成專屬 Mirror Card 性格卡片。">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<link rel="stylesheet" href="css/questionnaire.css">
+<script src="/js/vendor/html-to-image.min.js"></script>
+<script src="/js/vendor/html2canvas.min.js"></script>
+<link rel="stylesheet" href="css/questionnaire.css?v=20260706u">
+<link rel="stylesheet" href="css/auth-nav.css">
+<link rel="stylesheet" href="css/mobile-webview-scroll.css">
+<link rel="stylesheet" href="css/moon-loading.css">
+<script src="/js/posthog-init.js" defer></script>
+<style>
+  /* Mirror standalone: loader until first question / saved card is ready */
+  body[data-automode="mirror"].mirror-booting #main-content,
+  body[data-automode="mirror"].mirror-booting #q-card {
+    display: none !important;
+  }
+  body[data-automode="mirror"].mirror-booting #loading-screen {
+    display: flex !important;
+  }
+</style>
 </head>
-<body data-automode="mirror">
+<body data-automode="mirror" class="mirror-booting">
 
 <!-- Background starfield -->
 <canvas id="bg-canvas"></canvas>
@@ -25,19 +52,20 @@
 
 <!-- Part Transition Screen -->
 <div class="part-transition" id="part-transition">
-  <div class="part-num pixel-font" id="pt-num"></div>
+  <div class="part-num" id="pt-num"></div>
   <div class="part-line"></div>
   <div class="part-name" id="pt-name"></div>
 </div>
 
 <!-- Progress Bar -->
-<div class="progress-wrap" id="progress-wrap" style="display:none;">
-  <div class="progress-bar">
+<div class="progress-wrap mode-top-bar mode-top-bar--quiz" id="progress-wrap" style="display:none;">
+  <div class="progress-bar mode-top-bar__progress">
     <div class="progress-fill" id="progress-fill" style="width:0%"></div>
   </div>
-  <div class="progress-label pixel-font">
-    <span id="progress-text">Q1 / 15</span>
-    <button class="home-back-btn" id="home-back-btn">⌂ 主頁</button>
+  <div class="progress-label mode-top-bar__row">
+    <button class="home-back-btn mode-header-chip" id="home-back-btn" type="button"><span class="home-back-btn__icon" aria-hidden="true">⌂</span><span class="home-back-btn__label">主頁</span></button>
+    <span id="progress-text" class="mode-top-bar__center">Q1 / 15</span>
+    <div class="mode-top-bar__nav-slot"></div>
   </div>
 </div>
 
@@ -53,10 +81,62 @@
   </div>
 </div>
 
+<!-- Mirror auth prompt: login for full card + save, or continue as guest -->
+<div id="mirror-auth-overlay" role="presentation">
+  <div class="mirror-auth-modal" role="dialog" aria-modal="true" aria-labelledby="mirror-auth-title">
+    <div class="mirror-auth-modal__scan" aria-hidden="true"></div>
+    <div class="pcard-rivet pcard-rivet-tl" aria-hidden="true"></div>
+    <div class="pcard-rivet pcard-rivet-tr" aria-hidden="true"></div>
+    <div class="pcard-rivet pcard-rivet-bl" aria-hidden="true"></div>
+    <div class="pcard-rivet pcard-rivet-br" aria-hidden="true"></div>
+
+    <div class="mirror-auth-modal__icon" aria-hidden="true">🔮</div>
+    <div class="pcard-mode-badge mirror-auth-modal__badge">
+      <span class="pcard-zh">靈魂鏡像</span><span class="pcard-en"> · MIRROR MODE</span>
+    </div>
+    <h2 class="pcard-family-name mirror-auth-modal__title" id="mirror-auth-title">開始你的鏡像測驗</h2>
+    <p class="mirror-auth-modal__lead">
+      <span class="pcard-zh">登入可解鎖完整</span>
+      <span class="pcard-en">Mirror Card</span>
+      <span class="pcard-zh">結果並儲存到帳號。</span>
+    </p>
+
+    <div class="mirror-auth-tiers">
+      <div class="mirror-auth-tier mirror-auth-tier--full">
+        <div class="mirror-auth-tier__head">
+          <span class="mirror-auth-tier__icon" aria-hidden="true">✨</span>
+          <span class="mirror-auth-tier__label pcard-zh">登入用戶</span>
+        </div>
+        <ul class="mirror-auth-tier__list">
+          <li><span class="pcard-zh">完整 </span><span class="pcard-en">Mirror Card</span></li>
+          <li><span class="pcard-zh">儲存到帳號</span></li>
+          <li><span class="pcard-zh">公開分享連結</span></li>
+        </ul>
+      </div>
+      <div class="mirror-auth-tier mirror-auth-tier--guest">
+        <div class="mirror-auth-tier__head">
+          <span class="mirror-auth-tier__icon" aria-hidden="true">🌙</span>
+          <span class="mirror-auth-tier__label pcard-zh">訪客</span>
+        </div>
+        <ul class="mirror-auth-tier__list">
+          <li><span class="pcard-zh">簡易結果卡</span></li>
+          <li><span class="pcard-zh">可下載 </span><span class="pcard-en">PNG</span></li>
+          <li><span class="pcard-zh">不儲存記錄</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mirror-auth-actions">
+      <button class="mirror-auth-btn mirror-auth-btn--primary pixel-font" id="mirror-auth-login" type="button"><span class="pcard-zh">登入 / 註冊</span></button>
+      <button class="mirror-auth-btn mirror-auth-btn--ghost pixel-font" id="mirror-auth-guest" type="button"><span class="pcard-zh">以訪客繼續</span></button>
+    </div>
+  </div>
+</div>
+
 <!-- Header -->
-<header class="site-header" id="site-header" style="display:none;">
+<header class="site-header" id="site-header" hidden>
   <div class="header-art">
-    <canvas id="cat-canvas" width="90" height="60"></canvas>
+    <canvas id="cat-canvas" width="90" height="36"></canvas>
     <div>
       <div class="site-title pixel-font">🌈 Black Cat<br>Under The Moon</div>
     </div>
@@ -66,8 +146,8 @@
 <!-- Main Content -->
 <main class="main-container" id="main-content" style="display:none;">
   <div class="q-card" id="q-card">
-    <div class="part-label pixel-font" id="q-part-label"></div>
-    <div class="q-number pixel-font" id="q-number"></div>
+    <div class="part-label" id="q-part-label"></div>
+    <div class="q-number part-label-en" id="q-number"></div>
     <div class="q-text" id="q-text"></div>
     <div id="q-answers"></div>
     <div class="btn-row" id="btn-row" style="display:none;">
@@ -78,8 +158,10 @@
 </main>
 
 <!-- Loading Screen (unused in mirror mode, kept for shared JS compatibility) -->
-<div class="overlay-screen" id="loading-screen">
-  <div class="loading-cat">🐈‍⬛</div>
+<div class="overlay-screen active" id="loading-screen">
+  <div class="moon-loading moon-loading--night moon-loading--hero" role="status" aria-live="polite">
+    <img class="moon-loading__img" src="/loading/FirstQuarterloading.png" alt="" width="44" height="44" decoding="async" draggable="false" />
+  </div>
   <div class="loading-text pixel-font">傳送中<span class="loading-dots"></span></div>
 </div>
 
@@ -91,7 +173,7 @@
     <div class="thankyou-cat">🐈‍⬛✨</div>
     <div class="thankyou-msg">資料已成功傳送！</div>
     <div class="thankyou-msg thankyou-heart">多謝你嘅參與 ♡</div>
-    <div class="thankyou-msg" style="margin-top:16px;font-size:0.8rem;color:var(--text-dim);">期待你嘅靈魂伴侶出現 🌙</div>
+    <div class="thankyou-msg" style="margin-top:16px;color:var(--text-dim);">期待你的靈魂知己出現 🌙</div>
     <div class="support-section">
       <div class="support-stack">
         <div class="support-card">
@@ -153,9 +235,30 @@
   <div class="mirror-result-inner">
     <div id="personality-card"></div>
     <div class="mirror-actions">
-      <button class="mirror-download-btn pixel-font" id="mirror-download-btn">下載性格卡片 ↓</button>
-      <button class="mirror-retry-btn pixel-font" id="mirror-retry-btn">再測一次 ↩</button>
+      <div id="mirror-guest-upsell" class="mirror-guest-upsell" hidden>
+        <p class="mirror-guest-upsell__text">登入以解鎖完整 Mirror Card，並儲存到你的帳號。</p>
+        <a class="mirror-guest-upsell__btn pixel-font" href="/login?redirect=/mirror.html">登入 / 註冊 →</a>
+      </div>
+      <a href="/cat-families" class="mirror-families-btn pixel-font">了解四大貓家族 →</a>
+      <button class="mirror-download-btn pixel-font" id="mirror-download-btn" type="button">
+        <span class="mirror-download-btn__label">下載性格卡片</span>
+        <span class="mirror-download-btn__icon" aria-hidden="true">↓</span>
+      </button>
     </div>
+    <footer class="site-footer site-footer--legal site-footer--embedded mirror-result-footer" aria-label="頁尾">
+      <nav class="site-footer__nav site-footer__nav--legal" aria-label="法律與聯絡">
+        <a class="site-legal-link" href="about.html">關於我們</a>
+        <span class="site-legal-sep" aria-hidden="true">|</span>
+        <a class="site-legal-link" href="contact.html">聯絡我們</a>
+        <span class="site-legal-sep" aria-hidden="true">|</span>
+        <a class="site-legal-link" href="tos.html">使用條款</a>
+        <span class="site-legal-sep" aria-hidden="true">|</span>
+        <a class="site-legal-link" href="privacy.html">私隱政策</a>
+        <span class="site-legal-sep" aria-hidden="true">|</span>
+        <a class="site-legal-link" href="refund.html">退款與取消政策</a>
+      </nav>
+      <p class="site-footer__copy site-footer__copy--legal">© 2026 Black Cat Under The Moon. All rights reserved.</p>
+    </footer>
   </div>
 </div>
 
@@ -167,16 +270,27 @@
 </div>
 
 <!-- Global Footer -->
-<footer class="site-footer" id="site-footer">
-  <span class="footer-dot-row pixel-font">
-    <a class="footer-link" href="contact.html">聯絡我們</a>
-    <span class="footer-sep">•</span>
-    <a class="footer-link" href="https://ko-fi.com/blackcatunderthemoon" target="_blank" rel="noopener noreferrer">Ko-fi</a>
-    <span class="footer-sep">•</span>
-    <a class="footer-link" href="tos.html">使用條款</a>
-  </span>
+<footer class="site-footer site-footer--legal" id="site-footer">
+  <nav class="site-footer__nav site-footer__nav--legal" aria-label="法律與聯絡">
+    <a class="site-legal-link" href="about.html">關於我們</a>
+    <span class="site-legal-sep" aria-hidden="true">|</span>
+    <a class="site-legal-link" href="contact.html">聯絡我們</a>
+    <span class="site-legal-sep" aria-hidden="true">|</span>
+    <a class="site-legal-link" href="tos.html">使用條款</a>
+    <span class="site-legal-sep" aria-hidden="true">|</span>
+    <a class="site-legal-link" href="privacy.html">私隱政策</a>
+    <span class="site-legal-sep" aria-hidden="true">|</span>
+    <a class="site-legal-link" href="refund.html">退款與取消政策</a>
+  </nav>
+  <p class="site-footer__copy site-footer__copy--legal">© 2026 Black Cat Under The Moon. All rights reserved.</p>
 </footer>
 
-<script src="js/questionnaire.js"></script>
+<script src="js/site-config.js"></script>
+<script src="js/moon-loading.js"></script>
+<script src="js/mobile-document-scroll.js"></script>
+<script src="js/mirror-v3.js?v=20260705v"></script>
+<script src="js/mirror-narratives.js?v=20260706c"></script>
+<script src="js/questionnaire.js?v=20260706c"></script>
+<script src="js/auth-nav.js"></script>
 </body>
 </html>

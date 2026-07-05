@@ -63,7 +63,7 @@ export default async function handler(req, res) {
     // Strip sensitive fields
     const { view_key: _vk, user_id: _uid, ...safeBottle } = data;
 
-    return res.status(200).json(safeBottle);
+    return res.status(200).json({ ...safeBottle });
   } catch (err) {
     return res.status(500).json({ error: 'Internal server error.' });
   }

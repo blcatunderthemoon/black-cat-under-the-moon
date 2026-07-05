@@ -4,6 +4,7 @@ import { Redis } from '@upstash/redis';
 import { checkIp } from '../../../lib/ip-guard.js';
 import { filterContent } from '../../../lib/content-filter.js';
 import { verifyTurnstile } from '../../../lib/turnstile.js';
+import { getOptionalUser } from '../../../lib/server-auth.js';
 
 const ratelimit = process.env.UPSTASH_REDIS_REST_URL
   ? new Ratelimit({
@@ -57,8 +58,14 @@ export default async function handler(req, res) {
 
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
-    const { content, mood_tag, mood_tags, user_id, is_mission_bottle, turnstile_token } = body;
+    // Note: never trust client-supplied user_id — derive from auth token only
+    const { content, mood_tag, mood_tags, is_mission_bottle, turnstile_token } = body;
     const missionBottle = is_mission_bottle === true;
+
+    // Optional auth: if logged-in user throws a bottle, bind their user_id silently
+    // This does NOT expose their identity in the bottle's public view
+    const authUser = await getOptionalUser(req);
+    const authenticatedUserId = authUser?.id || null;
 
     // Human verification (Cloudflare Turnstile — bypassed if CF_TURNSTILE_SECRET not set)
     const ts = await verifyTurnstile(turnstile_token, ip);
@@ -115,7 +122,7 @@ export default async function handler(req, res) {
       content:           content.trim(),
       mood_tag:          normalizedTags[0] || null,
       tags:              normalizedTags,
-      user_id:           user_id  ? String(user_id).slice(0, 64) : null,
+      user_id:           authenticatedUserId,   // null for anonymous; verified from auth token
       is_mission_bottle: missionBottle,
     });
 

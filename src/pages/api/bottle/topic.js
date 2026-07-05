@@ -15,7 +15,10 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).end();
 
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const siteOrigin = process.env.NEXT_PUBLIC_SITE_URL
+    ? (() => { try { return new URL(process.env.NEXT_PUBLIC_SITE_URL).origin; } catch { return null; } })()
+    : null;
+  res.setHeader('Access-Control-Allow-Origin', siteOrigin || '*');
   res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
 
   // Try reading from DB first

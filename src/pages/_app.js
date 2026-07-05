@@ -1,7 +1,22 @@
 import '../styles/globals.css';
+import '../styles/pixel-theme.css';
+import '../styles/mobile.css';
 import Head from 'next/head';
+import Script from 'next/script';
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
+import { AuthProvider } from '../lib/auth-context.js';
+import { isNoIndexPath } from '../lib/site-seo.js';
+import MobileKeyboardGuard from '../components/MobileKeyboardGuard.js';
+import PostHogAnalytics from '../components/PostHogAnalytics.js';
+import AppErrorBoundary from '../components/AppErrorBoundary.js';
+
+const AUTH_PATHS = new Set(['/login', '/signup', '/forgot-password', '/auth/confirm', '/auth/reset-password']);
+
+function isAuthPath(pathname) {
+  if (AUTH_PATHS.has(pathname)) return true;
+  return pathname.startsWith('/auth/');
+}
 
 function DashboardAuthGate({ children }) {
   const [authed, setAuthed] = useState(false);
@@ -10,34 +25,54 @@ function DashboardAuthGate({ children }) {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Ask the server whether DASHBOARD_SECRET is configured
-    fetch('/api/dashboard/ping')
+    const stored = sessionStorage.getItem('dashKey') || '';
+    fetch('/api/dashboard/ping', {
+      headers: stored ? { 'x-dashboard-key': stored } : {},
+    })
       .then((r) => r.json())
-      .then(({ secured: s }) => {
-        if (!s) {
-          // No secret set — dev mode, bypass gate
+      .then(({ secured, valid }) => {
+        if (!secured) {
           setSecured(false);
           setAuthed(true);
+          return;
+        }
+        setSecured(true);
+        if (valid && stored) {
+          setAuthed(true);
         } else {
-          setSecured(true);
-          if (sessionStorage.getItem('dashKey')) setAuthed(true);
+          sessionStorage.removeItem('dashKey');
+          setAuthed(false);
         }
       })
       .catch(() => {
-        // If ping fails, still check sessionStorage
         setSecured(true);
-        if (sessionStorage.getItem('dashKey')) setAuthed(true);
+        sessionStorage.removeItem('dashKey');
+        setAuthed(false);
       });
   }, []);
 
-  if (secured === null) return null; // loading
+  if (secured === null) return null;
   if (authed) return children;
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    if (!keyInput.trim()) { setError('請輸入 Dashboard 金鑰。'); return; }
-    sessionStorage.setItem('dashKey', keyInput.trim());
-    setAuthed(true);
+    const key = keyInput.trim();
+    if (!key) { setError('請輸入 Dashboard 金鑰。'); return; }
+    setError('');
+    try {
+      const res = await fetch('/api/dashboard/ping', {
+        headers: { 'x-dashboard-key': key },
+      });
+      const data = await res.json();
+      if (!data.secured || data.valid) {
+        sessionStorage.setItem('dashKey', key);
+        setAuthed(true);
+      } else {
+        setError('金鑰錯誤，請確認與 .env 內 DASHBOARD_SECRET 一致。');
+      }
+    } catch {
+      setError('無法驗證金鑰，請重試。');
+    }
   }
 
   return (
@@ -64,16 +99,38 @@ function DashboardAuthGate({ children }) {
 export default function App({ Component, pageProps }) {
   const router = useRouter();
   const isDashboard = router.pathname.startsWith('/dashboard');
+  const isAuthPage = isAuthPath(router.pathname);
+  const noindex = isNoIndexPath(router.pathname);
 
   return (
-    <>
+    <AuthProvider>
       <Head>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
+        />
+        {noindex && <meta name="robots" content="noindex, nofollow" />}
+        {process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION && (
+          <meta
+            name="google-site-verification"
+            content={process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION}
+          />
+        )}
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="preload" href="/js/zpix.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        <link rel="stylesheet" href="/css/auth-nav.css" />
+        <link rel="stylesheet" href="/css/mobile-webview-scroll.css" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap"
           rel="stylesheet"
         />
       </Head>
+      <MobileKeyboardGuard />
+      {!isDashboard && !isAuthPage && <PostHogAnalytics />}
+      {!isDashboard && (
+        <Script src="/js/mobile-document-scroll.js" strategy="afterInteractive" />
+      )}
+      <AppErrorBoundary>
       {isDashboard ? (
         <DashboardAuthGate>
           <Component {...pageProps} />
@@ -81,7 +138,8 @@ export default function App({ Component, pageProps }) {
       ) : (
         <Component {...pageProps} />
       )}
-    </>
+      </AppErrorBoundary>
+    </AuthProvider>
   );
 }
 

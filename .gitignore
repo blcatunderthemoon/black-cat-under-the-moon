@@ -9,9 +9,22 @@ match-cards/
 # VS Code local settings
 .vscode/
 
+# Local safety / generated files
+.env
+.env.local
+.env.*.local
+*.log
+*.tmp
+*.bak
+*.orig
+.DS_Store
+Thumbs.db
+coverage/
+dist/
+tmp/
+
 # Root-level design assets (not served by Next.js; production copies belong in public/)
-*.png
-docs
+/*.png
 
 # Dashboard (internal use only)
 src/pages/dashboard/
@@ -21,14 +34,20 @@ src/styles/dashboard/
 src/lib/dashboard-fetch.js
 src/lib/seed-data.js
 
-# Internal scripts
-scripts/
+# Internal scripts (build scripts below are committed for Vercel)
+scripts/*
+!scripts/build-mirror-v3-browser.js
+!scripts/build-mirror-narratives-browser.js
+!scripts/vendor-mirror-capture.js
 
 # Internal planning docs
 ritual-overhaul.md
 
 # DB schema (internal reference only)
 drift-bottle-setup.sql
+
+# Ignore local DB migration SQL files (don't commit these)
+supabase/migrations/
 
 # Unreachable static pages (not in public/)
 promo-card.html

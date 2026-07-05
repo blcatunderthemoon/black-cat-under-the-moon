@@ -24,7 +24,8 @@ const SAFETY_SECTION = `
     <div style="margin-top:20px;border-left:3px solid #f87171;padding:14px 16px;background:rgba(248,113,113,0.06);border-radius:0 8px 8px 0;">
       <div style="font-size:13px;font-weight:700;color:#f87171;margin-bottom:10px;">🛡️ 黑貓的守護提醒（社交安全）</div>
       <div style="font-size:12px;color:#c9bfe8;line-height:1.9;">
-        在你們開始了解彼此之前，請務必閱讀以下安全指引，保護好自己：
+        本站為線上交流社群。如您與任何線上認識的成員進行私下互動，請務必提高警覺，注意個人隱私與人身安全。
+        <p style="margin:10px 0 0 0;">在你們開始了解彼此之前，請務必閱讀以下安全指引，保護好自己：</p>
         <ul style="margin:8px 0 0 0;padding-left:18px;">
           <li><strong style="color:#f0ebd8;">保護個人隱私：</strong>在建立足夠信任前，請勿向對方透露過多敏感資訊（如屋企地址、公司具體位置、身份證號碼或銀行資料）。</li>
           <li style="margin-top:6px;"><strong style="color:#f0ebd8;">初次見面安排：</strong>若決定見面，請務必約在人多、明亮的公眾場合（如餐廳或咖啡廳），切勿前往對方的私人住所或偏僻地方。</li>
@@ -39,7 +40,7 @@ const DISCLAIMER_SECTION = `
     <!-- Disclaimer -->
     <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:14px 16px;margin-bottom:20px;">
       <div style="font-size:12px;font-weight:700;color:#a89cc8;margin-bottom:8px;">⚠️ 免責聲明</div>
-      <div style="font-size:11px;color:#6b5fa5;line-height:1.85;">本配對結果由系統根據問卷答案演算得出，僅供參考，不代表任何對任何人士的推薦或保證。Black Cat Under The Moon 平台及其運營者對於配對雙方在線下互動所發生的任何事件、損失或糾紛概不負責。參加者須自行評估風險，謹慎行事，並對自身安全負責。</div>
+      <div style="font-size:11px;color:#6b5fa5;line-height:1.85;">本共鳴分析結果由系統根據問卷答案演算得出，僅供參考，不代表任何對任何人士的推薦或保證。Black Cat Under The Moon 平台及其運營者對於用戶因個人行為進行的私下互動概不負責。參加者須自行評估風險，謹慎行事，並對自身安全負責。</div>
     </div>`;
 
 /**
@@ -84,15 +85,15 @@ export function buildEmailHtml({ receiver, partner, score }) {
   <!-- Header -->
   <div style="text-align:center;margin-bottom:20px;">
     <div style="font-size:11px;letter-spacing:0.2em;color:#a89cc8;text-transform:uppercase;margin-bottom:6px;">🐈‍⬛ Black Cat Under The Moon</div>
-    <h2 style="margin:0 0 6px;font-size:22px;color:#ffe066;letter-spacing:0.05em;">🌙 靈魂配對通知</h2>
-    <div style="font-size:13px;color:#a89cc8;">靈貓為你尋找最合拍的靈魂伴侶</div>
+    <h2 style="margin:0 0 6px;font-size:22px;color:#ffe066;letter-spacing:0.05em;">🌙 靈魂共鳴連線通知</h2>
+    <div style="font-size:13px;color:#a89cc8;">靈貓為你分析心靈契合度，尋找靈魂同頻者</div>
   </div>
 
   <div style="border-top:1px solid rgba(124,92,252,.25);margin-bottom:20px;"></div>
 
   <!-- Match box -->
   <div style="background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:18px 20px;margin-bottom:20px;">
-    <div style="font-size:14px;margin-bottom:8px;">恭喜 <strong style="color:#ffe066;">${esc(receiver.name)}</strong> 成功配對：</div>
+    <div style="font-size:14px;margin-bottom:8px;">恭喜 <strong style="color:#ffe066;">${esc(receiver.name)}</strong> 成功連線：</div>
     <div style="font-size:34px;color:#00e5ff;font-weight:900;letter-spacing:1px;margin-bottom:10px;">${esc(partner.name)}</div>
     <div style="display:inline-block;padding:5px 14px;border:1px solid #ff6b9d;border-radius:3px;color:#ff6b9d;font-size:14px;font-weight:700;margin-bottom:14px;">同步率 ${score}/100 ・ ${label}</div>
     ${contactTable}
@@ -101,8 +102,8 @@ export function buildEmailHtml({ receiver, partner, score }) {
   <!-- Attachment notice -->
   <div style="background:rgba(0,229,255,.06);border:1px solid rgba(0,229,255,.2);border-radius:8px;padding:14px 18px;margin-bottom:20px;text-align:center;">
     <div style="font-size:22px;margin-bottom:6px;">📎</div>
-    <div style="font-size:14px;color:#f0ebd8;font-weight:700;margin-bottom:6px;">你的專屬配對卡片已附上</div>
-    <div style="font-size:13px;color:#a89cc8;line-height:1.75;">請下載並在瀏覽器中打開附件 <strong style="color:#00e5ff;">配對卡.html</strong>，<br>查看完整配對分析、靈魂雷達圖及相容度解說。</div>
+    <div style="font-size:14px;color:#f0ebd8;font-weight:700;margin-bottom:6px;">你的專屬共鳴分析卡已附上</div>
+    <div style="font-size:13px;color:#a89cc8;line-height:1.75;">請下載並在瀏覽器中打開附件 <strong style="color:#00e5ff;">共鳴分析卡.html</strong>，<br>查看完整心靈契合度分析、靈魂雷達圖及相容度解說。</div>
   </div>
 
   ${SAFETY_SECTION}
@@ -150,23 +151,27 @@ export function buildTextEmail({ receiver, partner, score }) {
   return [
     `嗨 ${receiver.name}，`,
     '',
-    '你的靈魂配對結果出爐了！',
+    '你的靈魂共鳴分析結果出爐了！',
     `靈魂同步率：${score}/100`,
     '',
-    `配對對象：${partner.name}`,
+    `連線對象：${partner.name}`,
     '',
     contactLines.length > 0 ? '聯絡資料：' : '',
     ...contactLines,
     '',
-    '📎 請下載並在瀏覽器中打開附件的配對卡片（.html 檔案），查看完整配對分析及靈魂雷達圖。',
+    '📎 請下載並在瀏覽器中打開附件的共鳴分析卡（.html 檔案），查看完整心靈契合度分析及靈魂雷達圖。',
     '',
     '🛡️ 黑貓的守護提醒（社交安全）',
-    '在建立足夠信任前，請勿分享敏感個人資料。',
-    '初次見面請在公眾場合，並預先告知親友。',
-    '注意飲品安全，提防金錢要求。',
+    '本站為線上交流社群。如您與任何線上認識的成員進行私下互動，請務必提高警覺，注意個人隱私與人身安全。',
+    '在你們開始了解彼此之前，請務必閱讀以下安全指引，保護好自己：',
+    '・保護個人隱私：在建立足夠信任前，請勿向對方透露過多敏感資訊（如屋企地址、公司具體位置、身份證號碼或銀行資料）。',
+    '・初次見面安排：若決定見面，請務必約在人多、明亮的公眾場合（如餐廳或咖啡廳），切勿前往對方的私人住所或偏僻地方。',
+    '・告知親友：出發前將約會的時間、地點及對方基本資料告知身邊信任的朋友或家人。',
+    '・保持清醒：注意飲品安全，確保飲品不曾離開你的視線範圍。',
+    '・金錢往來：若對方向你提出借錢、投資或任何金錢要求，請提高警覺。',
     '',
     '⚠️ 免責聲明',
-    '本配對結果僅供參考。平台對線下互動所發生之任何事件概不負責，參加者須自行評估風險。',
+    '本共鳴分析結果僅供參考。平台對用戶因個人行為進行的私下互動概不負責，參加者須自行評估風險。',
     '',
     'Black Cat Under The Moon',
     '此郵件由系統自動發送，請勿直接回覆。',

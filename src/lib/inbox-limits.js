@@ -1,0 +1,1 @@
+export const INBOX_MESSAGE_MAX_LENGTH = 200;

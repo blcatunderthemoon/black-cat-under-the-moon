@@ -1,0 +1,373 @@
+/* ============================================================
+   Mobile / in-app WebView scroll — site-wide
+   Natural document scroll: html/body overflow-y visible, height auto;
+   viewport scrolls the full document. See docs/MOBILE-WEBVIEW-SCROLL.md.
+   Landing panels forced in-flow; no JS-measured heights or spacers.
+   ============================================================ */
+
+/* Scrollbars hidden globally (see questionnaire.css / globals.css) */
+html,
+body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  :root {
+    /* Single source for mobile bottom breathing room (see docs/MOBILE-WEBVIEW-SCROLL.md) */
+    --mobile-page-bottom-gap: 12px;
+    --mobile-footer-inner-pad: 8px;
+    --mobile-legal-page-bottom: 12px;
+  }
+
+  #welcome.welcome-screen:not(.hiding),
+  #mode-select.mode-select-screen.active {
+    position: relative !important;
+    inset: auto !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    z-index: 1 !important;
+  }
+
+  html {
+    overflow-x: clip !important;
+    overflow-y: visible !important;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 100%;
+    overscroll-behavior-y: auto;
+    scroll-padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  body:not(.quiz-viewport):not(.body-scroll-locked) {
+    overflow-x: clip !important;
+    overflow-y: visible !important;
+    touch-action: pan-y;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 100dvh;
+    min-height: 100svh;
+    position: relative;
+    width: 100%;
+  }
+
+  /* Landing — document grows to its content (footer included) automatically */
+  body.landing-document-scroll:not(.body-scroll-locked),
+  body.welcome-active:not(.body-scroll-locked),
+  body.mode-select-active:not(.body-scroll-locked) {
+    height: auto !important;
+    max-height: none !important;
+    min-height: 100dvh !important;
+  }
+
+  html.landing-document-scroll,
+  html.welcome-active,
+  html.mode-select-active {
+    overflow-x: clip !important;
+    overflow-y: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 100% !important;
+  }
+
+  /* Static landing panels — always in document flow on mobile */
+  .welcome-screen:not(.hiding),
+  .mode-select-screen.active {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    inset: auto !important;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    overscroll-behavior: auto;
+    touch-action: pan-y;
+    padding-bottom: var(--mobile-page-bottom-gap);
+    box-sizing: border-box;
+  }
+
+  .welcome-screen:not(.hiding) .welcome-bottom,
+  body.welcome-active .welcome-bottom,
+  .mode-top-bar--index ~ .welcome-screen .welcome-bottom {
+    margin-top: 28px !important;
+    flex-shrink: 0;
+    width: 100%;
+  }
+
+  .welcome-screen .site-footer--embedded,
+  .mode-select-screen.active .site-footer--embedded,
+  .site-footer.site-footer--app {
+    display: block;
+    width: 100%;
+    flex-shrink: 0;
+    scroll-margin-bottom: env(safe-area-inset-bottom, 0);
+    padding-bottom: calc(var(--mobile-footer-inner-pad) + env(safe-area-inset-bottom, 0)) !important;
+    margin-bottom: 0;
+  }
+
+  .welcome-scroll-end,
+  .mode-select-scroll-end {
+    display: block;
+    width: 100%;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    pointer-events: none;
+    visibility: hidden;
+    flex-shrink: 0;
+  }
+
+  /* Match / mirror quiz — document scroll (nested overflow breaks mobile WebViews) */
+  html:has(body[data-automode="match"].quiz-viewport),
+  html:has(body[data-automode="mirror"].quiz-viewport) {
+    overflow-x: clip !important;
+    overflow-y: visible !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  body[data-automode="match"].quiz-viewport,
+  body[data-automode="mirror"].quiz-viewport {
+    height: auto !important;
+    min-height: 100dvh;
+    min-height: 100svh;
+    max-height: none !important;
+    overflow-x: clip !important;
+    overflow-y: visible !important;
+    display: block !important;
+    padding-bottom: 0 !important;
+    touch-action: pan-y;
+  }
+
+  body[data-automode="match"]:not(.quiz-viewport) .main-container,
+  body[data-automode="mirror"]:not(.quiz-viewport) .main-container,
+  body[data-automode="match"].quiz-viewport .main-container,
+  body[data-automode="mirror"].quiz-viewport .main-container {
+    overflow: visible !important;
+    flex: none !important;
+    min-height: 0 !important;
+    display: block !important;
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+
+  body[data-automode="match"]:not(.quiz-viewport) .q-card,
+  body[data-automode="mirror"]:not(.quiz-viewport) .q-card,
+  body[data-automode="match"].quiz-viewport .q-card,
+  body[data-automode="mirror"].quiz-viewport .q-card {
+    overflow: visible !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    display: block !important;
+  }
+
+  body[data-automode="match"]:not(.quiz-viewport) #q-answers,
+  body[data-automode="mirror"]:not(.quiz-viewport) #q-answers,
+  body[data-automode="match"].quiz-viewport #q-answers,
+  body[data-automode="mirror"].quiz-viewport #q-answers {
+    overflow: visible !important;
+    flex: none !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overscroll-behavior: auto;
+  }
+
+  /* Legal / content static pages */
+  body:has(.mode-top-bar--legal) .page {
+    padding-bottom: calc(var(--mobile-legal-page-bottom) + env(safe-area-inset-bottom, 0));
+  }
+
+  /* Next.js app shell */
+  #__next {
+    min-height: 0;
+    height: auto;
+    overflow: visible;
+  }
+
+  .app-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .app-page > .app-main,
+  .app-page > main {
+    overflow: visible;
+    flex: 1 0 auto;
+    min-height: auto;
+    max-height: none;
+    padding-bottom: var(--mobile-page-bottom-gap);
+  }
+
+  /* Forum — main must grow with posts; never shrink below content */
+  .app-page--forum,
+  .app-page--forum-post {
+    height: auto !important;
+    min-height: 100dvh;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .app-page--forum > .app-main,
+  .app-page--forum-post > .app-main,
+  .app-page--forum .app-main,
+  .app-page--forum-post .app-main {
+    display: block !important;
+    flex: 0 0 auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .app-page--forum .forum-layout,
+  .app-page--forum .forum-main,
+  .app-page--forum .pixel-list,
+  .app-page--forum-post .forum-post-detail,
+  .app-page--forum-post .pixel-list {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  .forum-scroll-end,
+  [data-scroll-end] {
+    display: block;
+    width: 100%;
+    height: 1px;
+    pointer-events: none;
+    visibility: hidden;
+    flex-shrink: 0;
+  }
+
+  .app-page > .site-footer.site-footer--app {
+    flex-shrink: 0;
+    scroll-margin-bottom: env(safe-area-inset-bottom, 0);
+    margin-top: 0;
+  }
+
+  .app-page--centered {
+    min-height: 100dvh;
+    height: auto;
+    overflow: visible;
+    padding-bottom: var(--mobile-page-bottom-gap);
+  }
+
+  .app-page--centered > main {
+    overflow: visible;
+    flex: 1 0 auto;
+    justify-content: flex-start;
+    min-height: 0;
+    max-height: none;
+  }
+
+  .app-page--thread {
+    min-height: 100dvh;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .app-page--thread .app-main {
+    overflow: visible;
+    flex: 1 0 auto;
+    min-height: 0;
+    max-height: none;
+  }
+
+  /* Message list scrolls; page still grows for legal footer */
+  .app-page--thread .thread-messages {
+    overflow: visible !important;
+    flex: none;
+    min-height: 0;
+    max-height: none;
+  }
+
+  .app-page--thread .thread-messages__inner--scroll {
+    overflow: visible;
+  }
+
+  .app-page--inbox.app-page--thread .app-main {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  .app-page--thread .thread-messages,
+  .app-page--thread .thread-messages--moon {
+    overflow: visible !important;
+    max-height: none !important;
+    flex: none;
+  }
+
+  /* Drift bottle — document scroll */
+  body[data-tab] {
+    min-height: 100dvh;
+    height: auto;
+    overflow-x: clip;
+    overflow-y: visible;
+    padding-bottom: calc(var(--mobile-page-bottom-gap) + env(safe-area-inset-bottom, 0));
+  }
+
+  body[data-tab] .page {
+    overflow: visible;
+  }
+
+  .match-card-drawer__panel {
+    top: 0;
+    right: 0;
+    left: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    max-height: 100dvh !important;
+    border-left: none;
+    border-radius: 0;
+  }
+
+  .match-card-drawer__body {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+
+  .match-card-drawer__frame {
+    height: auto !important;
+    min-height: 100%;
+  }
+
+  .overlay-screen.scrollable.active {
+    position: relative !important;
+    inset: auto !important;
+    height: auto !important;
+    min-height: 100dvh;
+    max-height: none !important;
+    overflow: visible !important;
+    display: flex !important;
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

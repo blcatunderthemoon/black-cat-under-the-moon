@@ -2,6 +2,30 @@
    BLACK CAT UNDER THE MOON — SOUL MATCH QUESTIONNAIRE
    ============================================================== */
 
+function getPublicSiteOrigin() {
+  if (typeof window !== 'undefined' && window.BCUTM_SITE && window.BCUTM_SITE.origin) {
+    return String(window.BCUTM_SITE.origin).replace(/\/$/, '');
+  }
+  if (typeof window !== 'undefined' && window.location && window.location.origin) {
+    var host = window.location.hostname || '';
+    if (host && host !== 'localhost' && host !== '127.0.0.1') {
+      return window.location.origin;
+    }
+  }
+  return 'https://www.blackcatunderthemoon.com';
+}
+
+function getPublicSiteHost() {
+  if (typeof window !== 'undefined' && window.BCUTM_SITE && window.BCUTM_SITE.host) {
+    return String(window.BCUTM_SITE.host);
+  }
+  try {
+    return new URL(getPublicSiteOrigin()).host;
+  } catch (e) {
+    return 'www.blackcatunderthemoon.com';
+  }
+}
+
 // ===================== QUESTIONS DATA =====================
 const QUESTIONS = [
   // ---- Part 1: 基本畫像 ----
@@ -465,12 +489,12 @@ const PERSONALITY_TYPES = {
     factorName: '暖陽熱能',
     hashtags: ['#直球對決選手', '#定義關係先別怕', '#公開曬恩愛達人'],
     warning: '遇到態度曖昧、拒絕定義關係的人，直接傳長文問清楚，不清楚不罷休。',
-    desc: '你喜歡曬太陽，也希望對方的世界裡只有溫暖。你的愛是直接的，你要的也是清晰而公開的。'
+    desc: '你喜歡曬太陽，也希望對方的世界裡只有溫暖。你的愛是直接，你要的是清晰而公開。'
   },
   mystical: {
     nameZh: '秘境貓家族',
     nameEn: 'The Mystical Depth',
-    icon: '🔮',
+    icon: '📡',
     color: '#00e5ff',
     traits: ['情感共鳴深', '靈魂對話', '重視被理解'],
     factorName: '秘境電波',
@@ -485,7 +509,7 @@ const PERSONALITY_TYPES = {
     color: '#50fa7b',
     traits: ['穩定安全感', '長期規劃', '規律相處'],
     factorName: '守護力場',
-    hashtags: ['#PlanB狂魔', '#討厭驚喜變成驚嚇', '#訊息不回會內心扣分'],
+    hashtags: ['#PlanB狂魔', '#計劃內的浪漫最動人', '#訊息不回會內心扣分'],
     warning: '遇到遲到不講、臨時改行程的人，內心的護盾會當場加厚 300%。',
     desc: '你是守護壁爐的貓，最怕變動與突如其來的驚嚇。你的愛是一種承諾，是每天都會回來的穩定。'
   }
@@ -557,8 +581,20 @@ function computeHiddenTags(userAnswers) {
 // ============ SUBMIT CONFIG ============
 // 透過 /api/submit serverless function 提交（Token 藏在 env vars）
 
+function trackPostHog(event, props) {
+  try { window.posthog?.capture(event, props || {}); } catch (e) { /* analytics optional */ }
+}
+
 // ===================== STATE =====================
 let isMirrorMode = false;
+let mirrorGuestMode = false;
+let mirrorShuffleSeed = 0;
+let mirrorOptionOrderCache = {};
+let mirrorUsesV3 = false;
+let lastMirrorResultPayload = null;
+const MIRROR_GUEST_SESSION_KEY = 'bcm_mirror_guest';
+const MIRROR_PENDING_RESULT_KEY = 'bcm_mirror_pending_result';
+const MIRROR_CARD_CACHE_KEY = 'bcutm_mirror_card_cache';
 let activeQuestions = QUESTIONS;
 let activeTotal = TOTAL;
 let currentIdx = 0;
@@ -572,11 +608,14 @@ let renderTimer = null;
 let partTransitionTimer = null;
 let partTransitionFadeTimer = null;
 
-const THREADS_SHARE_TEXT = [
-  '我剛完成了「Black Cat Under The Moon」靈魂配對問卷，一份專為 Lesbian 配對設計嘅問卷，你都試下搵屬於你嘅 Soulmate？',
-  'https://black-cat-under-the-moon.vercel.app/',
-  '#月老靈貓 #靈魂配對 #LesbianHK'
-].join('\n');
+function getThreadsShareText() {
+  const origin = `${getPublicSiteOrigin()}/`;
+  return [
+    '我剛完成了「Black Cat Under The Moon」心靈契合度問卷，一份專為女同志社群設計嘅 Echo Mode，你都試下搵屬於你嘅 Kindred Spirit？',
+    origin,
+    '#月老靈貓 #靈魂共鳴 #LesbianHK',
+  ].join('\n');
+}
 
 // ===================== DOM REFS =====================
 const $welcome     = document.getElementById('welcome');
@@ -587,6 +626,10 @@ const $header      = document.getElementById('site-header');
 const $main        = document.getElementById('main-content');
 const $card        = document.getElementById('q-card');
 const $partLabel   = document.getElementById('q-part-label');
+function formatQuestionNumberLabel(label, idx) {
+  return 'Q' + (idx + 1);
+}
+
 const $qNumber     = document.getElementById('q-number');
 const $qText       = document.getElementById('q-text');
 const $qAnswers    = document.getElementById('q-answers');
@@ -603,6 +646,117 @@ const $ptNum       = document.getElementById('pt-num');
 const $ptName      = document.getElementById('pt-name');
 const $shareThreadsBtn = document.getElementById('share-threads-btn');
 const $socialHandles = document.getElementById('social-handles');
+
+var suppressHomeConfirm = false;
+var mirrorModeStartPromise = null;
+var quizInitialRevealPending = false;
+
+function finishMirrorPageBoot() {
+  if (document.body.dataset.automode === 'mirror') {
+    document.body.classList.remove('mirror-booting');
+  }
+}
+
+function finishMatchPageBoot() {
+  if (document.body.dataset.automode === 'match') {
+    document.body.classList.remove('match-booting');
+  }
+}
+
+function setMirrorResultActive(active) {
+  if (window.MobileDocumentScroll && window.MobileDocumentScroll.setMirrorResultScrollActive) {
+    window.MobileDocumentScroll.setMirrorResultScrollActive(!!active);
+  } else {
+    document.documentElement.classList.toggle('mirror-result-active', !!active);
+    document.body.classList.toggle('mirror-result-active', !!active);
+  }
+  if (active) {
+    setQuizViewport(false);
+    document.body.classList.remove('quiz-viewport');
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+    if ($loading) $loading.classList.remove('active');
+    finishMirrorPageBoot();
+    finishMatchPageBoot();
+    requestAnimationFrame(function() {
+      window.scrollTo(0, 0);
+    });
+  } else {
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+  }
+}
+
+var quizViewportWanted = false;
+var quizViewportResizeBound = false;
+
+function applyQuizViewportClass() {
+  var mode = document.body.dataset.automode;
+  if (mode !== 'match' && mode !== 'mirror') return;
+  // Natural document scroll on all breakpoints — nested overflow breaks wheel on desktop
+  // and in-app WebViews on mobile.
+  document.body.classList.remove('quiz-viewport');
+  document.body.style.overflow = '';
+  document.documentElement.style.overflow = '';
+}
+
+function setQuizViewport(active) {
+  quizViewportWanted = !!active;
+  applyQuizViewportClass();
+  if (!quizViewportResizeBound) {
+    quizViewportResizeBound = true;
+    window.addEventListener('resize', function () {
+      if (quizViewportWanted) applyQuizViewportClass();
+    });
+  }
+}
+
+function finishQuizPageBoot() {
+  finishMirrorPageBoot();
+  finishMatchPageBoot();
+}
+
+function setQuizBooting(active) {
+  var mode = document.body.dataset.automode;
+  if (mode === 'mirror') {
+    document.body.classList.toggle('mirror-booting', !!active);
+  } else if (mode === 'match') {
+    document.body.classList.toggle('match-booting', !!active);
+  }
+  if (active) $loading.classList.add('active');
+}
+
+function setMirrorBooting(active) {
+  setQuizBooting(active);
+}
+
+function isMirrorResultVisible() {
+  var el = document.getElementById('mirror-result');
+  if (!el) return false;
+  if (el.classList.contains('active')) return true;
+  return window.getComputedStyle(el).display !== 'none';
+}
+
+function showQuizSiteHeader() {
+  if (!$header) return;
+  $header.hidden = false;
+  $header.style.display = 'block';
+}
+
+function hideQuizSiteHeader() {
+  if (!$header) return;
+  $header.style.display = 'none';
+  $header.hidden = true;
+}
+
+function maybeFinishQuizInitialReveal(idx) {
+  if (!quizInitialRevealPending || idx !== 0) return;
+  quizInitialRevealPending = false;
+  setQuizBooting(false);
+  $loading.classList.remove('active');
+  showQuizSiteHeader();
+  finishQuizPageBoot();
+}
 
 function normalizeHandleValue(raw) {
   const trimmed = String(raw || '').trim();
@@ -663,6 +817,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Home back button
   document.getElementById('home-back-btn').addEventListener('click', () => {
+    if (shouldSkipHomeConfirm()) {
+      goBackToHome();
+      return;
+    }
     document.getElementById('home-confirm-overlay').classList.add('active');
   });
   document.getElementById('home-confirm-yes').addEventListener('click', () => {
@@ -683,6 +841,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Standalone pages: auto-start based on body data-automode attribute
   const autoMode = document.body.dataset.automode;
   if (autoMode === 'match') {
+    initMatchCardDrawer();
     startMatchMode();
   } else if (autoMode === 'mirror') {
     startMirrorMode();
@@ -691,7 +850,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function initShareLink() {
   if (!$shareThreadsBtn) return;
-  const params = new URLSearchParams({ text: THREADS_SHARE_TEXT });
+  const params = new URLSearchParams({ text: getThreadsShareText() });
   const url = 'https://www.threads.net/intent/post?' + params.toString();
   $shareThreadsBtn.setAttribute('href', url);
 }
@@ -710,40 +869,1051 @@ function startQuiz() {
 }
 
 function showModeSelect() {
+  var welcome = document.getElementById('welcome');
+  if (welcome) {
+    welcome.style.display = 'none';
+    welcome.style.pointerEvents = 'none';
+  }
   document.getElementById('mode-select').classList.add('active');
+  if (window.MobileDocumentScroll) {
+    MobileDocumentScroll.setLandingScrollScreen('mode-select');
+  }
+  window.scrollTo(0, 0);
+  var lbl = document.getElementById('mode-top-bar-label');
+  if (lbl) lbl.textContent = '選擇模式';
 }
 
 function goBackToHome() {
+  setMirrorResultActive(false);
   window.location.href = 'index.html';
 }
 
-function startMatchMode() {
+function shouldSkipHomeConfirm() {
+  if (suppressHomeConfirm) return true;
+  var already = document.getElementById('already-screen');
+  if (already && already.classList.contains('active')) return true;
+  if ($thankyou && $thankyou.classList.contains('active')) return true;
+  var mirrorResult = document.getElementById('mirror-result');
+  if (mirrorResult) {
+    if (mirrorResult.classList.contains('active')) return true;
+    if (window.getComputedStyle(mirrorResult).display !== 'none') return true;
+  }
+  if ($progressWrap && $progressWrap.classList.contains('mode-top-bar--result')) {
+    if (mirrorResult && window.getComputedStyle(mirrorResult).display !== 'none') return true;
+    if (already && already.classList.contains('active')) return true;
+  }
+  return false;
+}
+
+function resetQuizTopBarState() {
+  suppressHomeConfirm = false;
+  setMirrorResultActive(false);
+  if ($progressWrap) $progressWrap.classList.remove('mode-top-bar--result');
+  if ($progressText) $progressText.classList.remove('mode-top-bar__center--zh');
+}
+
+// Read the Supabase JWT from localStorage (written by @supabase/supabase-js v2).
+function getSupabaseAuthStorage() {
+  try {
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.startsWith('sb-') && k.endsWith('-auth-token')) {
+        var session = JSON.parse(localStorage.getItem(k) || 'null');
+        if (session) return { key: k, session: session };
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
+function getSupabaseAuthToken() {
+  var stored = getSupabaseAuthStorage();
+  return stored && stored.session && stored.session.access_token ? stored.session.access_token : null;
+}
+
+async function ensureSupabaseAuthToken() {
+  var stored = getSupabaseAuthStorage();
+  if (!stored || !stored.session || !stored.session.access_token) return null;
+
+  var token = stored.session.access_token;
+  var expiresAt = stored.session.expires_at;
+  if (expiresAt && Date.now() >= (Number(expiresAt) * 1000) - 60000) {
+    var refreshed = await refreshSupabaseAuthToken();
+    if (refreshed) return refreshed;
+  }
+  return token;
+}
+
+async function waitForSupabaseAuthToken(maxWaitMs) {
+  var deadline = Date.now() + (maxWaitMs || 2500);
+  while (Date.now() < deadline) {
+    var token = await ensureSupabaseAuthToken();
+    if (token) return token;
+    await new Promise(function (r) { setTimeout(r, 100); });
+  }
+  return null;
+}
+
+function hasMirrorCardSaved(card) {
+  return !!(card && card.mirror_type);
+}
+
+function writeMirrorCardCache(card) {
+  if (!card || !card.mirror_type) return;
+  try {
+    localStorage.setItem(MIRROR_CARD_CACHE_KEY, JSON.stringify({ savedAt: Date.now(), card: card }));
+  } catch (e) {}
+}
+
+function readMirrorCardCache() {
+  try {
+    var raw = localStorage.getItem(MIRROR_CARD_CACHE_KEY);
+    if (!raw) return null;
+    var parsed = JSON.parse(raw);
+    return hasMirrorCardSaved(parsed && parsed.card) ? parsed.card : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function clearMirrorCardCache() {
+  try { localStorage.removeItem(MIRROR_CARD_CACHE_KEY); } catch (e) {}
+}
+
+function persistPendingMirrorResult(scores, mainType, shadowType, v3Meta) {
+  try {
+    var safeAnswers = {};
+    Object.keys(answers || {}).forEach(function (k) {
+      if (answers[k] != null && answers[k] !== '') safeAnswers[k] = answers[k];
+    });
+    sessionStorage.setItem(MIRROR_PENDING_RESULT_KEY, JSON.stringify({
+      answers: safeAnswers,
+      scores: scores,
+      mainType: mainType,
+      shadowType: shadowType || null,
+      v3Meta: v3Meta || null,
+      mirrorUsesV3: mirrorUsesV3,
+      savedAt: Date.now(),
+    }));
+  } catch (e) {}
+}
+
+function readPendingMirrorResult() {
+  try {
+    var raw = sessionStorage.getItem(MIRROR_PENDING_RESULT_KEY);
+    if (!raw) return null;
+    var parsed = JSON.parse(raw);
+    if (!parsed || !parsed.mainType) return null;
+    return parsed;
+  } catch (e) {
+    return null;
+  }
+}
+
+function clearPendingMirrorResult() {
+  try { sessionStorage.removeItem(MIRROR_PENDING_RESULT_KEY); } catch (e) {}
+}
+
+async function loadMirrorCardForUser(token) {
+  try {
+    var resp = await fetchMirrorCardAuthed(token);
+    if (resp.ok) {
+      var data = await resp.json().catch(function () { return {}; });
+      if (hasMirrorCardSaved(data.card)) {
+        writeMirrorCardCache(data.card);
+        return data.card;
+      }
+      return null;
+    }
+  } catch (e) {}
+  return readMirrorCardCache();
+}
+
+function buildMirrorCardSavePayload(scores, mainType, shadowType, answerMap, v3Meta) {
+  var safeAnswers = {};
+  activeQuestions.forEach(function (q) {
+    if (q.field && answerMap[q.field]) safeAnswers[q.field] = answerMap[q.field];
+    if (q.type === 'select_pair' && q.selects) {
+      q.selects.forEach(function (s) {
+        if (answerMap[s.field]) safeAnswers[s.field] = answerMap[s.field];
+      });
+    }
+  });
+
+  var payload = {
+    mirror_type: mainType,
+    shadow_type: shadowType || null,
+    mirror_scores: scores,
+    basic_answers: safeAnswers,
+  };
+
+  if (v3Meta && v3Meta.scoring_version === 'v3_trait') {
+    payload.scoring_version = v3Meta.scoring_version;
+    payload.trait_scores = v3Meta.trait_scores;
+    payload.tension_narratives = v3Meta.tension_narratives || [];
+  }
+  return payload;
+}
+
+async function saveMirrorCardToAccount(token, scores, mainType, shadowType, answerMap, v3Meta) {
+  var payload = buildMirrorCardSavePayload(scores, mainType, shadowType, answerMap, v3Meta);
+
+  async function saveWithToken(activeToken) {
+    return fetch('/api/mirror-card/me', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + activeToken,
+      },
+      body: JSON.stringify(payload),
+    });
+  }
+
+  var resp = await saveWithToken(token);
+  if (resp.status === 401) {
+    var refreshed = await refreshSupabaseAuthToken();
+    if (refreshed) resp = await saveWithToken(refreshed);
+  }
+  if (!resp.ok) return null;
+  var data = await resp.json().catch(function () { return {}; });
+  if (data && data.card) writeMirrorCardCache(data.card);
+  return data;
+}
+
+async function tryClaimPendingMirrorResult(token) {
+  var pending = readPendingMirrorResult();
+  if (!pending) return false;
+
+  answers = Object.assign({}, pending.answers || {});
+  mirrorUsesV3 = !!pending.mirrorUsesV3;
+  mirrorGuestMode = false;
+  try { sessionStorage.removeItem(MIRROR_GUEST_SESSION_KEY); } catch (e) {}
+
+  var saveData = await saveMirrorCardToAccount(
+    token,
+    pending.scores,
+    pending.mainType,
+    pending.shadowType,
+    pending.answers || {},
+    pending.v3Meta
+  );
+
+  clearPendingMirrorResult();
+
+  quizInitialRevealPending = false;
+  setQuizBooting(false);
+  $loading.classList.remove('active');
+  finishQuizPageBoot();
+  showMirrorResultTopBar();
+
+  if (saveData && saveData.card && hasMirrorCardSaved(saveData.card)) {
+    showMirrorResultFromSavedCard(saveData.card);
+    return true;
+  }
+
+  if (pending.v3Meta && pending.v3Meta.scoring_version === 'v3_trait') {
+    showMirrorResult(
+      pending.scores,
+      pending.mainType,
+      pending.shadowType,
+      [],
+      true,
+      pending.v3Meta
+    );
+  } else {
+    showMirrorResult(
+      pending.scores,
+      pending.mainType,
+      pending.shadowType,
+      computeHiddenTags(pending.answers || {}),
+      true
+    );
+  }
+  return true;
+}
+
+async function fetchMatchStatusByEmail(email) {
+  if (!email) return null;
+  try {
+    var resp = await fetch('/api/match-status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: String(email).toLowerCase().trim() }),
+      cache: 'no-store',
+    });
+    if (!resp.ok) return null;
+    var data = await resp.json().catch(function() { return {}; });
+    return !!data.has_submitted;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function fetchMatchStatusAuthed(token) {
+  var resp = await fetch('/api/match-status', {
+    headers: { Authorization: 'Bearer ' + token },
+    cache: 'no-store',
+  });
+  if (resp.status === 401) {
+    var refreshed = await refreshSupabaseAuthToken();
+    if (refreshed) {
+      resp = await fetch('/api/match-status', {
+        headers: { Authorization: 'Bearer ' + refreshed },
+        cache: 'no-store',
+      });
+    }
+  }
+  return resp;
+}
+
+async function fetchMirrorCardAuthed(token) {
+  var resp = await fetch('/api/mirror-card/me', {
+    headers: { Authorization: 'Bearer ' + token },
+    cache: 'no-store',
+  });
+  if (resp.status === 401) {
+    var refreshed = await refreshSupabaseAuthToken();
+    if (refreshed) {
+      resp = await fetch('/api/mirror-card/me', {
+        headers: { Authorization: 'Bearer ' + refreshed },
+        cache: 'no-store',
+      });
+    }
+  }
+  return resp;
+}
+
+var MATCH_SUBMITTED_STORAGE_KEY = 'bcutm_match_submitted';
+
+function markMatchSubmittedLocally(email) {
+  try {
+    var norm = String(email || '').toLowerCase().trim();
+    localStorage.setItem(MATCH_SUBMITTED_STORAGE_KEY, JSON.stringify({ email: norm, at: Date.now() }));
+  } catch (e) {}
+}
+
+function clearLocalMatchSubmission() {
+  try {
+    localStorage.removeItem(MATCH_SUBMITTED_STORAGE_KEY);
+  } catch (e) {}
+}
+
+function hasLocalMatchSubmission() {
+  try {
+    return !!localStorage.getItem(MATCH_SUBMITTED_STORAGE_KEY);
+  } catch (e) {
+    return false;
+  }
+}
+
+function getLocalMatchSubmittedEmail() {
+  try {
+    var raw = localStorage.getItem(MATCH_SUBMITTED_STORAGE_KEY);
+    if (!raw) return null;
+    var parsed = JSON.parse(raw);
+    return parsed && parsed.email ? parsed.email : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function userHasMatchSubmission() {
+  var accountEmail = await resolveMatchAccountEmail();
+  var token = await ensureSupabaseAuthToken();
+  var authedChecked = false;
+  var authedSubmitted = false;
+
+  if (token) {
+    try {
+      var statusResp = await fetchMatchStatusAuthed(token);
+      authedChecked = statusResp.ok;
+      if (statusResp.ok) {
+        var statusData = await statusResp.json().catch(function() { return {}; });
+        authedSubmitted = !!statusData.has_submitted;
+        if (authedSubmitted) {
+          markMatchSubmittedLocally(accountEmail || getLocalMatchSubmittedEmail() || '');
+          return true;
+        }
+      }
+    } catch (e) {}
+  }
+
+  var emailsToCheck = [];
+  if (accountEmail) emailsToCheck.push(String(accountEmail).toLowerCase().trim());
+  var storedEmail = getLocalMatchSubmittedEmail();
+  if (storedEmail && emailsToCheck.indexOf(storedEmail) === -1) emailsToCheck.push(storedEmail);
+
+  for (var i = 0; i < emailsToCheck.length; i++) {
+    var found = await fetchMatchStatusByEmail(emailsToCheck[i]);
+    if (found) {
+      markMatchSubmittedLocally(emailsToCheck[i]);
+      return true;
+    }
+  }
+
+  if (authedChecked && !authedSubmitted) {
+    clearLocalMatchSubmission();
+  } else if (!authedChecked && hasLocalMatchSubmission()) {
+    clearLocalMatchSubmission();
+  }
+  return false;
+}
+
+function getLoggedInAccountEmailFromStorage() {
+  var stored = getSupabaseAuthStorage();
+  if (!stored || !stored.session) return null;
+  var user = stored.session.user;
+  if (user && user.email) return String(user.email).trim();
+  return null;
+}
+
+async function resolveMatchAccountEmail() {
+  var fromStorage = getLoggedInAccountEmailFromStorage();
+  if (fromStorage) return fromStorage;
+
+  var token = await ensureSupabaseAuthToken();
+  if (!token) return null;
+
+  try {
+    var resp = await fetch('/api/me', {
+      headers: { Authorization: 'Bearer ' + token },
+      cache: 'no-store',
+    });
+    if (resp.status === 401) {
+      var refreshed = await refreshSupabaseAuthToken();
+      if (refreshed) {
+        resp = await fetch('/api/me', {
+          headers: { Authorization: 'Bearer ' + refreshed },
+          cache: 'no-store',
+        });
+      }
+    }
+    if (resp.ok) {
+      var data = await resp.json().catch(function() { return {}; });
+      if (data.user && data.user.email) return String(data.user.email).trim();
+    }
+  } catch (e) {}
+
+  return null;
+}
+
+function matchQuestionsForAccount(accountEmail) {
+  if (!accountEmail) return QUESTIONS.slice();
+  return QUESTIONS.filter(function(q) { return q.id !== 'email'; });
+}
+
+async function refreshSupabaseAuthToken() {
+  var stored = getSupabaseAuthStorage();
+  if (!stored || !stored.session || !stored.session.refresh_token) return null;
+
+  try {
+    var resp = await fetch('/api/auth/refresh-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: stored.session.refresh_token }),
+      cache: 'no-store',
+    });
+    if (!resp.ok) return null;
+    var data = await resp.json();
+    if (!data.access_token) return null;
+
+    var nextSession = Object.assign({}, stored.session, {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token || stored.session.refresh_token,
+      expires_at: data.expires_at != null ? data.expires_at : stored.session.expires_at,
+      expires_in: data.expires_in != null ? data.expires_in : stored.session.expires_in,
+    });
+    localStorage.setItem(stored.key, JSON.stringify(nextSession));
+    return nextSession.access_token;
+  } catch (e) {
+    return null;
+  }
+}
+
+var matchCardHtmlCache = Object.create(null);
+
+function matchCardCacheKey(partnerResponseId, myResponseId) {
+  return 'v2:' + String(myResponseId || 0) + ':' + String(partnerResponseId);
+}
+
+function matchCardDrawerErrorMessage(status, body) {
+  if (body && body.error) return String(body.error);
+  if (body && body.premium_required) return '需要 Moonlight Passport 才能查看共鳴分析卡';
+  if (status === 401) return '登入已過期，請重新整理頁面';
+  if (status === 403) return '需要 Moonlight Passport 才能查看共鳴分析卡';
+  if (status === 404) return '找不到此連線記錄';
+  if (status >= 500) return '伺服器暫時無法產生共鳴分析卡，請稍後再試';
+  return '載入失敗，請稍後再試';
+}
+
+async function fetchMatchCardHtml(partnerResponseId, myResponseId, token) {
+  var payload = { partner_response_id: partnerResponseId };
+  if (myResponseId) payload.my_response_id = myResponseId;
+  return fetch('/api/matches/card', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + token,
+    },
+    body: JSON.stringify(payload),
+    cache: 'no-store',
+  });
+}
+
+function formatMatchDate(iso) {
+  if (!iso) return '';
+  try {
+    return new Date(iso).toLocaleDateString('zh-HK', { month: 'short', day: 'numeric' });
+  } catch (e) { return ''; }
+}
+
+function formatMatchScore(score) {
+  if (score == null || Number.isNaN(Number(score))) return '—';
+  return String(score) + '%';
+}
+
+function syncMatchCardFrameHeight(frame) {
+  if (!frame) return;
+  try {
+    var doc = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    if (!doc) return;
+    var height = Math.max(
+      (doc.documentElement && doc.documentElement.scrollHeight) || 0,
+      (doc.body && doc.body.scrollHeight) || 0,
+      480,
+    );
+    frame.style.height = height + 'px';
+  } catch (e) { /* sandbox */ }
+}
+
+function closeMatchCardDrawer() {
+  var drawer = document.getElementById('match-card-drawer');
+  var frame = document.getElementById('match-card-drawer-frame');
+  var loading = document.getElementById('match-card-drawer-loading');
+  if (!drawer) return;
+  drawer.classList.remove('active');
+  drawer.setAttribute('aria-hidden', 'true');
+  if (frame) {
+    frame.removeAttribute('srcdoc');
+    frame.style.display = 'none';
+  }
+  if (loading) {
+    loading.textContent = '載入共鳴分析卡…';
+    loading.style.display = '';
+  }
+}
+
+async function openMatchCardDrawer(partnerResponseId, partnerName, myResponseId) {
+  var drawer = document.getElementById('match-card-drawer');
+  var frame = document.getElementById('match-card-drawer-frame');
+  var loading = document.getElementById('match-card-drawer-loading');
+  var title = document.getElementById('match-card-drawer-title');
+  if (!drawer || !frame || !partnerResponseId) return;
+
+  drawer.classList.add('active');
+  drawer.setAttribute('aria-hidden', 'false');
+  if (title) title.textContent = partnerName ? partnerName + ' · 共鳴分析卡' : '共鳴分析卡';
+  if (loading) {
+    loading.textContent = '載入共鳴分析卡…';
+    loading.style.display = '';
+  }
+  frame.style.display = 'none';
+  frame.removeAttribute('srcdoc');
+
+  var token = getSupabaseAuthToken();
+  if (!token) {
+    if (loading) loading.textContent = '請先登入';
+    return;
+  }
+
+  try {
+    var cacheKey = matchCardCacheKey(partnerResponseId, myResponseId);
+    var data = matchCardHtmlCache[cacheKey];
+    if (!data) {
+      var resp = await fetchMatchCardHtml(partnerResponseId, myResponseId, token);
+      if (resp.status === 401) {
+        var refreshed = await refreshSupabaseAuthToken();
+        if (refreshed) resp = await fetchMatchCardHtml(partnerResponseId, myResponseId, refreshed);
+      }
+      var errBody = null;
+      if (!resp.ok) {
+        errBody = await resp.json().catch(function() { return null; });
+        if (loading) loading.textContent = matchCardDrawerErrorMessage(resp.status, errBody);
+        return;
+      }
+      data = await resp.json();
+      if (data && data.html) matchCardHtmlCache[cacheKey] = data;
+    }
+    frame.srcdoc = data.html || '';
+    if (loading) loading.style.display = 'none';
+    frame.style.display = 'block';
+    frame.onload = function () {
+      syncMatchCardFrameHeight(frame);
+      setTimeout(function () { syncMatchCardFrameHeight(frame); }, 120);
+      setTimeout(function () { syncMatchCardFrameHeight(frame); }, 400);
+    };
+    syncMatchCardFrameHeight(frame);
+  } catch (e) {
+    if (loading) loading.textContent = '載入失敗，請稍後再試';
+  }
+}
+
+function initMatchCardDrawer() {
+  var backdrop = document.getElementById('match-card-drawer-backdrop');
+  var closeBtn = document.getElementById('match-card-drawer-close');
+  var closeOverlay = document.getElementById('match-card-drawer-close-overlay');
+  if (backdrop) backdrop.addEventListener('click', closeMatchCardDrawer);
+  if (closeBtn) closeBtn.addEventListener('click', closeMatchCardDrawer);
+  if (closeOverlay) closeOverlay.addEventListener('click', closeMatchCardDrawer);
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeMatchCardDrawer();
+  });
+}
+
+function getMatchRarityTier(score) {
+  var s = Number(score);
+  if (Number.isNaN(s)) return '';
+  if (s >= 91) return 'ssr';
+  if (s >= 81) return 'sr';
+  if (s >= 75) return 'r';
+  return '';
+}
+
+function buildIdentityPixelCatSvg(identity, size) {
+  var w = size || 32;
+  var h = size || 32;
+  var accMap = {
+    'TB': '<rect x="10" y="0" width="12" height="6" fill="#223388"/><rect x="8" y="5" width="16" height="2" fill="#1a2a77"/><rect x="11" y="1" width="6" height="2" fill="#4466bb"/>',
+    'TBG': '<rect x="6" y="1" width="7" height="5" fill="#ff4499"/><rect x="7" y="0" width="5" height="2" fill="#ff88cc"/><rect x="19" y="1" width="7" height="5" fill="#ff4499"/><rect x="20" y="0" width="5" height="2" fill="#ff88cc"/><rect x="13" y="1" width="6" height="5" fill="#cc0055"/>',
+    'Pure': '<rect x="8" y="5" width="16" height="2" fill="#1a7030"/><rect x="7" y="2" width="5" height="4" fill="#ff79c6"/><rect x="8" y="3" width="3" height="2" fill="#ffff88"/><rect x="13" y="0" width="6" height="6" fill="#ffaadd"/><rect x="14" y="2" width="4" height="2" fill="#ffe066"/><rect x="20" y="2" width="5" height="4" fill="#ff79c6"/><rect x="21" y="3" width="3" height="2" fill="#ffff88"/>',
+    'Bi': '<rect x="8" y="4" width="16" height="3" fill="#7722aa"/><rect x="8" y="1" width="5" height="4" fill="#ff6b9d"/><rect x="13" y="0" width="6" height="5" fill="#bb66ff"/><rect x="19" y="1" width="5" height="4" fill="#5b5fdd"/>',
+    'No Label': '<rect x="13" y="0" width="6" height="2" fill="#ff6b9d"/><rect x="11" y="2" width="10" height="2" fill="#ffe066"/><rect x="9" y="4" width="14" height="2" fill="#00e5ff"/>',
+  };
+  var acc = accMap[identity] || '';
+  return '<svg class="match-result-card__cat" viewBox="0 0 32 32" width="' + w + '" height="' + h + '" shape-rendering="crispEdges" aria-hidden="true">' +
+    '<rect x="6" y="4" width="4" height="4" fill="#3a3660"/><rect x="8" y="2" width="2" height="2" fill="#3a3660"/>' +
+    '<rect x="22" y="4" width="4" height="4" fill="#3a3660"/><rect x="22" y="2" width="2" height="2" fill="#3a3660"/>' +
+    '<rect x="6" y="8" width="20" height="12" fill="#3a3660"/><rect x="8" y="6" width="16" height="2" fill="#3a3660"/>' +
+    '<rect x="10" y="11" width="2" height="3" fill="#50fa7b"/><rect x="20" y="11" width="2" height="3" fill="#50fa7b"/>' +
+    '<rect x="15" y="15" width="2" height="2" fill="#ff79c6"/><rect x="8" y="20" width="16" height="6" fill="#3a3660"/>' +
+    '<rect x="10" y="26" width="4" height="2" fill="#3a3660"/><rect x="18" y="26" width="4" height="2" fill="#3a3660"/>' +
+    '<rect x="26" y="3" width="2" height="2" fill="#ffe066"/><rect x="28" y="5" width="2" height="4" fill="#ffe066"/>' +
+    '<rect x="26" y="9" width="2" height="2" fill="#ffe066"/>' +
+    acc +
+    '</svg>';
+}
+
+function buildMatchResultCatHtml(identity, size) {
+  var svg = buildIdentityPixelCatSvg(identity, size);
+  if (!identity) return svg;
+  return '<span class="match-result-card__cat-wrap" data-identity="' + escHtml(identity) + '" aria-label="' + escHtml(identity) + '">' + svg + '</span>';
+}
+
+function renderMatchResultsOnMatchPage(matches) {
+  var listEl = document.getElementById('match-results-list');
+  var emptyEl = document.getElementById('match-results-empty');
+  var countEl = document.getElementById('match-results-count');
+  var headEl = document.getElementById('match-results-table-head');
+  if (!listEl) return;
+
+  listEl.innerHTML = '';
+  if (!matches || !matches.length) {
+    if (emptyEl) emptyEl.style.display = '';
+    if (headEl) {
+      headEl.style.display = 'none';
+      headEl.setAttribute('aria-hidden', 'true');
+    }
+    if (countEl) {
+      countEl.textContent = '';
+      countEl.style.display = 'none';
+    }
+    return;
+  }
+
+  if (emptyEl) emptyEl.style.display = 'none';
+  if (headEl) {
+    headEl.style.display = '';
+    headEl.setAttribute('aria-hidden', 'false');
+  }
+  if (countEl) {
+    countEl.textContent = '找到 ' + matches.length + ' 個連線';
+    countEl.style.display = '';
+  }
+
+  matches.forEach(function(match) {
+    var other = match.other_user || {};
+    var name = other.display_name || '神秘貓咪';
+    var slug = other.mirror_card_slug;
+    var partnerIdentity = other.identity || '';
+    var partnerResponseId = match.partner_response_id;
+    var myResponseId = match.my_response_id;
+    var rarity = getMatchRarityTier(match.match_score);
+    var card = document.createElement('div');
+    card.className = 'match-result-card' +
+      (partnerResponseId ? ' match-result-card--has-card' : '') +
+      (rarity ? ' match-result-card--rarity-' + rarity : '');
+
+    var nameHtml = slug
+      ? '<a class="match-result-card__name" href="/mirror-card/' + escHtml(slug) + '">' + escHtml(name) + '</a>'
+      : '<span class="match-result-card__name">' + escHtml(name) + '</span>';
+
+    var emailLabel = match.email_notified ? '已通知' : '—';
+    var emailClass = match.email_notified ? 'match-result-card__email--yes' : 'match-result-card__email--no';
+    var emailHtml = match.email_notified
+      ? '<span class="match-result-card__email ' + emailClass + '"><span class="status-dot" aria-hidden="true"></span>' + escHtml(emailLabel) + '</span>'
+      : '<span class="match-result-card__email ' + emailClass + '">' + escHtml(emailLabel) + '</span>';
+
+    var scoreHtml = '<span class="match-result-card__score-tag">' + escHtml(formatMatchScore(match.match_score)) + '</span>';
+
+    var viewBtn = partnerResponseId
+      ? '<button type="button" class="match-result-card__view-btn" title="查看共鳴分析卡" aria-label="查看共鳴分析卡">查看 ▸</button>'
+      : '';
+
+    card.innerHTML =
+      '<div class="match-result-card__main">' +
+        '<div class="match-result-card__identity">' +
+          buildMatchResultCatHtml(partnerIdentity, 32) +
+          nameHtml +
+        '</div>' +
+        '<div class="match-result-card__meta-row">' +
+          scoreHtml +
+          emailHtml +
+          viewBtn +
+        '</div>' +
+      '</div>';
+
+    if (partnerResponseId) {
+      var openCard = function(e) {
+        if (e.target.closest('a') || e.target.closest('button')) return;
+        openMatchCardDrawer(partnerResponseId, name, myResponseId);
+      };
+      card.addEventListener('click', openCard);
+      var btn = card.querySelector('.match-result-card__view-btn');
+      if (btn) {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          openMatchCardDrawer(partnerResponseId, name, myResponseId);
+        });
+      }
+    }
+
+    listEl.appendChild(card);
+  });
+}
+
+async function showMatchAlreadySubmitted(prefetchedMatches) {
+  suppressHomeConfirm = true;
+  setQuizViewport(false);
+  $main.style.display = 'none';
+  hideQuizSiteHeader();
+  $loading.classList.add('active');
+
+  var staticView = document.getElementById('already-submitted-static');
+  var resultsPanel = document.getElementById('match-results-panel');
+  var $already = document.getElementById('already-screen');
+  if (staticView) staticView.style.display = 'none';
+  if (resultsPanel) resultsPanel.style.display = 'none';
+  if ($already) $already.classList.remove('active');
+
+  var token = getSupabaseAuthToken();
+  var isPremium = false;
+  var matches = [];
+
+  if (prefetchedMatches && Array.isArray(prefetchedMatches.matches)) {
+    matches = prefetchedMatches.matches;
+    isPremium = true;
+  } else if (token) {
+    try {
+      var matchesResp = await fetch('/api/matches', {
+        headers: { Authorization: 'Bearer ' + token },
+        cache: 'no-store',
+      });
+      if (matchesResp.ok) {
+        var matchesData = await matchesResp.json().catch(function() { return {}; });
+        matches = matchesData.matches || [];
+        isPremium = true;
+      }
+    } catch (e) {}
+  }
+
+  $progressWrap.style.display = 'block';
+  $progressWrap.classList.add('mode-top-bar--result');
+  if ($progressFill) $progressFill.style.width = '100%';
+  if ($progressText) {
+    $progressText.textContent = '月下緣份';
+    $progressText.classList.add('mode-top-bar__center--zh');
+  }
+
+  if (isPremium && token) {
+    if (staticView) staticView.style.display = 'none';
+    if (resultsPanel) resultsPanel.style.display = '';
+    renderMatchResultsOnMatchPage(matches);
+    if ($already) $already.classList.add('overlay-screen--match-results');
+  } else {
+    if (staticView) staticView.style.display = '';
+    if (resultsPanel) resultsPanel.style.display = 'none';
+    if ($already) $already.classList.remove('overlay-screen--match-results');
+  }
+
+  if ($already) $already.classList.add('active');
+  $loading.classList.remove('active');
+  finishQuizPageBoot();
+}
+
+async function startMatchMode() {
   isMirrorMode = false;
-  activeQuestions = QUESTIONS;
-  activeTotal = TOTAL;
-  answers = {};
   lastPart = 0;
   document.getElementById('mode-select').classList.remove('active');
+
+  setQuizBooting(true);
+  quizInitialRevealPending = document.body.dataset.automode === 'match';
+
+  var token = getSupabaseAuthToken();
+  var matchesPrefetch = null;
+  if (token && (hasLocalMatchSubmission() || getLoggedInAccountEmailFromStorage())) {
+    matchesPrefetch = fetch('/api/matches', {
+      headers: { Authorization: 'Bearer ' + token },
+      cache: 'no-store',
+    })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .catch(function() { return null; });
+  }
+
+  if (await userHasMatchSubmission()) {
+    quizInitialRevealPending = false;
+    var prefetched = matchesPrefetch ? await matchesPrefetch : null;
+    await showMatchAlreadySubmitted(prefetched);
+    return;
+  }
+
+  var accountEmail = await resolveMatchAccountEmail();
+  activeQuestions = matchQuestionsForAccount(accountEmail);
+  activeTotal = activeQuestions.length;
+  answers = {};
+  if (accountEmail) {
+    answers.email = accountEmail;
+  }
+
+  resetQuizTopBarState();
   $progressWrap.style.display = 'block';
-  $header.style.display = 'block';
+  showQuizSiteHeader();
   $main.style.display = 'block';
+  setQuizViewport(true);
   showQuestion(0);
 }
 
-function startMirrorMode() {
+async function startMirrorMode() {
+  if (mirrorModeStartPromise) return mirrorModeStartPromise;
+  mirrorModeStartPromise = startMirrorModeImpl().finally(function() {
+    mirrorModeStartPromise = null;
+  });
+  return mirrorModeStartPromise;
+}
+
+function showMirrorAuthPrompt() {
+  return new Promise(function(resolve) {
+    var overlay = document.getElementById('mirror-auth-overlay');
+    if (!overlay) {
+      resolve('guest');
+      return;
+    }
+    var loginBtn = document.getElementById('mirror-auth-login');
+    var guestBtn = document.getElementById('mirror-auth-guest');
+    if (!loginBtn || !guestBtn) {
+      resolve('guest');
+      return;
+    }
+
+    function cleanup() {
+      overlay.classList.remove('active');
+      loginBtn.removeEventListener('click', onLogin);
+      guestBtn.removeEventListener('click', onGuest);
+    }
+    function onLogin() {
+      cleanup();
+      resolve('login');
+    }
+    function onGuest() {
+      cleanup();
+      resolve('guest');
+    }
+
+    loginBtn.addEventListener('click', onLogin);
+    guestBtn.addEventListener('click', onGuest);
+    overlay.classList.add('active');
+  });
+}
+
+function setMirrorGuestUpsellVisible(visible) {
+  var upsell = document.getElementById('mirror-guest-upsell');
+  if (upsell) upsell.hidden = !visible;
+  var loginLink = document.querySelector('.mirror-guest-upsell__btn');
+  if (loginLink && !loginLink.dataset.loginBound) {
+    loginLink.dataset.loginBound = '1';
+    loginLink.addEventListener('click', function () {
+      if (lastMirrorResultPayload) {
+        persistPendingMirrorResult(
+          lastMirrorResultPayload.scores,
+          lastMirrorResultPayload.mainType,
+          lastMirrorResultPayload.shadowType,
+          lastMirrorResultPayload.v3Meta
+        );
+      }
+      try { sessionStorage.setItem('bcm_mirror_post_login', '1'); } catch (e) {}
+    });
+  }
+  var dlBtn = document.getElementById('mirror-download-btn');
+  var label = dlBtn && dlBtn.querySelector('.mirror-download-btn__label');
+  if (label) {
+    label.textContent = visible ? '下載簡易結果卡' : '下載性格卡片';
+  }
+}
+
+async function startMirrorModeImpl() {
+  if (isMirrorResultVisible()) {
+    finishQuizPageBoot();
+    return;
+  }
+
   isMirrorMode = true;
-  activeQuestions = MIRROR_QUESTIONS;
-  activeTotal = MIRROR_QUESTIONS.length;
+  mirrorShuffleSeed = Date.now() % 2147483647;
+  mirrorOptionOrderCache = {};
+  activeQuestions = getMirrorQuestionBank();
+  activeTotal = activeQuestions.length;
   answers = {};
   lastPart = 0;
-  document.getElementById('mode-select').classList.remove('active');
-  $progressWrap.style.display = 'block';
-  $header.style.display = 'block';
-  $main.style.display = 'block';
-  showQuestion(0);
+  var modeSelect = document.getElementById('mode-select');
+  if (modeSelect) modeSelect.classList.remove('active');
+
+  setQuizBooting(true);
+
+  try {
+    var token = await waitForSupabaseAuthToken(2500);
+    if (token) {
+      mirrorGuestMode = false;
+      try { sessionStorage.removeItem(MIRROR_GUEST_SESSION_KEY); } catch (e) {}
+      try {
+        var postLoginClaim = false;
+        try { postLoginClaim = sessionStorage.getItem('bcm_mirror_post_login') === '1'; } catch (e) {}
+        if (postLoginClaim) {
+          try { sessionStorage.removeItem('bcm_mirror_post_login'); } catch (e) {}
+        }
+        if (postLoginClaim || readPendingMirrorResult()) {
+          if (await tryClaimPendingMirrorResult(token)) {
+            return;
+          }
+        }
+        var savedCard = await loadMirrorCardForUser(token);
+        if (hasMirrorCardSaved(savedCard)) {
+          quizInitialRevealPending = false;
+          setQuizBooting(false);
+          $loading.classList.remove('active');
+          finishQuizPageBoot();
+          showMirrorResultFromSavedCard(savedCard);
+          return;
+        }
+      } catch (e) {
+        var cachedCard = readMirrorCardCache();
+        if (hasMirrorCardSaved(cachedCard)) {
+          quizInitialRevealPending = false;
+          setQuizBooting(false);
+          $loading.classList.remove('active');
+          finishQuizPageBoot();
+          showMirrorResultFromSavedCard(cachedCard);
+          return;
+        }
+        // Network error — allow through so the questionnaire isn't blocked
+      }
+    } else {
+      var guestChosen = false;
+      try { guestChosen = sessionStorage.getItem(MIRROR_GUEST_SESSION_KEY) === '1'; } catch (e) {}
+      if (!guestChosen) {
+        setQuizBooting(false);
+        $loading.classList.remove('active');
+        var choice = await showMirrorAuthPrompt();
+        if (choice === 'login') {
+          window.location.href = '/login?redirect=/mirror.html';
+          return;
+        }
+        try { sessionStorage.setItem(MIRROR_GUEST_SESSION_KEY, '1'); } catch (e) {}
+      }
+      mirrorGuestMode = true;
+      setQuizBooting(true);
+    }
+
+    if (isMirrorResultVisible()) return;
+
+    quizInitialRevealPending = document.body.dataset.automode === 'mirror';
+    resetQuizTopBarState();
+    $progressWrap.style.display = 'block';
+    showQuizSiteHeader();
+    $main.style.display = 'block';
+    setQuizViewport(true);
+    showQuestion(0);
+  } catch (err) {
+    quizInitialRevealPending = false;
+    setQuizBooting(false);
+    $loading.classList.remove('active');
+    finishQuizPageBoot();
+    throw err;
+  }
 }
 
 // ===================== SHOW QUESTION =====================
+function splitPartTitle(partTitle) {
+  if (!partTitle) return { zh: '', en: '' };
+  const m = String(partTitle).match(/^([\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff·]+)\s*(.*)$/u);
+  if (m) return { zh: m[1].trim(), en: m[2].trim() };
+  return { zh: '', en: partTitle };
+}
+
+function escapeHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function renderPcardMixedHtml(text) {
+  const CJK_RE = /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff·]/u;
+  return String(text || '')
+    .split(/([\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff·]+)/u)
+    .filter(Boolean)
+    .map(function (part) {
+      const cls = CJK_RE.test(part) ? 'pcard-zh' : 'pcard-en';
+      return '<span class="' + cls + '">' + escapeHtml(part) + '</span>';
+    })
+    .join('');
+}
+
+function renderPcardHashtagHtml(text) {
+  const raw = String(text || '');
+  if (raw.charAt(0) === '#') {
+    return '<span class="pcard-en">#</span> ' + renderPcardMixedHtml(raw.slice(1));
+  }
+  return renderPcardMixedHtml(raw);
+}
+
+function renderPartLabelHtml(partNum, partTitle) {
+  const { zh, en } = splitPartTitle(partTitle);
+  const prefix = `<span class="part-label-en">Part ${partNum}:</span>`;
+  if (zh && en) {
+    return `${prefix} <span class="part-label-zh">${escapeHtml(zh)}</span> <span class="part-label-en">${escapeHtml(en)}</span>`;
+  }
+  if (zh) return `${prefix} <span class="part-label-zh">${escapeHtml(zh)}</span>`;
+  return `${prefix} <span class="part-label-en">${escapeHtml(partTitle)}</span>`;
+}
+
+function renderPartTransitionNameHtml(partTitle) {
+  const { zh, en } = splitPartTitle(partTitle);
+  if (zh && en) {
+    return `<span class="part-label-zh">${escapeHtml(zh)}</span><span class="part-label-en">${escapeHtml(en)}</span>`;
+  }
+  if (zh) return `<span class="part-label-zh">${escapeHtml(zh)}</span>`;
+  return `<span class="part-label-en">${escapeHtml(partTitle)}</span>`;
+}
+
 function showQuestion(idx, goingBack = false) {
   if (isTransitioning) return;
   resetQuestionState(true);
@@ -768,7 +1938,7 @@ function showPartTransition(partNum, partTitle, callback) {
   $card.style.pointerEvents = 'none';
   
   $ptNum.textContent = 'PART ' + partNum;
-  $ptName.textContent = partTitle;
+  $ptName.innerHTML = renderPartTransitionNameHtml(partTitle);
   $partTrans.classList.add('active');
   $partTrans.classList.remove('fade-out');
 
@@ -798,15 +1968,17 @@ function renderQuestion(idx, fromPartTransition = false) {
   $qAnswers.style.opacity = '0';
   $qAnswers.style.transform = 'translateY(10px)';
   $card.classList.remove('fade-in');
-  if (!fromPartTransition) {
+  if (!fromPartTransition && !(quizInitialRevealPending && idx === 0)) {
     $card.classList.add('fade-out');
   }
 
   renderTimer = setTimeout(() => {
     // Update labels first
     const partQ = activeQuestions.find(qq => qq.part === q.part && qq.partTitle);
-    $partLabel.textContent = 'Part ' + q.part + ': ' + (partQ ? partQ.partTitle : '');
-    $qNumber.textContent = q.label || ('Q' + (idx + 1));
+    $partLabel.innerHTML = partQ
+      ? renderPartLabelHtml(q.part, partQ.partTitle)
+      : '';
+    $qNumber.textContent = formatQuestionNumberLabel(q.label, idx);
 
     // Clear old content
     resetQuestionDOM();
@@ -831,6 +2003,8 @@ function renderQuestion(idx, fromPartTransition = false) {
     $card.classList.remove('fade-out');
     $card.classList.add('fade-in');
 
+    maybeFinishQuizInitialReveal(idx);
+
     // Start typewriter
     typeWriter($qText, q.text, () => {
       // After typewriter, fade in answers
@@ -843,7 +2017,7 @@ function renderQuestion(idx, fromPartTransition = false) {
       // Enable Next button based on question type
       if (q.type === 'select_pair') {
         $nextBtn.disabled = false;
-      } else if (q.type === 'single') {
+      } else if (q.type === 'single' || q.type === 'trait_single') {
         $nextBtn.disabled = !answers[q.field];
       } else if (q.type === 'text') {
         const textInp = $qAnswers.querySelector('.pixel-input');
@@ -861,7 +2035,7 @@ function renderQuestion(idx, fromPartTransition = false) {
       if (inp) setTimeout(() => inp.focus(), 100);
 
       // Navigation hint
-      if (idx === 0 && (q.type === 'single' || q.type === 'multi')) {
+      if (idx === 0 && (q.type === 'single' || q.type === 'trait_single' || q.type === 'multi')) {
         let hintBubble = document.getElementById('nav-hint-bubble');
         if (!hintBubble) {
           hintBubble = document.createElement('div');
@@ -948,6 +2122,8 @@ function buildAnswerArea(q) {
     buildTextInput(q);
   } else if (q.type === 'textarea') {
     buildTextarea(q);
+  } else if (q.type === 'trait_single') {
+    buildTraitSingleChoice(q);
   } else if (q.type === 'single') {
     buildSingleChoice(q);
   } else if (q.type === 'multi') {
@@ -1564,7 +2740,7 @@ function buildSingleChoice(q) {
   q.options.forEach((opt, i) => {
     const btn = document.createElement('button');
     btn.className = 'choice-btn';
-    btn.innerHTML = '<span class="choice-marker">' + markers[i] + '</span>' + escHtml(opt);
+    btn.innerHTML = '<span class="choice-marker">' + markers[i] + '</span><span class="choice-label">' + escHtml(opt) + '</span>';
     // Restore selection
     if (answers[q.field] === opt) btn.classList.add('selected');
 
@@ -1573,6 +2749,59 @@ function buildSingleChoice(q) {
       wrap.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
       answers[q.field] = opt;
+      $nextBtn.disabled = false;
+    });
+    wrap.appendChild(btn);
+  });
+
+  $qAnswers.appendChild(wrap);
+}
+
+function getMirrorProfileQuestions() {
+  return MIRROR_QUESTIONS.filter(function (q) { return q.part === 0; });
+}
+
+function getMirrorQuestionBank() {
+  if (typeof MirrorV3 !== 'undefined') {
+    mirrorUsesV3 = true;
+    return MirrorV3.getMirrorQuestionBank(getMirrorProfileQuestions());
+  }
+  mirrorUsesV3 = false;
+  if (document.body.dataset.automode === 'mirror') {
+    console.error('[mirror] mirror-v3.js failed to load — falling back to legacy question bank.');
+  }
+  return MIRROR_QUESTIONS;
+}
+
+function getTraitDisplayOptions(q, questionIndex) {
+  if (!q.optionDefs) return [];
+  if (!mirrorOptionOrderCache[q.field]) {
+    var seed = mirrorShuffleSeed + questionIndex * 97;
+    mirrorOptionOrderCache[q.field] = typeof MirrorV3 !== 'undefined'
+      ? MirrorV3.shuffleOptionDefs(q.optionDefs, seed)
+      : q.optionDefs.slice();
+  }
+  return mirrorOptionOrderCache[q.field];
+}
+
+function buildTraitSingleChoice(q) {
+  const wrap = document.createElement('div');
+  wrap.className = 'choices';
+  const markers = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const opts = getTraitDisplayOptions(q, currentIdx);
+
+  opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'choice-btn';
+    btn.innerHTML = '<span class="choice-marker">' + markers[i] + '</span><span class="choice-label">' + escHtml(opt.text) + '</span>';
+    if (answers[q.field] === opt.key) btn.classList.add('selected');
+
+    btn.addEventListener('click', () => {
+      playClick();
+      wrap.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      answers[q.field] = opt.key;
       $nextBtn.disabled = false;
     });
     wrap.appendChild(btn);
@@ -1767,8 +2996,9 @@ function resetQuestionState(preserveDOM = false) {
 
 // ===================== SUBMIT =====================
 async function submitAnswers() {
+  setQuizViewport(false);
   $main.style.display = 'none';
-  $header.style.display = 'none';
+  hideQuizSiteHeader();
   $progressWrap.style.display = 'none';
   $loading.classList.add('active');
   if ($errorDetail) {
@@ -1827,9 +3057,13 @@ async function submitAnswers() {
       throw new Error('Failed to fetch: opened via file://');
     }
 
+    const submitHeaders = { 'Content-Type': 'application/json' };
+    const submitToken = await ensureSupabaseAuthToken();
+    if (submitToken) submitHeaders.Authorization = 'Bearer ' + submitToken;
+
     const resp = await fetch('/api/submit', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: submitHeaders,
       body: JSON.stringify(payload)
     });
     if (!resp.ok) {
@@ -1837,6 +3071,23 @@ async function submitAnswers() {
       console.error('Submit error:', errBody);
       throw new Error(errBody.error || ('HTTP ' + resp.status));
     }
+
+    const respData = await resp.json().catch(() => ({}));
+
+    // Email was already submitted — show the already-submitted screen
+    if (respData.already_submitted) {
+      markMatchSubmittedLocally(answers.email);
+      const elapsedTime = Date.now() - loadingStartTime;
+      const remainingDelay = Math.max(0, minLoadingDuration - elapsedTime);
+      setTimeout(async function() {
+        $loading.classList.remove('active');
+        await showMatchAlreadySubmitted();
+      }, remainingDelay);
+      return;
+    }
+
+    markMatchSubmittedLocally(answers.email);
+    trackPostHog('echo_submitted', { mode: 'echo' });
     
     // Calculate elapsed time and wait for remaining duration if needed
     const elapsedTime = Date.now() - loadingStartTime;
@@ -1844,6 +3095,7 @@ async function submitAnswers() {
     
     setTimeout(() => {
       $loading.classList.remove('active');
+      suppressHomeConfirm = true;
       $thankyou.classList.add('active');
       $progressFill.style.width = '100%';
       // Trigger confetti and animations
@@ -2007,10 +3259,71 @@ function drawHeaderCat() {
 }
 
 // ===================== MIRROR MODE LOGIC =====================
-function computeAndShowMirrorResult() {
+function showMirrorResultFromSavedCard(card) {
+  answers = Object.assign({}, card.basic_answers || {});
+  mirrorGuestMode = false;
+  clearPendingMirrorResult();
+  showMirrorResultTopBar();
+
+  if (card.scoring_version === 'v3_trait' && card.trait_scores && typeof MirrorV3 !== 'undefined') {
+    var v3Result = {
+      scoring_version: card.scoring_version,
+      trait_scores: card.trait_scores,
+      mirror_type: card.mirror_type,
+      shadow_type: card.shadow_type || null,
+      mirror_scores: card.mirror_scores || {},
+      trait_bars: MirrorV3.getTraitBars(card.trait_scores),
+      tension_narratives: card.tension_narratives || [],
+    };
+    showMirrorResult(
+      v3Result.mirror_scores,
+      v3Result.mirror_type,
+      v3Result.shadow_type,
+      [],
+      true,
+      v3Result
+    );
+    return;
+  }
+
+  var scores = card.mirror_scores || {};
+  var mainType = card.mirror_type;
+  var shadowType = card.shadow_type || null;
+  var hiddenTags = computeHiddenTags(answers);
+  showMirrorResult(scores, mainType, shadowType, hiddenTags, true);
+}
+
+function showMirrorResultTopBar() {
+  suppressHomeConfirm = true;
+  setQuizViewport(false);
+  setMirrorResultActive(true);
   $main.style.display = 'none';
-  $header.style.display = 'none';
-  $progressWrap.style.display = 'none';
+  hideQuizSiteHeader();
+  $progressWrap.style.display = 'block';
+  $progressWrap.classList.add('mode-top-bar--result');
+  if ($progressFill) $progressFill.style.width = '100%';
+  if ($progressText) {
+    $progressText.textContent = '鏡像結果';
+    $progressText.classList.add('mode-top-bar__center--zh');
+  }
+}
+
+function computeAndShowMirrorResult() {
+  showMirrorResultTopBar();
+
+  if (mirrorUsesV3 && typeof MirrorV3 !== 'undefined') {
+    var psychQuestions = activeQuestions.filter(function (q) { return q.type === 'trait_single'; });
+    var v3Result = MirrorV3.computeMirrorResultV3(answers, psychQuestions);
+    showMirrorResult(
+      v3Result.mirror_scores,
+      v3Result.mirror_type,
+      v3Result.shadow_type,
+      [],
+      false,
+      v3Result
+    );
+    return;
+  }
 
   const scores = { solitary: 0, sunny: 0, mystical: 0, sentinel: 0 };
   const typeOrder = ['solitary', 'sunny', 'mystical', 'sentinel'];
@@ -2033,40 +3346,347 @@ function computeAndShowMirrorResult() {
   showMirrorResult(scores, mainType, shadowType, hiddenTags);
 }
 
-function showMirrorResult(scores, mainType, shadowType, hiddenTags) {
+function resolveMirrorNarrative(mainType, shadowType, v3Meta, isGuest) {
+  var scoringVersion = v3Meta && v3Meta.scoring_version
+    ? v3Meta.scoring_version
+    : (v3Meta && v3Meta.trait_scores ? 'v3_trait' : '');
+  if (typeof MirrorNarratives !== 'undefined') {
+    return MirrorNarratives.assembleNarrative({
+      mirrorType: mainType,
+      shadowType: shadowType,
+      traitScores: v3Meta && v3Meta.trait_scores ? v3Meta.trait_scores : null,
+      answers: answers,
+      scoringVersion: scoringVersion,
+      includeMisread: true,
+      includeMoonlight: !isGuest,
+    });
+  }
+  var fallback = PERSONALITY_TYPES[mainType] || {};
+  return {
+    worldview: fallback.desc || '',
+    insight: null,
+    misread: null,
+    warning: null,
+    warningLegacy: fallback.warning || '',
+    moonlight: null,
+    dynamic: false,
+  };
+}
+
+var MIRROR_HEROES = {
+  sunny: {
+    verdict: '\u4f60\u4e00\u76f4\u8ffd\u6c42\u7684\u662f\u88ab\u9078\u64c7\u3002\u800c\u4e0d\u662f\u88ab\u559c\u6b61\u3002',
+    hero: '\u4f60\u7684\u611b\uff0c\u9700\u8981\u88ab\u78ba\u8a8d\u3002',
+    heroSub: '\u4f60\u4e0d\u662f\u5bb3\u6015\u5b64\u55ae\u3002\u4f60\u5bb3\u6015\uff1a\u52aa\u529b\u611b\u7684\u4eba\uff0c\u5f9e\u4f86\u6c92\u6709\u8a8d\u771f\u9078\u64c7\u4f60\u3002',
+  },
+  sentinel: {
+    verdict: '\u4f60\u5b88\u4f4f\u7684\uff0c\u5f9e\u4f86\u4e0d\u53ea\u662f\u8a08\u5283\u3002\u662f\u90a3\u4e9b\u88ab\u8aaa\u51fa\u53e3\u3001\u537b\u9084\u6c92\u5151\u73fe\u7684\u627f\u8afe\u3002',
+    hero: '\u4f60\u7684\u627f\u8afe\uff0c\u9700\u8981\u88ab\u5151\u73fe\u3002',
+    heroSub: '\u4f60\u771f\u6b63\u5bb3\u6015\u7684\uff0c\u4e0d\u662f\u6539\u8b8a\u3002\u800c\u662f\uff1a\u53ea\u6709\u4f60\uff0c\u9084\u8a18\u5f97\u627f\u8afe\u3002',
+  },
+  solitary: {
+    verdict: '\u4f60\u9000\u5f8c\u7684\u6bcf\u4e00\u6b65\uff0c\u90fd\u662f\u5728\u78ba\u8a8d\uff1a\u9019\u500b\u4eba\u6703\u4e0d\u6703\u8ffd\u4e0a\u4f86\u3002',
+    hero: '\u4f60\u7684\u7bc0\u594f\uff0c\u9700\u8981\u88ab\u5c0a\u91cd\u3002',
+    heroSub: '\u4f60\u4e0d\u662f\u4e0d\u9700\u8981\u4eba\u3002\u53ea\u662f\uff1a\u6c92\u6709\u4eba\u6559\u904e\u4f60\uff0c\u4f9d\u9760\u5225\u4eba\u4e5f\u53ef\u4ee5\u5f88\u5b89\u5168\u3002',
+  },
+  mystical: {
+    verdict: '\u4f60\u7b49\u7684\u5f9e\u4f86\u4e0d\u662f\u7b54\u6848\u3002\u662f\u6709\u4eba\u9858\u610f\uff0c\u5728\u4f60\u7684\u6c89\u9ed9\u88e1\u505c\u4e0b\u4f86\u3002',
+    hero: '\u4f60\u7684\u611f\u53d7\uff0c\u9700\u8981\u88ab\u7576\u56de\u4e8b\u3002',
+    heroSub: '\u4f60\u4e0d\u662f\u654f\u611f\u3002\u53ea\u662f\uff1a\u6bd4\u5176\u4ed6\u4eba\uff0c\u66f4\u65e9\u807d\u8981\u6c89\u9ed9\u3002',
+  },
+};
+
+var MIRROR_NARRATIVE_LABELS = {
+  log: { zh: '鏡像觀測' },
+  warn: { zh: '黑貓警戒' },
+  moon: { zh: '月光備忘' },
+};
+
+var MIRROR_WARNING_STEP_LABELS = {
+  trigger: '\u89f8\u767c',
+  reaction: '\u53cd\u61c9',
+  recovery: '\u4fee\u88dc',
+};
+
+function joinMirrorText(text) {
+  if (!text) return '';
+  return String(text).replace(/\s*\n+\s*/g, '').trim();
+}
+
+function renderFamilyNameRevealHtml(nameZh, worldview) {
+  if (!worldview) {
+    return '<div class="pcard-family-name pcard-zh">' + escHtml(nameZh) + '</div>';
+  }
+  return '<div class="pcard-family-name-wrap pcard-family-name-wrap--reveal">' +
+    '<button type="button" class="pcard-family-name-btn" aria-expanded="false">' +
+      '<span class="pcard-family-name pcard-zh">' + escHtml(nameZh) + '</span>' +
+    '</button>' +
+    '<p class="pcard-family-magic pcard-zh" role="region">\u300c' + escHtml(worldview) + '\u300d</p>' +
+  '</div>';
+}
+
+function initFamilyNameReveal(root) {
+  if (!root) return;
+  var wrap = root.querySelector('.pcard-family-name-wrap--reveal');
+  if (!wrap || wrap.dataset.revealBound === '1') return;
+  wrap.dataset.revealBound = '1';
+  var btn = wrap.querySelector('.pcard-family-name-btn');
+  if (!btn) return;
+
+  function setOpen(open) {
+    wrap.classList.toggle('pcard-family-name-wrap--open', open);
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+
+  btn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    setOpen(!wrap.classList.contains('pcard-family-name-wrap--open'));
+  });
+
+  document.addEventListener('click', function(e) {
+    if (!wrap.classList.contains('pcard-family-name-wrap--open')) return;
+    if (wrap.contains(e.target)) return;
+    setOpen(false);
+  });
+}
+
+function initTraitSpectrumInteractivity(root) {
+  if (!root) return;
+
+  function clearSpectrum(spectrum) {
+    spectrum.querySelectorAll('.pcard-trait-spectrum__seg.is-active').forEach(function (seg) {
+      seg.classList.remove('is-active');
+    });
+    spectrum.querySelectorAll('.pcard-trait-spectrum__item.is-linked').forEach(function (item) {
+      item.classList.remove('is-linked');
+    });
+  }
+
+  root.querySelectorAll('.pcard-trait-spectrum').forEach(function (spectrum) {
+    if (spectrum.dataset.traitBound === '1') return;
+    spectrum.dataset.traitBound = '1';
+
+    var segs = spectrum.querySelectorAll('.pcard-trait-spectrum__seg');
+    var items = spectrum.querySelectorAll('.pcard-trait-spectrum__item');
+
+    function activateIndex(idx) {
+      clearSpectrum(spectrum);
+      if (idx < 0) return;
+      if (segs[idx]) segs[idx].classList.add('is-active');
+      if (items[idx]) items[idx].classList.add('is-linked');
+    }
+
+    segs.forEach(function (seg, idx) {
+      seg.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (seg.classList.contains('is-active')) clearSpectrum(spectrum);
+        else activateIndex(idx);
+      });
+      seg.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          if (seg.classList.contains('is-active')) clearSpectrum(spectrum);
+          else activateIndex(idx);
+        }
+      });
+    });
+
+    items.forEach(function (item, idx) {
+      item.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (item.classList.contains('is-linked')) clearSpectrum(spectrum);
+        else {
+          activateIndex(idx);
+          if (segs[idx]) segs[idx].focus();
+        }
+      });
+    });
+  });
+
+  if (root.dataset.traitDocBound === '1') return;
+  root.dataset.traitDocBound = '1';
+
+  document.addEventListener('click', function onTraitSpectrumDocClick(e) {
+    if (!root.contains(e.target)) return;
+    if (e.target.closest('.pcard-trait-spectrum__seg, .pcard-trait-spectrum__item')) return;
+    root.querySelectorAll('.pcard-trait-spectrum').forEach(clearSpectrum);
+  });
+}
+
+function renderMirrorHeroHtml(narrative, mirrorType) {
+  var hero = MIRROR_HEROES[mirrorType] || MIRROR_HEROES.sunny;
+  if (!hero.hero) return '';
+  var sub = joinMirrorText(narrative.insight) || hero.heroSub || '';
+  return '<div class="pcard-hero-block">' +
+    '<p class="pcard-hero-line pcard-zh">' + escHtml(hero.hero) + '</p>' +
+    (sub ? '<p class="pcard-hero-sub pcard-zh">' + escHtml(sub) + '</p>' : '') +
+  '</div>';
+}
+
+function renderMirrorNarrativeHtml(narrative, mirrorType, includeMoonlight) {
+  return renderMirrorHeroHtml(narrative, mirrorType) +
+    renderMirrorWarningHtml(narrative) +
+    (includeMoonlight ? renderMirrorMoonlightHtml(narrative) : '');
+}
+
+function renderMirrorDescHtml(narrative, mirrorType) {
+  return renderMirrorNarrativeHtml(narrative, mirrorType, false);
+}
+
+function resolveMirrorWarningSteps(w) {
+  if (typeof MirrorNarratives !== 'undefined' && MirrorNarratives.formatWarningSteps) {
+    return MirrorNarratives.formatWarningSteps(w);
+  }
+  if (typeof MirrorNarratives !== 'undefined' && MirrorNarratives.formatWarningRows) {
+    var rows = MirrorNarratives.formatWarningRows(w);
+    if (!rows) return null;
+    return { trigger: rows.burst, reaction: '', recovery: rows.recovery };
+  }
+  return {
+    trigger: (w.trigger || '').replace(/^當/, ''),
+    reaction: (w.behaviour || '').replace(/^你會/, ''),
+    recovery: w.recovery || '',
+  };
+}
+
+function renderBerserkStepHtml(keyClass, idx, label, text) {
+  return '<div class="pcard-berserk-terminal__step">' +
+    '<span class="pcard-berserk-terminal__idx" aria-hidden="true">' + idx + '</span>' +
+    '<span class="pcard-berserk-terminal__key pcard-berserk-terminal__key--' + keyClass + ' pcard-zh">' + label + '</span>' +
+    '<span class="pcard-berserk-terminal__prompt" aria-hidden="true">&gt;</span>' +
+    '<p class="pcard-berserk-terminal__val">' + escHtml(joinMirrorText(text)) + '</p>' +
+  '</div>';
+}
+
+function renderMirrorWarningHtml(narrative) {
+  if (narrative.warning && narrative.warning.trigger) {
+    var w = narrative.warning;
+    var steps = resolveMirrorWarningSteps(w);
+    if (!steps) return '';
+    return '<div class="pcard-narrative-block">' +
+      '<div class="pcard-berserk-terminal">' +
+        '<div class="pcard-berserk-terminal__scan" aria-hidden="true"></div>' +
+        '<div class="pcard-berserk-terminal__head">' +
+          '<span class="pcard-berserk-terminal__icon" aria-hidden="true">\u26a0</span>' +
+          '<span class="pcard-berserk-terminal__title pcard-zh">' + MIRROR_NARRATIVE_LABELS.warn.zh + '</span>' +
+        '</div>' +
+        '<div class="pcard-berserk-terminal__body">' +
+          renderBerserkStepHtml('trigger', '01', MIRROR_WARNING_STEP_LABELS.trigger, steps.trigger) +
+          renderBerserkStepHtml('reaction', '02', MIRROR_WARNING_STEP_LABELS.reaction, steps.reaction) +
+          renderBerserkStepHtml('recovery', '03', MIRROR_WARNING_STEP_LABELS.recovery, steps.recovery) +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+  var legacy = narrative.warningLegacy || '';
+  if (!legacy) return '';
+  return '<div class="pcard-warning pcard-warning--legacy" style="margin-top:6px">\u9ed1\u8c93\u8b66\u6212\uff1a' + escHtml(legacy) + '</div>';
+}
+
+function splitMoonWhisperCopy(text) {
+  var joined = joinMirrorText(text);
+  if (!joined) return { lead: '', tail: '' };
+  var breakAt = joined.indexOf('\u3002');
+  if (breakAt === -1) return { lead: joined, tail: '' };
+  return { lead: joined.slice(0, breakAt + 1), tail: joined.slice(breakAt + 1).trim() };
+}
+
+function renderMirrorMoonlightHtml(narrative) {
+  if (!narrative.moonlight) return '';
+  var parts = splitMoonWhisperCopy(narrative.moonlight);
+  if (!parts.lead) return '';
+  var bodyHtml = '<p class="pcard-moon-whisper__lead pcard-zh">' + escHtml(parts.lead) + '</p>' +
+    (parts.tail ? '<p class="pcard-moon-whisper__tail pcard-zh">' + escHtml(parts.tail) + '</p>' : '');
+  return '<div class="pcard-narrative-block pcard-narrative-block--whisper">' +
+    '<div class="pcard-moon-whisper__label pcard-zh">' + MIRROR_NARRATIVE_LABELS.moon.zh + '</div>' +
+    '<div class="pcard-moon-whisper">' +
+      '<div class="pcard-moon-whisper__body">' + bodyHtml + '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+function showMirrorResult(scores, mainType, shadowType, hiddenTags, skipAutoSave, v3Meta) {
+  const isGuest = mirrorGuestMode;
+  lastMirrorResultPayload = { scores: scores, mainType: mainType, shadowType: shadowType, v3Meta: v3Meta || null };
+  const isV3 = !!(v3Meta && v3Meta.scoring_version === 'v3_trait');
   const total = Object.values(scores).reduce((a, b) => a + b, 0) || 1;
   const p = PERSONALITY_TYPES[mainType];
   const typeOrder = ['solitary', 'sunny', 'mystical', 'sentinel'];
 
-  // Top-3 non-zero ingredient bars
-  var sortedTypes = typeOrder.slice().sort(function(a, b) { return scores[b] - scores[a]; });
-  sortedTypes = sortedTypes.filter(function(k) { return scores[k] > 0; }).slice(0, 3);
+  var barsHtml = '';
+  if (isV3 && v3Meta.trait_bars && v3Meta.trait_bars.length) {
+    barsHtml = '<div class="pcard-trait-spectrum">' +
+      '<div class="pcard-trait-spectrum__track">' +
+        v3Meta.trait_bars.map(function (bar) {
+          var glow = bar.glow || bar.color;
+          var hint = bar.hint || '';
+          var tip = escHtml(bar.label) + ' \u00b7 ' + bar.pct + '%';
+          var aria = hint
+            ? escHtml(bar.label) + ' ' + bar.pct + '%：' + escHtml(hint)
+            : escHtml(bar.label) + ' ' + bar.pct + '%';
+          return '<div class="pcard-trait-spectrum__seg" style="width:' + bar.pct + '%;background-color:' + bar.color + ';--trait-color:' + bar.color + ';--trait-glow:' + glow + '"' +
+            ' data-label="' + escHtml(bar.label) + '"' +
+            ' data-tip="' + tip + '"' +
+            (hint ? ' data-hint="' + escHtml(hint) + '"' : '') +
+            ' role="button"' +
+            ' title="' + escHtml(bar.label) + '" tabindex="0"' +
+            ' aria-label="' + aria + '"></div>';
+        }).join('') +
+      '</div>' +
+      '<ul class="pcard-trait-spectrum__legend">' +
+        v3Meta.trait_bars.map(function (bar, idx) {
+          var glow = bar.glow || bar.color;
+          var hint = bar.hint || '';
+          return '<li class="pcard-trait-spectrum__item" style="--trait-color:' + bar.color + ';--trait-glow:' + glow + '"' +
+            ' data-trait-idx="' + idx + '"' +
+            (hint ? ' tabindex="0" aria-label="' + escHtml(bar.label) + ' ' + bar.pct + '%：' + escHtml(hint) + '"' : '') +
+            '>' +
+            '<span class="pcard-trait-spectrum__dot" aria-hidden="true"></span>' +
+            '<span class="pcard-trait-spectrum__name">' + escHtml(bar.label) + '</span>' +
+            '<span class="pcard-trait-spectrum__pct">' + bar.pct + '%</span>' +
+            (hint ? '<span class="pcard-trait-spectrum__tip" role="tooltip">' + escHtml(hint) + '</span>' : '') +
+          '</li>';
+        }).join('') +
+      '</ul></div>';
+  } else {
+    // Top-3 non-zero ingredient bars (full card only)
+    var sortedTypes = typeOrder.slice().sort(function(a, b) { return scores[b] - scores[a]; });
+    sortedTypes = sortedTypes.filter(function(k) { return scores[k] > 0; }).slice(0, 3);
+    barsHtml = sortedTypes.map(function(k) {
+      var pct = Math.round((scores[k] / total) * 100);
+      var tp = PERSONALITY_TYPES[k];
+      return '<div class="pcard-bar-row">' +
+        '<div class="pcard-bar-label">' + escHtml(tp.factorName) + '</div>' +
+        '<div class="pcard-bar-wrap"><div class="pcard-bar-fill" data-pct="' + pct + '" style="width:0%;background-color:' + tp.color + '"></div></div>' +
+        '<span class="pcard-bar-heart">\u2665</span>' +
+        '<div class="pcard-bar-pct">' + pct + '%</div>' +
+      '</div>';
+    }).join('');
+  }
 
   var mixedTitleHtml = '';
-  if (shadowType) {
+  if (!isGuest && shadowType) {
     var hybridKey = mainType + '+' + shadowType;
     var lv = 20 + Math.round(((scores[mainType] || 0) / total) * 77);
     var hybridText = (HYBRID_TITLES[hybridKey] || '[ 混血靈魂 ]').replace(' ]', ' \u2022 Lv.' + lv + ' ]');
-    mixedTitleHtml = '<div class="pcard-hybrid-title">' + escHtml(hybridText) + '</div>';
+    mixedTitleHtml = '<div class="pcard-hybrid-title">' + renderPcardMixedHtml(hybridText) + '</div>';
   }
 
-  var barsHtml = sortedTypes.map(function(k) {
-    var pct = Math.round((scores[k] / total) * 100);
-    var tp = PERSONALITY_TYPES[k];
-    return '<div class="pcard-bar-row">' +
-      '<div class="pcard-bar-label">' + escHtml(tp.factorName) + '</div>' +
-      '<div class="pcard-bar-wrap"><div class="pcard-bar-fill" data-pct="' + pct + '" style="width:0%;background-color:' + tp.color + '"></div></div>' +
-      '<span class="pcard-bar-heart">\u2665</span>' +
-      '<div class="pcard-bar-pct">' + pct + '%</div>' +
+  var tensionHtml = '';
+  if (!isGuest && isV3 && v3Meta.tension_narratives && v3Meta.tension_narratives.length) {
+    tensionHtml = '<div class="pcard-tension">' +
+      v3Meta.tension_narratives.map(function (t) {
+        return '<p class="pcard-tension__line">\u300c' + escHtml(t.copy_zh) + '\u300d</p>';
+      }).join('') +
     '</div>';
-  }).join('');
+  }
 
   // Cat image and glow maps
   var CAT_IMG_MAP = {
-    solitary: 'Solitary_Moon.png',
-    sunny:    'Sunny_Tether.png',
-    mystical: 'Mystical_Depth.png',
-    sentinel: 'Eternal_Sentinel.png'
+    solitary: '/Solitary_Moon.png',
+    sunny:    '/Sunny_Tether.png',
+    mystical: '/Mystical_Depth.png',
+    sentinel: '/Eternal_Sentinel.png'
   };
   var CAT_GLOW_MAP = {
     solitary: '#9b6fff',
@@ -2090,33 +3710,31 @@ function showMirrorResult(scores, mainType, shadowType, hiddenTags) {
 
     // Identity Core: compact meta row beneath family name
     var metaParts = [];
-    if (label)  metaParts.push('<span class="pcard-profile-val">' + escHtml(label)  + '</span>');
-    if (mbti)   metaParts.push('<span class="pcard-profile-val">' + escHtml(mbti)   + '</span>');
-    if (zodiac) metaParts.push('<span class="pcard-profile-val">' + escHtml(zodiac) + '</span>');
+    if (label)  metaParts.push('<span class="pcard-profile-val">' + renderPcardMixedHtml(label)  + '</span>');
+    if (mbti)   metaParts.push('<span class="pcard-profile-val">' + renderPcardMixedHtml(mbti)   + '</span>');
+    if (zodiac) metaParts.push('<span class="pcard-profile-val">' + renderPcardMixedHtml(zodiac) + '</span>');
     if (metaParts.length) {
       identityMetaHtml = '<div class="pcard-profile-meta">' +
-        metaParts.join('<span class="pcard-profile-dot"> · </span>') +
+        metaParts.join('<span class="pcard-profile-dot" aria-hidden="true">·</span>') +
       '</div>';
     }
 
-    // Psych Profile: hobby / music / movie tag rows
+    if (isGuest) return;
+
+    // Psych Profile: hobby / music / movie tag rows (full card only)
     var rowsHtml = '';
     [
-      { label: '喜好', items: hobbies, max: 8 },
-      { label: '音樂', items: music,   max: 6 },
-      { label: '電影', items: movies,  max: 6 }
+      { label: '喜好', items: hobbies },
+      { label: '音樂', items: music },
+      { label: '電影', items: movies },
     ].forEach(function(row) {
       if (!row.items.length) return;
       rowsHtml += '<div class="pcard-profile-row">' +
         '<span class="pcard-profile-label">' + escHtml(row.label) + '</span>' +
         '<div class="pcard-profile-tags">' +
-          row.items.slice(0, row.max).map(function(t) {
-            // Remove English suffix (e.g., "流行 Pop" -> "流行", "手作 / DIY" -> "手作")
-            // But keep tags that start with English (e.g., "R&B / Soul", "K-pop")
+          row.items.map(function(t) {
             var cleaned = t.trim();
-            // Remove " / DIY" or " / 烹飪"
             cleaned = cleaned.replace(/\s*\/\s*(DIY|烹飪)$/, '');
-            // Remove space + English word suffix (only if tag starts with Chinese)
             if (/^[\u4e00-\u9fff]/.test(cleaned)) {
               cleaned = cleaned.replace(/\s+[A-Za-z].*$/, '');
             }
@@ -2125,60 +3743,81 @@ function showMirrorResult(scores, mainType, shadowType, hiddenTags) {
         '</div></div>';
     });
     if (rowsHtml) {
-      hobbyTagsHtml = '<div style="width:100%;margin-top:8px;border-top:1px dashed rgba(189,147,249,0.15);padding-top:7px">' +
+      hobbyTagsHtml = '<div class="pcard-hobby-divider">' +
         rowsHtml +
       '</div>';
     }
   })();
 
+  const siteHost = getPublicSiteHost();
+
+  var hashtagsHtml = '<div class="pcard-tags">' +
+    p.hashtags.map(function(h) { return '<span class="pcard-tag">' + renderPcardHashtagHtml(h) + '</span>'; }).join('') +
+  '</div>';
+
+  var hiddenTagsHtml = '';
+  if (!isGuest && hiddenTags && hiddenTags.length) {
+    hiddenTagsHtml =
+      '<div style="width:100%;margin-top:8px;border-top:1px dashed rgba(255,215,0,0.2);padding-top:7px">' +
+        '<div class="pcard-hidden-label">\u25b8 \u96b1\u85cf\u8ff7\u60d1\u884c\u70ba</div>' +
+        '<div class="pcard-hidden-tags">' +
+          hiddenTags.map(function(t) {
+            return '<span class="pcard-hidden-tag">' + escHtml(t.zh) + '</span>';
+          }).join('') +
+        '</div>' +
+      '</div>';
+  }
+
+  var psychSectionHtml = isGuest
+    ? '<div class="pcard-section pcard-section--panel">' + hashtagsHtml + '</div>'
+    : '<div class="pcard-section pcard-section--panel">' + hashtagsHtml + hiddenTagsHtml + hobbyTagsHtml + '</div>';
+
+  var narrative = resolveMirrorNarrative(mainType, shadowType, v3Meta, isGuest);
+  var familyWorldview = joinMirrorText(narrative.worldview);
+  var familyNameHtml = renderFamilyNameRevealHtml(p.nameZh, familyWorldview);
+  var narrativeHtml = renderMirrorNarrativeHtml(narrative, mainType, !isGuest);
+
+  var emotionalSectionHtml = isGuest
+    ? '<div class="pcard-section">' + narrativeHtml + '</div>'
+    : '<div class="pcard-section">' +
+        narrativeHtml +
+        tensionHtml +
+        '<div class="pcard-ingredients-label' + (isV3 ? ' pcard-ingredients-label--trait' : '') + '">' + (isV3 ? '需求光譜' : '// 靈魂成分') + '</div>' +
+        '<div class="pcard-bars">' + barsHtml + '</div>' +
+      '</div>';
+
+  var ctaHtml = isGuest ? '' :
+    '<div class="pcard-cta">' +
+      '<div class="pcard-cta-text">\u6e2c\u6e2c\u4f60\u662f\u54ea\u96bb\u8c93 \u27a1\ufe0f</div>' +
+      '<div class="pcard-cta-url">' + escHtml(siteHost) + '</div>' +
+    '</div>';
+
   const pcard = document.getElementById('personality-card');
+  pcard.className = isGuest ? 'mirror-simple-card' : '';
   pcard.innerHTML =
-    // ── Header ──────────────────────────────────────────────────────────────
     '<div class="pcard-header">' +
-      '<div class="pcard-brand">\ud83d\udc08\u200d\u2b1b BLACK CAT<br>UNDER THE MOON</div>' +
+      '<div class="pcard-brand">BLACK CAT<br>UNDER THE MOON</div>' +
     '</div>' +
     '<div class="pcard-divider"></div>' +
-    '<div class="pcard-mode-badge">\u9748\u9b42\u93e1\u50cf \xb7 MIRROR MODE</div>' +
-    // ── Layer 1: Identity Core ───────────────────────────────────────────────
+    '<div class="pcard-mode-badge"><span class="pcard-zh">\u9748\u9b42\u93e1\u50cf</span><span class="pcard-en"> \xb7 MIRROR MODE</span></div>' +
     '<div class="pcard-section">' +
-      '<div class="pcard-avatar-wrap"><img class="pcard-cat-img" src="' + catImgSrc + '" alt="' + mainType + '" style="box-shadow:0 0 30px ' + catGlowCol + '99,0 0 10px ' + catGlowCol + '44;border:2px solid ' + catGlowCol + '55"></div>' +
+      '<div class="pcard-avatar-wrap"><img class="pcard-cat-img" src="' + catImgSrc + '" alt="' + mainType + '" crossorigin="anonymous" referrerpolicy="no-referrer" decoding="async"></div>' +
       mixedTitleHtml +
-      '<div class="pcard-family-name">' + escHtml(p.nameZh) + '</div>' +
+      familyNameHtml +
       '<div class="pcard-family-en">' + escHtml(p.nameEn) + '</div>' +
       identityMetaHtml +
     '</div>' +
-    // ── Layer 2: Psych Profile ───────────────────────────────────────────────
-    '<div class="pcard-section">' +
-      '<div class="pcard-tags">' + p.hashtags.map(function(h) { return '<span class="pcard-tag">' + escHtml(h) + '</span>'; }).join('') + '</div>' +
-      (hiddenTags && hiddenTags.length ? (
-        '<div style="width:100%;margin-top:8px;border-top:1px dashed rgba(255,215,0,0.2);padding-top:7px">' +
-          '<div class="pcard-hidden-label">\u25b8 \u96b1\u85cf\u8ff7\u60d1\u884c\u70ba</div>' +
-          '<div class="pcard-hidden-tags">' +
-            hiddenTags.map(function(t) {
-              return '<span class="pcard-hidden-tag">' + escHtml(t.zh) + '</span>';
-            }).join('') +
-          '</div>' +
-        '</div>'
-      ) : '') +
-      hobbyTagsHtml +
-    '</div>' +
-    // ── Layer 3: Emotional Layer ─────────────────────────────────────────────
-    '<div class="pcard-section">' +
-      '<div class="pcard-family-desc">\u300c' + escHtml(p.desc) + '\u300d</div>' +
-      '<div class="pcard-warning" style="margin-top:6px">\u9ed1\u8c93\u70b8\u6bdb\u9810\u8b66\uff1a' + escHtml(p.warning) + '</div>' +
-      '<div class="pcard-ingredients-label">// 靈魂成分</div>' +
-      '<div class="pcard-bars">' + barsHtml + '</div>' +
-    '</div>' +
-    // ── CTA ─────────────────────────────────────────────────────────────────
-    '<div class="pcard-cta">' +
-      '<div class="pcard-cta-text">\u6e2c\u6e2c\u4f60\u662f\u54ea\u96bb\u8c93 \u27a1\ufe0f</div>' +
-      '<div class="pcard-cta-url">black-cat-under-the-moon.vercel.app</div>' +
-    '</div>';
+    emotionalSectionHtml +
+    psychSectionHtml +
+    ctaHtml;
 
   // Apply type-specific colour theme to the whole card
   pcard.style.setProperty('--type-col', catGlowCol);
+  initFamilyNameReveal(pcard);
+  initTraitSpectrumInteractivity(pcard);
 
   document.getElementById('mirror-result').classList.add('active');
+  suppressHomeConfirm = true;
 
   // Inject background twinkling stars
   injectCardStars();
@@ -2198,21 +3837,66 @@ function showMirrorResult(scores, mainType, shadowType, hiddenTags) {
   }, 120);
 
   document.getElementById('mirror-download-btn').onclick = downloadPersonalityCard;
-  document.getElementById('mirror-retry-btn').onclick = function() {
-    document.getElementById('mirror-result').classList.remove('active');
-    answers = {};
-    activeQuestions = MIRROR_QUESTIONS;
-    activeTotal = MIRROR_QUESTIONS.length;
-    currentIdx = 0;
-    lastPart = 0;
-    $progressWrap.style.display = 'block';
-    $header.style.display = 'block';
-    $main.style.display = 'block';
-    showQuestion(0);
-  };
+  preloadMirrorCaptureEngine();
+  var retryBtn = document.getElementById('mirror-retry-btn');
+  if (retryBtn) retryBtn.onclick = goBackToHome;
+
+  setMirrorGuestUpsellVisible(isGuest);
+
+  if (isGuest) {
+    persistPendingMirrorResult(scores, mainType, shadowType, v3Meta);
+  } else {
+    clearPendingMirrorResult();
+  }
+
+  // ── Auto-save Mirror Card for logged-in users ────────────────────────────
+  if (!skipAutoSave && !isGuest) {
+    tryAutoSaveMirrorCard(scores, mainType, shadowType, answers, v3Meta);
+  }
+
+  trackPostHog('mirror_completed', {
+    mirror_type: mainType,
+    shadow_type: shadowType || null,
+    scoring_version: isV3 ? 'v3_trait' : 'legacy',
+    guest: isGuest,
+  });
 }
 
-function drawPixelCatOnCanvas(type, canvasId, shadowType) {
+/**
+ * If the user has an active Supabase session (stored in localStorage by @supabase/supabase-js v2),
+ * save the Mirror Mode result to their Mirror Card via PATCH /api/mirror-card/me.
+ * Fires silently — does not block the result UI.
+ */
+function tryAutoSaveMirrorCard(scores, mainType, shadowType, answers, v3Meta) {
+  ensureSupabaseAuthToken().then(function (token) {
+    if (!token) return;
+    return saveMirrorCardToAccount(token, scores, mainType, shadowType, answers, v3Meta);
+  }).then(function (data) {
+        if (data && data.card) {
+          trackPostHog('mirror_card_saved', {
+            mirror_type: data.card.mirror_type || mainType,
+            has_public_slug: Boolean(data.card.public_slug),
+          });
+          // Show a subtle save confirmation inside the result card
+          var slug = data.card.public_slug;
+          var banner = document.createElement('div');
+          banner.id = 'mirror-save-banner';
+          banner.style.cssText = [
+            'margin:16px 0 0;padding:10px 14px;border-radius:8px;',
+            'background:rgba(124,92,252,0.15);border:1px solid rgba(124,92,252,0.35);',
+            'font-size:13px;color:#c4b5fd;text-align:center;line-height:1.6;',
+          ].join('');
+          banner.innerHTML = '✨ 已儲存到你的 Mirror Card！' +
+            (slug ? ' <a href="/mirror-card/' + slug + '" style="color:#a78bfa;text-decoration:underline;">查看公開卡</a> · ' +
+                    '<a href="/mirror-card/me" style="color:#a78bfa;text-decoration:underline;">我的 Mirror Card</a>' : '');
+          var pcard = document.querySelector('.pcard');
+          if (pcard) pcard.appendChild(banner);
+        }
+      })
+      .catch(function () { /* silent — save failure doesn't break the result */ });
+}
+
+function drawSpriteCat(type, canvasId, shadowType) {
   var canvas = document.getElementById(canvasId);
   if (!canvas) return;
   var ctx = canvas.getContext('2d');
@@ -2341,13 +4025,453 @@ function hexToRgb(hex) {
   } : { r: 189, g: 147, b: 249 }; // fallback to purple
 }
 
-// ===================== DOWNLOAD PERSONALITY CARD =====================
-async function downloadPersonalityCard() {
+function rgbaFromRgb(rgb, alpha) {
+  return 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',' + alpha + ')';
+}
+
+function readCssVarColor(el, name, fallback) {
+  var raw = (el.style.getPropertyValue(name) || '').trim();
+  if (raw) return raw;
+  try {
+    raw = getComputedStyle(el).getPropertyValue(name).trim();
+  } catch (e) { /* ignore */ }
+  return raw || fallback;
+}
+
+function applyTraitSpectrumExportFallbacks(root, typeRgb) {
+  var typeColor = typeRgb || { r: 189, g: 147, b: 249 };
+  root.querySelectorAll('.pcard-trait-spectrum').forEach(function (el) {
+    el.style.background = 'transparent';
+    el.style.backgroundImage = 'none';
+    el.style.borderColor = 'transparent';
+    el.style.boxShadow = 'none';
+  });
+  root.querySelectorAll('.pcard-trait-spectrum__track').forEach(function (el) {
+    el.style.background = 'rgba(0,0,0,0.38)';
+    el.style.boxShadow = 'inset 0 0 0 1px rgba(255,224,102,0.12)';
+  });
+  root.querySelectorAll('.pcard-trait-spectrum__seg').forEach(function (el) {
+    var color = el.style.backgroundColor || readCssVarColor(el, '--trait-color', '#6b52a8');
+    var glow = readCssVarColor(el, '--trait-glow', color);
+    var glowRgb = hexToRgb(glow);
+    el.style.background = color;
+    el.style.backgroundColor = color;
+    el.style.backgroundImage = 'none';
+    el.style.filter = 'none';
+    el.style.animation = 'none';
+    el.style.boxShadow = '0 0 5px ' + rgbaFromRgb(glowRgb, 0.38);
+  });
+  root.querySelectorAll('.pcard-trait-spectrum__dot').forEach(function (el) {
+    var item = el.closest('.pcard-trait-spectrum__item');
+    var color = item ? readCssVarColor(item, '--trait-color', '#6b52a8') : '#6b52a8';
+    el.style.background = color;
+    el.style.boxShadow = 'none';
+  });
+  root.querySelectorAll('.pcard-trait-spectrum__pct').forEach(function (el) {
+    var item = el.closest('.pcard-trait-spectrum__item');
+    var glow = item ? readCssVarColor(item, '--trait-glow', '#bd93f9') : '#bd93f9';
+    var glowRgb = hexToRgb(glow);
+    el.style.color = rgbaFromRgb(glowRgb, 0.92);
+    el.style.textShadow = 'none';
+  });
+}
+
+async function imageElementToDataUrl(img) {
+  if (!img || !img.src) return null;
+  if (img.src.indexOf('data:') === 0) return img.src;
+
+  function blobToDataUrl(blob) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function () { resolve(reader.result); };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  try {
+    var imgUrl = new URL(img.src, location.href);
+    if (imgUrl.protocol === 'http:' || imgUrl.protocol === 'https:') {
+      var res = await fetch(imgUrl.href, { mode: 'cors', credentials: 'omit', cache: 'force-cache' });
+      if (res.ok) return await blobToDataUrl(await res.blob());
+    }
+  } catch (fetchErr) {
+    /* fall through to canvas */
+  }
+
+  if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+    try {
+      var tmpC = document.createElement('canvas');
+      tmpC.width = img.naturalWidth;
+      tmpC.height = img.naturalHeight;
+      tmpC.getContext('2d').drawImage(img, 0, 0);
+      return tmpC.toDataURL('image/png');
+    } catch (canvasErr) {
+      /* fall through */
+    }
+  }
+
+  try {
+    var fallbackRes = await fetch(img.src, { mode: 'cors', credentials: 'omit', cache: 'force-cache' });
+    if (!fallbackRes.ok) throw new Error('IMAGE_FETCH_' + fallbackRes.status);
+    return await blobToDataUrl(await fallbackRes.blob());
+  } catch (fetchErr) {
+    console.warn('Card export image fallback failed:', img.src, fetchErr);
+    return null;
+  }
+}
+
+function buildPcardExportStyle(rgb) {
+  var r = rgbaFromRgb.bind(null, rgb);
+  var root = '[data-export="1"]';
+  return (
+    root + '{' +
+      'animation:none!important;' +
+      'border:2px solid rgba(255,224,102,0.72)!important;' +
+      'box-shadow:none!important;' +
+      'outline:none!important;' +
+      'background:#0b0a18!important;' +
+    '}' +
+    root + '::before,' + root + '::after{display:none!important;content:none!important;}' +
+    root + ' *,' + root + ' *::before,' + root + ' *::after{animation:none!important;transition:none!important;}' +
+    root + ' .pcard-trait-spectrum__track::after{display:none!important;content:none!important;}' +
+    root + ' .pcard-trait-spectrum__seg::after{display:none!important;content:none!important;}' +
+    root + ' .pcard-trait-spectrum__seg,' + root + ' .pcard-trait-spectrum__dot{filter:none!important;background-image:none!important;}' +
+    root + ' .pcard-trait-spectrum,' + root + ' .pcard-trait-spectrum__track{background-image:none!important;}' +
+    root + ' .pcard-rivet{box-shadow:none!important;}' +
+    root + ' .pcard-cat-img{border-color:' + r(0.34) + '!important;box-shadow:0 0 12px ' + r(0.38) + ',0 0 4px ' + r(0.20) + '!important;}' +
+    root + ' .pcard-section{border-color:' + r(0.22) + '!important;}' +
+    root + ' .pcard-tag{border-color:' + r(0.50) + '!important;background:' + r(0.08) + '!important;color:' + r(1) + '!important;}' +
+    root + ' .pcard-profile-tag{border-color:' + r(0.35) + '!important;background:' + r(0.07) + '!important;}' +
+    root + ' .pcard-owner-name{border-color:' + r(0.45) + '!important;background:' + r(0.10) + '!important;box-shadow:inset 0 1px 0 rgba(255,255,255,0.05),0 0 12px ' + r(0.18) + '!important;text-shadow:0 0 10px ' + r(0.55) + '!important;}'
+  );
+}
+
+var EXPORT_INLINE_PROPS = [
+  'display', 'position', 'box-sizing', 'overflow', 'overflow-x', 'overflow-y',
+  'top', 'left', 'right', 'bottom', 'z-index',
+  'width', 'height', 'min-width', 'max-width', 'min-height', 'max-height',
+  'margin', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
+  'padding', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
+  'border', 'border-top', 'border-right', 'border-bottom', 'border-left',
+  'border-width', 'border-style', 'border-color', 'border-radius',
+  'background', 'background-color', 'background-image', 'background-size', 'background-position',
+  'color', 'font-family', 'font-size', 'font-weight', 'font-style',
+  'line-height', 'letter-spacing', 'text-align', 'text-decoration', 'text-shadow',
+  'white-space', 'word-break', 'flex', 'flex-grow', 'flex-shrink', 'flex-basis',
+  'flex-direction', 'flex-wrap', 'align-items', 'align-self', 'justify-content', 'gap',
+  'grid-template-columns', 'grid-template-rows', 'grid-column', 'grid-row',
+  'opacity', 'vertical-align', 'list-style', 'object-fit'
+];
+
+function isUnsafeCssValue(val) {
+  if (!val || val === 'none' || val === 'normal' || val === 'auto') return false;
+  return /color-mix\(|oklch\(|oklab\(|lch\(|lab\(/i.test(val);
+}
+
+function isUnsafeBackgroundValue(val) {
+  if (!val || val === 'none') return false;
+  return isUnsafeCssValue(val) || /gradient\(/i.test(val);
+}
+
+function inlineExportStyles(sourceEl, cloneEl) {
+  if (!sourceEl || !cloneEl) return;
+  var cs = window.getComputedStyle(sourceEl);
+  EXPORT_INLINE_PROPS.forEach(function (prop) {
+    var val = cs.getPropertyValue(prop);
+    if (!val) return;
+    if (prop === 'background-image' && (val.indexOf('gradient') >= 0 || isUnsafeCssValue(val))) {
+      cloneEl.style.setProperty(prop, 'none');
+      return;
+    }
+    if (prop === 'background' && isUnsafeBackgroundValue(val)) return;
+    if (isUnsafeCssValue(val)) return;
+    try {
+      cloneEl.style.setProperty(prop, val, cs.getPropertyPriority(prop));
+    } catch (e) { /* ignore */ }
+  });
+  cloneEl.style.filter = 'none';
+  cloneEl.style.animation = 'none';
+  cloneEl.style.transition = 'none';
+
+  var srcKids = sourceEl.children;
+  var cloneKids = cloneEl.children;
+  for (var i = 0; i < srcKids.length; i += 1) {
+    inlineExportStyles(srcKids[i], cloneKids[i]);
+  }
+}
+
+function suspendExportStyles() {
+  var states = [];
+  document.querySelectorAll('link[rel="stylesheet"]').forEach(function (link) {
+    states.push({ node: link, kind: 'link', disabled: link.disabled });
+    link.disabled = true;
+  });
+  document.querySelectorAll('style').forEach(function (style) {
+    if (style.getAttribute('data-export-style')) return;
+    states.push({ node: style, kind: 'style', media: style.media || '' });
+    style.media = 'not all';
+  });
+  return states;
+}
+
+function restoreExportStyles(states) {
+  (states || []).forEach(function (s) {
+    if (s.kind === 'link') s.node.disabled = s.disabled;
+    else s.node.media = s.media;
+  });
+}
+
+function dataUrlToBlob(dataUrl) {
+  var parts = dataUrl.split(',');
+  var mimeMatch = parts[0].match(/:(.*?);/);
+  var mime = mimeMatch ? mimeMatch[1] : 'image/png';
+  var bin = atob(parts[1]);
+  var arr = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i += 1) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], { type: mime });
+}
+
+function applyPcardExportFallbacks(clone, rgb) {
+  applyTraitSpectrumExportFallbacks(clone, rgb);
+  clone.querySelectorAll('.pcard-cat-img').forEach(function(el) {
+    el.style.borderColor = rgbaFromRgb(rgb, 0.34);
+    el.style.boxShadow = '0 0 12px ' + rgbaFromRgb(rgb, 0.38) + ', 0 0 4px ' + rgbaFromRgb(rgb, 0.20);
+  });
+  clone.querySelectorAll('.pcard-section').forEach(function(el) {
+    el.style.background = 'rgba(255,255,255,0.02)';
+    el.style.backgroundImage = 'none';
+    el.style.borderColor = rgbaFromRgb(rgb, 0.22);
+  });
+  clone.querySelectorAll('.pcard-divider').forEach(function(el) {
+    el.style.backgroundImage = 'none';
+    el.style.background = 'rgba(255,224,102,0.30)';
+  });
+  clone.querySelectorAll('.pcard-tag').forEach(function(el) {
+    el.style.borderColor = rgbaFromRgb(rgb, 0.50);
+    el.style.background = rgbaFromRgb(rgb, 0.08);
+    el.style.color = rgbaFromRgb(rgb, 1);
+  });
+  clone.querySelectorAll('.pcard-profile-tag').forEach(function(el) {
+    el.style.borderColor = rgbaFromRgb(rgb, 0.35);
+    el.style.background = rgbaFromRgb(rgb, 0.07);
+  });
+  clone.querySelectorAll('.pcard-bar-fill').forEach(function(el) {
+    var pct = parseFloat(el.dataset.pct || '0');
+    if (!isFinite(pct) || pct < 0) pct = 0;
+    if (pct > 100) pct = 100;
+    el.style.transition = 'none';
+    el.style.animation = 'none';
+    el.style.width = pct + '%';
+    el.style.backgroundImage = 'none';
+    el.style.backgroundColor = el.style.backgroundColor || 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.95)';
+  });
+  clone.querySelectorAll('.pcard-berserk-terminal').forEach(function(el) {
+    el.style.background = 'rgba(32, 10, 16, 0.98)';
+    el.style.backgroundImage = 'none';
+    el.style.borderLeftColor = '#ff6b82';
+    el.style.boxShadow = 'inset 0 0 20px rgba(255, 60, 80, 0.1)';
+  });
+  clone.querySelectorAll('.pcard-berserk-terminal__scan').forEach(function(el) {
+    el.style.display = 'none';
+  });
+  clone.querySelectorAll('.pcard-moon-verdict, .pcard-hero-block, .pcard-mirror-divider-section, .pcard-narrative-block--whisper').forEach(function(el) {
+    el.style.backgroundImage = 'none';
+  });
+}
+
+function getPcardExportPixelRatio(cardWidth) {
+  // Aim for ~1200px export width (360px card → 4×); cap to avoid canvas OOM on mobile.
+  var TARGET_EXPORT_WIDTH = 1200;
+  var MIN_RATIO = 3;
+  var MAX_RATIO = 4;
+  var w = Math.max(1, Math.round(cardWidth || 360));
+  return Math.max(MIN_RATIO, Math.min(MAX_RATIO, Math.ceil(TARGET_EXPORT_WIDTH / w)));
+}
+
+async function capturePcardWithHtmlToImage(node, w, h) {
+  if (typeof htmlToImage === 'undefined' || !htmlToImage.toBlob) return null;
+  var pixelRatio = getPcardExportPixelRatio(w);
+  return await htmlToImage.toBlob(node, {
+    cacheBust: true,
+    pixelRatio: pixelRatio,
+    backgroundColor: '#07060e',
+    width: w,
+    height: h,
+    skipAutoScale: true,
+    style: { transform: 'none', margin: '0' }
+  });
+}
+
+async function capturePcardWithHtml2Canvas(node, orig, w, h) {
+  inlineExportStyles(orig, node);
+  applyPcardExportFallbacks(node, hexToRgb(
+    getComputedStyle(node).getPropertyValue('--type-col').trim() || '#bd93f9'
+  ));
+
+  var suspendedStyles = suspendExportStyles();
+  await new Promise(function(r) { setTimeout(r, 50); });
+
+  var captureScale = getPcardExportPixelRatio(w);
+  var captureOpts = {
+    backgroundColor: '#07060e',
+    scale: captureScale,
+    width: w,
+    height: h,
+    useCORS: true,
+    logging: false,
+    allowTaint: false,
+    foreignObjectRendering: false,
+    imageTimeout: 15000,
+    onclone: function (doc) {
+      var exportNode = doc.querySelector('[data-export="1"]');
+      if (exportNode) exportNode.style.filter = 'none';
+    }
+  };
+
+  try {
+    try {
+      return await html2canvas(node, captureOpts);
+    } catch (firstErr) {
+      console.warn('html2canvas retry:', firstErr);
+      captureOpts.scale = Math.max(2, Math.floor(captureScale / 2));
+      try {
+        return await html2canvas(node, captureOpts);
+      } catch (secondErr) {
+        console.warn('html2canvas retry (scale 1):', secondErr);
+        captureOpts.scale = 1;
+        return await html2canvas(node, captureOpts);
+      }
+    }
+  } finally {
+    restoreExportStyles(suspendedStyles);
+  }
+}
+
+async function capturePcardToBlob(orig, clone, w, h, rgb) {
+  applyPcardExportFallbacks(clone, rgb);
+
+  try {
+    var htiBlob = await capturePcardWithHtmlToImage(clone, w, h);
+    if (htiBlob) return htiBlob;
+  } catch (htiErr) {
+    console.warn('html-to-image failed:', htiErr);
+  }
+
   if (typeof html2canvas === 'undefined') {
+    throw new Error('EXPORT_NO_CAPTURE_ENGINE');
+  }
+
+  var canvas = await capturePcardWithHtml2Canvas(clone, orig, w, h);
+  return await canvasToPngBlob(canvas);
+}
+
+function canvasToPngBlob(canvas) {
+  return new Promise(function (resolve, reject) {
+    function fromDataUrl() {
+      try {
+        resolve(dataUrlToBlob(canvas.toDataURL('image/png')));
+      } catch (err) {
+        reject(err);
+      }
+    }
+    try {
+      if (!canvas.toBlob) {
+        fromDataUrl();
+        return;
+      }
+      canvas.toBlob(function (blob) {
+        if (blob) resolve(blob);
+        else fromDataUrl();
+      }, 'image/png');
+    } catch (err) {
+      if (err && (err.name === 'SecurityError' || /tainted canvases/i.test(String(err.message || '')))) {
+        reject(new Error('EXPORT_TAINTED_CANVAS'));
+        return;
+      }
+      reject(err);
+    }
+  });
+}
+
+// ===================== DOWNLOAD PERSONALITY CARD =====================
+var mirrorCaptureEnginePromise = null;
+var MIRROR_CAPTURE_SCRIPT_HTMI = '/js/vendor/html-to-image.min.js';
+var MIRROR_CAPTURE_SCRIPT_H2C = '/js/vendor/html2canvas.min.js';
+
+function mirrorCaptureEngineReady() {
+  return (typeof htmlToImage !== 'undefined' && htmlToImage.toBlob) ||
+    typeof html2canvas !== 'undefined';
+}
+
+function loadMirrorCaptureScript(src) {
+  return new Promise(function(resolve, reject) {
+    var sel = 'script[data-mirror-capture-src="' + src + '"]';
+    var existing = document.querySelector(sel);
+    if (existing) {
+      if (existing.getAttribute('data-loaded') === '1') return resolve();
+      existing.addEventListener('load', function() { resolve(); }, { once: true });
+      existing.addEventListener('error', function() { reject(new Error('LOAD_FAILED:' + src)); }, { once: true });
+      return;
+    }
+    var s = document.createElement('script');
+    s.src = src;
+    s.async = true;
+    s.setAttribute('data-mirror-capture-src', src);
+    s.onload = function() {
+      s.setAttribute('data-loaded', '1');
+      resolve();
+    };
+    s.onerror = function() { reject(new Error('LOAD_FAILED:' + src)); };
+    document.head.appendChild(s);
+  });
+}
+
+function ensureMirrorCaptureEngine() {
+  if (mirrorCaptureEngineReady()) return Promise.resolve();
+  if (!mirrorCaptureEnginePromise) {
+    mirrorCaptureEnginePromise = loadMirrorCaptureScript(MIRROR_CAPTURE_SCRIPT_HTMI)
+      .catch(function(err) { console.warn('html-to-image load failed:', err); })
+      .then(function() {
+        if (mirrorCaptureEngineReady()) return;
+        return loadMirrorCaptureScript(MIRROR_CAPTURE_SCRIPT_H2C);
+      })
+      .then(function() {
+        if (!mirrorCaptureEngineReady()) throw new Error('EXPORT_NO_CAPTURE_ENGINE');
+      })
+      .catch(function(err) {
+        mirrorCaptureEnginePromise = null;
+        throw err;
+      });
+  }
+  return mirrorCaptureEnginePromise;
+}
+
+function preloadMirrorCaptureEngine() {
+  ensureMirrorCaptureEngine().catch(function(err) {
+    console.warn('Mirror capture preload failed:', err);
+  });
+}
+
+// ===================== MIRROR DOWNLOAD BUTTON =====================
+var MIRROR_DOWNLOAD_BTN_IDLE_HTML =
+  '<span class="mirror-download-btn__label">下載性格卡片</span>' +
+  '<span class="mirror-download-btn__icon" aria-hidden="true">↓</span>';
+
+function setMirrorDownloadBtnIdle(btn) {
+  if (!btn) return;
+  btn.innerHTML = MIRROR_DOWNLOAD_BTN_IDLE_HTML;
+  btn.disabled = false;
+}
+
+async function downloadPersonalityCard() {
+  const btn = document.getElementById('mirror-download-btn');
+  try {
+    await ensureMirrorCaptureEngine();
+  } catch (e) {
     alert('下載功能未能載入，請重新整理頁面後再試。');
     return;
   }
-  const btn = document.getElementById('mirror-download-btn');
   btn.textContent = '生成中...';
   btn.disabled = true;
   var clone = null;
@@ -2387,25 +4511,21 @@ async function downloadPersonalityCard() {
     var origImgList = Array.from(orig.querySelectorAll('img'));
     for (var ii = 0; ii < origImgList.length; ii++) {
       var srcImg = origImgList[ii];
-      if (srcImg.naturalWidth > 0 && srcImg.naturalHeight > 0) {
-        try {
-          var tmpC = document.createElement('canvas');
-          tmpC.width = srcImg.naturalWidth;
-          tmpC.height = srcImg.naturalHeight;
-          tmpC.getContext('2d').drawImage(srcImg, 0, 0);
-          imgDataUrlMap.set(srcImg.src, tmpC.toDataURL('image/png'));
-        } catch(imgErr) {
-          // already tainted — keep original src
-          imgDataUrlMap.set(srcImg.src, srcImg.src);
-        }
-      }
+      var dataUrl = await imageElementToDataUrl(srcImg);
+      if (dataUrl) imgDataUrlMap.set(srcImg.src, dataUrl);
     }
 
     clone = orig.cloneNode(true);
-    const w = orig.offsetWidth;
-    const h = orig.offsetHeight;
+    clone.id = 'personality-card';
+    const rect = orig.getBoundingClientRect();
+    const w = Math.round(rect.width);
+    const h = Math.round(rect.height);
     clone.setAttribute('data-export', '1');
-    clone.style.cssText = 'position:absolute;left:-9999px;top:0;width:' + w + 'px;height:' + h + 'px;z-index:-1;';
+    clone.style.cssText =
+      'position:fixed;left:0;top:0;transform:translate(-200%,-200%);' +
+      'width:' + w + 'px;height:' + h + 'px;z-index:-1;' +
+      'border:2px solid rgba(255,224,102,0.72);' +
+      'box-shadow:none;outline:none;';
     document.body.appendChild(clone);
 
     // Set type color variable directly on clone root so CSS vars resolve correctly
@@ -2415,59 +4535,21 @@ async function downloadPersonalityCard() {
     // Disables animated pseudo-elements and glows that html2canvas captures incorrectly.
     var exportStyle = document.createElement('style');
     exportStyle.setAttribute('data-export-style', '1');
-    exportStyle.textContent =
-      '#personality-card[data-export] { animation: none !important; box-shadow: 0 0 0 1px rgba(255,224,102,0.12) !important; }' +
-      '#personality-card[data-export]::before, #personality-card[data-export]::after { display: none !important; content: none !important; }' +
-      '#personality-card[data-export] *,#personality-card[data-export] *::before,#personality-card[data-export] *::after { animation: none !important; transition: none !important; }';
+    exportStyle.textContent = buildPcardExportStyle(rgb);
     document.head.appendChild(exportStyle);
 
     // Replace clone img srcs with data URLs — avoids any CORS/taint issue on file://
     clone.querySelectorAll('img').forEach(function(img) {
       var dataUrl = imgDataUrlMap.get(img.src);
-      if (dataUrl) img.src = dataUrl;
+      if (dataUrl) {
+        img.src = dataUrl;
+      } else {
+        img.style.visibility = 'hidden';
+      }
       img.removeAttribute('crossorigin');
       img.removeAttribute('referrerpolicy');
     });
 
-    // Inline-disable grid pattern backgrounds on sections only (not the card itself)
-    clone.querySelectorAll('.pcard-section').forEach(function(el) {
-      el.style.background = 'rgba(255,255,255,0.02)';
-      el.style.backgroundImage = 'none';
-    });
-    clone.querySelectorAll('.pcard-divider').forEach(function(el) {
-      el.style.backgroundImage = 'none';
-      el.style.background = 'rgba(255,224,102,0.30)';
-    });
-    
-    // .pcard-section border: color-mix(22%)
-    clone.querySelectorAll('.pcard-section').forEach(function(el) {
-      el.style.borderColor = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.22)';
-    });
-    
-    // .pcard-tag border: color-mix(50%), background: color-mix(8%)
-    clone.querySelectorAll('.pcard-tag').forEach(function(el) {
-      el.style.borderColor = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.50)';
-      el.style.background = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.08)';
-    });
-    
-    // .pcard-profile-tag border: color-mix(35%), background: color-mix(7%)
-    clone.querySelectorAll('.pcard-profile-tag').forEach(function(el) {
-      el.style.borderColor = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.35)';
-      el.style.background = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.07)';
-    });
-
-    // Export-only safety: avoid pattern rendering on 0-width bars in html2canvas
-    clone.querySelectorAll('.pcard-bar-fill').forEach(function(el) {
-      var pct = parseFloat(el.dataset.pct || '0');
-      if (!isFinite(pct) || pct < 0) pct = 0;
-      if (pct > 100) pct = 100;
-      el.style.transition = 'none';
-      el.style.animation = 'none';
-      el.style.width = pct + '%';
-      el.style.backgroundImage = 'none';
-      el.style.backgroundColor = el.style.backgroundColor || 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.95)';
-    });
-    
     // Remove background stars from the download version
     clone.querySelectorAll('.pcard-star').forEach(function(s) {
       s.remove();
@@ -2493,43 +4575,7 @@ async function downloadPersonalityCard() {
     // ⚠️ 等待一小段時間讓 clone 完全渲染
     await new Promise(function(r) { setTimeout(r, 200); });
 
-    var initialScale = Math.min(1.5, (window.devicePixelRatio || 1));
-    var captureOpts = {
-      backgroundColor: '#07060e',
-      scale: initialScale,
-      useCORS: true,
-      logging: false,
-      allowTaint: true,
-      foreignObjectRendering: false,
-      imageTimeout: 8000
-    };
-
-    var canvas;
-    try {
-      canvas = await html2canvas(clone, captureOpts);
-    } catch (firstErr) {
-      // Retry once with a lighter scale if browser/canvas pipeline is unstable
-      captureOpts.scale = 1;
-      canvas = await html2canvas(clone, captureOpts);
-    }
-
-    var blob = await new Promise(function(resolve, reject) {
-      try {
-        canvas.toBlob(function(b) {
-          if (!b) {
-            reject(new Error('EXPORT_BLOB_EMPTY'));
-            return;
-          }
-          resolve(b);
-        }, 'image/png');
-      } catch (exportErr) {
-        if (exportErr && (exportErr.name === 'SecurityError' || /tainted canvases/i.test(String(exportErr.message || '')))) {
-          reject(new Error('EXPORT_TAINTED_CANVAS'));
-          return;
-        }
-        reject(exportErr);
-      }
-    });
+    var blob = await capturePcardToBlob(orig, clone, w, h, rgb);
 
     var objectUrl = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -2541,7 +4587,9 @@ async function downloadPersonalityCard() {
     setTimeout(function() { URL.revokeObjectURL(objectUrl); }, 1000);
   } catch (e) {
     console.error('Card download failed:', e);
-    if (e && e.message === 'EXPORT_TAINTED_CANVAS') {
+    if (e && e.message === 'EXPORT_NO_CAPTURE_ENGINE') {
+      alert('下載功能未能載入，請重新整理頁面後再試。');
+    } else if (e && e.message === 'EXPORT_TAINTED_CANVAS') {
       alert('\u4e0b\u8f09\u5931\u6557\uff1a\u5716\u50cf\u8cc7\u6e90\u8de8\u7db2\u57df\u5c0e\u81f4\u7121\u6cd5\u532f\u51fa\u3002\n\u8acb\u6539\u7528 http://localhost \u958b\u555f\u9801\u9762\uff08\u4e0d\u8981\u76f4\u63a5 file:// \u57f7\u884c\uff09\u5f8c\u518d\u8a66\u3002');
     } else if (location.protocol === 'file:') {
       alert('\u4e0b\u8f09\u5931\u6557\uff1afile:// \u76f4\u958b\u5bb9\u6613\u89f8\u767c\u700f\u89bd\u5668\u5b89\u5168\u9650\u5236\u8207\u8a18\u61b6\u9ad4\u554f\u984c\u3002\n\u8acb\u6539\u7528 http://localhost \u958b\u555f index.html \u5f8c\u518d\u8a66\u3002');
@@ -2561,8 +4609,7 @@ async function downloadPersonalityCard() {
     if (exportStyle && exportStyle.parentNode) {
       exportStyle.parentNode.removeChild(exportStyle);
     }
-    btn.textContent = '下載性格卡片 ↓';
-    btn.disabled = false;
+    setMirrorDownloadBtnIdle(btn);
   }
 }
 

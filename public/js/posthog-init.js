@@ -1,0 +1,52 @@
+/**
+ * Site-wide PostHog bootstrap (static HTML + Next.js via _app.js).
+ */
+(function initPostHog(global) {
+  if (global.__BCUTM_POSTHOG_BOOTED) return;
+  global.__BCUTM_POSTHOG_BOOTED = true;
+
+  function capturePageview(surface) {
+    if (!global.posthog || typeof global.posthog.capture !== 'function') return;
+    global.posthog.capture('$pageview', {
+      $current_url: global.location.href,
+      path: global.location.pathname,
+      surface: surface || 'static',
+    });
+  }
+
+  function boot(cfg) {
+    if (!cfg || !cfg.enabled || !cfg.key) return;
+
+    /* Safe script insertion — stock snippet crashes when script[0] or parentNode is missing. */
+    !function(t,e){var o,n,p,r;e.__SV||(window.posthog&&window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0])&&r.parentNode?r.parentNode.insertBefore(p,r):(t.head||t.documentElement).appendChild(p);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="Mi Ri init Vi Gi Rr Wi Ji Bi capture calculateEventProperties tn register register_once register_for_session unregister unregister_for_session an getFeatureFlag getFeatureFlagPayload getFeatureFlagResult isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync un identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty nn Xi createPersonProfile setInternalOrTestUser sn Hi cn opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing Ki debug Lr rn getPageViewId captureTraceFeedback captureTraceMetric Di".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+
+    global.posthog.init(cfg.key, cfg.options || { api_host: cfg.host });
+    var surface = (global.document.body && global.document.body.getAttribute('data-analytics-surface')) || cfg.surface || 'static';
+    capturePageview(surface);
+  }
+
+  function scheduleBoot(cfg) {
+    if (!cfg) return;
+    if (global.document && global.document.readyState === 'loading') {
+      global.document.addEventListener('DOMContentLoaded', function onReady() {
+        global.document.removeEventListener('DOMContentLoaded', onReady);
+        boot(cfg);
+      });
+      return;
+    }
+    boot(cfg);
+  }
+
+  function fetchConfig() {
+    return fetch('/api/analytics/config', { credentials: 'same-origin' })
+      .then(function (res) { return res.ok ? res.json() : null; })
+      .catch(function () { return null; });
+  }
+
+  if (global.__BCUTM_POSTHOG_CONFIG) {
+    scheduleBoot(global.__BCUTM_POSTHOG_CONFIG);
+    return;
+  }
+
+  fetchConfig().then(scheduleBoot);
+})(typeof window !== 'undefined' ? window : globalThis);

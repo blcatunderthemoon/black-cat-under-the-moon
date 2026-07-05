@@ -1,0 +1,258 @@
+/**
+ * Index landing — pixel black cat mascot (bottom patrol + idle).
+ */
+(function () {
+  'use strict';
+
+  var MEOW_LINES = [
+    '喵~',
+    '今晚月色很好。',
+    '呼~',
+    '…你在找誰？',
+    '月亮會記得路過的人。',
+    '慢啲，夜仲長。',
+    '星星今日好密。',
+    '我守緊呢度。',
+    '有心事？丟個瓶試下。',
+    '樹洞今晚好靜。',
+    '靈魂同頻，唔急。',
+    '伸個懶腰先…',
+    '(*ΦωΦ*)',
+    '別怕黑，有光。',
+    '聽到風聲未？',
+    '月光照到你了。',
+    '想傾計就去圍爐。',
+    '緣份有時遲到。',
+    '黑貓不咬人…大概。',
+    '今晚適合照鏡。',
+    'zzz…吓！',
+    '尾巴自己郁嘅。',
+  ];
+  var lastLineIndex = -1;
+  var bubbleTimer = null;
+  var wanderTimer = null;
+  var pos = { x: 0, y: 0 };
+
+  function init() {
+    var btn = document.getElementById('welcome-mascot');
+    if (!btn) return;
+
+    var pupils = btn.querySelectorAll('.welcome-mascot__pupil');
+    var bubble = btn.querySelector('.welcome-mascot__bubble');
+    var figure = btn.querySelector('.welcome-mascot__figure');
+    var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var pauseUntil = 0;
+    var walking = false;
+    var margin = 36;
+    var bottomPad = 64;
+
+    function catSize() {
+      if (!figure) return { w: 48, h: 48 };
+      var rect = figure.getBoundingClientRect();
+      return { w: rect.width || 48, h: rect.height || 48 };
+    }
+
+    function bounds() {
+      var size = catSize();
+      var totalH = size.h;
+      var feetY = window.innerHeight - bottomPad;
+      return {
+        minX: margin + size.w * 0.5,
+        maxX: Math.max(margin + size.w * 0.5 + 1, window.innerWidth - margin - size.w * 0.5),
+        feetY: feetY,
+        minFeetY: feetY - 12,
+        maxFeetY: feetY,
+        totalH: totalH,
+        halfW: size.w * 0.5,
+      };
+    }
+
+    function clampPos() {
+      var b = bounds();
+      pos.x = Math.min(b.maxX, Math.max(b.minX, pos.x));
+      pos.y = Math.min(b.maxFeetY, Math.max(b.minFeetY, pos.y));
+    }
+
+    function applyPos(animate, durationMs) {
+      var b = bounds();
+      btn.style.setProperty('--mascot-x', (pos.x - b.halfW) + 'px');
+      btn.style.setProperty('--mascot-y', (pos.y - b.totalH) + 'px');
+
+      if (animate && durationMs > 0) {
+        btn.style.transitionDuration = durationMs + 'ms';
+        btn.classList.add('welcome-mascot--walk');
+        walking = true;
+      } else {
+        btn.style.transitionDuration = '0ms';
+        btn.classList.remove('welcome-mascot--walk');
+        walking = false;
+      }
+    }
+
+    function setStartPos() {
+      var b = bounds();
+      pos.x = b.minX + (b.maxX - b.minX) * 0.78;
+      pos.y = b.feetY;
+      applyPos(false);
+    }
+
+    setStartPos();
+
+    function pickHop() {
+      var b = bounds();
+      var hop = 28 + Math.random() * 44;
+      var dir = Math.random() < 0.5 ? -1 : 1;
+      var nextX = pos.x + dir * hop;
+
+      if (nextX < b.minX || nextX > b.maxX) {
+        nextX = pos.x - dir * hop;
+      }
+      nextX = Math.min(b.maxX, Math.max(b.minX, nextX));
+
+      if (Math.abs(nextX - pos.x) < 24) {
+        return null;
+      }
+
+      return {
+        x: nextX,
+        y: b.feetY - Math.floor(Math.random() * 4),
+      };
+    }
+
+    function wanderDuration(from, to) {
+      var dx = Math.abs(to.x - from.x);
+      var dy = Math.abs(to.y - from.y);
+      var dist = Math.sqrt(dx * dx + dy * dy);
+      return Math.min(3200, Math.max(1000, Math.round(dist * 22)));
+    }
+
+    function wander() {
+      if (reducedMotion) return;
+      if (walking) return;
+      if (Date.now() < pauseUntil) return;
+      if (bubble && bubble.classList.contains('welcome-mascot__bubble--visible')) return;
+
+      var next = pickHop();
+      if (!next) return;
+
+      var durationMs = wanderDuration(pos, next);
+      btn.classList.toggle('welcome-mascot--face-left', next.x < pos.x - 4);
+
+      btn.style.transitionDuration = '0ms';
+      btn.classList.remove('welcome-mascot--walk');
+      applyPos(false);
+
+      requestAnimationFrame(function () {
+        pos.x = next.x;
+        pos.y = next.y;
+        applyPos(true, durationMs);
+      });
+    }
+
+    btn.addEventListener('transitionend', function (e) {
+      if (e.propertyName !== 'transform') return;
+      if (!btn.classList.contains('welcome-mascot--walk')) return;
+      btn.classList.remove('welcome-mascot--walk');
+      walking = false;
+    });
+
+    function scheduleWander(delay) {
+      if (wanderTimer) clearTimeout(wanderTimer);
+      wanderTimer = setTimeout(function () {
+        wander();
+        scheduleWander(14000 + Math.random() * 9000);
+      }, delay);
+    }
+
+    if (!reducedMotion) {
+      scheduleWander(12000 + Math.random() * 6000);
+    }
+
+    window.addEventListener('resize', function () {
+      clampPos();
+      applyPos(false);
+    }, { passive: true });
+
+    btn.addEventListener('mouseenter', function () {
+      pauseUntil = Date.now() + 5000;
+    });
+
+    function randomIdle() {
+      if (reducedMotion) return;
+      if (walking) return;
+      var roll = Math.random();
+      btn.classList.remove('welcome-mascot--tail', 'welcome-mascot--blink', 'welcome-mascot--moon');
+      if (roll < 0.22) {
+        btn.classList.add('welcome-mascot--tail');
+        setTimeout(function () { btn.classList.remove('welcome-mascot--tail'); }, 1400);
+      } else if (roll < 0.52) {
+        btn.classList.add('welcome-mascot--blink');
+        setTimeout(function () { btn.classList.remove('welcome-mascot--blink'); }, 180);
+      } else if (roll < 0.72) {
+        btn.classList.add('welcome-mascot--moon');
+        setTimeout(function () { btn.classList.remove('welcome-mascot--moon'); }, 2200);
+      }
+    }
+
+    if (!reducedMotion) {
+      setInterval(randomIdle, 9000 + Math.random() * 7000);
+      setTimeout(randomIdle, 6000 + Math.random() * 4000);
+    }
+
+    function setPupilLook(dx, dy) {
+      var len = Math.sqrt(dx * dx + dy * dy) || 1;
+      var max = 1;
+      var nx = (dx / len) * max;
+      var ny = (dy / len) * max;
+      var faceLeft = btn.classList.contains('welcome-mascot--face-left');
+      if (faceLeft) nx = -nx;
+      pupils.forEach(function (p) {
+        p.style.setProperty('--pupil-x', nx + 'px');
+        p.style.setProperty('--pupil-y', ny + 'px');
+        p.style.transform = 'translate(' + nx + 'px,' + ny + 'px)';
+      });
+    }
+
+    function onPointerMove(e) {
+      if (walking) return;
+      var rect = btn.getBoundingClientRect();
+      var cx = rect.left + rect.width * 0.5;
+      var cy = rect.top + rect.height * 0.42;
+      setPupilLook(e.clientX - cx, e.clientY - cy);
+      btn.classList.remove('welcome-mascot--moon');
+    }
+
+    window.addEventListener('mousemove', onPointerMove, { passive: true });
+
+    function pickLine() {
+      if (MEOW_LINES.length <= 1) return MEOW_LINES[0] || '喵~';
+      var idx;
+      do {
+        idx = Math.floor(Math.random() * MEOW_LINES.length);
+      } while (idx === lastLineIndex);
+      lastLineIndex = idx;
+      return MEOW_LINES[idx];
+    }
+
+    btn.addEventListener('click', function () {
+      if (!bubble) return;
+      pauseUntil = Date.now() + 4000;
+      bubble.textContent = pickLine();
+      bubble.classList.add('welcome-mascot__bubble--visible');
+      bubble.hidden = false;
+      if (bubbleTimer) clearTimeout(bubbleTimer);
+      bubbleTimer = setTimeout(function () {
+        bubble.classList.remove('welcome-mascot__bubble--visible');
+        bubbleTimer = setTimeout(function () {
+          bubble.hidden = true;
+        }, 280);
+      }, 2600);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
