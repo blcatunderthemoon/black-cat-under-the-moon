@@ -735,6 +735,7 @@
   outline-offset: 4px;
 }
 
+.auth-brand__mark-btn:hover,
 .auth-brand__mark-btn:active,
 .auth-brand__mark-btn--glow {
   box-shadow:
@@ -755,7 +756,7 @@
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
   transform: translateZ(0);
-  transition: filter 0.24s ease;
+  transition: filter 0.24s ease, transform 0.24s ease;
   /* Soul white-gold — warmer yellow tint */
   filter:
     brightness(0) invert(1)
@@ -764,8 +765,10 @@
     drop-shadow(0 0 12px rgba(255, 200, 90, 0.22));
 }
 
+.auth-brand__mark-btn:hover .auth-brand__mark,
 .auth-brand__mark-btn:active .auth-brand__mark,
 .auth-brand__mark-btn--glow .auth-brand__mark {
+  transform: translateY(-2px) scale(1.04);
   filter:
     brightness(0) invert(1)
     sepia(0.5) saturate(2.35) hue-rotate(14deg) brightness(1.1) contrast(0.94)

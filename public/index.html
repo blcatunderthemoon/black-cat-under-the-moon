@@ -35,12 +35,28 @@
 <style>
 @keyframes logoHover {
   0%,100% { transform: translateY(0px) scale(1); }
-  40%      { transform: translateY(-6px) scale(1.03); }
-  70%      { transform: translateY(-2px) scale(1.01); }
+  40%      { transform: translateY(-8px) scale(1.06); }
+  70%      { transform: translateY(-3px) scale(1.03); }
 }
-.welcome-cat { font-size: unset; animation: none; display: inline-block; text-decoration: none; }
-.welcome-cat img { width: 160px; height: 160px; object-fit: contain; image-rendering: pixelated; filter: drop-shadow(0 0 18px rgba(189,147,249,.45)); transition: filter 0.3s ease; }
-.welcome-cat img:hover { animation: logoHover 0.6s ease-in-out; filter: drop-shadow(0 0 28px rgba(189,147,249,.75)); cursor: pointer; }
+.welcome-cat { font-size: unset; animation: none; display: inline-block; text-decoration: none; line-height: 0; }
+.welcome-cat img {
+  width: 160px;
+  height: 160px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 18px rgba(189,147,249,.45));
+  transition: filter 0.35s ease, transform 0.35s ease;
+}
+.welcome-cat:hover img,
+.welcome-cat:focus-visible img {
+  animation: logoHover 0.7s ease-in-out;
+  filter:
+    drop-shadow(0 0 28px rgba(189,147,249,.88))
+    drop-shadow(0 0 14px rgba(255,215,120,.42))
+    brightness(1.08);
+  transform: translateY(-4px) scale(1.04);
+  cursor: pointer;
+}
 
 /* Index mode-select icons only (public/icon/*.png) */
 .mode-select-screen .mode-card-icon {
