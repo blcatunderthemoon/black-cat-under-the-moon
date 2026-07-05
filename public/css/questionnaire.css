@@ -281,10 +281,22 @@ body[data-automode="mirror"] .header-art {
   z-index: 3;
 }
 .mirror-auth-modal__icon {
-  font-size: 36px;
-  line-height: 1;
+  display: flex;
+  justify-content: center;
   margin-bottom: 14px;
-  filter: drop-shadow(0 0 12px rgba(189, 147, 249, 0.55));
+  line-height: 0;
+}
+.mirror-auth-modal__mark {
+  display: block;
+  width: min(76px, 22vw);
+  max-width: 84px;
+  height: auto;
+  aspect-ratio: 317 / 379;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter:
+    drop-shadow(0 0 8px rgba(189, 147, 249, 0.5))
+    drop-shadow(0 0 16px rgba(255, 215, 120, 0.28));
 }
 .mirror-auth-modal__badge {
   display: inline-flex;
