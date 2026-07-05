@@ -11,12 +11,23 @@ const API = {
   topic:   '/api/bottle/topic',
 };
 
-/* ─── Cloudflare Turnstile ──────────────────────── */
+/* ─── Cloudflare Turnstile (single shared widget — never inside display:none panels) ── */
+const BOTTLE_TURNSTILE = '#bottle-turnstile';
 const TURNSTILE_NOT_READY = '人機驗證未就緒，請重新整理頁面後再試。';
-const TURNSTILE_WIDGET_IDS = {};
+let _turnstileWidgetId = null;
+let _turnstileTokenCache = '';
+let turnstileSiteKey = null;
 
-function getTurnstileToken(selector) {
-  return (window.turnstile?.getResponse(selector) ?? '') || '';
+function turnstileTarget() {
+  return _turnstileWidgetId || BOTTLE_TURNSTILE;
+}
+
+function getTurnstileToken() {
+  if (window.turnstile && _turnstileWidgetId) {
+    var live = window.turnstile.getResponse(_turnstileWidgetId) || '';
+    if (live) _turnstileTokenCache = live;
+  }
+  return _turnstileTokenCache || '';
 }
 
 function isTurnstileApiAvailable() {
@@ -24,12 +35,9 @@ function isTurnstileApiAvailable() {
 }
 
 function waitForTurnstileApi(timeoutMs) {
-  var limit = timeoutMs || 8000;
+  var limit = timeoutMs || 10000;
   return new Promise(function (resolve) {
-    if (isTurnstileApiAvailable()) {
-      resolve(true);
-      return;
-    }
+    if (isTurnstileApiAvailable()) { resolve(true); return; }
     if (window.turnstile?.ready) {
       var done = false;
       window.turnstile.ready(function () {
@@ -57,7 +65,6 @@ function waitForTurnstileApi(timeoutMs) {
   });
 }
 
-let turnstileSiteKey = null;
 async function fetchTurnstileSiteKey() {
   if (turnstileSiteKey) return turnstileSiteKey;
   var siteKey = '0x4AAAAAADYg006rqWz6ukif';
@@ -72,52 +79,60 @@ async function fetchTurnstileSiteKey() {
   return siteKey;
 }
 
-async function ensureTurnstileWidget(selector) {
-  var el = document.querySelector(selector);
+async function ensureTurnstileWidget() {
+  if (_turnstileWidgetId) return true;
+  var el = document.querySelector(BOTTLE_TURNSTILE);
   if (!el) return false;
-  el.style.display = '';
-  if (TURNSTILE_WIDGET_IDS[selector]) return true;
 
-  var apiOk = await waitForTurnstileApi(8000);
+  var apiOk = await waitForTurnstileApi(10000);
   if (!apiOk) return false;
 
   var siteKey = await fetchTurnstileSiteKey();
   try {
-    TURNSTILE_WIDGET_IDS[selector] = window.turnstile.render(selector, {
+    _turnstileWidgetId = window.turnstile.render(BOTTLE_TURNSTILE, {
       sitekey: siteKey,
       theme: 'dark',
-      appearance: 'interaction-only',
-      size: 'flexible',
+      size: 'invisible',
+      callback: function (token) {
+        _turnstileTokenCache = token || '';
+      },
+      'expired-callback': function () {
+        _turnstileTokenCache = '';
+      },
+      'error-callback': function () {
+        _turnstileTokenCache = '';
+      },
     });
-    return true;
+    return !!_turnstileWidgetId;
   } catch (e) {
     return false;
   }
 }
 
-function executeTurnstile(selector) {
+function waitMs(ms) {
+  return new Promise(function (resolve) { setTimeout(resolve, ms); });
+}
+
+function executeTurnstile() {
   return new Promise(function (resolve) {
-    var existing = getTurnstileToken(selector);
-    if (existing) {
-      resolve(existing);
-      return;
-    }
-    if (!isTurnstileApiAvailable() || !TURNSTILE_WIDGET_IDS[selector]) {
-      resolve('');
-      return;
-    }
+    var existing = getTurnstileToken();
+    if (existing) { resolve(existing); return; }
+    if (!isTurnstileApiAvailable() || !_turnstileWidgetId) { resolve(''); return; }
+
     var settled = false;
     var timer = setTimeout(function () {
       if (settled) return;
       settled = true;
-      resolve(getTurnstileToken(selector) || '');
-    }, 20000);
+      resolve(getTurnstileToken() || '');
+    }, 25000);
+
     try {
-      window.turnstile.execute(selector, {
+      window.turnstile.execute(turnstileTarget(), {
         callback: function (token) {
           if (settled) return;
           settled = true;
           clearTimeout(timer);
+          _turnstileTokenCache = token || '';
           resolve(token || '');
         },
         'error-callback': function () {
@@ -129,54 +144,49 @@ function executeTurnstile(selector) {
       });
     } catch (e) {
       clearTimeout(timer);
-      resolve(getTurnstileToken(selector) || '');
+      resolve(getTurnstileToken() || '');
     }
   });
 }
 
-function resetTurnstileWidget(selector) {
-  if (!window.turnstile || !TURNSTILE_WIDGET_IDS[selector]) return;
-  try { window.turnstile.reset(selector); } catch (e) {}
+function resetTurnstileWidget() {
+  _turnstileTokenCache = '';
+  if (!window.turnstile || !_turnstileWidgetId) return;
+  try { window.turnstile.reset(turnstileTarget()); } catch (e) {}
 }
 
-function waitMs(ms) {
-  return new Promise(function (resolve) { setTimeout(resolve, ms); });
-}
-
-async function waitForTurnstileToken(selector, maxMs) {
-  var deadline = Date.now() + (maxMs || 5000);
+async function waitForTurnstileToken(maxMs) {
+  var deadline = Date.now() + (maxMs || 15000);
   while (Date.now() < deadline) {
-    var token = getTurnstileToken(selector);
+    var token = getTurnstileToken();
     if (token) return token;
-    await waitMs(120);
+    await waitMs(100);
   }
   return '';
 }
 
-function warmTurnstileWidget(selector) {
-  ensureTurnstileWidget(selector).then(function (ok) {
-    if (ok) waitForTurnstileToken(selector, 8000);
+function warmTurnstileWidget() {
+  ensureTurnstileWidget().then(function (ok) {
+    if (!ok) return;
+    if (!getTurnstileToken()) executeTurnstile();
   });
 }
 
-async function requireHumanCheck(selector) {
-  var ready = await ensureTurnstileWidget(selector);
-  var token = getTurnstileToken(selector);
-  if (!token && ready) token = await waitForTurnstileToken(selector, 5000);
-  if (!token && ready) token = await executeTurnstile(selector);
-  if (!token && ready) {
-    resetTurnstileWidget(selector);
-    token = await waitForTurnstileToken(selector, 3000);
-    if (!token) token = await executeTurnstile(selector);
-  }
+/** Wait on a single user action — do not return early and force another click. */
+async function acquireTurnstileToken(maxWaitMs) {
+  var ready = await ensureTurnstileWidget();
+  var token = getTurnstileToken();
+  if (!token && ready) token = await waitForTurnstileToken(Math.min(maxWaitMs || 15000, 8000));
+  if (!token && ready) token = await executeTurnstile();
+  if (!token && ready) token = await waitForTurnstileToken(maxWaitMs || 15000);
 
+  if (!token && !isTurnstileApiAvailable()) {
+    return { ok: true, turnstileToken: '' };
+  }
   if (!token) {
-    if (!isTurnstileApiAvailable()) {
-      return { ok: true, turnstileToken: '' };
-    }
     return {
       ok: false,
-      message: ready ? '人機驗證中，請稍候再試。' : TURNSTILE_NOT_READY,
+      message: ready ? '人機驗證逾時，請再按一次送出。' : TURNSTILE_NOT_READY,
     };
   }
   return { ok: true, turnstileToken: token };
@@ -184,9 +194,53 @@ async function requireHumanCheck(selector) {
 
 async function initTurnstileWidgets() {
   await fetchTurnstileSiteKey();
-  await waitForTurnstileApi(8000);
-  await ensureTurnstileWidget('#throw-turnstile');
-  warmTurnstileWidget('#throw-turnstile');
+  await waitForTurnstileApi(10000);
+  await ensureTurnstileWidget();
+  warmTurnstileWidget();
+}
+
+async function postBottleThrow(body) {
+  for (var attempt = 0; attempt < 2; attempt++) {
+    var check = await acquireTurnstileToken(attempt === 0 ? 18000 : 15000);
+    if (!check.ok) return { ok: false, error: check.message, status: 0 };
+
+    var res = await fetch(API.throw, {
+      method: 'POST',
+      headers: jsonHeaders(),
+      body: JSON.stringify(Object.assign({}, body, { turnstile_token: check.turnstileToken })),
+    });
+    var data = await parseApiJson(res);
+
+    if (res.status === 403 && attempt === 0) {
+      resetTurnstileWidget();
+      warmTurnstileWidget();
+      continue;
+    }
+    return { ok: res.ok, status: res.status, data: data };
+  }
+  return { ok: false, error: '人機驗證失敗，請重新整理頁面後再試。', status: 403 };
+}
+
+async function postBottleReply(body) {
+  for (var attempt = 0; attempt < 2; attempt++) {
+    var check = await acquireTurnstileToken(attempt === 0 ? 18000 : 15000);
+    if (!check.ok) return { ok: false, error: check.message, status: 0 };
+
+    var res = await fetch(API.reply, {
+      method: 'POST',
+      headers: jsonHeaders(),
+      body: JSON.stringify(Object.assign({}, body, { turnstile_token: check.turnstileToken })),
+    });
+    var data = await parseApiJson(res);
+
+    if (res.status === 403 && attempt === 0) {
+      resetTurnstileWidget();
+      warmTurnstileWidget();
+      continue;
+    }
+    return { ok: res.ok, status: res.status, data: data };
+  }
+  return { ok: false, error: '人機驗證失敗，請重新整理頁面後再試。', status: 403 };
 }
 
 function jsonHeaders(extra) {
@@ -297,12 +351,6 @@ document.querySelectorAll('.tab').forEach(btn => {
         nextRandomAt = 0;
         loadRandom();
       }
-      ensureTurnstileWidget('#reply-turnstile');
-      warmTurnstileWidget('#reply-turnstile');
-    }
-    if (btn.dataset.panel === 'find') {
-      ensureTurnstileWidget('#find-reply-turnstile');
-      warmTurnstileWidget('#find-reply-turnstile');
     }
   });
 });
@@ -823,27 +871,22 @@ async function throwBottle() {
   btn.disabled = true;
   btn.setAttribute('aria-busy', 'true');
   const prevLabel = btn.textContent;
-  btn.textContent = '驗證中…';
+  btn.textContent = '🌊 投放中…';
   let thrown = false;
   try {
-    const check = await requireHumanCheck('#throw-turnstile');
-    if (!check.ok) { showMsg('throw-err', check.message, 'err'); return; }
-    btn.textContent = '🌊 投放中…';
-
-    const res  = await fetch(API.throw, {
-      method: 'POST',
-      headers: jsonHeaders(),
-      body: JSON.stringify({
-        content:           submittedContent,
-        mood_tag:          selectedMoods[0] || null,
-        mood_tags:         selectedMoods,
-        is_mission_bottle: isMission,
-        turnstile_token:   check.turnstileToken,
-      }),
+    const result = await postBottleThrow({
+      content:           submittedContent,
+      mood_tag:          selectedMoods[0] || null,
+      mood_tags:         selectedMoods,
+      is_mission_bottle: isMission,
     });
-    const data = await parseApiJson(res);
-    if (res.status === 451) { showCrisisBanner(); return; }
-    if (!res.ok) { showMsg('throw-err', data.error || '發生錯誤，請重試。', 'err'); return; }
+    const data = result.data || {};
+    if (!result.ok && result.status === 0) {
+      showMsg('throw-err', result.error || '人機驗證失敗。', 'err');
+      return;
+    }
+    if (result.status === 451) { showCrisisBanner(); return; }
+    if (!result.ok) { showMsg('throw-err', data.error || '發生錯誤，請重試。', 'err'); return; }
     window.posthog?.capture('bottle_thrown', {
       mood_tag:       selectedMoods[0] || null,
       mood_tags:      selectedMoods,
@@ -872,8 +915,8 @@ async function throwBottle() {
     document.getElementById('ov-key-box').classList.remove('key-float-anim');
 
     runSubmitAnimation();
-    resetTurnstileWidget('#throw-turnstile');
-    warmTurnstileWidget('#throw-turnstile');
+    resetTurnstileWidget();
+    warmTurnstileWidget();
     goStep(1);
     thrown = true;
   } catch { showMsg('throw-err', '網路錯誤，請稍後再試。', 'err'); }
@@ -978,7 +1021,6 @@ async function loadRandom() {
     });
 
     document.getElementById('rnd-content').style.display = 'block';
-    warmTurnstileWidget('#reply-turnstile');
 
     // Show replies section when others have already commented
     var _replySection = document.getElementById('rnd-replies-section');
@@ -1044,29 +1086,26 @@ async function sendReply() {
   btn.setAttribute('aria-busy', 'true');
   let replied = false;
   try {
-    const check = await requireHumanCheck('#reply-turnstile');
-    if (!check.ok) { showMsg('reply-err', check.message, 'err'); return; }
     btn.innerHTML = '⏳';
 
-    const res  = await fetch(API.reply, {
-      method: 'POST',
-      headers: jsonHeaders(),
-      body: JSON.stringify({
-        bottle_id: currentBottleId,
-        content,
-        user_id: uid(),
-        turnstile_token: check.turnstileToken,
-      }),
+    const result = await postBottleReply({
+      bottle_id: currentBottleId,
+      content,
+      user_id: uid(),
     });
-    const data = await parseApiJson(res);
-    if (res.status === 451) { showCrisisBanner(); return; }
-    if (!res.ok) { showMsg('reply-err', data.error || '發生錯誤。', 'err'); return; }
+    const data = result.data || {};
+    if (!result.ok && result.status === 0) {
+      showMsg('reply-err', result.error || '人機驗證失敗。', 'err');
+      return;
+    }
+    if (result.status === 451) { showCrisisBanner(); return; }
+    if (!result.ok) { showMsg('reply-err', data.error || '發生錯誤。', 'err'); return; }
     replied = true;
     setReplyTime(currentBottleId);
     showMsg('reply-ok', '留言已送出 ✨', 'ok');
     window.posthog?.capture('reply_sent');
-    resetTurnstileWidget('#reply-turnstile');
-    warmTurnstileWidget('#reply-turnstile');
+    resetTurnstileWidget();
+    warmTurnstileWidget();
     document.getElementById('reply-content').value = '';
     document.getElementById('reply-count').textContent = '0 / 100';
     btn.innerHTML = SEND_ICON;
@@ -1403,29 +1442,26 @@ async function sendFindReply() {
   btn.setAttribute('aria-busy', 'true');
   let replied = false;
   try {
-    const check = await requireHumanCheck('#find-reply-turnstile');
-    if (!check.ok) { showMsg('find-reply-err', check.message, 'err'); return; }
     btn.innerHTML = '⏳';
 
-    const res = await fetch(API.reply, {
-      method: 'POST',
-      headers: jsonHeaders(),
-      body: JSON.stringify({
-        bottle_id: foundBottleId,
-        content,
-        user_id: uid(),
-        turnstile_token: check.turnstileToken,
-      }),
+    const result = await postBottleReply({
+      bottle_id: foundBottleId,
+      content,
+      user_id: uid(),
     });
-    const data = await parseApiJson(res);
-    if (res.status === 451) { showCrisisBanner(); return; }
-    if (!res.ok) { showMsg('find-reply-err', data.error || '發生錯誤。', 'err'); return; }
+    const data = result.data || {};
+    if (!result.ok && result.status === 0) {
+      showMsg('find-reply-err', result.error || '人機驗證失敗。', 'err');
+      return;
+    }
+    if (result.status === 451) { showCrisisBanner(); return; }
+    if (!result.ok) { showMsg('find-reply-err', data.error || '發生錯誤。', 'err'); return; }
     replied = true;
     setReplyTime(foundBottleId);
     showMsg('find-reply-ok', '留言已送出 ✨', 'ok');
     window.posthog?.capture('reply_sent', { panel: 'find' });
-    resetTurnstileWidget('#find-reply-turnstile');
-    warmTurnstileWidget('#find-reply-turnstile');
+    resetTurnstileWidget();
+    warmTurnstileWidget();
     document.getElementById('find-reply-content').value = '';
     document.getElementById('find-reply-count').textContent = '0 / 100';
     btn.innerHTML = SEND_ICON;
@@ -1586,7 +1622,6 @@ async function findBottle() {
     if (reportBtn) { reportBtn.disabled = false; reportBtn.textContent = '⚑'; reportBtn.style.color = 'rgba(255,255,255,.18)'; }
 
     document.getElementById('found-wrap').classList.add('found-visible');
-    warmTurnstileWidget('#find-reply-turnstile');
 
     const listEl = document.getElementById('found-list');
     listEl.innerHTML = '<div class="no-replies" style="opacity:.5">載入中…</div>';
@@ -1747,7 +1782,6 @@ async function loadBottleById(id) {
     const reportBtn = document.getElementById('btn-find-report');
     if (reportBtn) { reportBtn.disabled = false; reportBtn.textContent = '⚑'; reportBtn.style.color = 'rgba(255,255,255,.18)'; }
     document.getElementById('found-wrap').classList.add('found-visible');
-    warmTurnstileWidget('#find-reply-turnstile');
     const listEl = document.getElementById('found-list');
     listEl.innerHTML = '<div class="no-replies" style="opacity:.5">載入中…</div>';
     document.getElementById('found-heading').textContent = '拾瓶人的回聲';

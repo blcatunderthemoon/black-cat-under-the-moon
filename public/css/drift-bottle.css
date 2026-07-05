@@ -13,7 +13,8 @@
       min-height: 100vh; padding: 0 0 24px; overflow-x: hidden; position: relative;
     }
     body::after {
-      content: ''; position: fixed; inset: 0;
+      content: ''; position: fixed; left: 0; right: 0; bottom: 0;
+      top: calc(var(--mode-top-bar-h, 44px) + env(safe-area-inset-top, 0));
       background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,.06) 2px, rgba(0,0,0,.06) 4px);
       pointer-events: none; z-index: 999;
     }
@@ -145,6 +146,19 @@
     /* Panels */
     .panel { display: none; }
     .panel.active { display: block; }
+
+    /* Shared Turnstile — always mounted (not inside display:none panels) */
+    .bottle-turnstile-slot {
+      position: fixed;
+      left: 0;
+      bottom: 0;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
+      z-index: -1;
+    }
 
     /* Card */
     .card {
