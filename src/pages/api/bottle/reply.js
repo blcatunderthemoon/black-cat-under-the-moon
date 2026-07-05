@@ -4,6 +4,7 @@ import { Redis } from '@upstash/redis';
 import { checkIp } from '../../../lib/ip-guard.js';
 import { filterContent } from '../../../lib/content-filter.js';
 import { verifyTurnstile } from '../../../lib/turnstile.js';
+import { getOptionalUser } from '../../../lib/server-auth.js';
 
 const ratelimit = process.env.UPSTASH_REDIS_REST_URL
   ? new Ratelimit({
@@ -60,9 +61,10 @@ export default async function handler(req, res) {
     }
 
     const isSubReply = !!parent_reply_id;
+    const authUser = await getOptionalUser(req);
 
-    // Human verification — required for top-level comments, skipped for sub-replies
-    if (!isSubReply) {
+    // Human verification — required for anonymous top-level comments; logged-in users skip
+    if (!isSubReply && !authUser) {
       const ts = await verifyTurnstile(turnstile_token, ip);
       if (!ts.success) {
         return res.status(403).json({ error: '人機驗證失敗，請重新整理頁面後再試。' });

@@ -99,6 +99,61 @@ html:has(.mode-top-bar--quiz) {
   display: none !important;
 }
 
+/* Index — greeting sits in nav row, immediately before moon badge */
+.mode-top-bar--index.mode-top-bar--greeting .mode-top-bar__row {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.mode-top-bar--index.mode-top-bar--greeting .mode-top-bar__spacer,
+.mode-top-bar--index.mode-top-bar--greeting .mode-top-bar__center {
+  display: none;
+}
+
+.mode-top-bar--index.mode-top-bar--greeting .mode-top-bar__header-end {
+  grid-column: 1;
+  width: 100%;
+  max-width: 100%;
+  justify-content: flex-end;
+  gap: 0;
+}
+
+.mode-top-bar--index.mode-top-bar--greeting .mode-top-bar__nav-slot {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.mode-top-bar--index.mode-top-bar--greeting .auth-nav-badge__inner {
+  flex-wrap: nowrap;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.mode-top-bar--index.mode-top-bar--greeting .welcome-greeting--in-nav {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+  padding: 0 6px 0 0;
+  overflow: hidden;
+  text-overflow: clip;
+  text-align: right;
+  white-space: nowrap;
+  font-size: clamp(7px, 2.5vw, 11px);
+  line-height: 1.35;
+}
+
+.mode-top-bar--index.mode-top-bar--greeting .welcome-greeting:not([hidden]):not(.welcome-greeting--in-nav) {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: none;
+  overflow: hidden;
+  text-overflow: clip;
+  text-align: right;
+  font-size: clamp(7px, 2.5vw, 11px);
+}
+
 .mode-top-bar__spacer {
   grid-column: 1;
 }
@@ -719,6 +774,36 @@ html:has(.mode-top-bar--quiz) {
     font-size: 9px;
     line-height: 1.4;
     padding-top: 0;
+  }
+
+  .mode-top-bar--index.mode-top-bar--greeting .mode-top-bar__header-end {
+    gap: 0;
+    justify-content: flex-end;
+  }
+
+  .mode-top-bar--index.mode-top-bar--greeting .welcome-greeting--in-nav,
+  .mode-top-bar--index.mode-top-bar--greeting .welcome-greeting:not([hidden]):not(.welcome-greeting--in-nav) {
+    flex: 0 1 auto;
+    max-width: none;
+    font-size: clamp(6px, 2.4vw, 9px);
+    line-height: 1.35;
+    padding-right: 4px;
+  }
+
+  .mode-top-bar--index.mode-top-bar--greeting .auth-nav-badge__inner {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .mode-top-bar--index.mode-top-bar--greeting .auth-nav-badge__item {
+    padding: 0 5px;
+    font-size: 8px;
+  }
+
+  .mode-top-bar--index.mode-top-bar--greeting .auth-nav-badge__item--icon {
+    width: 26px;
+    min-width: 26px;
+    height: 26px;
   }
 
   .mode-header-chip {

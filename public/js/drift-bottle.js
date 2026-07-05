@@ -19,10 +19,31 @@ function getTurnstileToken(selector) {
   return (window.turnstile?.getResponse(selector) ?? '') || '';
 }
 
-function requireTurnstileToken(selector) {
-  const token = getTurnstileToken(selector);
+function getSupabaseAuthToken() {
+  try {
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.startsWith('sb-') && k.endsWith('-auth-token')) {
+        var session = JSON.parse(localStorage.getItem(k) || 'null');
+        if (session && session.access_token) return session.access_token;
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
+function authRequestHeaders(extra) {
+  var headers = Object.assign({ 'Content-Type': 'application/json' }, extra || {});
+  var token = getSupabaseAuthToken();
+  if (token) headers.Authorization = 'Bearer ' + token;
+  return headers;
+}
+
+async function requireHumanCheck(selector) {
+  if (getSupabaseAuthToken()) return { ok: true };
+  var token = getTurnstileToken(selector);
   if (!token) return { ok: false, message: TURNSTILE_NOT_READY };
-  return { ok: true, token };
+  return { ok: true, turnstileToken: token };
 }
 
 async function initTurnstileWidgets() {
@@ -36,8 +57,14 @@ async function initTurnstileWidgets() {
   } catch {}
 
   const renderAll = function () {
+    var loggedIn = !!getSupabaseAuthToken();
     TURNSTILE_SELECTORS.forEach(function (sel) {
-      if (!document.querySelector(sel)) return;
+      var el = document.querySelector(sel);
+      if (!el) return;
+      if (loggedIn) {
+        el.style.display = 'none';
+        return;
+      }
       window.turnstile.render(sel, {
         sitekey: siteKey,
         theme: 'dark',
@@ -659,20 +686,20 @@ async function throwBottle() {
   showMsg('throw-err', '');
   const btn = document.getElementById('btn-throw');
   const submittedContent = formatOracleAnswerContent(throwContent);
-  const ts = requireTurnstileToken('#throw-turnstile');
-  if (!ts.ok) { showMsg('throw-err', ts.message, 'err'); return; }
+  const check = await requireHumanCheck('#throw-turnstile');
+  if (!check.ok) { showMsg('throw-err', check.message, 'err'); return; }
   btn.disabled = true; btn.textContent = '🌊 投放中…';
 
   try {
     const res  = await fetch(API.throw, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authRequestHeaders(),
       body: JSON.stringify({
         content:           submittedContent,
         mood_tag:          selectedMoods[0] || null,
         mood_tags:         selectedMoods,
         is_mission_bottle: isMission,
-        turnstile_token:   ts.token,
+        turnstile_token:   check.turnstileToken,
       }),
     });
     const data = await res.json();
@@ -847,7 +874,10 @@ async function loadRandom() {
 
 /* ─── Panel B: Send reply ────────────────────────── */
 async function sendReply() {
-  if (!currentBottleId) return;
+  if (!currentBottleId) {
+    showMsg('reply-err', '請先拾取一個瓶子。', 'err');
+    return;
+  }
   const content = document.getElementById('reply-content').value.trim();
   showMsg('reply-err', ''); showMsg('reply-ok', '');
   if (!content) { showMsg('reply-err', '請寫點什麼再送出。', 'err'); return; }
@@ -855,8 +885,8 @@ async function sendReply() {
   const cdMs = getReplyCooldownMs(currentBottleId);
   if (cdMs > 0) { startCooldownHint('reply-err', document.getElementById('btn-reply'), cdMs); return; }
 
-  const ts = requireTurnstileToken('#reply-turnstile');
-  if (!ts.ok) { showMsg('reply-err', ts.message, 'err'); return; }
+  const check = await requireHumanCheck('#reply-turnstile');
+  if (!check.ok) { showMsg('reply-err', check.message, 'err'); return; }
 
   const btn = document.getElementById('btn-reply');
   btn.disabled = true; btn.textContent = '⏳';
@@ -864,12 +894,12 @@ async function sendReply() {
   try {
     const res  = await fetch(API.reply, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authRequestHeaders(),
       body: JSON.stringify({
         bottle_id: currentBottleId,
         content,
         user_id: uid(),
-        turnstile_token: ts.token,
+        turnstile_token: check.turnstileToken,
       }),
     });
     const data = await res.json();
@@ -1155,7 +1185,7 @@ async function sendSubReply(parentReplyId, bottleId, listElId) {
   try {
     const res = await fetch(API.reply, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authRequestHeaders(),
       body: JSON.stringify({ bottle_id: bottleId, content, user_id: uid(), parent_reply_id: parentReplyId }),
     });
     const data = await res.json();
@@ -1204,20 +1234,20 @@ async function sendFindReply() {
   const cdMs = getReplyCooldownMs(foundBottleId);
   if (cdMs > 0) { startCooldownHint('find-reply-err', document.getElementById('btn-find-reply'), cdMs); return; }
 
-  const ts = requireTurnstileToken('#find-reply-turnstile');
-  if (!ts.ok) { showMsg('find-reply-err', ts.message, 'err'); return; }
+  const check = await requireHumanCheck('#find-reply-turnstile');
+  if (!check.ok) { showMsg('find-reply-err', check.message, 'err'); return; }
 
   const btn = document.getElementById('btn-find-reply');
   btn.disabled = true; btn.textContent = '⏳';
   try {
     const res = await fetch(API.reply, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authRequestHeaders(),
       body: JSON.stringify({
         bottle_id: foundBottleId,
         content,
         user_id: uid(),
-        turnstile_token: ts.token,
+        turnstile_token: check.turnstileToken,
       }),
     });
     const data = await res.json();

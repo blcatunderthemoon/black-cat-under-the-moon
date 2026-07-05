@@ -24,6 +24,11 @@ const nextConfig = {
       "frame-ancestors 'none'",
     ].join('; ');
 
+    const corsImageHeaders = [
+      { key: 'Access-Control-Allow-Origin', value: '*' },
+      { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+    ];
+
     return [
       {
         source: '/:path*',
@@ -35,6 +40,10 @@ const nextConfig = {
           { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
           { key: 'Content-Security-Policy', value: csp },
         ],
+      },
+      {
+        source: '/:file(.*\\.(?:png|jpg|jpeg|webp|gif|svg|ico))',
+        headers: corsImageHeaders,
       },
     ];
   },

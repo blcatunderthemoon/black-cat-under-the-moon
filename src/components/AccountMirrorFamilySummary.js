@@ -49,16 +49,6 @@ function AccountMirrorIdentityMeta({ basicAnswers }) {
   );
 }
 
-function familyDescExcerpt(desc, maxLen = 72) {
-  const text = String(desc || '').trim();
-  if (!text) return '';
-  if (text.length <= maxLen) return text;
-  const cut = text.slice(0, maxLen);
-  const last = Math.max(cut.lastIndexOf('。'), cut.lastIndexOf('，'), cut.lastIndexOf(' '));
-  const end = last > 24 ? last + 1 : maxLen;
-  return `${text.slice(0, end).trim()}…`;
-}
-
 export default function AccountMirrorFamilySummary({ card, displayName }) {
   const mainType = card?.mirror_type;
   const family = mainType ? PERSONALITY_TYPES[mainType] : null;
@@ -66,19 +56,11 @@ export default function AccountMirrorFamilySummary({ card, displayName }) {
 
   const glow = CAT_GLOW_MAP[mainType] || family.color;
   const slug = card?.public_slug;
-  const tags = (family.hashtags || []).slice(0, 2);
-  const excerpt = familyDescExcerpt(family.desc);
 
   return (
     <article className="account-mirror-family" style={{ '--family-glow': glow }}>
       <div className="account-mirror-family__hero">
         <div className="account-mirror-family__hero-glow" aria-hidden="true" />
-        <img
-          className="account-mirror-family__img"
-          src={CAT_IMG_MAP[mainType]}
-          alt={family.nameZh}
-          loading="lazy"
-        />
         <span className="account-mirror-family__badge">
           <PixelMixedLabel
             text="靈魂鏡像 · MIRROR"
@@ -86,6 +68,12 @@ export default function AccountMirrorFamilySummary({ card, displayName }) {
             enClass="account-mirror-family__badge-en"
           />
         </span>
+        <img
+          className="account-mirror-family__img"
+          src={CAT_IMG_MAP[mainType]}
+          alt={family.nameZh}
+          loading="lazy"
+        />
         <span className="account-mirror-family__rivet account-mirror-family__rivet--tl" aria-hidden="true" />
         <span className="account-mirror-family__rivet account-mirror-family__rivet--tr" aria-hidden="true" />
         <span className="account-mirror-family__rivet account-mirror-family__rivet--bl" aria-hidden="true" />
@@ -108,25 +96,13 @@ export default function AccountMirrorFamilySummary({ card, displayName }) {
         <AccountMirrorIdentityMeta basicAnswers={card?.basic_answers} />
 
         {displayName ? (
-          <p className="account-mirror-family__username">{displayName}</p>
-        ) : null}
-
-        {excerpt ? (
-          <p className="account-mirror-family__desc">{excerpt}</p>
-        ) : null}
-
-        {tags.length > 0 ? (
-          <ul className="account-mirror-family__tags" aria-label="家族標籤">
-            {tags.map((tag) => (
-              <li key={tag} className="account-mirror-family__tag">
-                <PixelMixedLabel
-                  text={tag}
-                  zhClass="account-mirror-family__tag-zh"
-                  enClass="account-mirror-family__tag-en"
-                />
-              </li>
-            ))}
-          </ul>
+          <p className="account-mirror-family__username">
+            <PixelMixedLabel
+              text={displayName}
+              zhClass="account-mirror-family__username-zh"
+              enClass="account-mirror-family__username-en"
+            />
+          </p>
         ) : null}
 
         <div className="account-mirror-family__actions">

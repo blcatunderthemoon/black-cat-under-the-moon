@@ -42,8 +42,6 @@ export default async function handler(req, res) {
 
 
 
-  const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
-
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
   const startOfWeek = getStartOfWeekHongKongIso();
@@ -60,7 +58,7 @@ export default async function handler(req, res) {
 
       .in('visibility', visibilityFilter)
 
-      .gte('created_at', sixHoursAgo),
+      .gte('created_at', oneDayAgo),
 
     admin
 

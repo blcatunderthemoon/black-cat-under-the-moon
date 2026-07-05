@@ -33,11 +33,11 @@ export default function LoginPage() {
   }, []);
 
   useEffect(() => {
-    if (!loading && session && router.isReady) {
+    if (!loading && session && router.isReady && !submitting) {
       const dest = resolvePostAuthDestination(router.query.redirect);
       navigateAfterAuth(router, dest);
     }
-  }, [session, loading, router.isReady, router.query.redirect, router]);
+  }, [session, loading, router.isReady, router.query.redirect, router, submitting]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -59,6 +59,7 @@ export default function LoginPage() {
       return;
     }
     const token = signInData?.session?.access_token;
+    const userId = signInData?.session?.user?.id;
     if (token) {
       const initRes = await fetch('/api/auth/init-profile', {
         method: 'POST',
@@ -73,13 +74,18 @@ export default function LoginPage() {
           return;
         }
       }
-      fetch('/api/me', { headers: { Authorization: `Bearer ${token}` } })
-        .then((r) => (r.ok ? r.json() : null))
-        .then((data) => {
-          const userId = signInData?.session?.user?.id;
+      try {
+        const meRes = await fetch('/api/me', {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: 'no-store',
+        });
+        if (meRes.ok) {
+          const data = await meRes.json();
           if (data && userId) writeMeCache(userId, data);
-        })
-        .catch(() => {});
+        }
+      } catch {
+        /* index auth-nav will refetch */
+      }
     }
     saveRememberLogin(rememberMe, email);
     setSubmitting(false);

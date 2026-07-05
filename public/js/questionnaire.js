@@ -319,7 +319,7 @@ const MIRROR_QUESTIONS = [
     id:'p2', part:0, label:'P2',
     text:'你的 MBTI 與星座？', type:'select_pair', optional:true,
     selects:[
-      { label:'MBTI', field:'p2_mbti', options:['INTJ','INTP','ENTJ','ENTP','INFJ','INFP','ENFJ','ENFP','ISTJ','ISFJ','ESTJ','ESFJ','ISTP','ISFP','ESTP','ESFP'] },
+      { label:'MBTI', field:'p2_mbti', options:['INTJ','INTP','ENTJ','ENTP','INFJ','INFP','ENFJ','ENFP','ISTJ','ISFJ','ESTJ','ESFJ','ISTP','ISFP','ESTP','ESFP','唔知道'] },
       { label:'星座', field:'p2_zodiac', options:['牡羊座','金牛座','雙子座','巨蟹座','獅子座','處女座','天秤座','天蠍座','射手座','摩羯座','水瓶座','雙魚座'] }
     ],
     field:'p2'
@@ -650,6 +650,9 @@ const $socialHandles = document.getElementById('social-handles');
 var suppressHomeConfirm = false;
 var mirrorModeStartPromise = null;
 var quizInitialRevealPending = false;
+var quizBootFailsafeTimer = null;
+var QUIZ_BOOT_FETCH_TIMEOUT_MS = 8000;
+var QUIZ_BOOT_FAILSAFE_MS = 12000;
 
 function finishMirrorPageBoot() {
   if (document.body.dataset.automode === 'mirror') {
@@ -723,7 +726,63 @@ function setQuizBooting(active) {
   } else if (mode === 'match') {
     document.body.classList.toggle('match-booting', !!active);
   }
-  if (active) $loading.classList.add('active');
+  if (!$loading) return;
+  if (active) {
+    $loading.classList.add('active');
+    if (quizBootFailsafeTimer) clearTimeout(quizBootFailsafeTimer);
+    quizBootFailsafeTimer = setTimeout(function () {
+      quizBootFailsafeTimer = null;
+      if (!document.body.classList.contains('mirror-booting') && !document.body.classList.contains('match-booting')) {
+        return;
+      }
+      quizInitialRevealPending = false;
+      releaseQuizBootScreen();
+      if (activeQuestions && activeQuestions.length && (!$main || $main.style.display === 'none' || $main.hidden)) {
+        beginQuizQuestionnaire();
+      }
+    }, QUIZ_BOOT_FAILSAFE_MS);
+  } else {
+    if (quizBootFailsafeTimer) {
+      clearTimeout(quizBootFailsafeTimer);
+      quizBootFailsafeTimer = null;
+    }
+    $loading.classList.remove('active');
+  }
+}
+
+function releaseQuizBootScreen() {
+  setQuizBooting(false);
+  finishQuizPageBoot();
+  if ($loading) $loading.classList.remove('active');
+}
+
+function beginQuizQuestionnaire() {
+  if (!activeQuestions || !activeQuestions.length) {
+    quizInitialRevealPending = false;
+    releaseQuizBootScreen();
+    showErrorOverlay('問卷載入失敗，請重新整理頁面。');
+    return false;
+  }
+  resetQuizTopBarState();
+  if ($progressWrap) $progressWrap.style.display = 'block';
+  showQuizSiteHeader();
+  if ($main) {
+    $main.style.display = 'block';
+    $main.hidden = false;
+    $main.removeAttribute('aria-hidden');
+  }
+  if ($card) {
+    $card.hidden = false;
+    $card.removeAttribute('aria-hidden');
+  }
+  setQuizViewport(true);
+  releaseQuizBootScreen();
+  showQuestion(0);
+  return true;
+}
+
+function mirrorLoginRedirectUrl() {
+  return '/login?redirect=' + encodeURIComponent('/mirror.html');
 }
 
 function setMirrorBooting(active) {
@@ -752,10 +811,8 @@ function hideQuizSiteHeader() {
 function maybeFinishQuizInitialReveal(idx) {
   if (!quizInitialRevealPending || idx !== 0) return;
   quizInitialRevealPending = false;
-  setQuizBooting(false);
-  $loading.classList.remove('active');
+  releaseQuizBootScreen();
   showQuizSiteHeader();
-  finishQuizPageBoot();
 }
 
 function normalizeHandleValue(raw) {
@@ -914,7 +971,8 @@ function resetQuizTopBarState() {
 }
 
 /** Remove questionnaire chrome after submit — thank-you / already-submitted only. */
-function hideQuizQuestionnaireUi() {
+function hideQuizQuestionnaireUi(options) {
+  var keepTopBar = !!(options && options.keepTopBar);
   document.body.classList.add('match-results-active', 'quiz-complete-active');
   if ($main) {
     $main.style.setProperty('display', 'none', 'important');
@@ -926,7 +984,7 @@ function hideQuizQuestionnaireUi() {
     $card.hidden = true;
     $card.setAttribute('aria-hidden', 'true');
   }
-  if ($progressWrap) {
+  if ($progressWrap && !keepTopBar) {
     $progressWrap.style.display = 'none';
   }
   if ($partTrans) {
@@ -968,7 +1026,24 @@ async function ensureSupabaseAuthToken() {
   return token;
 }
 
+function fetchWithTimeout(url, options, timeoutMs) {
+  var ms = timeoutMs || QUIZ_BOOT_FETCH_TIMEOUT_MS;
+  var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  var timer = null;
+  if (controller) {
+    timer = setTimeout(function () { controller.abort(); }, ms);
+  }
+  var opts = Object.assign({}, options || {});
+  if (controller) opts.signal = controller.signal;
+  return fetch(url, opts).finally(function () {
+    if (timer) clearTimeout(timer);
+  });
+}
+
 async function waitForSupabaseAuthToken(maxWaitMs) {
+  var immediate = getSupabaseAuthToken();
+  if (immediate) return immediate;
+
   var deadline = Date.now() + (maxWaitMs || 2500);
   while (Date.now() < deadline) {
     var token = await ensureSupabaseAuthToken();
@@ -1053,6 +1128,13 @@ async function loadMirrorCardForUser(token) {
   return readMirrorCardCache();
 }
 
+function normalizeMirrorMbti(value) {
+  if (value == null || value === '') return null;
+  var s = String(value).trim();
+  if (!s || s === '唔知道' || s === '不知道' || s.toLowerCase() === 'unknown') return null;
+  return s;
+}
+
 function buildMirrorCardSavePayload(scores, mainType, shadowType, answerMap, v3Meta) {
   var safeAnswers = {};
   activeQuestions.forEach(function (q) {
@@ -1063,6 +1145,11 @@ function buildMirrorCardSavePayload(scores, mainType, shadowType, answerMap, v3M
       });
     }
   });
+  if ('p2_mbti' in safeAnswers) {
+    var mbti = normalizeMirrorMbti(safeAnswers.p2_mbti);
+    if (mbti) safeAnswers.p2_mbti = mbti;
+    else delete safeAnswers.p2_mbti;
+  }
 
   var payload = {
     mirror_type: mainType,
@@ -1108,10 +1195,23 @@ async function tryClaimPendingMirrorResult(token) {
   var pending = readPendingMirrorResult();
   if (!pending) return false;
 
-  answers = Object.assign({}, pending.answers || {});
-  mirrorUsesV3 = !!pending.mirrorUsesV3;
   mirrorGuestMode = false;
   try { sessionStorage.removeItem(MIRROR_GUEST_SESSION_KEY); } catch (e) {}
+
+  // Account already has a locked mirror card — discard guest session, show saved result.
+  var existingCard = await loadMirrorCardForUser(token);
+  if (hasMirrorCardSaved(existingCard)) {
+    clearPendingMirrorResult();
+    quizInitialRevealPending = false;
+    setQuizBooting(false);
+    $loading.classList.remove('active');
+    finishQuizPageBoot();
+    showMirrorResultFromSavedCard(existingCard);
+    return true;
+  }
+
+  answers = Object.assign({}, pending.answers || {});
+  mirrorUsesV3 = !!pending.mirrorUsesV3;
 
   var saveData = await saveMirrorCardToAccount(
     token,
@@ -1132,6 +1232,13 @@ async function tryClaimPendingMirrorResult(token) {
 
   if (saveData && saveData.card && hasMirrorCardSaved(saveData.card)) {
     showMirrorResultFromSavedCard(saveData.card);
+    return true;
+  }
+
+  // Save failed (e.g. card locked by race) — prefer any card now on the account.
+  var cardAfterSave = await loadMirrorCardForUser(token);
+  if (hasMirrorCardSaved(cardAfterSave)) {
+    showMirrorResultFromSavedCard(cardAfterSave);
     return true;
   }
 
@@ -1173,35 +1280,35 @@ async function fetchMatchStatusByEmail(email) {
   }
 }
 
-async function fetchMatchStatusAuthed(token) {
-  var resp = await fetch('/api/match-status', {
+async function fetchMatchStatusAuthed(token, timeoutMs) {
+  var resp = await fetchWithTimeout('/api/match-status', {
     headers: { Authorization: 'Bearer ' + token },
     cache: 'no-store',
-  });
+  }, timeoutMs);
   if (resp.status === 401) {
     var refreshed = await refreshSupabaseAuthToken();
     if (refreshed) {
-      resp = await fetch('/api/match-status', {
+      resp = await fetchWithTimeout('/api/match-status', {
         headers: { Authorization: 'Bearer ' + refreshed },
         cache: 'no-store',
-      });
+      }, timeoutMs);
     }
   }
   return resp;
 }
 
-async function fetchMirrorCardAuthed(token) {
-  var resp = await fetch('/api/mirror-card/me', {
+async function fetchMirrorCardAuthed(token, timeoutMs) {
+  var resp = await fetchWithTimeout('/api/mirror-card/me', {
     headers: { Authorization: 'Bearer ' + token },
     cache: 'no-store',
-  });
+  }, timeoutMs);
   if (resp.status === 401) {
     var refreshed = await refreshSupabaseAuthToken();
     if (refreshed) {
-      resp = await fetch('/api/mirror-card/me', {
+      resp = await fetchWithTimeout('/api/mirror-card/me', {
         headers: { Authorization: 'Bearer ' + refreshed },
         cache: 'no-store',
-      });
+      }, timeoutMs);
     }
   }
   return resp;
@@ -1283,17 +1390,17 @@ async function resolveMatchAccountEmail() {
   if (!token) return null;
 
   try {
-    var resp = await fetch('/api/me', {
+    var resp = await fetchWithTimeout('/api/me', {
       headers: { Authorization: 'Bearer ' + token },
       cache: 'no-store',
-    });
+    }, QUIZ_BOOT_FETCH_TIMEOUT_MS);
     if (resp.status === 401) {
       var refreshed = await refreshSupabaseAuthToken();
       if (refreshed) {
-        resp = await fetch('/api/me', {
+        resp = await fetchWithTimeout('/api/me', {
           headers: { Authorization: 'Bearer ' + refreshed },
           cache: 'no-store',
-        });
+        }, QUIZ_BOOT_FETCH_TIMEOUT_MS);
       }
     }
     if (resp.ok) {
@@ -1612,7 +1719,7 @@ function renderMatchResultsOnMatchPage(matches) {
 async function showMatchAlreadySubmitted(prefetchedMatches) {
   suppressHomeConfirm = true;
   setQuizViewport(false);
-  hideQuizQuestionnaireUi();
+  hideQuizQuestionnaireUi({ keepTopBar: true });
   $loading.classList.add('active');
 
   var staticView = document.getElementById('already-submitted-static');
@@ -1698,38 +1805,43 @@ async function startMatchMode() {
   setQuizBooting(true);
   quizInitialRevealPending = document.body.dataset.automode === 'match';
 
-  var token = getSupabaseAuthToken();
-  var matchesPrefetch = null;
-  if (token) {
-    matchesPrefetch = fetch('/api/matches', {
-      headers: { Authorization: 'Bearer ' + token },
-      cache: 'no-store',
-    })
-      .then(function(r) { return r.ok ? r.json() : null; })
-      .catch(function() { return null; });
-  }
+  try {
+    var token = getSupabaseAuthToken();
+    if (!token) {
+      token = await waitForSupabaseAuthToken(3000);
+    }
 
-  if (token && await userHasMatchSubmission()) {
+    var matchesPrefetch = null;
+    if (token) {
+      matchesPrefetch = fetchWithTimeout('/api/matches', {
+        headers: { Authorization: 'Bearer ' + token },
+        cache: 'no-store',
+      }, QUIZ_BOOT_FETCH_TIMEOUT_MS)
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .catch(function() { return null; });
+    }
+
+    if (token && await userHasMatchSubmission()) {
+      quizInitialRevealPending = false;
+      var prefetched = matchesPrefetch ? await matchesPrefetch : null;
+      await showMatchAlreadySubmitted(prefetched);
+      return;
+    }
+
+    var accountEmail = await resolveMatchAccountEmail();
+    activeQuestions = matchQuestionsForAccount(accountEmail);
+    activeTotal = activeQuestions.length;
+    answers = {};
+    if (accountEmail) {
+      answers.email = accountEmail;
+    }
+
+    beginQuizQuestionnaire();
+  } catch (err) {
     quizInitialRevealPending = false;
-    var prefetched = matchesPrefetch ? await matchesPrefetch : null;
-    await showMatchAlreadySubmitted(prefetched);
-    return;
+    releaseQuizBootScreen();
+    showErrorOverlay(err);
   }
-
-  var accountEmail = await resolveMatchAccountEmail();
-  activeQuestions = matchQuestionsForAccount(accountEmail);
-  activeTotal = activeQuestions.length;
-  answers = {};
-  if (accountEmail) {
-    answers.email = accountEmail;
-  }
-
-  resetQuizTopBarState();
-  $progressWrap.style.display = 'block';
-  showQuizSiteHeader();
-  $main.style.display = 'block';
-  setQuizViewport(true);
-  showQuestion(0);
 }
 
 async function startMirrorMode() {
@@ -1754,16 +1866,31 @@ function showMirrorAuthPrompt() {
       return;
     }
 
+    var settled = false;
+
     function cleanup() {
-      overlay.classList.remove('active');
+      overlay.classList.remove('active', 'mirror-auth-overlay--navigating');
       loginBtn.removeEventListener('click', onLogin);
       guestBtn.removeEventListener('click', onGuest);
     }
-    function onLogin() {
-      cleanup();
+    function onLogin(e) {
+      if (e) e.preventDefault();
+      if (settled) return;
+      settled = true;
+      guestBtn.disabled = true;
+      loginBtn.setAttribute('aria-busy', 'true');
+      if (loginBtn.tagName === 'BUTTON') loginBtn.disabled = true;
+      overlay.classList.add('mirror-auth-overlay--navigating');
+      var loginLabel = loginBtn.querySelector('.pcard-zh');
+      if (loginLabel) loginLabel.textContent = '前往登入…';
+      guestBtn.removeEventListener('click', onGuest);
+      loginBtn.removeEventListener('click', onLogin);
+      try { sessionStorage.setItem('bcm_mirror_post_login', '1'); } catch (err) {}
       resolve('login');
     }
     function onGuest() {
+      if (settled) return;
+      settled = true;
       cleanup();
       resolve('guest');
     }
@@ -1817,8 +1944,14 @@ async function startMirrorModeImpl() {
 
   setQuizBooting(true);
 
+  preloadMirrorCatFamilyImages();
+
   try {
-    var token = await waitForSupabaseAuthToken(2500);
+    var authWaitMs = 2500;
+    try {
+      if (sessionStorage.getItem('bcm_mirror_post_login') === '1') authWaitMs = 6000;
+    } catch (e) {}
+    var token = await waitForSupabaseAuthToken(authWaitMs);
     if (token) {
       mirrorGuestMode = false;
       try { sessionStorage.removeItem(MIRROR_GUEST_SESSION_KEY); } catch (e) {}
@@ -1858,11 +1991,10 @@ async function startMirrorModeImpl() {
       var guestChosen = false;
       try { guestChosen = sessionStorage.getItem(MIRROR_GUEST_SESSION_KEY) === '1'; } catch (e) {}
       if (!guestChosen) {
-        setQuizBooting(false);
-        $loading.classList.remove('active');
+        releaseQuizBootScreen();
         var choice = await showMirrorAuthPrompt();
         if (choice === 'login') {
-          window.location.href = '/login?redirect=/mirror.html';
+          window.location.replace(mirrorLoginRedirectUrl());
           return;
         }
         try { sessionStorage.setItem(MIRROR_GUEST_SESSION_KEY, '1'); } catch (e) {}
@@ -1871,21 +2003,17 @@ async function startMirrorModeImpl() {
       setQuizBooting(true);
     }
 
-    if (isMirrorResultVisible()) return;
+    if (isMirrorResultVisible()) {
+      releaseQuizBootScreen();
+      return;
+    }
 
     quizInitialRevealPending = document.body.dataset.automode === 'mirror';
-    resetQuizTopBarState();
-    $progressWrap.style.display = 'block';
-    showQuizSiteHeader();
-    $main.style.display = 'block';
-    setQuizViewport(true);
-    showQuestion(0);
+    beginQuizQuestionnaire();
   } catch (err) {
     quizInitialRevealPending = false;
-    setQuizBooting(false);
-    $loading.classList.remove('active');
-    finishQuizPageBoot();
-    throw err;
+    releaseQuizBootScreen();
+    showErrorOverlay(err);
   }
 }
 
@@ -3732,7 +3860,7 @@ function showMirrorResult(scores, mainType, shadowType, hiddenTags, skipAutoSave
   var hobbyTagsHtml    = '';
   (function() {
     var label  = answers.p1        || null;
-    var mbti   = answers.p2_mbti   || null;
+    var mbti   = normalizeMirrorMbti(answers.p2_mbti);
     var zodiac = answers.p2_zodiac || null;
     var hobbies = answers.p3 ? answers.p3.split(', ') : [];
     var music   = answers.p4 ? answers.p4.split(', ') : [];
@@ -3831,7 +3959,7 @@ function showMirrorResult(scores, mainType, shadowType, hiddenTags, skipAutoSave
     '<div class="pcard-divider"></div>' +
     '<div class="pcard-mode-badge"><span class="pcard-zh">\u9748\u9b42\u93e1\u50cf</span><span class="pcard-en"> \xb7 MIRROR MODE</span></div>' +
     '<div class="pcard-section">' +
-      '<div class="pcard-avatar-wrap"><img class="pcard-cat-img" src="' + catImgSrc + '" alt="' + mainType + '" crossorigin="anonymous" referrerpolicy="no-referrer" decoding="async"></div>' +
+      '<div class="pcard-avatar-wrap"><img class="pcard-cat-img" src="' + catImgSrc + '" alt="' + mainType + '" width="240" height="240" decoding="async"></div>' +
       mixedTitleHtml +
       familyNameHtml +
       '<div class="pcard-family-en">' + escHtml(p.nameEn) + '</div>' +
@@ -3868,6 +3996,7 @@ function showMirrorResult(scores, mainType, shadowType, hiddenTags, skipAutoSave
 
   document.getElementById('mirror-download-btn').onclick = downloadPersonalityCard;
   preloadMirrorCaptureEngine();
+  upgradeMirrorCatImage(pcard, catImgSrc);
   var retryBtn = document.getElementById('mirror-retry-btn');
   if (retryBtn) retryBtn.onclick = goBackToHome;
 
@@ -4106,28 +4235,84 @@ function applyTraitSpectrumExportFallbacks(root, typeRgb) {
   });
 }
 
+var MIRROR_CAT_IMAGE_PATHS = [
+  '/Solitary_Moon.png',
+  '/Sunny_Tether.png',
+  '/Mystical_Depth.png',
+  '/Eternal_Sentinel.png',
+];
+var mirrorCatImageDataUrlCache = Object.create(null);
+
+function normalizeImageSrc(src) {
+  if (!src) return '';
+  if (String(src).indexOf('data:') === 0) return String(src);
+  try {
+    return new URL(src, location.href).href;
+  } catch (e) {
+    return String(src);
+  }
+}
+
+function blobToDataUrl(blob) {
+  return new Promise(function (resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function () { resolve(reader.result); };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function fetchImageAsDataUrl(src) {
+  var key = normalizeImageSrc(src);
+  if (!key) return null;
+  if (key.indexOf('data:') === 0) return key;
+  if (mirrorCatImageDataUrlCache[key]) return mirrorCatImageDataUrlCache[key];
+
+  var candidates = [key];
+  try {
+    var parsed = new URL(key);
+    if (parsed.pathname) candidates.push(parsed.pathname);
+  } catch (e) {}
+
+  for (var i = 0; i < candidates.length; i++) {
+    var candidate = candidates[i];
+    try {
+      var res = await fetch(candidate, { cache: 'force-cache', credentials: 'same-origin' });
+      if (!res.ok) continue;
+      var dataUrl = await blobToDataUrl(await res.blob());
+      mirrorCatImageDataUrlCache[key] = dataUrl;
+      mirrorCatImageDataUrlCache[candidate] = dataUrl;
+      return dataUrl;
+    } catch (err) { /* try next candidate */ }
+  }
+  return null;
+}
+
+function preloadMirrorCatFamilyImages() {
+  MIRROR_CAT_IMAGE_PATHS.forEach(function (path) {
+    fetchImageAsDataUrl(path).catch(function () {});
+  });
+}
+
+async function upgradeMirrorCatImage(pcard, relativePath) {
+  var img = pcard && pcard.querySelector('.pcard-cat-img');
+  if (!img || !relativePath) return;
+  var dataUrl = await fetchImageAsDataUrl(relativePath);
+  if (dataUrl) img.src = dataUrl;
+}
+
 async function imageElementToDataUrl(img) {
   if (!img || !img.src) return null;
   if (img.src.indexOf('data:') === 0) return img.src;
 
-  function blobToDataUrl(blob) {
-    return new Promise(function (resolve, reject) {
-      var reader = new FileReader();
-      reader.onload = function () { resolve(reader.result); };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
+  var attrSrc = img.getAttribute('src');
+  if (attrSrc) {
+    var fetched = await fetchImageAsDataUrl(attrSrc);
+    if (fetched) return fetched;
   }
 
-  try {
-    var imgUrl = new URL(img.src, location.href);
-    if (imgUrl.protocol === 'http:' || imgUrl.protocol === 'https:') {
-      var res = await fetch(imgUrl.href, { mode: 'cors', credentials: 'omit', cache: 'force-cache' });
-      if (res.ok) return await blobToDataUrl(await res.blob());
-    }
-  } catch (fetchErr) {
-    /* fall through to canvas */
-  }
+  var fetchedFromSrc = await fetchImageAsDataUrl(img.src);
+  if (fetchedFromSrc) return fetchedFromSrc;
 
   if (img.naturalWidth > 0 && img.naturalHeight > 0) {
     try {
@@ -4141,13 +4326,35 @@ async function imageElementToDataUrl(img) {
     }
   }
 
-  try {
-    var fallbackRes = await fetch(img.src, { mode: 'cors', credentials: 'omit', cache: 'force-cache' });
-    if (!fallbackRes.ok) throw new Error('IMAGE_FETCH_' + fallbackRes.status);
-    return await blobToDataUrl(await fallbackRes.blob());
-  } catch (fetchErr) {
-    console.warn('Card export image fallback failed:', img.src, fetchErr);
-    return null;
+  console.warn('Card export image fallback failed:', img.src);
+  return null;
+}
+
+async function embedCloneImages(orig, clone) {
+  var origImgs = Array.from(orig.querySelectorAll('img'));
+  var cloneImgs = Array.from(clone.querySelectorAll('img'));
+  for (var i = 0; i < cloneImgs.length; i++) {
+    var cloneImg = cloneImgs[i];
+    var origImg = origImgs[i];
+    var dataUrl = null;
+    if (origImg && origImg.src && origImg.src.indexOf('data:') === 0) {
+      dataUrl = origImg.src;
+    }
+    if (!dataUrl && origImg) dataUrl = await imageElementToDataUrl(origImg);
+    if (!dataUrl) {
+      var path = (origImg && origImg.getAttribute('src')) || cloneImg.getAttribute('src') || '';
+      dataUrl = await fetchImageAsDataUrl(path);
+    }
+    if (dataUrl) {
+      cloneImg.src = dataUrl;
+      cloneImg.removeAttribute('crossorigin');
+      cloneImg.removeAttribute('referrerpolicy');
+      if (cloneImg.decode) {
+        try { await cloneImg.decode(); } catch (e) {}
+      }
+    } else {
+      console.warn('Card export: could not embed image', cloneImg.getAttribute('src') || cloneImg.src);
+    }
   }
 }
 
@@ -4231,27 +4438,6 @@ function inlineExportStyles(sourceEl, cloneEl) {
   }
 }
 
-function suspendExportStyles() {
-  var states = [];
-  document.querySelectorAll('link[rel="stylesheet"]').forEach(function (link) {
-    states.push({ node: link, kind: 'link', disabled: link.disabled });
-    link.disabled = true;
-  });
-  document.querySelectorAll('style').forEach(function (style) {
-    if (style.getAttribute('data-export-style')) return;
-    states.push({ node: style, kind: 'style', media: style.media || '' });
-    style.media = 'not all';
-  });
-  return states;
-}
-
-function restoreExportStyles(states) {
-  (states || []).forEach(function (s) {
-    if (s.kind === 'link') s.node.disabled = s.disabled;
-    else s.node.media = s.media;
-  });
-}
-
 function dataUrlToBlob(dataUrl) {
   var parts = dataUrl.split(',');
   var mimeMatch = parts[0].match(/:(.*?);/);
@@ -4333,14 +4519,24 @@ async function capturePcardWithHtmlToImage(node, w, h) {
   });
 }
 
+function getMirrorExportRoot() {
+  var root = document.getElementById('mirror-export-root');
+  if (root) return root;
+  root = document.createElement('div');
+  root.id = 'mirror-export-root';
+  root.setAttribute('aria-hidden', 'true');
+  root.style.cssText =
+    'position:fixed;left:-10000px;top:0;width:0;height:0;overflow:hidden;' +
+    'visibility:hidden;pointer-events:none;contain:strict;z-index:-1;';
+  document.body.appendChild(root);
+  return root;
+}
+
 async function capturePcardWithHtml2Canvas(node, orig, w, h) {
   inlineExportStyles(orig, node);
   applyPcardExportFallbacks(node, hexToRgb(
     getComputedStyle(node).getPropertyValue('--type-col').trim() || '#bd93f9'
   ));
-
-  var suspendedStyles = suspendExportStyles();
-  await new Promise(function(r) { setTimeout(r, 50); });
 
   var captureScale = getPcardExportPixelRatio(w);
   var captureOpts = {
@@ -4353,6 +4549,9 @@ async function capturePcardWithHtml2Canvas(node, orig, w, h) {
     allowTaint: false,
     foreignObjectRendering: false,
     imageTimeout: 15000,
+    ignoreElements: function (el) {
+      return el.tagName === 'CANVAS';
+    },
     onclone: function (doc) {
       var exportNode = doc.querySelector('[data-export="1"]');
       if (exportNode) exportNode.style.filter = 'none';
@@ -4360,26 +4559,32 @@ async function capturePcardWithHtml2Canvas(node, orig, w, h) {
   };
 
   try {
+    return await html2canvas(node, captureOpts);
+  } catch (firstErr) {
+    console.warn('html2canvas retry:', firstErr);
+    captureOpts.scale = Math.max(2, Math.floor(captureScale / 2));
     try {
       return await html2canvas(node, captureOpts);
-    } catch (firstErr) {
-      console.warn('html2canvas retry:', firstErr);
-      captureOpts.scale = Math.max(2, Math.floor(captureScale / 2));
-      try {
-        return await html2canvas(node, captureOpts);
-      } catch (secondErr) {
-        console.warn('html2canvas retry (scale 1):', secondErr);
-        captureOpts.scale = 1;
-        return await html2canvas(node, captureOpts);
-      }
+    } catch (secondErr) {
+      console.warn('html2canvas retry (scale 1):', secondErr);
+      captureOpts.scale = 1;
+      return await html2canvas(node, captureOpts);
     }
-  } finally {
-    restoreExportStyles(suspendedStyles);
   }
 }
 
 async function capturePcardToBlob(orig, clone, w, h, rgb) {
   applyPcardExportFallbacks(clone, rgb);
+  var hasImages = clone.querySelector('img');
+
+  if (typeof html2canvas !== 'undefined' && hasImages) {
+    try {
+      var canvas = await capturePcardWithHtml2Canvas(clone, orig, w, h);
+      return await canvasToPngBlob(canvas);
+    } catch (h2cErr) {
+      console.warn('html2canvas failed:', h2cErr);
+    }
+  }
 
   try {
     var htiBlob = await capturePcardWithHtmlToImage(clone, w, h);
@@ -4392,8 +4597,8 @@ async function capturePcardToBlob(orig, clone, w, h, rgb) {
     throw new Error('EXPORT_NO_CAPTURE_ENGINE');
   }
 
-  var canvas = await capturePcardWithHtml2Canvas(clone, orig, w, h);
-  return await canvasToPngBlob(canvas);
+  var canvasFallback = await capturePcardWithHtml2Canvas(clone, orig, w, h);
+  return await canvasToPngBlob(canvasFallback);
 }
 
 function canvasToPngBlob(canvas) {
@@ -4496,16 +4701,18 @@ function setMirrorDownloadBtnIdle(btn) {
 
 async function downloadPersonalityCard() {
   const btn = document.getElementById('mirror-download-btn');
+  const btnLabel = btn && btn.querySelector('.mirror-download-btn__label');
   try {
     await ensureMirrorCaptureEngine();
   } catch (e) {
     alert('下載功能未能載入，請重新整理頁面後再試。');
     return;
   }
-  btn.textContent = '生成中...';
-  btn.disabled = true;
+  if (btnLabel) btnLabel.textContent = '生成中...';
+  else if (btn) btn.textContent = '生成中...';
+  if (btn) btn.disabled = true;
   var clone = null;
-  var canvasStates = [];
+  var exportRoot = null;
   try {
     const orig = document.getElementById('personality-card');
     if (!orig) throw new Error('personality-card not found');
@@ -4529,56 +4736,36 @@ async function downloadPersonalityCard() {
     });
     await Promise.all(imgPromises);
     
-    // 額外等待一小段時間，確保瀏覽器完成渲染
-    await new Promise(function(r) { setTimeout(r, 200); });
-    
     // Convert original images to data URLs BEFORE cloning to avoid CORS taint on file://
-    // Read type color now before cloning so it's available for all clone overrides
     var typeCol = getComputedStyle(orig).getPropertyValue('--type-col').trim() || '#bd93f9';
     var rgb = hexToRgb(typeCol);
 
-    var imgDataUrlMap = new Map();
-    var origImgList = Array.from(orig.querySelectorAll('img'));
-    for (var ii = 0; ii < origImgList.length; ii++) {
-      var srcImg = origImgList[ii];
-      var dataUrl = await imageElementToDataUrl(srcImg);
-      if (dataUrl) imgDataUrlMap.set(srcImg.src, dataUrl);
-    }
-
     clone = orig.cloneNode(true);
-    clone.id = 'personality-card';
+    clone.removeAttribute('id');
     const rect = orig.getBoundingClientRect();
     const w = Math.round(rect.width);
     const h = Math.round(rect.height);
     clone.setAttribute('data-export', '1');
     clone.style.cssText =
-      'position:fixed;left:0;top:0;transform:translate(-200%,-200%);' +
-      'width:' + w + 'px;height:' + h + 'px;z-index:-1;' +
+      'position:relative;left:0;top:0;transform:none;' +
+      'width:' + w + 'px;height:' + h + 'px;' +
       'border:2px solid rgba(255,224,102,0.72);' +
-      'box-shadow:none;outline:none;';
-    document.body.appendChild(clone);
+      'box-shadow:none;outline:none;margin:0;';
+
+    exportRoot = getMirrorExportRoot();
+    exportRoot.textContent = '';
+    exportRoot.appendChild(clone);
 
     // Set type color variable directly on clone root so CSS vars resolve correctly
     clone.style.setProperty('--type-col', typeCol);
 
     // Inject scoped style targeting ONLY the clone (via data-export attribute).
-    // Disables animated pseudo-elements and glows that html2canvas captures incorrectly.
     var exportStyle = document.createElement('style');
     exportStyle.setAttribute('data-export-style', '1');
     exportStyle.textContent = buildPcardExportStyle(rgb);
     document.head.appendChild(exportStyle);
 
-    // Replace clone img srcs with data URLs — avoids any CORS/taint issue on file://
-    clone.querySelectorAll('img').forEach(function(img) {
-      var dataUrl = imgDataUrlMap.get(img.src);
-      if (dataUrl) {
-        img.src = dataUrl;
-      } else {
-        img.style.visibility = 'hidden';
-      }
-      img.removeAttribute('crossorigin');
-      img.removeAttribute('referrerpolicy');
-    });
+    await embedCloneImages(orig, clone);
 
     // Remove background stars from the download version
     clone.querySelectorAll('.pcard-star').forEach(function(s) {
@@ -4589,21 +4776,6 @@ async function downloadPersonalityCard() {
     clone.querySelectorAll('canvas').forEach(function(c) {
       c.remove();
     });
-    
-    // ⚠️ 臨時隱藏頁面上所有 canvas 元素，避免 html2canvas 誤觸
-    var allCanvases = document.querySelectorAll('canvas');
-    allCanvases.forEach(function(c) {
-      canvasStates.push({
-        element: c,
-        display: c.style.display,
-        visibility: c.style.visibility
-      });
-      c.style.display = 'none';
-      c.style.visibility = 'hidden';
-    });
-    
-    // ⚠️ 等待一小段時間讓 clone 完全渲染
-    await new Promise(function(r) { setTimeout(r, 200); });
 
     var blob = await capturePcardToBlob(orig, clone, w, h, rgb);
 
@@ -4627,13 +4799,7 @@ async function downloadPersonalityCard() {
       alert('\u4e0b\u8f09\u5931\u6557\uff0c\u8acb\u91cd\u65b0\u6574\u7406\u5f8c\u518d\u8a66\u3002');
     }
   } finally {
-    canvasStates.forEach(function(state) {
-      state.element.style.display = state.display;
-      state.element.style.visibility = state.visibility;
-    });
-    if (clone && clone.parentNode) {
-      clone.parentNode.removeChild(clone);
-    }
+    if (exportRoot) exportRoot.textContent = '';
     // Remove the scoped export style injected into <head>
     var exportStyle = document.querySelector('style[data-export-style]');
     if (exportStyle && exportStyle.parentNode) {

@@ -110,11 +110,22 @@ export function getFamilyMeta(type) {
 
 export const TYPE_ORDER = ['solitary', 'sunny', 'mystical', 'sentinel'];
 
+export const MBTI_UNKNOWN_LABEL = '唔知道';
+
+/** MBTI values that mean "unknown" — omitted from mirror card display. */
+export function normalizeMirrorMbti(value) {
+  if (value == null || value === '') return null;
+  const s = String(value).trim();
+  if (!s) return null;
+  if (s === MBTI_UNKNOWN_LABEL || s === '不知道' || s.toLowerCase() === 'unknown') return null;
+  return s;
+}
+
 export function getPublicProfile(basicAnswers) {
   const ba = basicAnswers || {};
   return {
     label: ba.p1 || null,
-    mbti: ba.p2_mbti || null,
+    mbti: normalizeMirrorMbti(ba.p2_mbti),
     zodiac: ba.p2_zodiac || null,
   };
 }

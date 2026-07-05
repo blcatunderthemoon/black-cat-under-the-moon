@@ -156,7 +156,7 @@ function GatheringPanel({ count }) {
     <aside className="forum-panel forum-panel--stat">
       <div className="forum-panel__head">
         <h3 className="forum-panel__title">圍爐人數</h3>
-        <p className="forum-panel__hint forum-panel__hint--hot">近 6 小時活躍</p>
+        <p className="forum-panel__hint forum-panel__hint--hot">近 24 小時活躍</p>
       </div>
       <div className="forum-gathering-count forum-gathering-count--body">
         {count ?? '—'}

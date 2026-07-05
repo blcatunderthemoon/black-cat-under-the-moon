@@ -9,6 +9,7 @@ import {
   CAT_IMG_MAP,
   CAT_GLOW_MAP,
   computeHybridTitle,
+  getPublicProfile,
   getTopIngredientBars,
   splitCsv,
   cleanHobbyTag,
@@ -369,11 +370,7 @@ export default function MirrorPersonalityCard({
   const catImg = CAT_IMG_MAP[mainType] || '';
 
   const profile = isDetailed
-    ? {
-        label: card?.basic_answers?.p1,
-        mbti: card?.basic_answers?.p2_mbti,
-        zodiac: card?.basic_answers?.p2_zodiac,
-      }
+    ? getPublicProfile(card?.basic_answers)
     : (card?.public_profile || {});
 
   const hybridTitle = isDetailed

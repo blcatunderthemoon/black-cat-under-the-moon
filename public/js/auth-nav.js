@@ -211,17 +211,69 @@
     return '晚上好';
   }
 
-  function updateWelcomeGreeting(displayName) {
+  function mountIndexGreetingInNav() {
+    var greeting = document.getElementById('welcome-greeting');
+    if (!greeting || greeting.hidden || !isIndexLandingPage()) return;
+    var nav = document.getElementById(NAV_ID);
+    if (!nav) return;
+    var inner = nav.querySelector('.auth-nav-badge__inner');
+    if (!inner) return;
+    var nameGroup = inner.querySelector('.auth-nav-badge__name-group');
+    if (nameGroup) {
+      inner.insertBefore(greeting, nameGroup);
+    } else {
+      inner.insertBefore(greeting, inner.firstChild);
+    }
+    greeting.classList.add('welcome-greeting--in-nav');
+  }
+
+  function unmountIndexGreetingFromNav() {
+    var greeting = document.getElementById('welcome-greeting');
+    var headerEnd = document.querySelector('.mode-top-bar--index .mode-top-bar__header-end');
+    var navSlot = document.querySelector('.mode-top-bar--index .mode-top-bar__nav-slot');
+    if (!greeting || !headerEnd || !navSlot) return;
+    if (greeting.parentNode !== headerEnd) {
+      headerEnd.insertBefore(greeting, navSlot);
+    }
+    greeting.classList.remove('welcome-greeting--in-nav');
+  }
+
+  function syncGreetingTopBar(active) {
+    var topBar = document.querySelector('.mode-top-bar--index');
+    if (topBar) topBar.classList.toggle('mode-top-bar--greeting', !!active);
+  }
+
+  function fitWelcomeGreeting(el) {
+    if (!el || el.hidden) return;
+    el.style.fontSize = '';
+    var size = parseFloat(window.getComputedStyle(el).fontSize);
+    var min = 6;
+    var guard = 0;
+    while (el.scrollWidth > el.clientWidth && size > min && guard < 48) {
+      size -= 0.5;
+      el.style.fontSize = size + 'px';
+      guard += 1;
+    }
+  }
+
+  function updateWelcomeGreeting(displayName, isPremium) {
     var el = document.getElementById('welcome-greeting');
     if (!el) return;
     var name = String(displayName || '').trim();
     if (!name) {
       el.hidden = true;
       el.textContent = '';
+      el.style.fontSize = '';
+      syncGreetingTopBar(false);
       return;
     }
-    el.textContent = getWelcomeGreetingPrefix() + '。 ' + name + ' 🌙';
+    var moonSuffix = isPremium ? '' : ' 🌙';
+    el.textContent = getWelcomeGreetingPrefix() + '。 ' + name + moonSuffix;
     el.hidden = false;
+    syncGreetingTopBar(true);
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() { fitWelcomeGreeting(el); });
+    });
   }
 
   function getPremiumStatusMessage(data) {
@@ -382,6 +434,8 @@
 
     window.addEventListener('resize', function() {
       document.querySelectorAll('.header-premium-moon-wrap--open').forEach(positionPremiumMoonPopover);
+      var greeting = document.getElementById('welcome-greeting');
+      if (greeting && !greeting.hidden) fitWelcomeGreeting(greeting);
     });
   }
 
@@ -413,6 +467,15 @@
       var existing = group.querySelector('.header-premium-moon-wrap');
       if (existing) existing.remove();
     }
+    if (isIndexLandingPage()) {
+      var name = (data && data.profile && data.profile.display_name)
+        || (meCache && meCache.profile && meCache.profile.display_name)
+        || '';
+      if (name) {
+        updateWelcomeGreeting(name, isPremium);
+        mountIndexGreetingInNav();
+      }
+    }
   }
 
   function isIndexLandingPage() {
@@ -420,10 +483,13 @@
     return path === '/' || /index\.html$/i.test(path);
   }
 
-  function showLoggedIn(displayName, unreadCount, isPremium, meData) {
+  function showLoggedIn(displayName, unreadCount, isPremium, meData, options) {
+    options = options || {};
+    var profilePending = !!options.profilePending;
     var name = displayName || '貓咪';
     var moon = isPremium ? premiumMoonHtml(meData || meCache) : '';
-    var hideNameOnIndex = isIndexLandingPage() && Boolean(String(displayName || '').trim());
+    var hideNameOnIndex = isIndexLandingPage()
+      && (profilePending || Boolean(String(displayName || '').trim()));
     var nameBlock = hideNameOnIndex
       ? (moon ? '<span class="auth-nav-badge__name-group">' + moon + '</span>' : '')
       : (
@@ -445,10 +511,17 @@
       shellEnd();
 
     injectNav(html, doLogout);
-    updateWelcomeGreeting(displayName);
+    if (!profilePending) {
+      updateWelcomeGreeting(displayName, isPremium);
+      mountIndexGreetingInNav();
+    } else {
+      updateWelcomeGreeting('', isPremium);
+      unmountIndexGreetingFromNav();
+    }
   }
 
   function showLoggedOut() {
+    unmountIndexGreetingFromNav();
     updateWelcomeGreeting('');
     var html =
       shellStart() +
@@ -519,7 +592,7 @@
     var cachedName = cached && cached.profile && cached.profile.display_name;
     var isPremium = !!(cached && cached.profile && cached.profile.subscription_tier === 'premium');
     var unread = (cached && cached.unread_inbox_count) || 0;
-    showLoggedIn(cachedName || immediateName, unread, isPremium, cached);
+    showLoggedIn(cachedName || immediateName, unread, isPremium, cached, { profilePending: true });
 
     fetch('/api/me', {
       headers: { Authorization: 'Bearer ' + token },
@@ -537,22 +610,23 @@
         return r.ok ? r.json() : null;
       })
       .then(function (data) {
-        if (!data) return;
+        if (!data) {
+          showLoggedIn(immediateName, unread, isPremium, cached);
+          return;
+        }
         meCache = data;
         if (userId) writeMeCache(userId, data);
         var serverName = data.profile && data.profile.display_name;
-        if (serverName && serverName !== immediateName) {
-          var el = document.getElementById(NAV_ID);
-          if (el) {
-            var nameLink = el.querySelector('.auth-nav-badge__name-group .auth-nav-badge__item--name');
-            setAuthNavName(nameLink, serverName);
-          }
-        }
-        updateWelcomeGreeting(serverName || immediateName);
-        updateUnread(data.unread_inbox_count || 0);
-        updatePremiumMoon(data.profile && data.profile.subscription_tier === 'premium', data);
+        showLoggedIn(
+          serverName || immediateName,
+          data.unread_inbox_count || 0,
+          !!(data.profile && data.profile.subscription_tier === 'premium'),
+          data
+        );
       })
-      .catch(function () {});
+      .catch(function () {
+        showLoggedIn(immediateName, unread, isPremium, cached);
+      });
   }
 
   if (document.readyState === 'loading') {

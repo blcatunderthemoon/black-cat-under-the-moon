@@ -13,6 +13,7 @@ import {
   getHongKongMonthEnd,
   getHongKongMonthStart,
 } from './hong-kong-time.js';
+import { getPublicProfile } from './mirror-personality.js';
 
 // ── Mirror Card visibility ─────────────────────────────────────────────────
 
@@ -83,14 +84,9 @@ export function shapeMirrorCard(card, visibility) {
   };
 
   if (visibility === 'public' || visibility === 'basic') {
-    const ba = card.basic_answers || {};
     return {
       ...base,
-      public_profile: {
-        label: ba.p1 || null,
-        mbti: ba.p2_mbti || null,
-        zodiac: ba.p2_zodiac || null,
-      },
+      public_profile: getPublicProfile(card.basic_answers),
     };
   }
 

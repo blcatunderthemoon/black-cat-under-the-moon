@@ -67,10 +67,12 @@ export default async function handler(req, res) {
     const authUser = await getOptionalUser(req);
     const authenticatedUserId = authUser?.id || null;
 
-    // Human verification (Cloudflare Turnstile — bypassed if CF_TURNSTILE_SECRET not set)
-    const ts = await verifyTurnstile(turnstile_token, ip);
-    if (!ts.success) {
-      return res.status(403).json({ error: '人機驗證失敗，請重新整理頁面後再試。' });
+    // Human verification — anonymous users only; logged-in users skip Turnstile
+    if (!authenticatedUserId) {
+      const ts = await verifyTurnstile(turnstile_token, ip);
+      if (!ts.success) {
+        return res.status(403).json({ error: '人機驗證失敗，請重新整理頁面後再試。' });
+      }
     }
 
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
