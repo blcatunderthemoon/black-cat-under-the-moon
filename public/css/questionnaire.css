@@ -211,7 +211,7 @@ body[data-automode="mirror"] .header-art {
   position: relative;
   width: 100%;
   max-width: 400px;
-  padding: 34px 28px 30px;
+  padding: 22px 28px 26px;
   background: linear-gradient(168deg, #14122a 0%, #0a0916 55%, #0d101c 100%);
   border: 2px solid rgba(255, 224, 102, 0.55);
   box-shadow:
@@ -283,20 +283,21 @@ body[data-automode="mirror"] .header-art {
 .mirror-auth-modal__icon {
   display: flex;
   justify-content: center;
-  margin-bottom: 14px;
+  margin: 0 auto 8px;
   line-height: 0;
+  width: fit-content;
 }
 .mirror-auth-modal__mark {
   display: block;
-  width: min(76px, 22vw);
-  max-width: 84px;
+  width: min(118px, 32vw);
+  max-width: 128px;
   height: auto;
-  aspect-ratio: 317 / 379;
   object-fit: contain;
   image-rendering: pixelated;
+  image-rendering: crisp-edges;
   filter:
-    drop-shadow(0 0 8px rgba(189, 147, 249, 0.5))
-    drop-shadow(0 0 16px rgba(255, 215, 120, 0.28));
+    drop-shadow(0 0 10px rgba(189, 147, 249, 0.45))
+    drop-shadow(0 0 6px rgba(255, 215, 120, 0.3));
 }
 .mirror-auth-modal__badge {
   display: inline-flex;
@@ -304,7 +305,7 @@ body[data-automode="mirror"] .header-art {
   justify-content: center;
   flex-wrap: wrap;
   gap: 0 5px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   line-height: 1;
   color: var(--purple-light);
   border-color: rgba(189, 147, 249, 0.45);
@@ -469,7 +470,7 @@ body[data-automode="mirror"] .header-art {
 }
 @media (max-width: 380px) {
   .mirror-auth-modal {
-    padding: 28px 22px 26px;
+    padding: 18px 22px 24px;
     --ma-zh-size: 9px;
     --ma-en-size: 6px;
     --ma-title-size: 11px;
