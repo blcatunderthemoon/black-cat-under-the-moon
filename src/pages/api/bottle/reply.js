@@ -1,10 +1,9 @@
-﻿import { createClient } from '@supabase/supabase-js';
-import { Ratelimit } from '@upstash/ratelimit';
+﻿import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 import { checkIp } from '../../../lib/ip-guard.js';
 import { filterContent } from '../../../lib/content-filter.js';
 import { verifyTurnstile } from '../../../lib/turnstile.js';
-import { getOptionalUser } from '../../../lib/server-auth.js';
+import { getAdminClient } from '../../../lib/server-auth.js';
 
 const ratelimit = process.env.UPSTASH_REDIS_REST_URL
   ? new Ratelimit({
@@ -15,9 +14,6 @@ const ratelimit = process.env.UPSTASH_REDIS_REST_URL
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: { persistSession: false },
-});
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -61,10 +57,9 @@ export default async function handler(req, res) {
     }
 
     const isSubReply = !!parent_reply_id;
-    const authUser = await getOptionalUser(req);
+    const db = getAdminClient();
 
-    // Human verification — required for anonymous top-level comments; logged-in users skip
-    if (!isSubReply && !authUser) {
+    if (!isSubReply) {
       const ts = await verifyTurnstile(turnstile_token, ip);
       if (!ts.success) {
         return res.status(403).json({ error: '人機驗證失敗，請重新整理頁面後再試。' });
@@ -77,7 +72,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: '無效的回覆 ID。' });
       }
       // Parent must exist in the same bottle, be visible, and be top-level (no further nesting)
-      const { data: parent, error: pErr } = await supabase
+      const { data: parent, error: pErr } = await db
         .from('replies')
         .select('id, bottle_id, parent_reply_id, is_hidden')
         .eq('id', parent_reply_id)
@@ -111,7 +106,7 @@ export default async function handler(req, res) {
     // Cooldown check (30s per user per bottle, top-level only)
     const safeUserId = String(user_id).slice(0, 64);
     if (!isSubReply) {
-      const { data: lastReply } = await supabase
+      const { data: lastReply } = await db
         .from('replies')
         .select('created_at')
         .eq('bottle_id', bottle_id)
@@ -129,7 +124,7 @@ export default async function handler(req, res) {
       }
     }
 
-    const { error } = await supabase.from('replies').insert({
+    const { error } = await db.from('replies').insert({
       bottle_id,
       content:         content.trim(),
       user_id:         safeUserId,

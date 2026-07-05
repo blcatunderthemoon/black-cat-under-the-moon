@@ -242,10 +242,10 @@
             <button id="btn-reply" onclick="sendReply()" class="btn-round-send"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="display:block"><path transform="rotate(-30,12,12) translate(2.6,0)" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
           </div>
           <div id="reply-turnstile" style="margin:8px 0 4px"></div>
+          <div class="msg msg-err" id="reply-err"></div>
+          <div class="msg msg-ok"  id="reply-ok"></div>
         </div>
       </div>
-      <div class="msg msg-err" id="reply-err"></div>
-      <div class="msg msg-ok"  id="reply-ok"></div>
       <div class="msg msg-ok"  id="report-ok" style="margin-top:10px"></div>
       <div id="btn-next-wrap" style="margin:12px 0 0">
         <button class="btn btn-cyan" id="btn-next" onclick="skipBottle()">🌊 拋回大海</button>
@@ -364,7 +364,7 @@
 
 <script src="/js/mobile-document-scroll.js"></script>
 <script src="js/auth-nav.js"></script>
-<script src="js/drift-bottle.js?v=20260709a"></script>
+<script src="js/drift-bottle.js?v=20260710d"></script>
 
 <!-- ── Crisis Intervention Banner ── -->
 <div id="crisis-banner" class="crisis-overlay" style="display:none;"

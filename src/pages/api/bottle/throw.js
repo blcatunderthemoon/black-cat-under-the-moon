@@ -1,10 +1,9 @@
-﻿import { createClient } from '@supabase/supabase-js';
-import { Ratelimit } from '@upstash/ratelimit';
+﻿import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 import { checkIp } from '../../../lib/ip-guard.js';
 import { filterContent } from '../../../lib/content-filter.js';
 import { verifyTurnstile } from '../../../lib/turnstile.js';
-import { getOptionalUser } from '../../../lib/server-auth.js';
+import { getAdminClient } from '../../../lib/server-auth.js';
 
 const ratelimit = process.env.UPSTASH_REDIS_REST_URL
   ? new Ratelimit({
@@ -15,10 +14,6 @@ const ratelimit = process.env.UPSTASH_REDIS_REST_URL
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: { persistSession: false },
-});
-const MAX_BOTTLE_CONTENT_LENGTH = 500;
 
 // 6-char key from unambiguous chars (no 0/O/1/I confusion)
 function generateKey() {
@@ -58,27 +53,19 @@ export default async function handler(req, res) {
 
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
-    // Note: never trust client-supplied user_id — derive from auth token only
     const { content, mood_tag, mood_tags, is_mission_bottle, turnstile_token } = body;
     const missionBottle = is_mission_bottle === true;
+    const db = getAdminClient();
 
-    // Optional auth: if logged-in user throws a bottle, bind their user_id silently
-    // This does NOT expose their identity in the bottle's public view
-    const authUser = await getOptionalUser(req);
-    const authenticatedUserId = authUser?.id || null;
-
-    // Human verification — anonymous users only; logged-in users skip Turnstile
-    if (!authenticatedUserId) {
-      const ts = await verifyTurnstile(turnstile_token, ip);
-      if (!ts.success) {
-        return res.status(403).json({ error: '人機驗證失敗，請重新整理頁面後再試。' });
-      }
+    const ts = await verifyTurnstile(turnstile_token, ip);
+    if (!ts.success) {
+      return res.status(403).json({ error: '人機驗證失敗，請重新整理頁面後再試。' });
     }
 
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
       return res.status(400).json({ error: '瓶子裡沒有內容哦。' });
     }
-    if (content.trim().length > MAX_BOTTLE_CONTENT_LENGTH) {
+    if (content.trim().length > 500) {
       return res.status(400).json({ error: '內容不能超過 500 字。' });
     }
 
@@ -105,7 +92,7 @@ export default async function handler(req, res) {
     let view_key = null;
     for (let attempt = 0; attempt < 5; attempt++) {
       const candidate = generateKey();
-      const { data: existing } = await supabase
+      const { data: existing } = await db
         .from('bottles')
         .select('id')
         .eq('view_key', candidate)
@@ -119,12 +106,12 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: '生成鑰匙失敗，請重試。' });
     }
 
-    const { error } = await supabase.from('bottles').insert({
+    const { error } = await db.from('bottles').insert({
       view_key,
       content:           content.trim(),
       mood_tag:          normalizedTags[0] || null,
       tags:              normalizedTags,
-      user_id:           authenticatedUserId,   // null for anonymous; verified from auth token
+      user_id:           null,
       is_mission_bottle: missionBottle,
     });
 

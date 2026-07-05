@@ -511,10 +511,11 @@
       shellEnd();
 
     injectNav(html, doLogout);
-    if (!profilePending) {
-      updateWelcomeGreeting(displayName, isPremium);
+    var greetingName = String(displayName || '').trim();
+    if (greetingName) {
+      updateWelcomeGreeting(greetingName, isPremium);
       mountIndexGreetingInNav();
-    } else {
+    } else if (!profilePending) {
       updateWelcomeGreeting('', isPremium);
       unmountIndexGreetingFromNav();
     }

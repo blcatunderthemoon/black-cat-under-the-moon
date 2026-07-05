@@ -12,71 +12,167 @@ const API = {
 };
 
 /* ─── Cloudflare Turnstile ──────────────────────── */
-const TURNSTILE_SELECTORS = ['#throw-turnstile', '#reply-turnstile', '#find-reply-turnstile'];
 const TURNSTILE_NOT_READY = '人機驗證未就緒，請重新整理頁面後再試。';
+const TURNSTILE_WIDGET_IDS = {};
 
 function getTurnstileToken(selector) {
   return (window.turnstile?.getResponse(selector) ?? '') || '';
 }
 
-function getSupabaseAuthToken() {
-  try {
-    for (var i = 0; i < localStorage.length; i++) {
-      var k = localStorage.key(i);
-      if (k && k.startsWith('sb-') && k.endsWith('-auth-token')) {
-        var session = JSON.parse(localStorage.getItem(k) || 'null');
-        if (session && session.access_token) return session.access_token;
-      }
-    }
-  } catch (e) {}
-  return null;
+function isTurnstileApiAvailable() {
+  return !!(window.turnstile && typeof window.turnstile.render === 'function');
 }
 
-function authRequestHeaders(extra) {
-  var headers = Object.assign({ 'Content-Type': 'application/json' }, extra || {});
-  var token = getSupabaseAuthToken();
-  if (token) headers.Authorization = 'Bearer ' + token;
-  return headers;
+function waitForTurnstileApi(timeoutMs) {
+  var limit = timeoutMs || 8000;
+  return new Promise(function (resolve) {
+    if (isTurnstileApiAvailable()) {
+      resolve(true);
+      return;
+    }
+    if (window.turnstile?.ready) {
+      var done = false;
+      window.turnstile.ready(function () {
+        if (done) return;
+        done = true;
+        resolve(isTurnstileApiAvailable());
+      });
+      setTimeout(function () {
+        if (done) return;
+        done = true;
+        resolve(isTurnstileApiAvailable());
+      }, limit);
+      return;
+    }
+    var deadline = Date.now() + limit;
+    var timer = setInterval(function () {
+      if (isTurnstileApiAvailable()) {
+        clearInterval(timer);
+        resolve(true);
+      } else if (Date.now() >= deadline) {
+        clearInterval(timer);
+        resolve(false);
+      }
+    }, 100);
+  });
+}
+
+let turnstileSiteKey = null;
+async function fetchTurnstileSiteKey() {
+  if (turnstileSiteKey) return turnstileSiteKey;
+  var siteKey = '0x4AAAAAADYg006rqWz6ukif';
+  try {
+    var res = await fetch('/api/turnstile/site-key');
+    if (res.ok) {
+      var data = await res.json();
+      if (data.siteKey) siteKey = data.siteKey;
+    }
+  } catch (e) {}
+  turnstileSiteKey = siteKey;
+  return siteKey;
+}
+
+async function ensureTurnstileWidget(selector) {
+  var el = document.querySelector(selector);
+  if (!el) return false;
+  el.style.display = '';
+  if (TURNSTILE_WIDGET_IDS[selector]) return true;
+
+  var apiOk = await waitForTurnstileApi(8000);
+  if (!apiOk) return false;
+
+  var siteKey = await fetchTurnstileSiteKey();
+  try {
+    TURNSTILE_WIDGET_IDS[selector] = window.turnstile.render(selector, {
+      sitekey: siteKey,
+      theme: 'dark',
+      appearance: 'interaction-only',
+      size: 'flexible',
+      execution: 'execute',
+    });
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function executeTurnstile(selector) {
+  return new Promise(function (resolve) {
+    var existing = getTurnstileToken(selector);
+    if (existing) {
+      resolve(existing);
+      return;
+    }
+    if (!isTurnstileApiAvailable() || !TURNSTILE_WIDGET_IDS[selector]) {
+      resolve('');
+      return;
+    }
+    var settled = false;
+    var timer = setTimeout(function () {
+      if (settled) return;
+      settled = true;
+      resolve(getTurnstileToken(selector) || '');
+    }, 20000);
+    try {
+      window.turnstile.execute(selector, {
+        callback: function (token) {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          resolve(token || '');
+        },
+        'error-callback': function () {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          resolve('');
+        },
+      });
+    } catch (e) {
+      clearTimeout(timer);
+      resolve(getTurnstileToken(selector) || '');
+    }
+  });
+}
+
+function resetTurnstileWidget(selector) {
+  if (!window.turnstile || !TURNSTILE_WIDGET_IDS[selector]) return;
+  try { window.turnstile.reset(selector); } catch (e) {}
+}
+
+function jsonHeaders(extra) {
+  return Object.assign({ 'Content-Type': 'application/json' }, extra || {});
+}
+
+async function parseApiJson(res) {
+  try {
+    return await res.json();
+  } catch (e) {
+    return {};
+  }
 }
 
 async function requireHumanCheck(selector) {
-  if (getSupabaseAuthToken()) return { ok: true };
+  var ready = await ensureTurnstileWidget(selector);
   var token = getTurnstileToken(selector);
-  if (!token) return { ok: false, message: TURNSTILE_NOT_READY };
+  if (!token && ready) token = await executeTurnstile(selector);
+
+  if (!token) {
+    if (!isTurnstileApiAvailable()) {
+      return { ok: true, turnstileToken: '' };
+    }
+    return {
+      ok: false,
+      message: ready ? '請完成人機驗證後再試。' : TURNSTILE_NOT_READY,
+    };
+  }
   return { ok: true, turnstileToken: token };
 }
 
 async function initTurnstileWidgets() {
-  let siteKey = '0x4AAAAAADYg006rqWz6ukif';
-  try {
-    const res = await fetch('/api/turnstile/site-key');
-    if (res.ok) {
-      const data = await res.json();
-      if (data.siteKey) siteKey = data.siteKey;
-    }
-  } catch {}
-
-  const renderAll = function () {
-    var loggedIn = !!getSupabaseAuthToken();
-    TURNSTILE_SELECTORS.forEach(function (sel) {
-      var el = document.querySelector(sel);
-      if (!el) return;
-      if (loggedIn) {
-        el.style.display = 'none';
-        return;
-      }
-      window.turnstile.render(sel, {
-        sitekey: siteKey,
-        theme: 'dark',
-        appearance: 'interaction-only',
-        size: 'flexible',
-      });
-    });
-  };
-
-  if (window.turnstile?.ready) {
-    window.turnstile.ready(renderAll);
-  }
+  await fetchTurnstileSiteKey();
+  await waitForTurnstileApi(8000);
+  await ensureTurnstileWidget('#throw-turnstile');
 }
 
 if (document.readyState === 'loading') {
@@ -171,6 +267,10 @@ document.querySelectorAll('.tab').forEach(btn => {
         nextRandomAt = 0;
         loadRandom();
       }
+      ensureTurnstileWidget('#reply-turnstile');
+    }
+    if (btn.dataset.panel === 'find') {
+      ensureTurnstileWidget('#find-reply-turnstile');
     }
   });
 });
@@ -693,7 +793,7 @@ async function throwBottle() {
   try {
     const res  = await fetch(API.throw, {
       method: 'POST',
-      headers: authRequestHeaders(),
+      headers: jsonHeaders(),
       body: JSON.stringify({
         content:           submittedContent,
         mood_tag:          selectedMoods[0] || null,
@@ -702,7 +802,7 @@ async function throwBottle() {
         turnstile_token:   check.turnstileToken,
       }),
     });
-    const data = await res.json();
+    const data = await parseApiJson(res);
     if (res.status === 451) { showCrisisBanner(); return; }
     if (!res.ok) { showMsg('throw-err', data.error || '發生錯誤，請重試。', 'err'); return; }
     window.posthog?.capture('bottle_thrown', {
@@ -733,7 +833,7 @@ async function throwBottle() {
     document.getElementById('ov-key-box').classList.remove('key-float-anim');
 
     runSubmitAnimation();
-    window.turnstile?.reset('#throw-turnstile');
+    resetTurnstileWidget('#throw-turnstile');
     goStep(1);
   } catch { showMsg('throw-err', '網路錯誤，請稍後再試。', 'err'); }
   finally { btn.disabled = false; btn.textContent = '🌙 將話語封進瓶中'; }
@@ -894,7 +994,7 @@ async function sendReply() {
   try {
     const res  = await fetch(API.reply, {
       method: 'POST',
-      headers: authRequestHeaders(),
+      headers: jsonHeaders(),
       body: JSON.stringify({
         bottle_id: currentBottleId,
         content,
@@ -902,14 +1002,14 @@ async function sendReply() {
         turnstile_token: check.turnstileToken,
       }),
     });
-    const data = await res.json();
+    const data = await parseApiJson(res);
     if (res.status === 451) { showCrisisBanner(); return; }
     if (!res.ok) { showMsg('reply-err', data.error || '發生錯誤。', 'err'); return; }
     replied = true;
     setReplyTime(currentBottleId);
     showMsg('reply-ok', '留言已送出 ✨', 'ok');
     window.posthog?.capture('reply_sent');
-    window.turnstile?.reset('#reply-turnstile');
+    resetTurnstileWidget('#reply-turnstile');
     document.getElementById('reply-content').value = '';
     document.getElementById('reply-count').textContent = '0 / 100';
     btn.innerHTML = SEND_ICON;
@@ -1185,7 +1285,7 @@ async function sendSubReply(parentReplyId, bottleId, listElId) {
   try {
     const res = await fetch(API.reply, {
       method: 'POST',
-      headers: authRequestHeaders(),
+      headers: jsonHeaders(),
       body: JSON.stringify({ bottle_id: bottleId, content, user_id: uid(), parent_reply_id: parentReplyId }),
     });
     const data = await res.json();
@@ -1242,7 +1342,7 @@ async function sendFindReply() {
   try {
     const res = await fetch(API.reply, {
       method: 'POST',
-      headers: authRequestHeaders(),
+      headers: jsonHeaders(),
       body: JSON.stringify({
         bottle_id: foundBottleId,
         content,
@@ -1250,13 +1350,13 @@ async function sendFindReply() {
         turnstile_token: check.turnstileToken,
       }),
     });
-    const data = await res.json();
+    const data = await parseApiJson(res);
     if (res.status === 451) { showCrisisBanner(); btn.disabled = false; btn.innerHTML = SEND_ICON; return; }
     if (!res.ok) { showMsg('find-reply-err', data.error || '發生錯誤。', 'err'); btn.disabled = false; btn.innerHTML = SEND_ICON; return; }
     setReplyTime(foundBottleId);
     showMsg('find-reply-ok', '留言已送出 ✨', 'ok');
     window.posthog?.capture('reply_sent', { panel: 'find' });
-    window.turnstile?.reset('#find-reply-turnstile');
+    resetTurnstileWidget('#find-reply-turnstile');
     document.getElementById('find-reply-content').value = '';
     document.getElementById('find-reply-count').textContent = '0 / 100';
     btn.innerHTML = SEND_ICON;
@@ -1407,7 +1507,7 @@ async function findBottle() {
     const findBtn = document.getElementById('btn-find-reply');
     findBtn.disabled = false; findBtn.innerHTML = SEND_ICON;
     findBtn.classList.remove('btn-success');
-    window.turnstile?.reset('#find-reply-turnstile');
+    resetTurnstileWidget('#find-reply-turnstile');
     const reportBtn = document.getElementById('btn-find-report');
     if (reportBtn) { reportBtn.disabled = false; reportBtn.textContent = '⚑'; reportBtn.style.color = 'rgba(255,255,255,.18)'; }
 
@@ -1569,7 +1669,7 @@ async function loadBottleById(id) {
     const findBtn = document.getElementById('btn-find-reply');
     findBtn.disabled = false; findBtn.innerHTML = SEND_ICON;
     findBtn.classList.remove('btn-success');
-    window.turnstile?.reset('#find-reply-turnstile');
+    resetTurnstileWidget('#find-reply-turnstile');
     const reportBtn = document.getElementById('btn-find-report');
     if (reportBtn) { reportBtn.disabled = false; reportBtn.textContent = '⚑'; reportBtn.style.color = 'rgba(255,255,255,.18)'; }
     document.getElementById('found-wrap').classList.add('found-visible');
