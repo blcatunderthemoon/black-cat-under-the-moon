@@ -33,8 +33,8 @@
 
 | 模組 | 說明 | 入口 |
 |---|---|---|
-| 💫 **Echo Mode** | 多維度靈魂配對問卷，六維度相容性評分，配對成功後 Inbox + Email 通知 | `/echo.html` |
-| 🪞 **Mirror Mode** | 15 題性格探索，四大貓家族 + 12 種混合標題，生成可分享 Mirror Card | `/mirror.html` |
+| 💫 **Echo Mode** | 多維度靈魂配對問卷，六維度相容性評分；配對成功後**雙方**收 Email，已註冊用戶另收 Inbox 連線卡（對方未註冊亦可單邊投送） | `/echo.html` |
+| 🪞 **Mirror Mode** | v3 Trait 計分 + 模組化敘事（Insight／三段式炸毛／被誤解／月光提醒）；四大貓家族、12 種混血標題、可分享 Mirror Card | `/mirror.html` |
 | 🐾 **四大貓家族** | Mirror 測驗家族介紹 | `/cat-families` |
 | 🌊 **月光漂流瓶** | 完全匿名：投瓶、撈瓶、回聲、愛心、神秘鑰匙 | `/drift-bottle.html` |
 | 🔥 **黑貓樹洞** | 論壇：分類、留言、愛心、書籤、同族排序、舉報 | `/forum` |
@@ -123,7 +123,7 @@ BlackCatUnderTheMoon/
 ├── src/
 │   ├── pages/              # Next.js 頁面 + api/
 │   ├── components/
-│   ├── lib/                # intelligence、matching、permissions、match-delivery-quota、match-response-premium、match-notify-send…
+│   ├── lib/                # intelligence、matching、mirror-scoring-v3、mirror-narratives、match-notify-send…
 │   ├── styles/
 │   └── middleware.js       # 保護 /api/dashboard/*（x-dashboard-key）
 ├── src/pages/dashboard/    # 管理儀表板 UI（gitignore，本地開發用）
@@ -186,6 +186,7 @@ npm run dev
 | `npm run website` | `vercel dev`（模擬 Vercel 路由／環境） |
 | `npm run seed` | 植入測試用戶 |
 | `npm run test:match` | 配對算法測試 |
+| `npm run build:mirror-v3` | 建置 `public/js/mirror-v3.js` + `mirror-narratives.js`（改 v3 題庫或敘事後執行） |
 
 **PayPal 本地 webhook（選填）：**
 
@@ -293,7 +294,7 @@ npm run dev
 3. **等級** — 80+ 靈魂伴侶候選｜65+ 高度契合｜50+ 值得了解｜35+ 需磨合｜以下差異較大
 
 完整權重、非線性調整、地雷矩陣 → [docs/SCORING.md](docs/SCORING.md)  
-Mirror 測驗規格 → [docs/MIRROR-MODE-SPEC.md](docs/MIRROR-MODE-SPEC.md)
+Mirror 測驗規格 → [docs/MIRROR-MODE-SPEC.md](docs/MIRROR-MODE-SPEC.md)（v3 Trait 設計 → [docs/MIRROR-MODE-V3-DESIGN.md](docs/MIRROR-MODE-V3-DESIGN.md)）
 
 ---
 
@@ -322,6 +323,7 @@ npm run seed:clear                        # 清除後重新植入
 node scripts/seed-test-data.mjs --count=30 --clear
 npm run test:match                        # 配對算法測試
 npm run test:cards                        # 配對測試 + HTML 卡片
+npm run build:mirror-v3                   # 題庫 + 敘事 bundle（改 mirror-questions-v3 或 mirror-narratives 後）
 npm run generate:card -- --userA=1 --userB=5
 npm run export:excel                      # 匯出配對 Excel（≥ 60 分）
 node scripts/create-admin-user.mjs        # 建立管理員帳號
@@ -340,7 +342,7 @@ node scripts/create-admin-user.mjs        # 建立管理員帳號
 | Moonlight Passport 付款無反應 | 確認 `PAYPAL_*` 已設且 `PAYPAL_MODE=live`；正式站需設定 Webhook，見 [docs/paypal-onboarding.md](docs/paypal-onboarding.md) |
 | 意見箱提交失敗 | 確認已執行 `20250701000000_contact_feedback.sql`；API 路徑為 `POST /api/contact-feedback` |
 | Dashboard 郵件自動化 API 500 | 刪除 `.next` 後重啟 dev server；深層巢狀 API 路徑可能需改為扁平路徑 |
-| Passport 即時連線 Inbox 未投送 | 確認雙方問卷已認領（`responses.user_id`）；Dashboard 需勾選 Passport 分頁或 `deliver_inbox: true` |
+| Passport 即時連線 Inbox 未投送 | 已註冊一方應可收 solo match thread；確認 Dashboard 用 Passport 分頁或 `deliver_inbox: true`；已發送配對可 `POST /api/match/deliver-inbox` 補投 |
 | PayMe QR 不顯示 | 檢查 `NEXT_PUBLIC_PAYME_QR_URL` 或 `public/PayCode.jpg`；QR 僅在 `/premium` 付款步驟 popup 內 |
 | Mobile WebView 無法捲動／看不到 footer | 見 [docs/MOBILE-WEBVIEW-SCROLL.md](docs/MOBILE-WEBVIEW-SCROLL.md) |
 | 管理員 API 401 | 請求加 header `x-dashboard-key`，值同 `DASHBOARD_SECRET` |

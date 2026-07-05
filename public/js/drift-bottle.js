@@ -13,10 +13,11 @@ const API = {
 
 /* ─── Cloudflare Turnstile (single shared widget) ── */
 const BOTTLE_TURNSTILE = '#bottle-turnstile';
-const TURNSTILE_NOT_READY = '人機驗證未就緒，請重新整理頁面後再試。';
-const TURNSTILE_ACQUIRE_MS = 7000;
+const TURNSTILE_NOT_READY = '驗證未就緒，請重新整理頁面後再試。';
+const TURNSTILE_ACQUIRE_MS = 10000;
 let _turnstileWidgetId = null;
 let _turnstileTokenCache = '';
+let _turnstileWidgetSize = 'flexible';
 let turnstileSiteKey = null;
 let _turnstileVerification = null; // 'required' | 'optional'
 
@@ -71,25 +72,37 @@ function waitForTurnstileApi(timeoutMs) {
 
 async function fetchTurnstileConfig() {
   if (turnstileSiteKey && _turnstileVerification) {
-    return { siteKey: turnstileSiteKey, verification: _turnstileVerification };
+    return {
+      siteKey: turnstileSiteKey,
+      verification: _turnstileVerification,
+      widgetSize: _turnstileWidgetSize,
+    };
   }
   var siteKey = '0x4AAAAAADYg006rqWz6ukif';
   var verification = 'required';
+  var widgetSize = 'flexible';
   try {
     var res = await fetch('/api/turnstile/site-key');
     if (res.ok) {
       var data = await res.json();
       if (data.siteKey) siteKey = data.siteKey;
       if (data.verification === 'optional') verification = 'optional';
+      if (data.widgetSize) widgetSize = data.widgetSize;
     }
   } catch (e) {}
   turnstileSiteKey = siteKey;
   _turnstileVerification = verification;
-  return { siteKey: siteKey, verification: verification };
+  _turnstileWidgetSize = widgetSize;
+  return { siteKey: siteKey, verification: verification, widgetSize: widgetSize };
 }
 
 function turnstileOptional() {
   return _turnstileVerification === 'optional';
+}
+
+function showTurnstileSlot(show) {
+  var slot = document.getElementById('bottle-turnstile-slot');
+  if (slot) slot.classList.toggle('bottle-turnstile-slot--active', !!show);
 }
 
 async function ensureTurnstileWidget() {
@@ -108,15 +121,18 @@ async function ensureTurnstileWidget() {
     _turnstileWidgetId = window.turnstile.render(BOTTLE_TURNSTILE, {
       sitekey: config.siteKey,
       theme: 'dark',
-      size: 'invisible',
+      size: config.widgetSize || 'flexible',
       callback: function (token) {
         _turnstileTokenCache = token || '';
+        if (token) showTurnstileSlot(false);
       },
       'expired-callback': function () {
         _turnstileTokenCache = '';
+        warmTurnstileWidget();
       },
       'error-callback': function () {
         _turnstileTokenCache = '';
+        showTurnstileSlot(true);
       },
     });
     return !!_turnstileWidgetId;
@@ -156,6 +172,7 @@ function executeTurnstile(timeoutMs) {
           if (settled) return;
           settled = true;
           clearTimeout(timer);
+          showTurnstileSlot(true);
           resolve('');
         },
       });
@@ -177,16 +194,35 @@ async function waitForTurnstileToken(maxMs) {
   while (Date.now() < deadline) {
     var token = getTurnstileToken();
     if (token) return token;
-    await waitMs(80);
+    await waitMs(100);
   }
   return '';
+}
+
+async function requestTurnstileToken(maxWaitMs) {
+  var limit = maxWaitMs || TURNSTILE_ACQUIRE_MS;
+  var token = getTurnstileToken();
+  if (token) return token;
+
+  if (_turnstileWidgetSize === 'invisible') {
+    return executeTurnstile(limit);
+  }
+
+  showTurnstileSlot(true);
+  token = await waitForTurnstileToken(Math.min(limit, 5000));
+  if (!token) {
+    resetTurnstileWidget();
+    token = await waitForTurnstileToken(limit);
+  }
+  if (token) showTurnstileSlot(false);
+  return token;
 }
 
 function warmTurnstileWidget() {
   if (turnstileOptional()) return;
   ensureTurnstileWidget().then(function (ok) {
     if (!ok || getTurnstileToken()) return;
-    executeTurnstile(5000);
+    requestTurnstileToken(8000);
   });
 }
 
@@ -198,13 +234,9 @@ async function acquireTurnstileToken(maxWaitMs) {
   var ready = await ensureTurnstileWidget();
   if (!ready) return { ok: false, message: TURNSTILE_NOT_READY };
 
-  var token = getTurnstileToken();
-  if (!token) token = await waitForTurnstileToken(Math.min(limit, 3000));
-  if (!token) token = await executeTurnstile(limit);
-  if (!token) token = await waitForTurnstileToken(1500);
-
+  var token = await requestTurnstileToken(limit);
   if (!token) {
-    return { ok: false, message: '人機驗證失敗，請重新整理頁面後再試。' };
+    return { ok: false, message: '驗證未完成，請完成畫面下方驗證後再送出。' };
   }
   return { ok: true, turnstileToken: token };
 }
@@ -228,12 +260,12 @@ async function postWithTurnstile(url, body) {
   });
   var data = await parseApiJson(res);
 
-  if (res.status === 403 && !turnstileOptional()) {
+  if (res.status === 403 && !turnstileOptional() && data.turnstile_retry) {
+    _turnstileTokenCache = '';
     resetTurnstileWidget();
-    warmTurnstileWidget();
-    await waitMs(400);
-    check = await acquireTurnstileToken(5000);
-    if (!check.ok) return { ok: false, error: check.message, status: 0, data: {} };
+    await waitMs(300);
+    check = await acquireTurnstileToken(8000);
+    if (!check.ok) return { ok: false, error: check.message || data.error, status: 0, data: data };
     res = await fetch(url, {
       method: 'POST',
       headers: jsonHeaders(),
@@ -242,7 +274,17 @@ async function postWithTurnstile(url, body) {
     data = await parseApiJson(res);
   }
 
-  return { ok: res.ok, status: res.status, data: data };
+  if (res.ok) {
+    _turnstileTokenCache = '';
+    warmTurnstileWidget();
+  }
+
+  return {
+    ok: res.ok,
+    status: res.status,
+    data: data,
+    error: !res.ok && data.error ? data.error : undefined,
+  };
 }
 
 async function postBottleThrow(body) {
@@ -892,11 +934,11 @@ async function throwBottle() {
     });
     const data = result.data || {};
     if (!result.ok && result.status === 0) {
-      showMsg('throw-err', result.error || '人機驗證失敗。', 'err');
+      showMsg('throw-err', result.error || '驗證未完成。', 'err');
       return;
     }
     if (result.status === 451) { showCrisisBanner(); return; }
-    if (!result.ok) { showMsg('throw-err', data.error || '發生錯誤，請重試。', 'err'); return; }
+    if (!result.ok) { showMsg('throw-err', result.error || data.error || '發生錯誤，請重試。', 'err'); return; }
     window.posthog?.capture('bottle_thrown', {
       mood_tag:       selectedMoods[0] || null,
       mood_tags:      selectedMoods,
@@ -1105,11 +1147,11 @@ async function sendReply() {
     });
     const data = result.data || {};
     if (!result.ok && result.status === 0) {
-      showMsg('reply-err', result.error || '人機驗證失敗。', 'err');
+      showMsg('reply-err', result.error || '驗證未完成。', 'err');
       return;
     }
     if (result.status === 451) { showCrisisBanner(); return; }
-    if (!result.ok) { showMsg('reply-err', data.error || '發生錯誤。', 'err'); return; }
+    if (!result.ok) { showMsg('reply-err', result.error || data.error || '發生錯誤。', 'err'); return; }
     replied = true;
     setReplyTime(currentBottleId);
     showMsg('reply-ok', '留言已送出 ✨', 'ok');
@@ -1461,11 +1503,11 @@ async function sendFindReply() {
     });
     const data = result.data || {};
     if (!result.ok && result.status === 0) {
-      showMsg('find-reply-err', result.error || '人機驗證失敗。', 'err');
+      showMsg('find-reply-err', result.error || '驗證未完成。', 'err');
       return;
     }
     if (result.status === 451) { showCrisisBanner(); return; }
-    if (!result.ok) { showMsg('find-reply-err', data.error || '發生錯誤。', 'err'); return; }
+    if (!result.ok) { showMsg('find-reply-err', result.error || data.error || '發生錯誤。', 'err'); return; }
     replied = true;
     setReplyTime(foundBottleId);
     showMsg('find-reply-ok', '留言已送出 ✨', 'ok');

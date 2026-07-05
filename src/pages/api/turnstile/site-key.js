@@ -13,7 +13,8 @@ export default function handler(req, res) {
   res.setHeader('Cache-Control', 'public, max-age=60');
   return res.status(200).json({
     siteKey: process.env.NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY || DEFAULT_SITE_KEY,
-    // optional = server accepts empty token (local dev without CF_TURNSTILE_SECRET)
     verification: hasSecret ? 'required' : 'optional',
+    // flexible = challenge only when Cloudflare suspects automation (fewer false blocks than invisible)
+    widgetSize: 'flexible',
   });
 }

@@ -13,6 +13,11 @@ import {
   pairCanDeliverMatch,
 } from './match-delivery-quota.js';
 import { buildMatchResponsePremiumContext } from './match-response-premium.js';
+import {
+  linkResponseToAuthUser,
+  resolveResponseAuthUserId,
+  resolveResponseDeliveryEmail,
+} from './match-response-auth.js';
 import { buildMatchCardHtml } from '../pages/api/match_card/template.js';
 
 function getSupabase() {
@@ -101,8 +106,13 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
     const quotaA = quotaFor(userA);
     const quotaB = quotaFor(userB);
     const hasPremium = quotaA.is_premium || quotaB.is_premium;
-    const inboxReady = !!(userA.user_id && userB.user_id);
-    const shouldDeliverInbox = deliverInbox || (hasPremium && inboxReady);
+
+    let authA = await resolveResponseAuthUserId(supabase, userA);
+    let authB = await resolveResponseAuthUserId(supabase, userB);
+    if (authA && !userA.user_id) authA = await linkResponseToAuthUser(supabase, userA, authA);
+    if (authB && !userB.user_id) authB = await linkResponseToAuthUser(supabase, userB, authB);
+
+    const shouldDeliverInbox = deliverInbox || (hasPremium && !!(authA || authB));
 
     if (!skipQuotaCheck && !pairCanDeliverMatch(quotaA, quotaB)) {
       results.push({
@@ -124,7 +134,8 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
     const deliveries = [];
 
     for (const [receiver, partner] of [[userA, userB], [userB, userA]]) {
-      if (!receiver.email) {
+      const toEmail = await resolveResponseDeliveryEmail(supabase, receiver);
+      if (!toEmail) {
         deliveries.push({ to: receiver.id, skipped: true, reason: 'No email address' });
         continue;
       }
@@ -141,7 +152,7 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
         const safeB = String(partner.name).replace(/[^\w\u4e00-\u9fff]/g, '_');
         await transporter.sendMail({
           from: `"Black Cat Under The Moon" <${process.env.GMAIL_USER}>`,
-          to: receiver.email,
+          to: toEmail,
           subject: `你與 ${partner.name} 配對成功 ✨ | Black Cat Under The Moon`,
           html: buildEmailHtml({ receiver, partner, score }),
           text: buildTextEmail({ receiver, partner, score }),

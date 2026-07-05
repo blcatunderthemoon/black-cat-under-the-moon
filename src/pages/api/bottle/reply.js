@@ -2,7 +2,7 @@
 import { Redis } from '@upstash/redis';
 import { checkIp } from '../../../lib/ip-guard.js';
 import { filterContent } from '../../../lib/content-filter.js';
-import { verifyTurnstile } from '../../../lib/turnstile.js';
+import { verifyTurnstile, turnstileFailureMessage } from '../../../lib/turnstile.js';
 import { getAdminClient } from '../../../lib/server-auth.js';
 
 const ratelimit = process.env.UPSTASH_REDIS_REST_URL
@@ -62,7 +62,11 @@ export default async function handler(req, res) {
     if (!isSubReply) {
       const ts = await verifyTurnstile(turnstile_token, ip);
       if (!ts.success) {
-        return res.status(403).json({ error: '人機驗證失敗，請重新整理頁面後再試。' });
+        return res.status(403).json({
+          error: turnstileFailureMessage(ts),
+          turnstile_retry: true,
+          turnstile_codes: ts.errorCodes || [],
+        });
       }
     }
 

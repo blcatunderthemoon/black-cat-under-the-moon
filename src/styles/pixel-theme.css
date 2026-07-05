@@ -1369,58 +1369,18 @@
   background: transparent;
 }
 
-.moon-loading--hero,
-#loading-screen .moon-loading {
-  position: relative;
-}
-
-.moon-loading--hero::before,
-#loading-screen .moon-loading::before {
-  content: '';
-  position: absolute;
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    rgba(167, 139, 250, 0.42) 0%,
-    rgba(0, 229, 255, 0.18) 45%,
-    transparent 72%
-  );
-  animation: moon-loading-halo 1.4s ease-in-out infinite;
-  pointer-events: none;
-}
-
-@keyframes moon-loading-halo {
-  0%, 100% { opacity: 0.55; transform: scale(0.92); }
-  50% { opacity: 1; transform: scale(1.08); }
-}
-
-@keyframes moon-loading-pulse {
-  0%, 100% { opacity: 0.82; transform: scale(0.95); }
-  50% { opacity: 1; transform: scale(1.05); }
-}
-
 .moon-loading--night .moon-loading__img {
   mix-blend-mode: normal;
-  filter:
-    brightness(5.5)
-    contrast(1.08)
-    drop-shadow(0 0 8px rgba(167, 139, 250, 0.85))
-    drop-shadow(0 0 18px rgba(0, 229, 255, 0.5));
-  animation: moon-loading-pulse 1.4s ease-in-out infinite;
+  filter: brightness(0) invert(1);
+  opacity: 0.92;
 }
 
 .moon-loading--hero .moon-loading__img,
 #loading-screen .moon-loading__img {
   width: 56px;
   height: 56px;
-  filter:
-    brightness(6.5)
-    contrast(1.1)
-    drop-shadow(0 0 10px rgba(196, 181, 253, 0.95))
-    drop-shadow(0 0 22px rgba(0, 229, 255, 0.62))
-    drop-shadow(0 0 4px rgba(255, 255, 255, 0.35));
+  filter: brightness(0) invert(1);
+  opacity: 0.95;
 }
 
 #loading-screen .moon-loading {
@@ -1430,7 +1390,6 @@
 .moon-loading--forum .moon-loading__img {
   mix-blend-mode: lighten;
   filter: drop-shadow(0 0 10px rgba(255, 159, 67, 0.55));
-  animation: none;
 }
 
 .moon-loading__label {

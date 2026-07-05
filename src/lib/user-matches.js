@@ -74,7 +74,7 @@ async function enrichOtherUsers(admin, userIds) {
 async function loadInboxMatches(admin, userId, myResponseIds) {
   const { data: threads, error: threadsError } = await admin
     .from('inbox_threads')
-    .select('id, participant_a, participant_b, last_message_at, created_at')
+    .select('id, participant_a, participant_b, source_id, last_message_at, created_at')
     .eq('source_type', 'match')
     .or(`participant_a.eq.${userId},participant_b.eq.${userId}`)
     .order('last_message_at', { ascending: false });
@@ -117,25 +117,52 @@ async function loadInboxMatches(admin, userId, myResponseIds) {
   }
 
   const defaultMyId = myResponseIds[0] || null;
+  const myIdSet = new Set((myResponseIds || []).map(Number));
+
+  const soloPartnerIds = [];
+  for (const t of qualifying) {
+    if (t.participant_a !== t.participant_b) continue;
+    if (!String(t.source_id || '').startsWith('solo:')) continue;
+    const card = cardByThread[t.id];
+    const rA = Number(card.payload?.response_a_id);
+    const rB = Number(card.payload?.response_b_id);
+    soloPartnerIds.push(myIdSet.has(rA) ? rB : myIdSet.has(rB) ? rA : rB);
+  }
+  const soloNameById = {};
+  if (soloPartnerIds.length) {
+    const { data: soloRows } = await admin
+      .from('responses')
+      .select('id, name')
+      .in('id', [...new Set(soloPartnerIds)]);
+    for (const row of soloRows || []) soloNameById[row.id] = row.name;
+  }
 
   return qualifying.map((t) => {
     const card = cardByThread[t.id];
     const otherId = t.participant_a === userId ? t.participant_b : t.participant_a;
-    const profile = profileById[otherId] || {};
+    const isSolo = t.participant_a === t.participant_b && String(t.source_id || '').startsWith('solo:');
+    const rA = Number(card.payload?.response_a_id);
+    const rB = Number(card.payload?.response_b_id);
+    const partnerResponseId = isSolo
+      ? (myIdSet.has(rA) ? rB : myIdSet.has(rB) ? rA : rB)
+      : (responseByUserId[otherId] || null);
+    const profile = isSolo ? {} : (profileById[otherId] || {});
     const rawScore = card.payload?.match_score;
     return {
       thread_id: t.id,
-      my_response_id: defaultMyId,
-      partner_response_id: responseByUserId[otherId] || null,
+      my_response_id: myIdSet.has(rA) ? rA : myIdSet.has(rB) ? rB : defaultMyId,
+      partner_response_id: partnerResponseId,
       match_score: rawScore == null ? null : Number(rawScore),
       match_summary: card.payload?.match_summary || {},
       matched_at: card.created_at || t.last_message_at,
       source: 'inbox',
       email_notified: false,
       other_user: {
-        user_id: otherId,
-        display_name: profile.display_name || '神秘貓咪',
-        mirror_card_slug: mirrorByUserId[otherId] || null,
+        user_id: isSolo ? null : otherId,
+        display_name: (isSolo && partnerResponseId ? soloNameById[partnerResponseId] : null)
+          || profile.display_name
+          || '神秘貓咪',
+        mirror_card_slug: isSolo ? null : (mirrorByUserId[otherId] || null),
       },
     };
   });

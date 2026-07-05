@@ -17,6 +17,12 @@ import {
   enrichMatchThreadListItem,
   indexMatchCardsByThread,
 } from './inbox-match-thread.js';
+import {
+  linkResponseToAuthUser,
+  parseSoloMatchSourceId,
+  resolveResponseAuthUserId,
+  soloMatchSourceId,
+} from './match-response-auth.js';
 
 async function loadMirrorSlugsByUserIds(admin, userIds) {
   if (!userIds.length) return {};
@@ -110,6 +116,68 @@ function countUnreadByThread(messages) {
   return counts;
 }
 
+async function loadSoloMatchPartnerNames(admin, viewerId, threads, matchCardByThread) {
+  const names = {};
+  const responseIds = new Set();
+
+  for (const thread of threads || []) {
+    if (thread.source_type !== 'match') continue;
+    if (thread.participant_a !== thread.participant_b) continue;
+    const solo = parseSoloMatchSourceId(thread.source_id);
+    if (!solo) continue;
+    responseIds.add(solo.responseAId);
+    responseIds.add(solo.responseBId);
+  }
+
+  if (!responseIds.size) return names;
+
+  const [{ data: myResponses }, { data: pairResponses }] = await Promise.all([
+    admin.from('responses').select('id').eq('user_id', viewerId),
+    admin.from('responses').select('id, name').in('id', [...responseIds]),
+  ]);
+
+  const myIds = new Set((myResponses || []).map((r) => Number(r.id)));
+  const responseById = Object.fromEntries((pairResponses || []).map((r) => [Number(r.id), r]));
+
+  for (const thread of threads || []) {
+    if (thread.source_type !== 'match') continue;
+    if (thread.participant_a !== thread.participant_b) continue;
+    const solo = parseSoloMatchSourceId(thread.source_id);
+    if (!solo) continue;
+
+    const card = matchCardByThread[thread.id];
+    const rA = Number(card?.payload?.response_a_id ?? solo.responseAId);
+    const rB = Number(card?.payload?.response_b_id ?? solo.responseBId);
+    const partnerId = myIds.has(rA) ? rB : myIds.has(rB) ? rA : (rA === rB ? rB : rA);
+    const partner = responseById[partnerId];
+    if (partner?.name) {
+      names[thread.id] = { name: partner.name, responseId: partnerId };
+    }
+  }
+
+  return names;
+}
+
+async function loadSoloMatchPartnerForThread(admin, viewerId, thread, messages) {
+  const solo = parseSoloMatchSourceId(thread.source_id);
+  if (!solo) return null;
+
+  const card = (messages || []).find((m) => m.message_type === 'match_card');
+  const rA = Number(card?.payload?.response_a_id ?? solo.responseAId);
+  const rB = Number(card?.payload?.response_b_id ?? solo.responseBId);
+
+  const [{ data: myResponses }, { data: pairResponses }] = await Promise.all([
+    admin.from('responses').select('id').eq('user_id', viewerId),
+    admin.from('responses').select('id, name').in('id', [rA, rB]),
+  ]);
+
+  const myIds = new Set((myResponses || []).map((r) => Number(r.id)));
+  const partnerId = myIds.has(rA) ? rB : myIds.has(rB) ? rA : rB;
+  const partner = (pairResponses || []).find((r) => Number(r.id) === Number(partnerId));
+  if (!partner?.name) return null;
+  return { name: partner.name, responseId: partner.id };
+}
+
 /**
  * List inbox threads for a user, ordered by latest message.
  * Returns thread metadata and unread count per thread.
@@ -124,6 +192,7 @@ export async function listThreads(userId, { limit = 20, offset = 0 } = {}) {
       participant_a,
       participant_b,
       source_type,
+      source_id,
       last_message_at,
       created_at
     `)
@@ -176,8 +245,11 @@ export async function listThreads(userId, { limit = 20, offset = 0 } = {}) {
   const unreadByThread = countUnreadByThread(unreadMessagesResult.data);
   const matchCardByThread = indexMatchCardsByThread(userId, matchCardMessages);
 
+  const soloPartnerNames = await loadSoloMatchPartnerNames(admin, userId, threads, matchCardByThread);
+
   return threads.map((thread) => {
     const otherId = thread.participant_a === userId ? thread.participant_b : thread.participant_a;
+    const soloPartner = soloPartnerNames[thread.id];
     const threadMessages = messagesByThread[thread.id] || [];
     const latestMessage = threadMessages[threadMessages.length - 1] || null;
     const unreadCount = unreadByThread[thread.id] || 0;
@@ -202,16 +274,17 @@ export async function listThreads(userId, { limit = 20, offset = 0 } = {}) {
           participantTiers,
         });
 
-    const otherProfile = profileById[otherId];
+    const otherProfile = soloPartner ? null : profileById[otherId];
     const matchCard = matchCardByThread[thread.id] || null;
 
     return {
       ...thread,
       other_participant: {
-        id: otherId,
-        display_name: otherProfile?.display_name || '神秘貓咪',
+        id: soloPartner ? null : otherId,
+        display_name: soloPartner?.name || otherProfile?.display_name || '神秘貓咪',
         avatar_style: otherProfile?.avatar_style || null,
-        mirror_card_slug: slugByUser[otherId] || null,
+        mirror_card_slug: soloPartner ? null : (slugByUser[otherId] || null),
+        partner_response_id: soloPartner?.responseId || null,
       },
       unread_count: unreadCount,
       latest_message: matchCard
@@ -278,6 +351,9 @@ export async function getThread(threadId, userId) {
 
   const otherId = thread.participant_a === userId ? thread.participant_b : thread.participant_a;
   const isPhotoExchangeThread = thread.source_type === 'photo_exchange';
+  const isSoloMatchThread = thread.source_type === 'match'
+    && thread.participant_a === thread.participant_b
+    && String(thread.source_id || '').startsWith('solo:');
 
   if (isPhotoExchangeThread) {
     const exchangeIds = [...new Set(
@@ -381,20 +457,26 @@ export async function getThread(threadId, userId) {
     (profiles || []).forEach((p) => { senderProfiles[p.id] = p; });
   }
 
-  const [otherProfileResult, slugByUser, viewerProfileResult] = await Promise.all([
-    admin
-      .from('profiles')
-      .select('display_name, avatar_style, letter_prefs')
-      .eq('id', otherId)
-      .maybeSingle(),
-    loadMirrorSlugsByUserIds(admin, [otherId]),
+  const [otherProfileResult, slugByUser, viewerProfileResult, soloPartnerResult] = await Promise.all([
+    isSoloMatchThread
+      ? Promise.resolve({ data: null })
+      : admin
+        .from('profiles')
+        .select('display_name, avatar_style, letter_prefs')
+        .eq('id', otherId)
+        .maybeSingle(),
+    isSoloMatchThread ? Promise.resolve({}) : loadMirrorSlugsByUserIds(admin, [otherId]),
     admin
       .from('profiles')
       .select('letter_prefs')
       .eq('id', userId)
       .maybeSingle(),
+    isSoloMatchThread
+      ? loadSoloMatchPartnerForThread(admin, userId, thread, messages || [])
+      : Promise.resolve(null),
   ]);
   const otherProfile = otherProfileResult.data;
+  const soloPartner = soloPartnerResult;
 
   const participantTiers = await loadParticipantTiers([
     thread.participant_a,
@@ -430,13 +512,20 @@ export async function getThread(threadId, userId) {
       latestMessage: (messages || []).slice(-1)[0] || null,
       viewerTier,
     })
-    : enrichThreadWithChannel({
-      threadId,
-      viewerId: userId,
-      viewerTier,
-      messages: messages || [],
-      participantTiers,
-    });
+    : thread.source_type === 'match'
+      ? enrichMatchThreadListItem({
+        unreadCount: unreadIds.length,
+        matchMessage: (messages || []).find((m) => m.message_type === 'match_card' && m.recipient_id === userId)
+          || (messages || []).find((m) => m.message_type === 'match_card')
+          || null,
+      })
+      : enrichThreadWithChannel({
+        threadId,
+        viewerId: userId,
+        viewerTier,
+        messages: messages || [],
+        participantTiers,
+      });
 
   const activeLetterQuota = viewerTier === 'premium'
     ? await getQuotaUsage(userId, 'active_letter_monthly')
@@ -446,11 +535,12 @@ export async function getThread(threadId, userId) {
     thread,
     messages: messagesWithSenders,
     other_participant: {
-      id: otherId,
-      display_name: otherProfile?.display_name || '神秘貓咪',
+      id: soloPartner ? null : otherId,
+      display_name: soloPartner?.name || otherProfile?.display_name || '神秘貓咪',
       avatar_style: otherProfile?.avatar_style || null,
-      mirror_card_slug: slugByUser[otherId] || null,
-      is_premium: participantTiers[otherId] === 'premium',
+      mirror_card_slug: soloPartner ? null : (slugByUser[otherId] || null),
+      is_premium: soloPartner ? false : participantTiers[otherId] === 'premium',
+      partner_response_id: soloPartner?.responseId || null,
     },
     viewer_letter_prefs: normalizeLetterPrefs(viewerProfileResult.data?.letter_prefs, viewerTier),
     active_letter_quota: activeLetterQuota,
@@ -581,12 +671,9 @@ export async function sendLetter({
 }
 
 /**
- * Deliver a match card to both sides of a matched pair.
- * Requires both responses to have user_id (be claimed).
- *
- * responseAId / responseBId are integers (responses.id)
- * matchScore is 0-100
- * matchSummary is a safe JSON object (no full questionnaire answers)
+ * Deliver a match card to registered participant(s).
+ * Both sides receive Inbox cards when claimed; if only one has an account,
+ * the registered user still gets a solo match thread.
  */
 export async function deliverMatchCard({
   responseAId,
@@ -597,10 +684,9 @@ export async function deliverMatchCard({
 }) {
   const admin = getAdminClient();
 
-  // Look up both responses to get their user_ids
   const { data: rows, error } = await admin
     .from('responses')
-    .select('id, user_id, name')
+    .select('id, user_id, name, email')
     .in('id', [responseAId, responseBId]);
 
   if (error || !rows?.length) {
@@ -609,103 +695,133 @@ export async function deliverMatchCard({
 
   const rowA = rows.find((r) => Number(r.id) === Number(responseAId));
   const rowB = rows.find((r) => Number(r.id) === Number(responseBId));
-
   if (!rowA || !rowB) return { delivered: false, reason: 'response_missing' };
-  if (!rowA.user_id || !rowB.user_id) {
+
+  let authA = await resolveResponseAuthUserId(admin, rowA);
+  let authB = await resolveResponseAuthUserId(admin, rowB);
+  if (authA && !rowA.user_id) authA = await linkResponseToAuthUser(admin, rowA, authA);
+  if (authB && !rowB.user_id) authB = await linkResponseToAuthUser(admin, rowB, authB);
+
+  if (!authA && !authB) {
     return {
       delivered: false,
       reason: 'unclaimed_partner',
-      details: {
-        a_claimed: !!rowA.user_id,
-        b_claimed: !!rowB.user_id,
-      },
+      details: { a_claimed: false, b_claimed: false },
     };
   }
 
-  const userAId = rowA.user_id;
-  const userBId = rowB.user_id;
   const now = databaseNowIso();
-
-  // Find or create match thread
-  const { data: existingThread } = await admin
-    .from('inbox_threads')
-    .select('id')
-    .eq('source_type', 'match')
-    .or(
-      `and(participant_a.eq.${userAId},participant_b.eq.${userBId}),and(participant_a.eq.${userBId},participant_b.eq.${userAId})`
-    )
-    .limit(1)
-    .maybeSingle();
+  const isSolo = !authA || !authB;
+  const userAId = authA || authB;
+  const userBId = authB || authA;
+  const soloKey = isSolo ? soloMatchSourceId(responseAId, responseBId) : null;
 
   let threadId;
-  if (existingThread) {
-    threadId = existingThread.id;
-  } else {
-    const { data: newThread, error: threadError } = await admin
+  if (isSolo) {
+    const registeredId = authA || authB;
+    const { data: existingSolo } = await admin
       .from('inbox_threads')
-      .insert({
-        participant_a: userAId,
-        participant_b: userBId,
-        source_type: 'match',
-        source_id: null,
-        last_message_at: now,
-      })
       .select('id')
-      .single();
+      .eq('source_type', 'match')
+      .eq('source_id', soloKey)
+      .eq('participant_a', registeredId)
+      .eq('participant_b', registeredId)
+      .limit(1)
+      .maybeSingle();
 
-    if (threadError) return { delivered: false, reason: 'thread_create_failed' };
-    threadId = newThread.id;
+    if (existingSolo) {
+      threadId = existingSolo.id;
+    } else {
+      const { data: newThread, error: threadError } = await admin
+        .from('inbox_threads')
+        .insert({
+          participant_a: registeredId,
+          participant_b: registeredId,
+          source_type: 'match',
+          source_id: soloKey,
+          last_message_at: now,
+        })
+        .select('id')
+        .single();
+
+      if (threadError) return { delivered: false, reason: 'thread_create_failed' };
+      threadId = newThread.id;
+    }
+  } else {
+    const { data: existingThread } = await admin
+      .from('inbox_threads')
+      .select('id')
+      .eq('source_type', 'match')
+      .or(
+        `and(participant_a.eq.${userAId},participant_b.eq.${userBId}),and(participant_a.eq.${userBId},participant_b.eq.${userAId})`,
+      )
+      .limit(1)
+      .maybeSingle();
+
+    if (existingThread) {
+      threadId = existingThread.id;
+    } else {
+      const { data: newThread, error: threadError } = await admin
+        .from('inbox_threads')
+        .insert({
+          participant_a: userAId,
+          participant_b: userBId,
+          source_type: 'match',
+          source_id: null,
+          last_message_at: now,
+        })
+        .select('id')
+        .single();
+
+      if (threadError) return { delivered: false, reason: 'thread_create_failed' };
+      threadId = newThread.id;
+    }
   }
 
   const aKey = String(responseAId);
   const bKey = String(responseBId);
   const { data: existingCards } = await admin
     .from('inbox_messages')
-    .select('id')
+    .select('id, recipient_id')
     .eq('thread_id', threadId)
     .eq('message_type', 'match_card')
     .or(
       `and(payload->>response_a_id.eq.${aKey},payload->>response_b_id.eq.${bKey}),and(payload->>response_a_id.eq.${bKey},payload->>response_b_id.eq.${aKey})`,
-    )
-    .limit(1);
+    );
 
-  if (existingCards?.length) {
-    await admin
-      .from('inbox_threads')
-      .update({ last_message_at: now })
-      .eq('id', threadId);
-    return {
-      delivered: true,
-      thread_id: threadId,
-      message_ids: existingCards.map((m) => m.id),
-      already_exists: true,
-    };
-  }
-
-  // Build safe payload (never include full questionnaire answers)
   const cardPayload = {
     match_score: matchScore,
     match_summary: matchSummary,
     response_a_id: responseAId,
     response_b_id: responseBId,
+    solo_partner: isSolo,
   };
 
-  // Send match cards to both participants
-  const messages = [
-    { sender_id: null, recipient_id: userAId, content: `你同對方連線成功！同步率：${matchScore}/100` },
-    { sender_id: null, recipient_id: userBId, content: `你同對方連線成功！同步率：${matchScore}/100` },
-  ];
+  const recipients = [...new Set([authA, authB].filter(Boolean))];
+  const existingRecipientIds = new Set((existingCards || []).map((m) => m.recipient_id));
 
-  const insertedIds = [];
-  for (const msg of messages) {
+  if (existingCards?.length && recipients.every((id) => existingRecipientIds.has(id))) {
+    await admin.from('inbox_threads').update({ last_message_at: now }).eq('id', threadId);
+    return {
+      delivered: true,
+      thread_id: threadId,
+      message_ids: existingCards.map((m) => m.id),
+      already_exists: true,
+      solo: isSolo,
+    };
+  }
+
+  const insertedIds = (existingCards || []).map((m) => m.id);
+  for (const recipientId of recipients) {
+    if (existingRecipientIds.has(recipientId)) continue;
     const { data: inserted } = await admin
       .from('inbox_messages')
       .insert({
         thread_id: threadId,
-        sender_id: msg.sender_id,
-        recipient_id: msg.recipient_id,
+        sender_id: null,
+        recipient_id: recipientId,
         message_type: 'match_card',
-        content: msg.content,
+        content: `你同對方連線成功！同步率：${matchScore}/100`,
         payload: cardPayload,
       })
       .select('id')
@@ -713,18 +829,21 @@ export async function deliverMatchCard({
     if (inserted) insertedIds.push(inserted.id);
   }
 
-  await admin
-    .from('inbox_threads')
-    .update({ last_message_at: now })
-    .eq('id', threadId);
+  await admin.from('inbox_threads').update({ last_message_at: now }).eq('id', threadId);
 
-  // Fire notifications silently (do not await to avoid blocking the response)
   if (!skipEmailNotify) {
-    notifyMatchCard(userAId, { matchScore }).catch(() => {});
-    notifyMatchCard(userBId, { matchScore }).catch(() => {});
+    for (const recipientId of recipients) {
+      notifyMatchCard(recipientId, { matchScore }).catch(() => {});
+    }
   }
 
-  return { delivered: true, thread_id: threadId, message_ids: insertedIds };
+  return {
+    delivered: true,
+    thread_id: threadId,
+    message_ids: insertedIds,
+    solo: isSolo,
+    recipients,
+  };
 }
 
 async function findOrCreateDirectThread(admin, userIdA, userIdB) {
