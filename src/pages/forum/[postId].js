@@ -604,7 +604,7 @@ export default function ForumPostPage() {
       />
       <AppShell {...shellProps}>
         {!post ? (
-          <MoonLoading label="載入中…" variant="hero" calm />
+          <MoonLoading label="載入中…" variant="hero" smooth />
         ) : (
           <ForumSectionErrorBoundary fallbackLabel="貼文">
           <>

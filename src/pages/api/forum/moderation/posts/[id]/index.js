@@ -2,8 +2,8 @@
  * DELETE /api/forum/moderation/posts/[id] — admin hard delete
  */
 
-import { resolveModerationActor } from '../../../../../lib/forum-moderation-auth.js';
-import { hardDeleteForumPost } from '../../../../../lib/forum-moderation.js';
+import { resolveModerationActor } from '../../../../../../lib/forum-moderation-auth.js';
+import { hardDeleteForumPost } from '../../../../../../lib/forum-moderation.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'DELETE') return res.status(405).json({ error: 'Method not allowed' });

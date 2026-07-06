@@ -3,8 +3,8 @@
  * Body: { highlighted: boolean }
  */
 
-import { resolveModerationActor } from '../../../../../lib/forum-moderation-auth.js';
-import { highlightForumPost } from '../../../../../lib/forum-moderation.js';
+import { resolveModerationActor } from '../../../../../../lib/forum-moderation-auth.js';
+import { highlightForumPost } from '../../../../../../lib/forum-moderation.js';
 
 function parseBody(req) {
   return typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};

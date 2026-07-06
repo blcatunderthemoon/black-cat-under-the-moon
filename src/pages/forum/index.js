@@ -64,6 +64,7 @@ import {
   MATURE_POST_RULES_SUMMARY,
   readMatureGateAck,
 } from '../../lib/forum-mature.js';
+import useHorizontalRowScroll from '../../hooks/useHorizontalRowScroll.js';
 
 const SORT_OPTIONS = [
   { id: 'latest', label: '最新', icon: '🕐', hint: '依發文時間由新到舊' },
@@ -103,119 +104,6 @@ function scrollTopicBadgeIntoView(row, badge, behavior = 'smooth') {
     behavior,
   });
 }
-
-/** Desktop: wheel + drag horizontal scroll (scrollbar hidden via CSS). */
-function useHorizontalRowScroll(rowRef, dragRef, active = true) {
-  useEffect(() => {
-    if (!active) return undefined;
-    const row = rowRef.current;
-    if (!row) return undefined;
-
-    const DRAG_THRESHOLD_PX = 4;
-    let tracking = false;
-    let dragging = false;
-    let pointerId = null;
-    let startX = 0;
-    let startScroll = 0;
-    let suppressClick = false;
-
-    function canScroll() {
-      return row.scrollWidth > row.clientWidth + 1;
-    }
-
-    function unbindDocument() {
-      document.removeEventListener('pointermove', onPointerMove);
-      document.removeEventListener('pointerup', onDocumentPointerUp);
-      document.removeEventListener('pointercancel', onDocumentPointerUp);
-    }
-
-    function onWheel(e) {
-      if (!canScroll()) return;
-      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-      if (!delta) return;
-      e.preventDefault();
-      row.scrollLeft += delta;
-    }
-
-    function onPointerDown(e) {
-      if (e.button !== 0) return;
-      if (!canScroll()) return;
-      tracking = true;
-      dragging = false;
-      pointerId = e.pointerId;
-      startX = e.clientX;
-      startScroll = row.scrollLeft;
-      document.addEventListener('pointermove', onPointerMove);
-      document.addEventListener('pointerup', onDocumentPointerUp);
-      document.addEventListener('pointercancel', onDocumentPointerUp);
-    }
-
-    function onPointerMove(e) {
-      if (!tracking || e.pointerId !== pointerId) return;
-      const dx = e.clientX - startX;
-      if (!dragging && Math.abs(dx) > DRAG_THRESHOLD_PX) {
-        dragging = true;
-        row.classList.add('forum-h-scroll--dragging');
-        try {
-          row.setPointerCapture(e.pointerId);
-        } catch {
-          /* unsupported */
-        }
-      }
-      if (dragging) {
-        e.preventDefault();
-        const maxScroll = row.scrollWidth - row.clientWidth;
-        row.scrollLeft = Math.max(0, Math.min(startScroll - dx, maxScroll));
-      }
-    }
-
-    function endDrag(e) {
-      if (!tracking) return;
-      if (e?.pointerId !== undefined && pointerId !== null && e.pointerId !== pointerId) return;
-      unbindDocument();
-      if (dragging) {
-        suppressClick = true;
-        if (dragRef) dragRef.current = true;
-        row.classList.remove('forum-h-scroll--dragging');
-        try {
-          if (e?.pointerId !== undefined) row.releasePointerCapture(e.pointerId);
-        } catch {
-          /* ignore */
-        }
-      }
-      tracking = false;
-      dragging = false;
-      pointerId = null;
-    }
-
-    function onDocumentPointerUp(e) {
-      endDrag(e);
-    }
-
-    function onClickCapture(e) {
-      if (!suppressClick) return;
-      e.preventDefault();
-      e.stopPropagation();
-      suppressClick = false;
-      if (dragRef) dragRef.current = false;
-    }
-
-    row.addEventListener('wheel', onWheel, { passive: false });
-    row.addEventListener('pointerdown', onPointerDown);
-    row.addEventListener('click', onClickCapture, true);
-
-    return () => {
-      unbindDocument();
-      row.removeEventListener('wheel', onWheel);
-      row.removeEventListener('pointerdown', onPointerDown);
-      row.removeEventListener('click', onClickCapture, true);
-      row.classList.remove('forum-h-scroll--dragging');
-    };
-  }, [rowRef, dragRef, active]);
-}
-
-/** Back-compat alias (older builds referenced this name). */
-const useTopicsRowScroll = useHorizontalRowScroll;
 
 function WelcomeCard({ topic }) {
   const welcome = getWelcomePost(topic);
@@ -679,10 +567,12 @@ export default function ForumPage() {
         setLoadError(true);
       }
     } finally {
-      if (bootstrap && seq === loadSeqRef.current) {
-        setPageBootstrapping(false);
-        setFeedRefreshing(false);
-        initialLoadDoneRef.current = true;
+      if (seq === loadSeqRef.current) {
+        if (bootstrap) {
+          setPageBootstrapping(false);
+          setFeedRefreshing(false);
+          initialLoadDoneRef.current = true;
+        }
         loadedWithTokenRef.current = sessionRef.current?.access_token ?? null;
       }
     }
@@ -706,6 +596,8 @@ export default function ForumPage() {
   }, []);
 
   useEffect(() => {
+    if (authLoading) return;
+
     const prev = filterSnapshotRef.current;
     const topicChanged = prev.topic !== topic;
     const sortChanged = prev.sort !== sort;
@@ -753,16 +645,15 @@ export default function ForumPage() {
         postsOnly,
       });
     }
-  }, [topic, sort, activeTag, load, session?.access_token]);
+  }, [topic, sort, activeTag, load, authLoading]);
 
   useEffect(() => {
     if (authLoading) return;
     if (pageBootstrapping) return;
     const token = session?.access_token ?? null;
     if (loadedWithTokenRef.current === token) return;
-    loadedWithTokenRef.current = token;
     if (posts === null) return;
-    load(true, { bootstrap: false });
+    load(true, { bootstrap: false, silent: true });
   }, [authLoading, session?.access_token, pageBootstrapping, posts, load]);
 
   useEffect(() => {
@@ -983,7 +874,7 @@ export default function ForumPage() {
         <PageLoadingShell
           label="正在載入樹洞…"
           pageClassName="app-page--forum"
-          loadingCalm
+          loadingSmooth
           warmBackground
           showStarfield={false}
           maxWidth="100%"
@@ -1177,7 +1068,7 @@ export default function ForumPage() {
             <div className="forum-feed">
                 {feedLoading && (
                   <div className="forum-feed-loading" aria-busy="true" aria-live="polite">
-                    <MoonLoading label="正在載入貼文…" variant="inline" centered calm size={58} />
+                    <MoonLoading label="正在載入貼文…" variant="inline" centered smooth size={58} />
                   </div>
                 )}
 

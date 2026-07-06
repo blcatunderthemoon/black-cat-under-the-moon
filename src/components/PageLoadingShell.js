@@ -18,7 +18,7 @@ export default function PageLoadingShell({
   warmBackground,
   showStarfield,
   headerBrand,
-  loadingCalm = false,
+  loadingSmooth = false,
 }) {
   const mergedPageClass = ['app-page--page-loading', pageClassName].filter(Boolean).join(' ');
 
@@ -41,7 +41,7 @@ export default function PageLoadingShell({
         showStarfield={showStarfield}
         headerBrand={headerBrand}
       >
-        <MoonLoading label={label} variant="hero" className="page-loading" calm={loadingCalm} />
+        <MoonLoading label={label} variant="hero" className="page-loading" smooth={loadingSmooth} />
       </AppShell>
     </>
   );

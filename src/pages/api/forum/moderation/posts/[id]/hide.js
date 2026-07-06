@@ -2,8 +2,8 @@
  * POST /api/forum/moderation/posts/[id]/hide
  */
 
-import { resolveModerationActor } from '../../../../../lib/forum-moderation-auth.js';
-import { hideForumPost } from '../../../../../lib/forum-moderation.js';
+import { resolveModerationActor } from '../../../../../../lib/forum-moderation-auth.js';
+import { hideForumPost } from '../../../../../../lib/forum-moderation.js';
 
 function parseBody(req) {
   return typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};

@@ -1451,6 +1451,10 @@
   will-change: opacity;
 }
 
+.moon-loading--send.moon-loading--smooth .moon-loading__phase {
+  transition: opacity 0.55s ease-in-out;
+}
+
 .moon-loading--send:has(.moon-loading__phase)::before {
   display: none;
   content: none;
@@ -11710,13 +11714,6 @@
 
 .forum-filters-panel .pixel-filter-row--topics {
   flex-wrap: nowrap;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-x;
-  overscroll-behavior-x: contain;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
   gap: 6px;
   width: 100%;
   min-width: 0;
@@ -11726,17 +11723,38 @@
   padding-bottom: 2px;
   padding-inline-end: 12px;
   scroll-padding-inline: 4px 12px;
-  cursor: grab;
 }
 
-.forum-filters-panel .pixel-filter-row--topics::-webkit-scrollbar {
+/* Horizontal scroll rows: hidden scrollbar + drag/wheel (see useHorizontalRowScroll.js) */
+.forum-h-scroll {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  cursor: grab;
+  min-width: 0;
+}
+
+.forum-h-scroll::-webkit-scrollbar {
   display: none;
   width: 0;
   height: 0;
 }
 
+.forum-h-scroll--tracking,
 .forum-h-scroll.forum-h-scroll--dragging {
   cursor: grabbing;
+  user-select: none;
+}
+
+.forum-h-scroll--tracking *,
+.forum-h-scroll.forum-h-scroll--dragging * {
   user-select: none;
 }
 
@@ -11744,28 +11762,29 @@
   pointer-events: none;
 }
 
-.forum-filters-panel .pixel-filter-row--topics:not(.forum-h-scroll--dragging) .forum-topic-badge,
-.forum-h-scroll:not(.forum-h-scroll--dragging) .forum-tag-chip {
+.forum-filters-panel .pixel-filter-row--topics:not(.forum-h-scroll--dragging):not(.forum-h-scroll--tracking) .forum-topic-badge,
+.forum-h-scroll:not(.forum-h-scroll--dragging):not(.forum-h-scroll--tracking) .forum-tag-chip {
   cursor: pointer;
 }
 
-.forum-h-scroll {
+.forum-filters-panel .pixel-filter-row--topics .forum-topic-badge,
+.forum-h-scroll .forum-tag-chip {
+  flex-shrink: 0;
   touch-action: pan-x;
-  -webkit-overflow-scrolling: touch;
-  cursor: grab;
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
+button.forum-topic-badge,
+button.forum-tag-chip {
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .forum-preset-tags-row__scroll,
 .forum-hot-tags-row__scroll {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.forum-preset-tags-row__scroll::-webkit-scrollbar,
-.forum-hot-tags-row__scroll::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
+  flex: 1;
+  min-width: 0;
 }
 
 .forum-filters-panel .pixel-filter-row--topics + .forum-preset-tags-row,
@@ -11774,15 +11793,8 @@
 }
 
 .forum-filters-panel .pixel-filter-row--topics .forum-topic-badge {
-  flex-shrink: 0;
   font-size: 13px;
   padding: 7px 12px;
-  touch-action: pan-x;
-}
-
-.forum-filters-panel .forum-preset-tags-row__scroll .forum-tag-chip,
-.forum-filters-panel .forum-hot-tags-row__scroll .forum-tag-chip {
-  touch-action: pan-x;
 }
 
 .app-page--forum .forum-topic-badge:not(.forum-topic-badge--active) {
@@ -12197,18 +12209,13 @@
 .forum-preset-tags-row__scroll {
   display: flex;
   align-items: center;
+  flex-wrap: nowrap;
   gap: 8px;
-  overflow-x: auto;
-  overflow-y: hidden;
   flex: 1;
   min-width: 0;
   padding: 4px 4px 6px;
   padding-inline-end: 10px;
   scroll-padding-inline: 4px 10px;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-x;
-  overscroll-behavior-x: contain;
-  cursor: grab;
 }
 
 /* ── Hot sub-tags row (layer 2 filter) ── */
@@ -12243,18 +12250,13 @@
 .forum-hot-tags-row__scroll {
   display: flex;
   align-items: center;
+  flex-wrap: nowrap;
   gap: 8px;
-  overflow-x: auto;
-  overflow-y: hidden;
   flex: 1;
   min-width: 0;
   padding: 4px 4px 6px;
   padding-inline-end: 10px;
   scroll-padding-inline: 4px 10px;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-x;
-  overscroll-behavior-x: contain;
-  cursor: grab;
 }
 
 /* ── Unified forum tag chips (hot filter + post cards + compose) ── */
@@ -12811,7 +12813,7 @@ button.forum-tag-chip:hover {
   margin-top: 2px;
 }
 
-/* Forum loading — solid warm text + gentle moon glow (no phase flashing) */
+/* Forum loading — warm text + orange moon phases (smooth crossfade via .moon-loading--smooth) */
 .app-page--forum .moon-loading__label {
   background: none !important;
   -webkit-background-clip: border-box;
@@ -12824,19 +12826,8 @@ button.forum-tag-chip:hover {
   background: linear-gradient(135deg, #ffb347 0%, #ff8c42 100%);
 }
 
-.app-page--forum .moon-loading--calm .moon-loading__phase:first-child {
-  animation: forum-moon-breathe 2.2s ease-in-out infinite;
-}
-
-@keyframes forum-moon-breathe {
-  0%, 100% {
-    opacity: 0.85;
-    filter: drop-shadow(0 0 6px rgba(255, 140, 66, 0.3));
-  }
-  50% {
-    opacity: 1;
-    filter: drop-shadow(0 0 14px rgba(255, 179, 71, 0.5));
-  }
+.app-page--forum .moon-loading--smooth .moon-loading__phase {
+  filter: drop-shadow(0 0 8px rgba(255, 140, 66, 0.35));
 }
 
 .forum-page-loading {
