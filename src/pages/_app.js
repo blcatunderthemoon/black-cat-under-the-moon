@@ -107,7 +107,7 @@ export default function App({ Component, pageProps }) {
       <Head>
         <meta
           name="viewport"
-          content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
+          content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover, interactive-widget=resizes-content"
         />
         {noindex && <meta name="robots" content="noindex, nofollow" />}
         {process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION && (
@@ -119,7 +119,7 @@ export default function App({ Component, pageProps }) {
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="preload" href="/js/zpix.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         <link rel="stylesheet" href="/css/auth-nav.css" />
-        <link rel="stylesheet" href="/css/mobile-webview-scroll.css?v=20260706ios" />
+        <link rel="stylesheet" href="/css/mobile-webview-scroll.css?v=20260706safari" />
         <link
           href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap"
           rel="stylesheet"

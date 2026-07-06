@@ -1253,7 +1253,7 @@ body[data-automode="mirror"] .part-label .part-label-en {
   overflow-x: hidden;
   overflow-y: scroll;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-y;
+  touch-action: auto;
   overscroll-behavior-y: auto;
 }
 .welcome-screen.hiding {
@@ -2704,7 +2704,7 @@ html { scroll-behavior: smooth; }
   overflow-x: hidden;
   overflow-y: scroll;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-y;
+  touch-action: auto;
   overscroll-behavior-y: auto;
 }
 .mode-select-screen.active {
@@ -3361,7 +3361,7 @@ body:has(.mode-select-screen.active) {
   body:has(.welcome-screen:not(.hiding)) {
     overflow-x: clip !important;
     overflow-y: visible !important;
-    touch-action: pan-y;
+    touch-action: auto;
     height: auto !important;
     max-height: none !important;
     min-height: 100dvh !important;
@@ -3382,7 +3382,7 @@ body:has(.mode-select-screen.active) {
   body:has(#mirror-result.active) {
     overflow-x: clip;
     overflow-y: visible !important;
-    touch-action: pan-y;
+    touch-action: auto;
     height: auto !important;
     min-height: 100dvh;
     position: relative;

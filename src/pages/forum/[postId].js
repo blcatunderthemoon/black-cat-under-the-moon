@@ -82,6 +82,7 @@ export default function ForumPostPage() {
   const [reportedKeys, setReportedKeys] = useState(() => new Set());
   const [reportNotice, setReportNotice] = useState('');
   const [likingCommentId, setLikingCommentId] = useState(null);
+  const [likingPost, setLikingPost] = useState(false);
   const [opOnly, setOpOnly] = useState(false);
 
   const redirectPath = postId ? `/forum/${postId}` : '/forum';
@@ -272,8 +273,24 @@ export default function ForumPostPage() {
   }
 
   async function handleLike() {
-    if (!session) { router.push('/login'); return; }
-    if (data?.post?.viewer_liked) return;
+    if (!session) {
+      router.push(`/login?redirect=${encodeURIComponent(redirectPath)}`);
+      return;
+    }
+    if (data?.post?.viewer_liked || likingPost) return;
+
+    const prevLiked = !!data?.post?.viewer_liked;
+    const prevCount = data?.post?.like_count || 0;
+    setLikingPost(true);
+    setData((d) => d ? {
+      ...d,
+      post: {
+        ...d.post,
+        viewer_liked: true,
+        like_count: prevCount + 1,
+      },
+    } : d);
+
     try {
       const r = await fetch(`/api/forum/posts/${encodeURIComponent(postId)}?action=like`, {
         method: 'POST',
@@ -281,19 +298,51 @@ export default function ForumPostPage() {
       });
       const result = await r.json().catch(() => ({}));
       if (r.status === 409) {
-        setData((d) => d ? { ...d, post: { ...d.post, viewer_liked: true } } : d);
+        setData((d) => d ? {
+          ...d,
+          post: {
+            ...d.post,
+            viewer_liked: true,
+            like_count: result.like_count ?? d.post.like_count,
+          },
+        } : d);
         return;
       }
-      if (!r.ok) return;
+      if (!r.ok) {
+        setData((d) => d ? {
+          ...d,
+          post: {
+            ...d.post,
+            viewer_liked: prevLiked,
+            like_count: prevCount,
+          },
+        } : d);
+        setReportNotice(result.error || '讚好失敗，請稍後再試。');
+        setTimeout(() => setReportNotice(''), 4000);
+        return;
+      }
       setData((d) => d ? {
         ...d,
         post: {
           ...d.post,
           viewer_liked: true,
-          like_count: result.like_count ?? (d.post.like_count || 0) + 1,
+          like_count: result.like_count ?? prevCount + 1,
         },
       } : d);
-    } catch { /* ignore */ }
+    } catch {
+      setData((d) => d ? {
+        ...d,
+        post: {
+          ...d.post,
+          viewer_liked: prevLiked,
+          like_count: prevCount,
+        },
+      } : d);
+      setReportNotice('網路錯誤，請稍後再試。');
+      setTimeout(() => setReportNotice(''), 4000);
+    } finally {
+      setLikingPost(false);
+    }
   }
 
   async function handleBookmark() {
@@ -504,7 +553,7 @@ export default function ForumPostPage() {
                 <button
                   type="button"
                   onClick={handleLike}
-                  disabled={post.viewer_liked}
+                  disabled={post.viewer_liked || likingPost}
                   className={`forum-stat-btn forum-stat-btn--like${post.viewer_liked ? ' forum-stat-btn--liked' : ''}`}
                 >
                   <span aria-hidden="true">💗</span>

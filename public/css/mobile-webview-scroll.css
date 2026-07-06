@@ -46,7 +46,7 @@ body::-webkit-scrollbar {
     overflow-x: clip !important;
     overflow-y: visible !important;
     -webkit-overflow-scrolling: touch;
-    touch-action: pan-y;
+    touch-action: auto;
     height: auto !important;
     max-height: none !important;
     min-height: 100%;
@@ -57,7 +57,7 @@ body::-webkit-scrollbar {
   body:not(.quiz-viewport):not(.body-scroll-locked) {
     overflow-x: clip !important;
     overflow-y: visible !important;
-    touch-action: pan-y;
+    touch-action: auto;
     height: auto !important;
     max-height: none !important;
     min-height: 100dvh;
@@ -105,7 +105,7 @@ body::-webkit-scrollbar {
     max-height: none !important;
     overflow: visible !important;
     overscroll-behavior: auto;
-    touch-action: pan-y;
+    touch-action: auto;
     padding-bottom: var(--mobile-page-bottom-gap);
     box-sizing: border-box;
   }
@@ -494,6 +494,53 @@ body:has(#already-screen.active) #site-footer {
 
     .mode-card-desc {
       font-size: 0.88rem;
+    }
+  }
+}
+
+/* ============================================================
+   iOS Safari — keep page centered, allow pinch zoom.
+   pan-y on html/body blocks two-finger zoom; 100vw can overflow
+   and make the layout look shifted on iPhone.
+   ============================================================ */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 768px), (hover: none) and (pointer: coarse) {
+    html {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden !important;
+      touch-action: auto;
+    }
+
+    body {
+      width: 100%;
+      max-width: 100%;
+      margin-left: auto;
+      margin-right: auto;
+      overflow-x: hidden !important;
+      touch-action: auto;
+    }
+
+    .welcome-screen,
+    .mode-select-screen,
+    .mode-select-screen.active {
+      width: 100%;
+      max-width: 100%;
+      left: 0;
+      right: 0;
+      margin-left: auto;
+      margin-right: auto;
+      touch-action: auto;
+    }
+
+    .welcome-hero,
+    .welcome-bottom,
+    .mode-select-hdr,
+    .mode-cards {
+      width: 100%;
+      max-width: min(520px, 100%);
+      margin-left: auto;
+      margin-right: auto;
     }
   }
 }

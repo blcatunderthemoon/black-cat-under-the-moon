@@ -123,7 +123,7 @@
   background: none;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
+  touch-action: auto;
   overflow: visible;
   transform: translate(var(--mascot-x, calc(100vw - 120px)), var(--mascot-y, calc(100vh - 184px)));
   transition: transform 0s linear;
@@ -149,7 +149,7 @@
   transform: translateX(-50%) translateY(6px) scale(0.96);
   box-sizing: border-box;
   width: max-content;
-  max-width: min(196px, calc(100vw - 32px));
+  max-width: min(196px, calc(100% - 32px));
   min-width: 4.5em;
   padding: 7px 11px;
   border: 1px solid rgba(255, 224, 102, 0.35);

@@ -215,7 +215,16 @@ async function handleLike(req, res, postId) {
   }
 
   const nextCount = (post.like_count || 0) + 1;
-  await admin.from('forum_posts').update({ like_count: nextCount }).eq('id', postId);
+  const { error: updateErr } = await admin
+    .from('forum_posts')
+    .update({ like_count: nextCount })
+    .eq('id', postId);
+
+  if (updateErr) {
+    await admin.from('forum_likes').delete().eq('post_id', postId).eq('user_id', user.id);
+    console.error('[forum/like] count update failed:', updateErr.message);
+    return res.status(500).json({ error: 'Like failed' });
+  }
 
   return res.status(200).json({ success: true, like_count: nextCount, liked: true });
 }
