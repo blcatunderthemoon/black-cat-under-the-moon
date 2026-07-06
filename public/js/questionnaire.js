@@ -312,7 +312,7 @@ const MIRROR_QUESTIONS = [
   {
     id:'p1', part:0, partTitle:'基本資料 Profile', label:'P1',
     text:'你的 Label 是？', type:'single',
-    options:['TB', 'TBG', 'Pure', 'Bi', 'No Label'],
+    options:['TB', 'TBG', 'Pure', 'Bi', 'No Label', '不透露'],
     field:'p1'
   },
   {
@@ -3860,6 +3860,7 @@ function showMirrorResult(scores, mainType, shadowType, hiddenTags, skipAutoSave
   var hobbyTagsHtml    = '';
   (function() {
     var label  = answers.p1        || null;
+    if (label === '不透露') label = null;
     var mbti   = normalizeMirrorMbti(answers.p2_mbti);
     var zodiac = answers.p2_zodiac || null;
     var hobbies = answers.p3 ? answers.p3.split(', ') : [];
