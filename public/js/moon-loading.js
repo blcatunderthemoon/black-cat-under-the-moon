@@ -15,7 +15,10 @@
   }
 
   function syncSubmitMoonMask(el, src) {
-    if (!el.closest('#loading-screen')) return;
+    var inSubmit = el.closest('#loading-screen') || el.classList.contains('moon-loading--send');
+    if (!inSubmit) return;
+    el.classList.add('moon-loading--send');
+    el.classList.remove('moon-loading--night');
     el.style.setProperty('--moon-mask-url', 'url("' + src + '")');
   }
 

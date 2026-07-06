@@ -1077,7 +1077,15 @@ body[data-automode="mirror"] .part-label .part-label-en {
 .overlay-screen.active { display: flex; }
 
 #loading-screen.overlay-screen {
-  gap: 8px;
+  gap: 0;
+}
+
+.loading-send-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 .loading-cat {
@@ -1095,6 +1103,9 @@ body[data-automode="mirror"] .part-label .part-label-en {
   animation: pulse-text 1.2s ease-in-out infinite;
 }
 #loading-screen .loading-text {
+  margin: 0;
+  padding: 0;
+  line-height: 1.25;
   background: var(--moon-send-gradient);
   -webkit-background-clip: text;
   background-clip: text;
@@ -3605,19 +3616,97 @@ body:has(.mode-select-screen.active) {
   50% { opacity: 1; }
 }
 
-/* Export PNG — single uniform outer stroke (no glow stack) */
-#personality-card[data-export] {
+/* Export PNG — clone drops #personality-card id; mirror full card shell here */
+#personality-card[data-export],
+[data-export="1"] {
+  width: 100%;
+  max-width: 360px;
+  margin: 0;
+  --pcard-panel-core: rgba(0, 0, 0, 0.4);
+  --pcard-panel-wash: rgba(255, 255, 255, 0.03);
+  --pcard-panel-feather: radial-gradient(
+    ellipse 125% 88% at 50% 42%,
+    rgba(0, 0, 0, 0.44) 0%,
+    rgba(0, 0, 0, 0.26) 48%,
+    rgba(0, 0, 0, 0.06) 100%
+  );
+  --pcard-accent-warn: #ff6b82;
+  --pcard-accent-moon: rgba(255, 224, 102, 0.42);
+  --pcard-rail-w: 3px;
+  --pcard-content-pad: 12px;
+  --pcard-block-gap: 14px;
+  padding: 18px 18px 16px;
+  position: relative;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-sizing: border-box;
   animation: none !important;
   border: 2px solid rgba(255, 224, 102, 0.72) !important;
   box-shadow: none !important;
   outline: none !important;
-  background: #0b0a18 !important;
+  background: linear-gradient(170deg, #0f0e22 0%, #07060e 60%, #0a0d18 100%) !important;
 }
-#personality-card[data-export]::before {
+#personality-card[data-export]::before,
+[data-export="1"]::before {
   display: none !important;
 }
-#personality-card[data-export] .pcard-rivet {
+#personality-card[data-export] .pcard-rivet,
+[data-export="1"] .pcard-rivet {
   box-shadow: none !important;
+}
+
+/* Export PNG — lock flex/grid; disable capture-breaking motion overlays */
+[data-export="1"] *,
+[data-export="1"] *::before,
+[data-export="1"] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+[data-export="1"] .pcard-trait-spectrum__track {
+  display: flex !important;
+  flex-direction: row !important;
+  width: 100% !important;
+  height: 8px !important;
+  overflow: hidden !important;
+}
+[data-export="1"] .pcard-trait-spectrum__track::after,
+[data-export="1"] .pcard-trait-spectrum__seg::after,
+[data-export="1"] .pcard-bar-fill::after {
+  display: none !important;
+  content: none !important;
+}
+[data-export="1"] .pcard-trait-spectrum__seg {
+  flex: 0 0 auto !important;
+  min-width: 2px !important;
+  height: 100% !important;
+  filter: none !important;
+}
+[data-export="1"] .pcard-trait-spectrum__legend {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 4px 10px !important;
+  width: 100% !important;
+}
+[data-export="1"] .pcard-trait-spectrum__item {
+  display: grid !important;
+  grid-template-columns: 5px minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  min-width: 0 !important;
+}
+[data-export="1"] .pcard-profile-row {
+  display: grid !important;
+  grid-template-columns: 2.25rem minmax(0, 1fr) !important;
+}
+[data-export="1"] .pcard-tags,
+[data-export="1"] .pcard-profile-tags {
+  display: flex !important;
+  flex-wrap: wrap !important;
+}
+[data-export="1"] .pcard-berserk-terminal__scan {
+  display: none !important;
 }
 
 /* Pixel rivets at card corners */

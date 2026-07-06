@@ -36,7 +36,8 @@
   opacity: 0.95;
 }
 
-/* Echo / Mirror submit — blue→purple gradient (mask tracks moon phase frames) */
+/* Echo / Mirror submit — blue→purple gradient moon (mask tracks phase frames) */
+.moon-loading--send,
 #loading-screen .moon-loading {
   position: relative;
   display: inline-grid;
@@ -46,6 +47,7 @@
   gap: 0;
 }
 
+.moon-loading--send::before,
 #loading-screen .moon-loading::before {
   content: '';
   grid-area: 1 / 1;
@@ -64,13 +66,35 @@
   image-rendering: crisp-edges;
 }
 
+.moon-loading--send .moon-loading__img,
 #loading-screen .moon-loading__img {
   grid-area: 1 / 1;
   width: 56px;
   height: 56px;
-  opacity: 0;
+  opacity: 0 !important;
   pointer-events: none;
-  filter: none;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+}
+
+.loading-send-stack .loading-text {
+  margin: 0;
+  padding: 0;
+  line-height: 1.25;
+  background: var(--moon-send-gradient, linear-gradient(155deg, #00e5ff 0%, #7c5cfc 52%, #bd93f9 100%));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.moon-loading--send .moon-loading__label .loading-dots::after,
+.loading-send-stack .loading-text .loading-dots::after {
+  background: var(--moon-send-gradient, linear-gradient(155deg, #00e5ff 0%, #7c5cfc 52%, #bd93f9 100%));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 /* Forum warm pages — keep soft tint, no halo */

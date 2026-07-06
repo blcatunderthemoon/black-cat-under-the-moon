@@ -25,7 +25,7 @@
 <link rel="stylesheet" href="css/questionnaire.css">
 <link rel="stylesheet" href="css/auth-nav.css">
 <link rel="stylesheet" href="css/mobile-webview-scroll.css">
-<link rel="stylesheet" href="css/moon-loading.css?v=20260710m">
+<link rel="stylesheet" href="css/moon-loading.css?v=20260710n">
 <script src="/js/posthog-init.js" defer></script>
 <style>
   /* Match standalone: loader until first question is ready (keep logo + top bar visible) */
@@ -107,10 +107,12 @@
 
 <!-- Loading Screen -->
 <div class="overlay-screen active" id="loading-screen">
-  <div class="moon-loading moon-loading--night moon-loading--hero" role="status" aria-live="polite">
-    <img class="moon-loading__img" src="/loading/FirstQuarterloading.png" alt="" width="56" height="56" decoding="async" draggable="false" />
+  <div class="loading-send-stack">
+    <div class="moon-loading moon-loading--send moon-loading--hero" role="status" aria-live="polite" style="--moon-mask-url: url('/loading/FirstQuarterloading.png')">
+      <img class="moon-loading__img" src="/loading/FirstQuarterloading.png" alt="" width="56" height="56" decoding="async" draggable="false" />
+    </div>
+    <div class="loading-text pixel-font">傳送中<span class="loading-dots"></span></div>
   </div>
-  <div class="loading-text pixel-font">傳送中<span class="loading-dots"></span></div>
 </div>
 
 <!-- Thank You Screen -->
@@ -266,7 +268,7 @@
 </footer>
 
 <script src="js/site-config.js"></script>
-<script src="js/moon-loading.js?v=20260710m"></script>
+<script src="js/moon-loading.js?v=20260710n"></script>
 <script src="js/mobile-document-scroll.js"></script>
 <script src="js/questionnaire.js?v=20260709a"></script>
 <script src="js/auth-nav.js"></script>

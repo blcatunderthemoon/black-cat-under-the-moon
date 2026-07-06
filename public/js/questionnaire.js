@@ -4198,41 +4198,40 @@ function readCssVarColor(el, name, fallback) {
   return raw || fallback;
 }
 
-function applyTraitSpectrumExportFallbacks(root, typeRgb) {
-  var typeColor = typeRgb || { r: 189, g: 147, b: 249 };
-  root.querySelectorAll('.pcard-trait-spectrum').forEach(function (el) {
-    el.style.background = 'transparent';
-    el.style.backgroundImage = 'none';
-    el.style.borderColor = 'transparent';
-    el.style.boxShadow = 'none';
-  });
-  root.querySelectorAll('.pcard-trait-spectrum__track').forEach(function (el) {
-    el.style.background = 'rgba(0,0,0,0.38)';
-    el.style.boxShadow = 'inset 0 0 0 1px rgba(255,224,102,0.12)';
-  });
+function applyTraitSpectrumExportFallbacks(root) {
+  /* Preserve inline width % only — do not flatten segment colors/gradients. */
   root.querySelectorAll('.pcard-trait-spectrum__seg').forEach(function (el) {
-    var color = el.style.backgroundColor || readCssVarColor(el, '--trait-color', '#6b52a8');
-    var glow = readCssVarColor(el, '--trait-glow', color);
-    var glowRgb = hexToRgb(glow);
-    el.style.background = color;
-    el.style.backgroundColor = color;
-    el.style.backgroundImage = 'none';
+    var pct = readInlineWidthPct(el);
+    el.style.flex = '0 0 auto';
+    el.style.minWidth = '2px';
+    el.style.maxWidth = 'none';
+    el.style.height = '100%';
     el.style.filter = 'none';
     el.style.animation = 'none';
-    el.style.boxShadow = '0 0 5px ' + rgbaFromRgb(glowRgb, 0.38);
+    if (pct != null && isFinite(pct) && pct > 0) {
+      el.style.width = pct + '%';
+    }
   });
-  root.querySelectorAll('.pcard-trait-spectrum__dot').forEach(function (el) {
-    var item = el.closest('.pcard-trait-spectrum__item');
-    var color = item ? readCssVarColor(item, '--trait-color', '#6b52a8') : '#6b52a8';
-    el.style.background = color;
-    el.style.boxShadow = 'none';
-  });
-  root.querySelectorAll('.pcard-trait-spectrum__pct').forEach(function (el) {
-    var item = el.closest('.pcard-trait-spectrum__item');
-    var glow = item ? readCssVarColor(item, '--trait-glow', '#bd93f9') : '#bd93f9';
-    var glowRgb = hexToRgb(glow);
-    el.style.color = rgbaFromRgb(glowRgb, 0.92);
-    el.style.textShadow = 'none';
+}
+
+var PCARD_EXPORT_CSS_VARS = [
+  '--pcard-panel-core',
+  '--pcard-panel-wash',
+  '--pcard-panel-feather',
+  '--pcard-accent-warn',
+  '--pcard-accent-moon',
+  '--pcard-rail-w',
+  '--pcard-content-pad',
+  '--pcard-block-gap',
+];
+
+function syncPcardExportShell(clone, orig) {
+  var cs = getComputedStyle(orig);
+  PCARD_EXPORT_CSS_VARS.forEach(function (name) {
+    var val = orig.style.getPropertyValue(name) || cs.getPropertyValue(name);
+    if (val && String(val).trim()) {
+      clone.style.setProperty(name, String(val).trim());
+    }
   });
 }
 
@@ -4332,11 +4331,13 @@ async function imageElementToDataUrl(img) {
 }
 
 async function embedCloneImages(orig, clone) {
-  var origImgs = Array.from(orig.querySelectorAll('img'));
-  var cloneImgs = Array.from(clone.querySelectorAll('img'));
-  for (var i = 0; i < cloneImgs.length; i++) {
-    var cloneImg = cloneImgs[i];
-    var origImg = origImgs[i];
+  var pairs = [
+    { selector: '.pcard-cat-img' },
+  ];
+  for (var p = 0; p < pairs.length; p += 1) {
+    var cloneImg = clone.querySelector(pairs[p].selector);
+    var origImg = orig.querySelector(pairs[p].selector);
+    if (!cloneImg) continue;
     var dataUrl = null;
     if (origImg && origImg.src && origImg.src.indexOf('data:') === 0) {
       dataUrl = origImg.src;
@@ -4362,82 +4363,63 @@ async function embedCloneImages(orig, clone) {
 function buildPcardExportStyle(rgb) {
   var r = rgbaFromRgb.bind(null, rgb);
   var root = '[data-export="1"]';
+  /* Layout locks + identity toggle only — keep live card colors/backgrounds from CSS. */
   return (
-    root + '{' +
-      'animation:none!important;' +
-      'border:2px solid rgba(255,224,102,0.72)!important;' +
-      'box-shadow:none!important;' +
-      'outline:none!important;' +
-      'background:#0b0a18!important;' +
-    '}' +
-    root + '::before,' + root + '::after{display:none!important;content:none!important;}' +
-    root + ' *,' + root + ' *::before,' + root + ' *::after{animation:none!important;transition:none!important;}' +
-    root + ' .pcard-trait-spectrum__track::after{display:none!important;content:none!important;}' +
-    root + ' .pcard-trait-spectrum__seg::after{display:none!important;content:none!important;}' +
-    root + ' .pcard-trait-spectrum__seg,' + root + ' .pcard-trait-spectrum__dot{filter:none!important;background-image:none!important;}' +
-    root + ' .pcard-trait-spectrum,' + root + ' .pcard-trait-spectrum__track{background-image:none!important;}' +
-    root + ' .pcard-rivet{box-shadow:none!important;}' +
+    root + ' .pcard-section{display:flex!important;flex-direction:column!important;align-items:center!important;width:100%!important;box-sizing:border-box!important;}' +
+    root + ' .pcard-tags{display:flex!important;flex-wrap:wrap!important;justify-content:center!important;width:100%!important;}' +
+    root + ' .pcard-profile-row{display:grid!important;grid-template-columns:2.25rem minmax(0,1fr)!important;align-items:start!important;width:100%!important;}' +
+    root + ' .pcard-profile-tags{display:flex!important;flex-wrap:wrap!important;gap:4px!important;min-width:0!important;}' +
+    root + ' .pcard-trait-spectrum{width:100%!important;box-sizing:border-box!important;align-self:stretch!important;}' +
+    root + ' .pcard-trait-spectrum__track{display:flex!important;flex-direction:row!important;width:100%!important;height:8px!important;overflow:hidden!important;}' +
+    root + ' .pcard-trait-spectrum__seg{flex:0 0 auto!important;min-width:2px!important;height:100%!important;box-sizing:border-box!important;}' +
+    root + ' .pcard-trait-spectrum__legend{display:grid!important;grid-template-columns:1fr 1fr!important;gap:4px 10px!important;width:100%!important;}' +
+    root + ' .pcard-trait-spectrum__item{display:grid!important;grid-template-columns:5px minmax(0,1fr) auto!important;align-items:center!important;gap:6px 7px!important;min-width:0!important;}' +
+    root + ' .pcard-trait-spectrum__name{min-width:0!important;text-align:left!important;white-space:normal!important;}' +
     root + ' .pcard-cat-img{border-color:' + r(0.34) + '!important;box-shadow:0 0 12px ' + r(0.38) + ',0 0 4px ' + r(0.20) + '!important;}' +
-    root + ' .pcard-section{border-color:' + r(0.22) + '!important;}' +
-    root + ' .pcard-tag{border-color:' + r(0.50) + '!important;background:' + r(0.08) + '!important;color:' + r(1) + '!important;}' +
-    root + ' .pcard-profile-tag{border-color:' + r(0.35) + '!important;background:' + r(0.07) + '!important;}' +
-    root + ' .pcard-owner-name{border-color:' + r(0.45) + '!important;background:' + r(0.10) + '!important;box-shadow:inset 0 1px 0 rgba(255,255,255,0.05),0 0 12px ' + r(0.18) + '!important;text-shadow:0 0 10px ' + r(0.55) + '!important;}' +
-    root + '.pcard-hide-identity-meta .pcard-profile-meta{display:none!important;}'
+    root + '.pcard-hide-identity-meta .pcard-profile-meta{display:none!important;visibility:hidden!important;height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}'
   );
 }
 
-var EXPORT_INLINE_PROPS = [
-  'display', 'position', 'box-sizing', 'overflow', 'overflow-x', 'overflow-y',
-  'top', 'left', 'right', 'bottom', 'z-index',
-  'width', 'height', 'min-width', 'max-width', 'min-height', 'max-height',
-  'margin', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
-  'padding', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
-  'border', 'border-top', 'border-right', 'border-bottom', 'border-left',
-  'border-width', 'border-style', 'border-color', 'border-radius',
-  'background', 'background-color', 'background-image', 'background-size', 'background-position',
-  'color', 'font-family', 'font-size', 'font-weight', 'font-style',
-  'line-height', 'letter-spacing', 'text-align', 'text-decoration', 'text-shadow',
-  'white-space', 'word-break', 'flex', 'flex-grow', 'flex-shrink', 'flex-basis',
-  'flex-direction', 'flex-wrap', 'align-items', 'align-self', 'justify-content', 'gap',
-  'grid-template-columns', 'grid-template-rows', 'grid-column', 'grid-row',
-  'opacity', 'vertical-align', 'list-style', 'object-fit'
-];
-
-function isUnsafeCssValue(val) {
-  if (!val || val === 'none' || val === 'normal' || val === 'auto') return false;
-  return /color-mix\(|oklch\(|oklab\(|lch\(|lab\(/i.test(val);
+function readInlineWidthPct(el) {
+  if (!el) return null;
+  var inline = el.getAttribute('style') || '';
+  var m = inline.match(/(?:^|;)\s*width\s*:\s*([\d.]+)%/i);
+  if (m) return parseFloat(m[1]);
+  var w = (el.style && el.style.width) || '';
+  m = String(w).match(/^([\d.]+)%$/);
+  return m ? parseFloat(m[1]) : null;
 }
 
-function isUnsafeBackgroundValue(val) {
-  if (!val || val === 'none') return false;
-  return isUnsafeCssValue(val) || /gradient\(/i.test(val);
-}
-
-function inlineExportStyles(sourceEl, cloneEl) {
-  if (!sourceEl || !cloneEl) return;
-  var cs = window.getComputedStyle(sourceEl);
-  EXPORT_INLINE_PROPS.forEach(function (prop) {
-    var val = cs.getPropertyValue(prop);
-    if (!val) return;
-    if (prop === 'background-image' && (val.indexOf('gradient') >= 0 || isUnsafeCssValue(val))) {
-      cloneEl.style.setProperty(prop, 'none');
-      return;
-    }
-    if (prop === 'background' && isUnsafeBackgroundValue(val)) return;
-    if (isUnsafeCssValue(val)) return;
-    try {
-      cloneEl.style.setProperty(prop, val, cs.getPropertyPriority(prop));
-    } catch (e) { /* ignore */ }
+function waitExportLayout() {
+  return new Promise(function (resolve) {
+    requestAnimationFrame(function () {
+      requestAnimationFrame(resolve);
+    });
   });
-  cloneEl.style.filter = 'none';
-  cloneEl.style.animation = 'none';
-  cloneEl.style.transition = 'none';
+}
 
-  var srcKids = sourceEl.children;
-  var cloneKids = cloneEl.children;
-  for (var i = 0; i < srcKids.length; i += 1) {
-    inlineExportStyles(srcKids[i], cloneKids[i]);
+function finalizePcardExportSize(node, fallbackW) {
+  var w = Math.max(1, Math.round(
+    node.getBoundingClientRect().width || node.offsetWidth || fallbackW || 360
+  ));
+  node.style.boxSizing = 'border-box';
+  node.style.width = w + 'px';
+  node.style.maxWidth = w + 'px';
+  node.style.height = 'auto';
+  node.style.minHeight = '0';
+  node.style.overflow = 'visible';
+  var h = Math.max(1, Math.ceil(node.scrollHeight || node.offsetHeight || 0));
+  if (h < 2) {
+    h = Math.max(1, Math.ceil(node.getBoundingClientRect().height || 480));
   }
+  node.style.height = h + 'px';
+  return { w: w, h: h };
+}
+
+async function preparePcardForExport(clone, fallbackW) {
+  applyPcardExportFallbacks(clone);
+  await waitExportLayout();
+  return finalizePcardExportSize(clone, fallbackW);
 }
 
 function dataUrlToBlob(dataUrl) {
@@ -4450,30 +4432,8 @@ function dataUrlToBlob(dataUrl) {
   return new Blob([arr], { type: mime });
 }
 
-function applyPcardExportFallbacks(clone, rgb) {
-  applyTraitSpectrumExportFallbacks(clone, rgb);
-  clone.querySelectorAll('.pcard-cat-img').forEach(function(el) {
-    el.style.borderColor = rgbaFromRgb(rgb, 0.34);
-    el.style.boxShadow = '0 0 12px ' + rgbaFromRgb(rgb, 0.38) + ', 0 0 4px ' + rgbaFromRgb(rgb, 0.20);
-  });
-  clone.querySelectorAll('.pcard-section').forEach(function(el) {
-    el.style.background = 'rgba(255,255,255,0.02)';
-    el.style.backgroundImage = 'none';
-    el.style.borderColor = rgbaFromRgb(rgb, 0.22);
-  });
-  clone.querySelectorAll('.pcard-divider').forEach(function(el) {
-    el.style.backgroundImage = 'none';
-    el.style.background = 'rgba(255,224,102,0.30)';
-  });
-  clone.querySelectorAll('.pcard-tag').forEach(function(el) {
-    el.style.borderColor = rgbaFromRgb(rgb, 0.50);
-    el.style.background = rgbaFromRgb(rgb, 0.08);
-    el.style.color = rgbaFromRgb(rgb, 1);
-  });
-  clone.querySelectorAll('.pcard-profile-tag').forEach(function(el) {
-    el.style.borderColor = rgbaFromRgb(rgb, 0.35);
-    el.style.background = rgbaFromRgb(rgb, 0.07);
-  });
+function applyPcardExportFallbacks(clone) {
+  applyTraitSpectrumExportFallbacks(clone);
   clone.querySelectorAll('.pcard-bar-fill').forEach(function(el) {
     var pct = parseFloat(el.dataset.pct || '0');
     if (!isFinite(pct) || pct < 0) pct = 0;
@@ -4481,20 +4441,6 @@ function applyPcardExportFallbacks(clone, rgb) {
     el.style.transition = 'none';
     el.style.animation = 'none';
     el.style.width = pct + '%';
-    el.style.backgroundImage = 'none';
-    el.style.backgroundColor = el.style.backgroundColor || 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.95)';
-  });
-  clone.querySelectorAll('.pcard-berserk-terminal').forEach(function(el) {
-    el.style.background = 'rgba(32, 10, 16, 0.98)';
-    el.style.backgroundImage = 'none';
-    el.style.borderLeftColor = '#ff6b82';
-    el.style.boxShadow = 'inset 0 0 20px rgba(255, 60, 80, 0.1)';
-  });
-  clone.querySelectorAll('.pcard-berserk-terminal__scan').forEach(function(el) {
-    el.style.display = 'none';
-  });
-  clone.querySelectorAll('.pcard-moon-verdict, .pcard-hero-block, .pcard-mirror-divider-section, .pcard-narrative-block--whisper').forEach(function(el) {
-    el.style.backgroundImage = 'none';
   });
 }
 
@@ -4507,45 +4453,40 @@ function getPcardExportPixelRatio(cardWidth) {
   return Math.max(MIN_RATIO, Math.min(MAX_RATIO, Math.ceil(TARGET_EXPORT_WIDTH / w)));
 }
 
-async function capturePcardWithHtmlToImage(node, w, h) {
+async function capturePcardWithHtmlToImage(node, pixelRatio) {
   if (typeof htmlToImage === 'undefined' || !htmlToImage.toBlob) return null;
-  var pixelRatio = getPcardExportPixelRatio(w);
   return await htmlToImage.toBlob(node, {
     cacheBust: true,
     pixelRatio: pixelRatio,
     backgroundColor: '#07060e',
-    width: w,
-    height: h,
-    skipAutoScale: true,
-    style: { transform: 'none', margin: '0' }
   });
 }
 
 function getMirrorExportRoot() {
   var root = document.getElementById('mirror-export-root');
-  if (root) return root;
-  root = document.createElement('div');
-  root.id = 'mirror-export-root';
-  root.setAttribute('aria-hidden', 'true');
+  if (!root) {
+    root = document.createElement('div');
+    root.id = 'mirror-export-root';
+    root.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(root);
+  }
+  /* Must stay paintable — visibility:hidden / 0×0 / contain break html2canvas on mobile. */
   root.style.cssText =
-    'position:fixed;left:-10000px;top:0;width:0;height:0;overflow:hidden;' +
-    'visibility:hidden;pointer-events:none;contain:strict;z-index:-1;';
-  document.body.appendChild(root);
+    'position:fixed;left:-10000px;top:0;' +
+    'width:auto;height:auto;max-width:none;max-height:none;' +
+    'overflow:visible;opacity:1;visibility:visible;' +
+    'pointer-events:none;z-index:2147483646;background:transparent;';
   return root;
 }
 
-async function capturePcardWithHtml2Canvas(node, orig, w, h) {
-  inlineExportStyles(orig, node);
-  applyPcardExportFallbacks(node, hexToRgb(
-    getComputedStyle(node).getPropertyValue('--type-col').trim() || '#bd93f9'
-  ));
+function measurePcardExportSize(node, fallbackW, fallbackH) {
+  return finalizePcardExportSize(node, fallbackW);
+}
 
-  var captureScale = getPcardExportPixelRatio(w);
+async function capturePcardWithHtml2Canvas(node, captureScale) {
   var captureOpts = {
     backgroundColor: '#07060e',
     scale: captureScale,
-    width: w,
-    height: h,
     useCORS: true,
     logging: false,
     allowTaint: false,
@@ -4575,32 +4516,27 @@ async function capturePcardWithHtml2Canvas(node, orig, w, h) {
   }
 }
 
-async function capturePcardToBlob(orig, clone, w, h, rgb) {
-  applyPcardExportFallbacks(clone, rgb);
-  var hasImages = clone.querySelector('img');
+async function capturePcardToBlob(clone, w) {
+  var size = await preparePcardForExport(clone, w);
+  var captureScale = getPcardExportPixelRatio(size.w);
 
-  if (typeof html2canvas !== 'undefined' && hasImages) {
+  try {
+    var htiBlob = await capturePcardWithHtmlToImage(clone, captureScale);
+    if (htiBlob) return htiBlob;
+  } catch (htiErr) {
+    console.warn('html-to-image failed:', htiErr);
+  }
+
+  if (typeof html2canvas !== 'undefined') {
     try {
-      var canvas = await capturePcardWithHtml2Canvas(clone, orig, w, h);
+      var canvas = await capturePcardWithHtml2Canvas(clone, captureScale);
       return await canvasToPngBlob(canvas);
     } catch (h2cErr) {
       console.warn('html2canvas failed:', h2cErr);
     }
   }
 
-  try {
-    var htiBlob = await capturePcardWithHtmlToImage(clone, w, h);
-    if (htiBlob) return htiBlob;
-  } catch (htiErr) {
-    console.warn('html-to-image failed:', htiErr);
-  }
-
-  if (typeof html2canvas === 'undefined') {
-    throw new Error('EXPORT_NO_CAPTURE_ENGINE');
-  }
-
-  var canvasFallback = await capturePcardWithHtml2Canvas(clone, orig, w, h);
-  return await canvasToPngBlob(canvasFallback);
+  throw new Error('EXPORT_NO_CAPTURE_ENGINE');
 }
 
 function canvasToPngBlob(canvas) {
@@ -4632,6 +4568,8 @@ function canvasToPngBlob(canvas) {
 }
 
 // ===================== DOWNLOAD PERSONALITY CARD =====================
+// Export rules: clone keeps DOM intact (toggle = CSS hide only); never flatten
+// the full computed-style tree; measure height from clone.scrollHeight after layout.
 var mirrorCaptureEnginePromise = null;
 var MIRROR_CAPTURE_SCRIPT_HTMI = '/js/vendor/html-to-image.min.js';
 var MIRROR_CAPTURE_SCRIPT_H2C = '/js/vendor/html2canvas.min.js';
@@ -4745,6 +4683,7 @@ async function downloadPersonalityCard() {
   try {
     const orig = document.getElementById('personality-card');
     if (!orig) throw new Error('personality-card not found');
+    syncMirrorIdentityMetaVisibility();
     if (orig.offsetWidth <= 0 || orig.offsetHeight <= 0) {
       throw new Error('personality-card has invalid size');
     }
@@ -4771,27 +4710,25 @@ async function downloadPersonalityCard() {
 
     clone = orig.cloneNode(true);
     clone.removeAttribute('id');
-    if (clone.classList.contains('pcard-hide-identity-meta')) {
-      clone.querySelectorAll('.pcard-profile-meta').forEach(function (el) {
-        el.remove();
-      });
-    }
-    const rect = orig.getBoundingClientRect();
-    const w = Math.round(rect.width);
-    const h = Math.round(rect.height);
+    var rect = orig.getBoundingClientRect();
+    var w = Math.round(rect.width);
     clone.setAttribute('data-export', '1');
-    clone.style.cssText =
-      'position:relative;left:0;top:0;transform:none;' +
-      'width:' + w + 'px;height:' + h + 'px;' +
-      'border:2px solid rgba(255,224,102,0.72);' +
-      'box-shadow:none;outline:none;margin:0;';
+    syncPcardExportShell(clone, orig);
+    clone.style.setProperty('--type-col', typeCol);
+    clone.style.position = 'relative';
+    clone.style.left = '0';
+    clone.style.top = '0';
+    clone.style.transform = 'none';
+    clone.style.width = w + 'px';
+    clone.style.maxWidth = w + 'px';
+    clone.style.height = 'auto';
+    clone.style.minHeight = '0';
+    clone.style.overflow = 'visible';
+    clone.style.margin = '0';
 
     exportRoot = getMirrorExportRoot();
     exportRoot.textContent = '';
     exportRoot.appendChild(clone);
-
-    // Set type color variable directly on clone root so CSS vars resolve correctly
-    clone.style.setProperty('--type-col', typeCol);
 
     // Inject scoped style targeting ONLY the clone (via data-export attribute).
     var exportStyle = document.createElement('style');
@@ -4811,7 +4748,7 @@ async function downloadPersonalityCard() {
       c.remove();
     });
 
-    var blob = await capturePcardToBlob(orig, clone, w, h, rgb);
+    var blob = await capturePcardToBlob(clone, w);
 
     var objectUrl = URL.createObjectURL(blob);
     const link = document.createElement('a');
