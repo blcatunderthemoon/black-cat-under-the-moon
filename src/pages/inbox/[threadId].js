@@ -170,7 +170,7 @@ export default function ThreadPage() {
           pageClassName="app-page--inbox"
           maxWidth="520px"
         >
-          <MoonLoading label="載入中…" />
+          <MoonLoading label="載入中…" variant="hero" />
         </AppShell>
       </>
     );

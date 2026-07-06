@@ -182,11 +182,16 @@ export const ZODIAC_ZH_TO_EN = {
   雙魚座: 'Pisces',
 };
 
-/** Display zodiac in English on public cards; pass through if already Latin. */
+const ZODIAC_EN_TO_ZH = Object.fromEntries(
+  Object.entries(ZODIAC_ZH_TO_EN).map(([zh, en]) => [en, zh]),
+);
+
+/** Display zodiac in Chinese on public cards; normalise English stored values. */
 export function formatZodiacDisplay(zodiac) {
   if (!zodiac) return null;
   const trimmed = String(zodiac).trim();
-  return ZODIAC_ZH_TO_EN[trimmed] || trimmed;
+  if (ZODIAC_ZH_TO_EN[trimmed]) return trimmed;
+  return ZODIAC_EN_TO_ZH[trimmed] || trimmed;
 }
 
 const PCARD_CJK_RE = /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff·]/u;

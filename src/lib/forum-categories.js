@@ -6,7 +6,7 @@
 import { canonicalForumTagKey } from './forum-tags.js';
 
 /** Filter row on /forum (includes 全部). */
-export const FORUM_TOPICS = ['全部', '感情', '社群', '娛樂', '命理', '興趣', '徵友'];
+export const FORUM_TOPICS = ['全部', '感情', '社群', '娛樂', '命理', '興趣', '徵友', '親密話題'];
 
 /** Topics assignable when creating a post (excludes 全部). */
 export const FORUM_POST_TOPICS = FORUM_TOPICS.filter((t) => t !== '全部');
@@ -22,6 +22,7 @@ export const TOPIC_DB_ALIASES = {
   命理: ['命理', 'Mirror同類'],
   興趣: ['興趣'],
   徵友: ['徵友', '識人徵友'],
+  親密話題: ['親密話題'],
   官方公告: ['官方公告'],
 };
 
@@ -41,6 +42,7 @@ export const TOPIC_STYLES = {
   命理: { emoji: '🔮', accent: '#bd93f9', glow: 'rgba(189, 147, 249, 0.25)' },
   興趣: { emoji: '🎮', accent: '#4ade80', glow: 'rgba(74, 222, 128, 0.2)' },
   徵友: { emoji: '🌸', accent: '#fb7185', glow: 'rgba(251, 113, 133, 0.22)' },
+  親密話題: { emoji: '🌙', accent: '#c084fc', glow: 'rgba(192, 132, 252, 0.22)' },
   官方公告: { emoji: '📢', accent: '#94a3b8', glow: 'rgba(148, 163, 184, 0.2)' },
 };
 
@@ -89,6 +91,14 @@ export const PRESET_TAGS_BY_TOPIC = {
     { key: '徵友', label: '徵友' },
     { key: '介紹自己', label: '介紹自己' },
     { key: '線下聚會', label: '線下聚會' },
+  ],
+  親密話題: [
+    { key: '慾望探索', label: '慾望探索' },
+    { key: '開放關係', label: '開放關係' },
+    { key: '角色扮演', label: '角色扮演' },
+    { key: '性癖', label: '性癖' },
+    { key: '性玩具', label: '性玩具' },
+    { key: '界線與同意', label: '界線與同意' },
   ],
 };
 

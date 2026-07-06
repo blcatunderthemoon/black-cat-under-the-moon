@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import MoonLoading from './MoonLoading.js';
 
 function percent(count, total) {
   if (!total) return 0;
@@ -35,7 +36,7 @@ export default function ForumPoll({
     return (
       <div className="forum-poll forum-poll--missing">
         <p className="forum-poll__title">📊 投票</p>
-        <p className="forum-poll__hint">投票資料載入中…</p>
+        <MoonLoading label="投票資料載入中…" centered={false} size={24} />
       </div>
     );
   }

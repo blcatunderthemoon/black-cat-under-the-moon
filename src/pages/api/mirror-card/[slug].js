@@ -54,7 +54,7 @@ export default async function handler(req, res) {
     getMirrorCardVisibility(viewerId, card.user_id),
     admin
       .from('profiles')
-      .select('display_name, avatar_style, status')
+      .select('display_name, avatar_style, status, bio')
       .eq('id', card.user_id)
       .maybeSingle(),
     canMessage ? getMirrorCardMessaging(viewerId, card.user_id) : Promise.resolve(null),
@@ -78,6 +78,7 @@ export default async function handler(req, res) {
     owner: {
       display_name: profile.display_name,
       avatar_style: profile.avatar_style,
+      bio: profile.bio?.trim() || null,
     },
     viewer_level: visibility,
     viewer_tier: viewerTier,

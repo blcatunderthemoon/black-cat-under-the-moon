@@ -5,6 +5,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import PixelMoonIcon from './PixelMoonIcon.js';
+import MoonLoading from './MoonLoading.js';
 import { MOON_JOURNEY_GUIDE_PATH } from '../lib/moon-journey.js';
 
 function MoonJourneyPanelHead({ level }) {
@@ -304,7 +305,9 @@ export default function MoonJourneyPanel({
 
       <div className="moon-journey-panel__body">
         {journeyLoading ? (
-          <p className="moon-journey-panel__loading">載入中…</p>
+          <div className="moon-journey-panel__loading-wrap">
+            <MoonLoading label="載入中…" centered={false} size={24} />
+          </div>
         ) : (
           <>
             <div className="moon-journey-panel__hero">

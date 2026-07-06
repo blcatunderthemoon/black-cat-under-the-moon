@@ -96,7 +96,7 @@ export default function LoginPage() {
       <>
         <Head><title>登入 — Black Cat Under The Moon</title></Head>
         <AppShell centered hideHeader>
-          <MoonLoading label="載入中…" />
+          <MoonLoading label="載入中…" variant="hero" />
         </AppShell>
       </>
     );

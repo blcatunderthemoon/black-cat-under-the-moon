@@ -3,7 +3,8 @@
  * POST /api/forum/posts/[id]/like — toggle like
  */
 
-import { getOptionalUser, requireUser, sendAuthError, getAdminClient, getServiceOrUserClient } from '../../../../lib/server-auth.js';
+import { getOptionalUser, requireUser, sendAuthError, getAdminClient, getServiceOrUserClient, getProfile } from '../../../../lib/server-auth.js';
+import { getForumRole, canModerateForum } from '../../../../lib/forum-roles.js';
 import {
   getViewerBookmarkedPostIds,
   getViewerLikedCommentIds,
@@ -15,6 +16,7 @@ import { getTagsByPostIds, getTagLabelMapForPosts } from '../../../../lib/forum-
 import { canonicalForumTagKey } from '../../../../lib/forum-tags.js';
 import { resolveForumAuthorDisplayName } from '../../../../lib/forum-author-names.js';
 import { awardMoonJourneyExp, MOON_JOURNEY_EXP } from '../../../../lib/moon-journey.js';
+import { isMatureForumTopicStored } from '../../../../lib/forum-mature.js';
 
 async function fetchPostComments(admin, postId) {
   const withLikes = await admin
@@ -51,6 +53,12 @@ export default async function handler(req, res) {
   if (!id || typeof id !== 'string') return res.status(400).json({ error: 'Post ID required' });
 
   if (req.method === 'GET') return handleGet(req, res, id);
+  if (req.method === 'PATCH' || req.method === 'DELETE') {
+    return res.status(403).json({
+      error: '帖子發出後無法修改或刪除。',
+      code: 'author_cannot_modify_post',
+    });
+  }
   if (req.method === 'POST' && req.query.action === 'like') return handleLike(req, res, id);
   if (req.method === 'POST' && req.query.action === 'bookmark') return handleBookmark(req, res, id);
   return res.status(405).json({ error: 'Method not allowed' });
@@ -59,14 +67,16 @@ export default async function handler(req, res) {
 async function handleGet(req, res, postId) {
   const admin = getServiceOrUserClient(req);
 
-  const [viewer, { data: post, error }] = await Promise.all([
-    getOptionalUser(req),
-    admin
-      .from('forum_posts')
-      .select('id, author_id, title, content, topic, mood_tag, anonymous_name_snapshot, like_count, comment_count, visibility, created_at')
-      .eq('id', postId)
-      .maybeSingle(),
-  ]);
+  const viewer = await getOptionalUser(req);
+  const profile = viewer ? await getProfile(viewer.id) : null;
+
+  const { data: post, error } = await admin
+    .from('forum_posts')
+    .select('id, author_id, title, content, topic, mood_tag, anonymous_name_snapshot, like_count, comment_count, visibility, is_pinned, is_highlighted, created_at')
+    .eq('id', postId)
+    .maybeSingle();
+
+  const isModerator = canModerateForum(getForumRole(profile));
 
   if (error || !post) return res.status(404).json({ error: 'Post not found' });
 
@@ -77,7 +87,15 @@ async function handleGet(req, res, postId) {
   }
 
   // Visibility gate
-  if (post.visibility === 'hidden') return res.status(404).json({ error: 'Post not found' });
+  if (post.visibility === 'hidden' && !isModerator) {
+    return res.status(404).json({ error: 'Post not found' });
+  }
+  if (isMatureForumTopicStored(post.topic) && !viewer) {
+    return res.status(401).json({
+      error: '請登入並確認年齡後才能瀏覽此版塊。',
+      code: 'mature_login_required',
+    });
+  }
   if (post.visibility === 'members_only' && !viewer) {
     return res.status(403).json({
       error: 'Login required to view this post',
@@ -100,7 +118,7 @@ async function handleGet(req, res, postId) {
       .maybeSingle(),
     admin
       .from('profiles')
-      .select('display_name, subscription_tier')
+      .select('display_name, subscription_tier, forum_role')
       .eq('id', post.author_id)
       .maybeSingle(),
     getTagsByPostIds(admin, [postId]),
@@ -175,8 +193,15 @@ async function handleGet(req, res, postId) {
         mirror_slug: mirrorCard?.public_slug || null,
         mirror_type: mirrorCard?.mirror_type || null,
         is_premium: authorProfile?.subscription_tier === 'premium',
+        forum_role: ['moderator', 'admin'].includes(authorProfile?.forum_role)
+          ? authorProfile.forum_role
+          : undefined,
       },
       tags: postTags,
+      is_pinned: post.is_pinned || false,
+      is_highlighted: post.is_highlighted || false,
+      is_hidden: post.visibility === 'hidden',
+      viewer_can_moderate: isModerator,
     },
     tag_labels: tagLabels,
     comments: enrichedComments,

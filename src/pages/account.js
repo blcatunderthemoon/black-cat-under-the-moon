@@ -2,10 +2,14 @@
  * /account — Account settings page
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useAuth, getBrowserClient } from '../lib/auth-context.js';
+import { useClientReady } from '../lib/use-client-ready.js';
+import { readStoredAuthSession } from '../lib/browser-session.js';
+import { readMeCache } from '../lib/me-cache.js';
+import { readMirrorCardMeCache, writeMirrorCardMeCache } from '../lib/mirror-card-cache.js';
 import AppShell from '../components/AppShell.js';
 import AppHeaderAuth from '../components/AppHeaderAuth.js';
 import AccountMirrorFamilySummary from '../components/AccountMirrorFamilySummary.js';
@@ -16,7 +20,7 @@ import AccountSubscriptionPanel from '../components/AccountSubscriptionPanel.js'
 import { validateDisplayName, DISPLAY_NAME_MAX_LENGTH } from '../lib/display-name-policy.js';
 import { validatePassword, PASSWORD_MIN_LENGTH, PASSWORD_REQUIREMENTS_LABEL } from '../lib/auth-credentials-policy.js';
 import PasswordRequirementsChecklist from '../components/PasswordRequirementsChecklist.js';
-import MoonLoading from '../components/MoonLoading.js';
+import PageLoadingShell from '../components/PageLoadingShell.js';
 import { MoonJourneyAccountCard } from '../components/MoonJourneyPanel.js';
 import {
   readMoonJourneyCache,
@@ -28,11 +32,15 @@ import { patchMeCacheDisplayName } from '../lib/me-cache.js';
 
 export default function AccountPage() {
   const router = useRouter();
-  const { session, profile, loading, refreshProfile } = useAuth();
+  const { session, profile, profileHydrated, loading, refreshProfile } = useAuth();
+  const clientReady = useClientReady();
+  const didRedirect = useRef(false);
+  const mirrorFetchedRef = useRef(false);
 
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
-  const [mirrorCard, setMirrorCard] = useState(undefined);
+  const [mirrorCard, setMirrorCard] = useState(null);
+  const [mirrorCardKnown, setMirrorCardKnown] = useState(false);
 
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
@@ -65,22 +73,73 @@ export default function AccountPage() {
     }
     const cached = readMoonJourneyCache(userId);
     if (cached) setMoonJourneyState((prev) => prev ?? cached);
-  }, [session?.user?.id]);
+    const entry = readMoonJourneyCacheEntry(userId);
+    const fromProfile = profile?.moon_journey;
+    if (fromProfile) {
+      const next = resolveMoonJourneyUpdate(entry, fromProfile);
+      if (next) setMoonJourneyState((prev) => prev ?? next);
+    }
+  }, [session?.user?.id, profile?.moon_journey]);
+
+  const loadMirrorCard = useCallback(async (token, userId, { silent = false } = {}) => {
+    if (!token || !userId) {
+      setMirrorCard(null);
+      setMirrorCardKnown(true);
+      return;
+    }
+
+    const cached = readMirrorCardMeCache(userId);
+    if (!silent) {
+      if (cached !== undefined) {
+        setMirrorCard(cached);
+        setMirrorCardKnown(true);
+      }
+      if (mirrorFetchedRef.current === token) return;
+      mirrorFetchedRef.current = token;
+    }
+
+    try {
+      const r = await fetch('/api/mirror-card/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = r.ok ? await r.json() : null;
+      const card = data?.card ?? null;
+      setMirrorCard(card);
+      writeMirrorCardMeCache(userId, card);
+    } catch {
+      if (!silent) mirrorFetchedRef.current = null;
+      if (cached === undefined && !silent) setMirrorCard(null);
+    } finally {
+      if (!silent) setMirrorCardKnown(true);
+    }
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!clientReady) return;
+    const stored = readStoredAuthSession();
+    const userId = session?.user?.id ?? stored?.user?.id;
+    if (!userId) return;
+    const cached = readMirrorCardMeCache(userId);
+    if (cached !== undefined) {
+      setMirrorCard(cached);
+      setMirrorCardKnown(true);
+    }
+  }, [clientReady, session?.user?.id]);
 
   useEffect(() => {
-    if (!session?.access_token) return;
-    fetch('/api/me', {
-      headers: { Authorization: `Bearer ${session.access_token}` },
-    })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (!data) return;
-        const entry = readMoonJourneyCacheEntry(session.user.id);
-        const next = resolveMoonJourneyUpdate(entry, data.moon_journey || null);
-        if (next) setMoonJourney(next);
-      })
-      .catch(() => {});
-  }, [session?.access_token, session?.user?.id]);
+    const stored = readStoredAuthSession();
+    if (stored?.access_token && stored?.user?.id) {
+      loadMirrorCard(stored.access_token, stored.user.id);
+    }
+  }, [loadMirrorCard]);
+
+  useEffect(() => {
+    if (!session?.access_token || !session?.user?.id) return;
+    if (mirrorFetchedRef.current !== session.access_token) {
+      mirrorFetchedRef.current = null;
+    }
+    loadMirrorCard(session.access_token, session.user.id);
+  }, [session?.access_token, session?.user?.id, loadMirrorCard]);
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -91,13 +150,32 @@ export default function AccountPage() {
   }, [router.isReady, router.asPath, router]);
 
   useEffect(() => {
-    if (mirrorCard === undefined) return;
-    window.scrollTo(0, 0);
-  }, [mirrorCard]);
+    if (mirrorCardKnown) window.scrollTo(0, 0);
+  }, [mirrorCardKnown]);
 
   useEffect(() => {
-    if (!loading && !session) router.replace('/login?redirect=/account');
-  }, [session, loading, router]);
+    if (!clientReady || loading || session) return;
+    if (didRedirect.current) return;
+    didRedirect.current = true;
+    router.replace('/login?redirect=/account');
+  }, [clientReady, session, loading, router]);
+
+  useEffect(() => {
+    if (!session?.access_token || !session?.user?.id) return undefined;
+
+    const refreshMirror = () => {
+      if (document.visibilityState && document.visibilityState !== 'visible') return;
+      mirrorFetchedRef.current = null;
+      loadMirrorCard(session.access_token, session.user.id, { silent: true });
+    };
+
+    window.addEventListener('focus', refreshMirror);
+    window.addEventListener('pageshow', refreshMirror);
+    return () => {
+      window.removeEventListener('focus', refreshMirror);
+      window.removeEventListener('pageshow', refreshMirror);
+    };
+  }, [session?.access_token, session?.user?.id, loadMirrorCard]);
 
   useEffect(() => {
     if (profile?.profile) {
@@ -110,16 +188,6 @@ export default function AccountPage() {
       });
     }
   }, [profile]);
-
-  useEffect(() => {
-    if (!session?.access_token) return;
-    fetch('/api/mirror-card/me', {
-      headers: { Authorization: `Bearer ${session.access_token}` },
-    })
-      .then((r) => r.json())
-      .then((data) => setMirrorCard(data.card || null))
-      .catch(() => setMirrorCard(null));
-  }, [session?.access_token]);
 
   async function handleSaveProfile(e) {
     e.preventDefault();
@@ -209,7 +277,29 @@ export default function AccountPage() {
     finally { setNotifSaving(false); }
   }
 
-  if (loading || !session) return null;
+  const storedAuth = clientReady ? readStoredAuthSession() : null;
+  const hasStoredAuth = Boolean(storedAuth?.access_token);
+  const showShell = clientReady && (session || hasStoredAuth);
+  const userId = session?.user?.id ?? storedAuth?.user?.id;
+  const meData = profile ?? (userId ? readMeCache(userId) : null);
+  const pageReady = mirrorCardKnown && (profileHydrated || Boolean(meData));
+  const booting = !clientReady || (loading && !hasStoredAuth && !session);
+
+  if (booting || !showShell || !pageReady) {
+    return (
+      <PageLoadingShell
+        title="帳號設定 — Black Cat Under The Moon"
+        label="載入中…"
+        headerVariant="account"
+        pageClassName="app-page--account"
+        maxWidth="520px"
+        backHref="/index.html"
+        nav={<AppHeaderAuth redirectPath="/account" />}
+      />
+    );
+  }
+
+  if (!session) return null;
 
   const tier = profile?.profile?.subscription_tier || 'free';
 
@@ -227,9 +317,7 @@ export default function AccountPage() {
         nav={<AppHeaderAuth redirectPath="/account" />}
       >
         <section id="mirror-card" className="pixel-card pixel-card--moon account-mirror-section">
-          {mirrorCard === undefined ? (
-            <MoonLoading label="載入中…" centered={false} />
-          ) : mirrorCard ? (
+          {mirrorCard ? (
             <>
               <h2 className="pixel-section-title">// 貓家族</h2>
               <AccountMirrorFamilySummary

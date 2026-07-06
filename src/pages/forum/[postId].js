@@ -22,6 +22,12 @@ import {
   forumCommentDraftKey,
 } from '../../lib/forum-draft-storage.js';
 import MoonLoading from '../../components/MoonLoading.js';
+import ForumMatureGate from '../../components/ForumMatureGate.js';
+import {
+  isMatureForumTopicStored,
+  readMatureGateAck,
+  MATURE_FORUM_TOPIC,
+} from '../../lib/forum-mature.js';
 
 function AuthorLinks({ author, isMine }) {
   return (
@@ -58,6 +64,51 @@ function formatDate(dateStr) {
   return new Date(dateStr).toLocaleDateString('zh-HK', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
+function ForumModToolbar({ post, accessToken, onUpdated }) {
+  const [busy, setBusy] = useState(false);
+
+  async function modFetch(method, path, body) {
+    if (!accessToken || busy) return;
+    setBusy(true);
+    try {
+      const res = await fetch(path, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      if (res.ok) onUpdated?.();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="forum-mod-toolbar" style={{ marginBottom: 12, padding: '10px 12px', background: 'rgba(124,92,252,0.12)', borderRadius: 8, border: '1px solid rgba(124,92,252,0.25)' }}>
+      <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 600, color: 'var(--purple-light)' }}>🛡️ 守護者工具列</p>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {post.is_hidden || post.visibility === 'hidden' ? (
+          <button type="button" className="pixel-btn pixel-btn--ghost" disabled={busy} onClick={() => modFetch('POST', `/api/forum/moderation/posts/${post.id}/unhide`)}>
+            恢復月光
+          </button>
+        ) : (
+          <button type="button" className="pixel-btn pixel-btn--ghost" disabled={busy} onClick={() => modFetch('POST', `/api/forum/moderation/posts/${post.id}/hide`, {})}>
+            夜幕降臨
+          </button>
+        )}
+        <button type="button" className="pixel-btn pixel-btn--ghost" disabled={busy} onClick={() => modFetch('POST', `/api/forum/moderation/posts/${post.id}/pin`, { pinned: !post.is_pinned })}>
+          {post.is_pinned ? '取消置頂' : '圍爐置頂'}
+        </button>
+        <button type="button" className="pixel-btn pixel-btn--ghost" disabled={busy} onClick={() => modFetch('POST', `/api/forum/moderation/posts/${post.id}/highlight`, { highlighted: !post.is_highlighted })}>
+          {post.is_highlighted ? '取消加冕' : '月光加冕'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function normalizeRouteId(value) {
   if (Array.isArray(value)) return value[0] || '';
   return value || '';
@@ -84,12 +135,26 @@ export default function ForumPostPage() {
   const [likingCommentId, setLikingCommentId] = useState(null);
   const [likingPost, setLikingPost] = useState(false);
   const [opOnly, setOpOnly] = useState(false);
+  const [matureAcked, setMatureAcked] = useState(false);
 
   const redirectPath = postId ? `/forum/${postId}` : '/forum';
   const breadcrumbs = [
     { href: '/forum', label: `🌙 ${FORUM_DISPLAY_NAME}` },
     { label: '貼文詳情' },
   ];
+
+  const reloadPost = useCallback(async () => {
+    if (!postId) return;
+    const headers = {};
+    if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
+    const r = await fetch(`/api/forum/posts/${encodeURIComponent(postId)}`, { headers });
+    const payload = await r.json().catch(() => ({}));
+    if (r.ok) {
+      setLoadError(null);
+      setLoadErrorCode('');
+      setData(payload);
+    }
+  }, [postId, session?.access_token]);
 
   useEffect(() => {
     if (!postId) return;
@@ -115,6 +180,10 @@ export default function ForumPostPage() {
         setLoadErrorCode(e.code || '');
       });
   }, [postId, session?.access_token]);
+
+  useEffect(() => {
+    setMatureAcked(readMatureGateAck(session?.user?.id));
+  }, [postId, session?.user?.id]);
 
   useEffect(() => {
     if (!postId) return undefined;
@@ -430,19 +499,36 @@ export default function ForumPostPage() {
   );
 
   if (loadError) {
-    const isMembersOnly = loadErrorCode === 'members_only'
-      || loadError === 'Login required to view this post';
+    const isMatureLoginRequired = loadErrorCode === 'mature_login_required';
+    const isMembersOnly = !isMatureLoginRequired && (
+      loadErrorCode === 'members_only'
+      || loadError === 'Login required to view this post'
+    );
     return (
       <>
         <SeoHead
           title="貼文"
           description={`${FORUM_DISPLAY_NAME} — 貼文`}
           path={`/forum/${postId}`}
-          noindex={isMembersOnly}
+          noindex={isMembersOnly || isMatureLoginRequired}
         />
         <AppShell {...shellProps}>
-          <div className={`pixel-empty${isMembersOnly ? ' forum-members-gate' : ''}`}>
-            {isMembersOnly ? (
+          <div className={`pixel-empty${(isMembersOnly || isMatureLoginRequired) ? ' forum-members-gate' : ''}`}>
+            {isMatureLoginRequired ? (
+              <>
+                <span className="forum-members-gate__icon" aria-hidden="true">🌙</span>
+                <h2 className="forum-members-gate__title">{MATURE_FORUM_TOPIC}</h2>
+                <p className="pixel-subtitle forum-members-gate__text">
+                  此貼文屬於成熟話題版塊，僅供已登入會員閱讀。請先登入並確認年齡。
+                </p>
+                <Link
+                  href={`/login?redirect=${encodeURIComponent(redirectPath)}`}
+                  className="pixel-btn pixel-btn--primary forum-members-gate__cta"
+                >
+                  登入後繼續
+                </Link>
+              </>
+            ) : isMembersOnly ? (
               <>
                 <span className="forum-members-gate__icon" aria-hidden="true">🔒</span>
                 <h2 className="forum-members-gate__title">會員限定內容</h2>
@@ -477,7 +563,31 @@ export default function ForumPostPage() {
   }
 
   const post = data?.post;
+  const needsMatureAck = post && isMatureForumTopicStored(post.topic) && !matureAcked;
   const commentCount = comments.length || post?.comment_count || 0;
+
+  if (needsMatureAck) {
+    return (
+      <>
+        <SeoHead
+          title={MATURE_FORUM_TOPIC}
+          description={`${FORUM_DISPLAY_NAME} — 成熟話題`}
+          path={`/forum/${postId}`}
+          noindex
+        />
+        <AppShell {...shellProps}>
+          <div className="forum-mature-backdrop-placeholder" aria-hidden="true" />
+        </AppShell>
+        <ForumMatureGate
+          open
+          session={session}
+          loginRedirect={redirectPath}
+          onAcknowledged={() => setMatureAcked(true)}
+          onDismiss={() => router.push('/forum')}
+        />
+      </>
+    );
+  }
 
   return (
     <>
@@ -494,7 +604,7 @@ export default function ForumPostPage() {
       />
       <AppShell {...shellProps}>
         {!post ? (
-          <MoonLoading label="載入中…" theme="forum" />
+          <MoonLoading label="載入中…" variant="hero" calm />
         ) : (
           <ForumSectionErrorBoundary fallbackLabel="貼文">
           <>
@@ -505,6 +615,15 @@ export default function ForumPostPage() {
                   <ForumPostTags tags={post.tags} tagLabels={data?.tag_labels} variant="detail" />
                   {post.visibility === 'members_only' && (
                     <span className="forum-visibility-badge">🔒 會員限定</span>
+                  )}
+                  {post.is_hidden && (
+                    <span className="forum-visibility-badge">🌑 夜幕降臨</span>
+                  )}
+                  {post.is_pinned && (
+                    <span className="forum-visibility-badge">📌 圍爐置頂</span>
+                  )}
+                  {post.is_highlighted && (
+                    <span className="forum-visibility-badge">✨ 月光加冕</span>
                   )}
                 </div>
                 {session && !post.is_mine && (
@@ -520,6 +639,13 @@ export default function ForumPostPage() {
                   </button>
                 )}
               </div>
+              {post.viewer_can_moderate && session?.access_token && (
+                <ForumModToolbar
+                  post={post}
+                  accessToken={session.access_token}
+                  onUpdated={reloadPost}
+                />
+              )}
               {post.title && (
                 <header className="forum-post-card__header">
                   <h1 className="forum-post-card__title">{post.title}</h1>
@@ -653,7 +779,9 @@ export default function ForumPostPage() {
             </section>
 
             {authLoading ? (
-              <div className="forum-comments-empty">載入帳戶狀態…</div>
+              <div className="forum-comments-empty forum-comments-empty--loading">
+                <MoonLoading label="載入帳戶狀態…" centered={false} size={24} />
+              </div>
             ) : session ? (
               <form onSubmit={handleComment} className="forum-comment-form">
                 <ForumCommentField

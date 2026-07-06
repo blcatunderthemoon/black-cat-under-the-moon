@@ -20,12 +20,78 @@ import {
   getTopicDbValues,
   isValidPostTopic,
 } from '../../../lib/forum-categories.js';
+import {
+  isMatureForumTopic,
+  applyExcludeMatureTopics,
+  validateMaturePostContent,
+} from '../../../lib/forum-mature.js';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
 const ratelimit = process.env.UPSTASH_REDIS_REST_URL
   ? new Ratelimit({ redis: Redis.fromEnv(), limiter: Ratelimit.slidingWindow(5, '10 m') })
   : null;
+
+const POST_LIST_COLUMNS = `
+  id,
+  author_id,
+  title,
+  content,
+  topic,
+  mood_tag,
+  anonymous_name_snapshot,
+  like_count,
+  comment_count,
+  visibility,
+  is_pinned,
+  is_highlighted,
+  pinned_at,
+  created_at
+`;
+
+const POST_LIST_COLUMNS_LEGACY = `
+  id,
+  author_id,
+  title,
+  content,
+  topic,
+  mood_tag,
+  anonymous_name_snapshot,
+  like_count,
+  comment_count,
+  visibility,
+  created_at
+`;
+
+function applyPostListSort(query, sort) {
+  if (sort === 'popular') {
+    return query
+      .order('is_pinned', { ascending: false })
+      .order('like_count', { ascending: false })
+      .order('created_at', { ascending: false });
+  }
+  return query
+    .order('is_pinned', { ascending: false })
+    .order('created_at', { ascending: false });
+}
+
+async function fetchPostList(admin, buildQuery, sort) {
+  let query = buildQuery(POST_LIST_COLUMNS);
+  query = applyPostListSort(query, sort);
+  const result = await query;
+  if (result.error?.code === '42703') {
+    let legacyQuery = buildQuery(POST_LIST_COLUMNS_LEGACY);
+    if (sort === 'popular') {
+      legacyQuery = legacyQuery
+        .order('like_count', { ascending: false })
+        .order('created_at', { ascending: false });
+    } else {
+      legacyQuery = legacyQuery.order('created_at', { ascending: false });
+    }
+    return await legacyQuery;
+  }
+  return result;
+}
 
 const VALID_SORTS = ['latest', 'popular', 'clan', 'saved'];
 
@@ -69,6 +135,13 @@ async function handleGetInner(req, res) {
       : Promise.resolve(null),
   ]);
   const isGuest = !viewer;
+
+  if (isMatureForumTopic(topic) && !viewer) {
+    return res.status(401).json({
+      error: '請登入並確認年齡後才能瀏覽此版塊。',
+      code: 'mature_login_required',
+    });
+  }
 
   if (!viewer) {
     res.setHeader('Cache-Control', 'public, s-maxage=15, stale-while-revalidate=45');
@@ -147,19 +220,7 @@ async function handleGetInner(req, res) {
     if (bookmarkedPostIds.length > 0) {
       let savedQuery = admin
         .from('forum_posts')
-        .select(`
-          id,
-          author_id,
-          title,
-          content,
-          topic,
-          mood_tag,
-          anonymous_name_snapshot,
-          like_count,
-          comment_count,
-          visibility,
-          created_at
-        `)
+        .select(POST_LIST_COLUMNS)
         .in('id', bookmarkedPostIds)
         .in('visibility', visibilityFilter);
       if (topic && getTopicDbValues(topic)?.length) {
@@ -168,52 +229,50 @@ async function handleGetInner(req, res) {
       if (tagPostIds) {
         savedQuery = savedQuery.in('id', tagPostIds);
       }
+      if (!isMatureForumTopic(topic)) {
+        savedQuery = applyExcludeMatureTopics(savedQuery);
+      }
       const { data: savedPosts, error: savedError } = await savedQuery;
-      posts = savedPosts || [];
-      error = savedError;
+      if (savedError?.code === '42703') {
+        const legacy = await admin
+          .from('forum_posts')
+          .select(POST_LIST_COLUMNS_LEGACY)
+          .in('id', bookmarkedPostIds)
+          .in('visibility', visibilityFilter);
+        posts = legacy.data || [];
+        error = legacy.error;
+      } else {
+        posts = savedPosts || [];
+        error = savedError;
+      }
 
       const orderMap = new Map(bookmarkedPostIds.map((id, i) => [id, i]));
       posts.sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0));
     }
   } else {
-    let query = admin
-      .from('forum_posts')
-      .select(`
-        id,
-        author_id,
-        title,
-        content,
-        topic,
-        mood_tag,
-        anonymous_name_snapshot,
-        like_count,
-        comment_count,
-        visibility,
-        created_at
-      `)
-      .in('visibility', visibilityFilter)
-      .range(offset, offset + limit - 1);
+    const buildQuery = (columns) => {
+      let query = admin
+        .from('forum_posts')
+        .select(columns)
+        .in('visibility', visibilityFilter)
+        .range(offset, offset + limit - 1);
 
-    if (topic && getTopicDbValues(topic)?.length) {
-      query = applyTopicFilter(query, topic);
-    }
+      if (topic && getTopicDbValues(topic)?.length) {
+        query = applyTopicFilter(query, topic);
+      }
+      if (tagPostIds) {
+        query = query.in('id', tagPostIds);
+      }
+      if (clanAuthorIds) {
+        query = query.in('author_id', clanAuthorIds);
+      }
+      if (!isMatureForumTopic(topic)) {
+        query = applyExcludeMatureTopics(query);
+      }
+      return query;
+    };
 
-    if (tagPostIds) {
-      query = query.in('id', tagPostIds);
-    }
-
-    if (clanAuthorIds) {
-      query = query.in('author_id', clanAuthorIds);
-    }
-
-    if (sort === 'popular') {
-      query = query.order('like_count', { ascending: false }).order('created_at', { ascending: false });
-    } else {
-      // 'latest' and 'clan' both sort by recency; clan adds metadata for the UI to decorate
-      query = query.order('created_at', { ascending: false });
-    }
-
-    const result = await query;
+    const result = await fetchPostList(admin, buildQuery, sort);
     posts = result.data || [];
     error = result.error;
     hasMore = posts.length === limit;
@@ -326,7 +385,9 @@ async function handlePost(req, res) {
     return res.status(400).json({ error: '無效的分類。' });
   }
 
-  const postVisibility = visibility === 'members_only' ? 'members_only' : 'public';
+  const postVisibility = isMatureForumTopic(topic)
+    ? 'members_only'
+    : (visibility === 'members_only' ? 'members_only' : 'public');
 
   const pollIdsInContent = extractPollIdsFromContent(content);
   const pollValidation = validatePollsForContent(content, pollsPayload);
@@ -343,6 +404,13 @@ async function handlePost(req, res) {
   if (blocked) {
     if (crisis) return res.status(451).json({ error: 'crisis', crisis: true });
     return res.status(422).json({ error: '內容包含不允許的詞語。' });
+  }
+
+  if (isMatureForumTopic(topic)) {
+    const matureCheck = validateMaturePostContent(combined);
+    if (!matureCheck.ok) {
+      return res.status(422).json({ error: matureCheck.error });
+    }
   }
 
   // Quota check (server-side)

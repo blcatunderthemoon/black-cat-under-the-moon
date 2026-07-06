@@ -5,7 +5,11 @@
  */
 
 import { requireUser, sendAuthError, getAdminClient } from '../../../lib/server-auth.js';
-import { shouldAutoHide } from '../../../lib/moderation.js';
+import { shouldAutoHide, shouldNotifyModerators } from '../../../lib/moderation.js';
+import {
+  buildReportNotifyContext,
+  notifyForumModerators,
+} from '../../../lib/forum-moderation-notify.js';
 import {
   createRateLimiter,
   rateLimitOrPass,
@@ -72,9 +76,21 @@ export default async function handler(req, res) {
 
   await admin.from(table).update(patch).eq('id', target_id);
 
+  let moderatorNotified = false;
+  if (shouldNotifyModerators(newCount)) {
+    const ctx = await buildReportNotifyContext(admin, target_type, target_id);
+    moderatorNotified = await notifyForumModerators({
+      targetType: target_type,
+      targetId: target_id,
+      reportCount: newCount,
+      ...ctx,
+    });
+  }
+
   return res.status(200).json({
     success: true,
     report_count: newCount,
     auto_hidden: shouldAutoHide(newCount),
+    moderator_notified: moderatorNotified,
   });
 }

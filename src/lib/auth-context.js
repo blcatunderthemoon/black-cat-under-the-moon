@@ -12,6 +12,8 @@ import { resolveDisplayName } from './display-name.js';
 import { readMeCache, writeMeCache, clearMeCache, ME_CACHE_KEY, PROFILE_UPDATED_EVENT } from './me-cache.js';
 import { clearInboxThreadsCache } from './inbox-threads-cache.js';
 import { clearMoonJourneyCache } from './moon-journey-cache.js';
+import { clearMirrorCardCache } from './mirror-card-cache.js';
+import { clearForumFeedCache } from './forum-feed-cache.js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -56,6 +58,8 @@ export function AuthProvider({ children }) {
         clearMeCache();
         clearInboxThreadsCache();
         clearMoonJourneyCache();
+        clearMirrorCardCache();
+        clearForumFeedCache();
         return null;
       }
       if (!r.ok) return null;
@@ -103,6 +107,8 @@ export function AuthProvider({ children }) {
         clearMeCache();
         clearInboxThreadsCache();
         clearMoonJourneyCache();
+        clearMirrorCardCache();
+        clearForumFeedCache();
       }
     });
 
@@ -138,11 +144,14 @@ export function AuthProvider({ children }) {
     }
     const userId = session.user?.id;
     const cached = userId ? readMeCache(userId) : null;
-    if (cached) setProfile(cached);
+    if (cached) {
+      setProfile(cached);
+      setProfileHydrated(true);
+    }
 
     const token = session.access_token;
     let cancelled = false;
-    setProfileHydrated(false);
+    if (!cached) setProfileHydrated(false);
     fetch('/api/me', {
       headers: { Authorization: `Bearer ${token}` },
       cache: 'no-store',
@@ -157,6 +166,8 @@ export function AuthProvider({ children }) {
           clearMeCache();
         clearInboxThreadsCache();
         clearMoonJourneyCache();
+        clearMirrorCardCache();
+        clearForumFeedCache();
           return null;
         }
         return r.ok ? r.json() : null;
@@ -254,6 +265,8 @@ export function AuthProvider({ children }) {
     clearMeCache();
     clearInboxThreadsCache();
     clearMoonJourneyCache();
+    clearMirrorCardCache();
+    clearForumFeedCache();
   };
 
   const resetPassword = async (email, redirectPath) => {

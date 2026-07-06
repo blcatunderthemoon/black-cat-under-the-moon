@@ -369,7 +369,7 @@ export default function ExchangePhotoPage() {
 
       <AppShell title={pageTitle} headerVariant="account" nav={<AppHeaderAuth redirectPath="/exchange-photo" />}>
 
-        <MoonLoading label="載入中…" />
+        <MoonLoading label="載入中…" variant="hero" />
 
       </AppShell>
 

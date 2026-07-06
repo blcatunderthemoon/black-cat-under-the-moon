@@ -27,11 +27,13 @@ tmp/
 /*.png
 
 # Dashboard (internal use only)
-src/pages/dashboard/
-src/pages/api/dashboard/
+src/pages/dashboard/**
+!src/pages/dashboard/forum/
+!src/pages/dashboard/forum/**
+src/pages/api/dashboard/**
+!src/pages/api/dashboard/ping.js
 src/components/dashboard/
 src/styles/dashboard/
-src/lib/dashboard-fetch.js
 src/lib/seed-data.js
 
 # Internal scripts (build scripts below are committed for Vercel)

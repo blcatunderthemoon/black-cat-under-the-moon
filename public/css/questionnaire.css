@@ -1106,8 +1106,9 @@ body[data-automode="mirror"] .part-label .part-label-en {
 .loading-text {
   font-size: 9px;
   color: var(--cyan);
-  animation: pulse-text 1.2s ease-in-out infinite;
 }
+
+.loading-send-stack .loading-text,
 #loading-screen .loading-text {
   margin: 0;
   padding: 0;
@@ -1117,7 +1118,22 @@ body[data-automode="mirror"] .part-label .part-label-en {
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
+  animation: none;
+  opacity: 1;
 }
+
+.moon-loading__label,
+.loading-send-stack .moon-loading__label,
+.moon-loading__label.loading-text {
+  animation: none !important;
+  opacity: 1 !important;
+}
+
+.moon-loading--send .moon-loading__phase {
+  animation: none !important;
+  transition: none;
+}
+
 #loading-screen .loading-text .loading-dots::after {
   background: var(--moon-send-gradient);
   -webkit-background-clip: text;
@@ -2580,8 +2596,6 @@ a.match-result-card__name:hover {
   align-items: center;
   justify-content: center;
   margin: 0;
-  color: var(--text-dim);
-  font-size: 0.85rem;
 }
 @media (max-width: 768px), (hover: none) and (pointer: coarse) {
   .match-card-drawer__panel {

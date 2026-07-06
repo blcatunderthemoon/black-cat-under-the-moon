@@ -11,6 +11,7 @@ import { isDisplayNameTaken } from '../../lib/display-name-uniqueness.js';
 import { getQuotaUsage } from '../../lib/permissions.js';
 import { normalizeLetterPrefs } from '../../lib/letter-gameplay.js';
 import { buildMoonJourneySummary } from '../../lib/moon-journey.js';
+import { getForumRole } from '../../lib/forum-roles.js';
 import { databaseNowIso } from '../../lib/hong-kong-time.js';
 
 export default async function handler(req, res) {
@@ -71,6 +72,7 @@ async function handleGet(req, res) {
       bio: profile.bio,
       status: profile.status,
       subscription_tier: subscriptionTier,
+      forum_role: getForumRole(profile),
       created_at: profile.created_at,
       exchange_photo_url: profileRow?.exchange_photo_url || null,
       exchange_photo_updated_at: profileRow?.exchange_photo_updated_at || null,

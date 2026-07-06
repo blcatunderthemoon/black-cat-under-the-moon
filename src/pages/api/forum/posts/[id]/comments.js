@@ -74,6 +74,24 @@ export default async function handler(req, res) {
     return res.status(403).json({ error: '請登入後才能留言。', code: 'members_only' });
   }
 
+  if (parent_comment_id) {
+    const { data: parent } = await admin
+      .from('forum_comments')
+      .select('id, post_id, parent_comment_id')
+      .eq('id', parent_comment_id)
+      .maybeSingle();
+
+    if (!parent || parent.post_id !== postId) {
+      return res.status(400).json({ error: '無效的回覆目標。', code: 'invalid_parent' });
+    }
+    if (parent.parent_comment_id) {
+      return res.status(400).json({
+        error: '僅可回覆頂層留言（樓中樓深度鎖定 1 層）。',
+        code: 'max_thread_depth',
+      });
+    }
+  }
+
   const { data: comment, error } = await admin
     .from('forum_comments')
     .insert({

@@ -39,6 +39,14 @@ export default async function handler(req, res) {
   if (!commentId || typeof commentId !== 'string') {
     return res.status(400).json({ error: 'Comment ID required' });
   }
+
+  if (req.method === 'PATCH' || req.method === 'DELETE') {
+    return res.status(403).json({
+      error: '留言發出後無法修改或刪除。',
+      code: 'author_cannot_modify_comment',
+    });
+  }
+
   if (req.method !== 'POST' || action !== 'like') {
     return res.status(405).json({ error: 'Method not allowed' });
   }

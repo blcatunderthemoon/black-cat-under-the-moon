@@ -40,6 +40,14 @@ import {
   readForumDraft,
   writeForumDraft,
 } from '../../lib/forum-draft-storage.js';
+import {
+  readForumFeedCache,
+  writeForumFeedCache,
+  isForumFeedCacheStale,
+  clearForumFeedCache,
+  FORUM_FEED_STALE_MS,
+} from '../../lib/forum-feed-cache.js';
+import PageLoadingShell from '../../components/PageLoadingShell.js';
 import MoonLoading from '../../components/MoonLoading.js';
 import MoonJourneyPanel from '../../components/MoonJourneyPanel.js';
 import ForumMoonJourneyMobile from '../../components/ForumMoonJourneyMobile.js';
@@ -49,6 +57,13 @@ import {
   resolveMoonJourneyUpdate,
   shouldSkipMoonJourneyRefresh,
 } from '../../lib/moon-journey-cache.js';
+import ForumMatureGate from '../../components/ForumMatureGate.js';
+import {
+  isMatureForumTopic,
+  MATURE_FORUM_TOPIC,
+  MATURE_POST_RULES_SUMMARY,
+  readMatureGateAck,
+} from '../../lib/forum-mature.js';
 
 const SORT_OPTIONS = [
   { id: 'latest', label: '最新', icon: '🕐', hint: '依發文時間由新到舊' },
@@ -88,6 +103,119 @@ function scrollTopicBadgeIntoView(row, badge, behavior = 'smooth') {
     behavior,
   });
 }
+
+/** Desktop: wheel + drag horizontal scroll (scrollbar hidden via CSS). */
+function useHorizontalRowScroll(rowRef, dragRef, active = true) {
+  useEffect(() => {
+    if (!active) return undefined;
+    const row = rowRef.current;
+    if (!row) return undefined;
+
+    const DRAG_THRESHOLD_PX = 4;
+    let tracking = false;
+    let dragging = false;
+    let pointerId = null;
+    let startX = 0;
+    let startScroll = 0;
+    let suppressClick = false;
+
+    function canScroll() {
+      return row.scrollWidth > row.clientWidth + 1;
+    }
+
+    function unbindDocument() {
+      document.removeEventListener('pointermove', onPointerMove);
+      document.removeEventListener('pointerup', onDocumentPointerUp);
+      document.removeEventListener('pointercancel', onDocumentPointerUp);
+    }
+
+    function onWheel(e) {
+      if (!canScroll()) return;
+      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      if (!delta) return;
+      e.preventDefault();
+      row.scrollLeft += delta;
+    }
+
+    function onPointerDown(e) {
+      if (e.button !== 0) return;
+      if (!canScroll()) return;
+      tracking = true;
+      dragging = false;
+      pointerId = e.pointerId;
+      startX = e.clientX;
+      startScroll = row.scrollLeft;
+      document.addEventListener('pointermove', onPointerMove);
+      document.addEventListener('pointerup', onDocumentPointerUp);
+      document.addEventListener('pointercancel', onDocumentPointerUp);
+    }
+
+    function onPointerMove(e) {
+      if (!tracking || e.pointerId !== pointerId) return;
+      const dx = e.clientX - startX;
+      if (!dragging && Math.abs(dx) > DRAG_THRESHOLD_PX) {
+        dragging = true;
+        row.classList.add('forum-h-scroll--dragging');
+        try {
+          row.setPointerCapture(e.pointerId);
+        } catch {
+          /* unsupported */
+        }
+      }
+      if (dragging) {
+        e.preventDefault();
+        const maxScroll = row.scrollWidth - row.clientWidth;
+        row.scrollLeft = Math.max(0, Math.min(startScroll - dx, maxScroll));
+      }
+    }
+
+    function endDrag(e) {
+      if (!tracking) return;
+      if (e?.pointerId !== undefined && pointerId !== null && e.pointerId !== pointerId) return;
+      unbindDocument();
+      if (dragging) {
+        suppressClick = true;
+        if (dragRef) dragRef.current = true;
+        row.classList.remove('forum-h-scroll--dragging');
+        try {
+          if (e?.pointerId !== undefined) row.releasePointerCapture(e.pointerId);
+        } catch {
+          /* ignore */
+        }
+      }
+      tracking = false;
+      dragging = false;
+      pointerId = null;
+    }
+
+    function onDocumentPointerUp(e) {
+      endDrag(e);
+    }
+
+    function onClickCapture(e) {
+      if (!suppressClick) return;
+      e.preventDefault();
+      e.stopPropagation();
+      suppressClick = false;
+      if (dragRef) dragRef.current = false;
+    }
+
+    row.addEventListener('wheel', onWheel, { passive: false });
+    row.addEventListener('pointerdown', onPointerDown);
+    row.addEventListener('click', onClickCapture, true);
+
+    return () => {
+      unbindDocument();
+      row.removeEventListener('wheel', onWheel);
+      row.removeEventListener('pointerdown', onPointerDown);
+      row.removeEventListener('click', onClickCapture, true);
+      row.classList.remove('forum-h-scroll--dragging');
+    };
+  }, [rowRef, dragRef, active]);
+}
+
+/** Back-compat alias (older builds referenced this name). */
+const useTopicsRowScroll = useHorizontalRowScroll;
 
 function WelcomeCard({ topic }) {
   const welcome = getWelcomePost(topic);
@@ -166,6 +294,38 @@ function GatheringPanel({ count }) {
   );
 }
 
+function FeaturedPostsPanel({ featuredPosts }) {
+  if (!featuredPosts?.length) return null;
+
+  return (
+    <aside className="forum-panel forum-panel--featured">
+      <div className="forum-panel__head">
+        <h3 className="forum-panel__title">✨ 月光精選</h3>
+        <p className="forum-panel__hint forum-panel__hint--hot">版主加冕的優質文章</p>
+      </div>
+      <ol className="forum-hot-list">
+        {featuredPosts.map((p) => (
+          <li key={p.id}>
+            <Link href={`/forum/${p.id}`} className="forum-hot-item">
+              <span className="forum-hot-item__rank" aria-hidden="true">✨</span>
+              <div className="forum-hot-item__body">
+                <p className="forum-hot-item__title">{p.title || p.topic}</p>
+                <span className="forum-hot-item__meta">
+                  <span className="forum-hot-item__topic">{displayTopic(p.topic)}</span>
+                  <span className="forum-hot-item__stats">
+                    <span>💗 {p.like_count}</span>
+                    <span>💬 {p.comment_count}</span>
+                  </span>
+                </span>
+              </div>
+            </Link>
+          </li>
+        ))}
+      </ol>
+    </aside>
+  );
+}
+
 function HotTopicsPanel({ hotPosts }) {
   const trophies = ['🥇', '🥈', '🥉'];
   const rankMods = ['forum-hot-item--gold', 'forum-hot-item--silver', 'forum-hot-item--bronze'];
@@ -208,6 +368,30 @@ function HotTopicsPanel({ hotPosts }) {
   );
 }
 
+function applyForumCache(entry, {
+  setPosts,
+  setMeta,
+  setFeaturedPosts,
+  setMetaTopic,
+  setTagLabels,
+  setViewerClanType,
+  setHasMore,
+  offsetRef,
+  setOffset,
+}) {
+  if (!entry) return;
+  setPosts(entry.posts || []);
+  setMeta(entry.meta ?? null);
+  setFeaturedPosts(entry.featuredPosts || []);
+  setMetaTopic(entry.metaTopic ?? null);
+  if (entry.tagLabels) setTagLabels(entry.tagLabels);
+  if (entry.viewerClanType !== undefined) setViewerClanType(entry.viewerClanType);
+  setHasMore(entry.hasMore ?? false);
+  const nextOffset = entry.offset ?? 20;
+  offsetRef.current = nextOffset;
+  setOffset(nextOffset);
+}
+
 export default function ForumPage() {
   const { session, profile, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -223,12 +407,17 @@ export default function ForumPage() {
   const [offset, setOffset] = useState(0);
   const [viewerClanType, setViewerClanType] = useState(null);
   const [meta, setMeta] = useState(null);
+  const [featuredPosts, setFeaturedPosts] = useState([]);
   const [metaTopic, setMetaTopic] = useState(null);
   const [moonJourney, setMoonJourneyState] = useState(null);
   const [tagLabels, setTagLabels] = useState({});
   const [loadError, setLoadError] = useState(false);
   const [pageBootstrapping, setPageBootstrapping] = useState(true);
+  const [feedRefreshing, setFeedRefreshing] = useState(false);
+  const [matureAcked, setMatureAcked] = useState(false);
   const topicRef = useRef(topic);
+  const initialLoadDoneRef = useRef(false);
+  const filterSnapshotRef = useRef({ topic, sort, activeTag });
 
   const defaultTopic = topic === '全部' ? '社群' : topic;
   const [form, setForm] = useState({
@@ -244,6 +433,11 @@ export default function ForumPage() {
   const [draftNotice, setDraftNotice] = useState('');
   const offsetRef = useRef(0);
   const topicsRowRef = useRef(null);
+  const topicsRowDragRef = useRef(false);
+  const presetTagsScrollRef = useRef(null);
+  const presetTagsDragRef = useRef(false);
+  const hotTagsScrollRef = useRef(null);
+  const hotTagsDragRef = useRef(false);
   const loadSeqRef = useRef(0);
   const sessionRef = useRef(session);
   const loadedWithTokenRef = useRef(undefined);
@@ -319,6 +513,14 @@ export default function ForumPage() {
     topicRef.current = topic;
   }, [topic]);
 
+  const matureTopicActive = isMatureForumTopic(topic);
+  const showMatureGate = matureTopicActive && (!session || !matureAcked);
+
+  useEffect(() => {
+    if (!matureTopicActive) return;
+    setMatureAcked(readMatureGateAck(session?.user?.id));
+  }, [matureTopicActive, topic, session?.user?.id]);
+
   const applyMetaPayload = useCallback((requestedTopic, data) => {
     if (requestedTopic !== topicRef.current) return;
     const payload = data || {};
@@ -381,7 +583,14 @@ export default function ForumPage() {
     return meta?.user_hot_tags || [];
   }, [topic, meta, metaMatchesTopic]);
 
-  const load = useCallback(async (reset = false, { bootstrap = false } = {}) => {
+  const showPresetTagsRow = topic !== '全部' && (presetTagsDisplay.length > 0 || activeTag);
+  const showHotTagsRow = userHotTagsDisplay.length > 0;
+
+  useHorizontalRowScroll(topicsRowRef, topicsRowDragRef, true);
+  useHorizontalRowScroll(presetTagsScrollRef, presetTagsDragRef, showPresetTagsRow);
+  useHorizontalRowScroll(hotTagsScrollRef, hotTagsDragRef, showHotTagsRow);
+
+  const load = useCallback(async (reset = false, { bootstrap = false, silent = false, feedOnly = false, postsOnly = false } = {}) => {
     const seq = ++loadSeqRef.current;
     const newOffset = reset ? 0 : offsetRef.current;
     const requestedTopic = topic;
@@ -391,11 +600,25 @@ export default function ForumPage() {
     const token = sessionRef.current?.access_token;
     if (token) headers.Authorization = `Bearer ${token}`;
 
-    if (bootstrap) setPageBootstrapping(true);
-    if (reset && bootstrap) setPosts(null);
+    if (bootstrap) {
+      if (!silent) {
+        if (feedOnly || initialLoadDoneRef.current) {
+          setFeedRefreshing(true);
+        } else {
+          setPageBootstrapping(true);
+        }
+      }
+      if (reset && !silent) setPosts(null);
+    }
 
     const applyPostsPayload = (r, data) => {
       if (!r.ok) {
+        if (data?.code === 'mature_login_required') {
+          setPosts([]);
+          setHasMore(false);
+          setLoadError(false);
+          return;
+        }
         if (reset) setPosts([]);
         setHasMore(false);
         setLoadError(true);
@@ -422,11 +645,21 @@ export default function ForumPage() {
           `/api/forum/posts?sort=${sort}&limit=20&offset=0${topicParam}${tagParam}`,
           { headers },
         );
-        const skipMoonJourney = shouldSkipMoonJourneyRefresh(moonJourneyCacheRef.current);
-        fetchMeta(requestedTopic, headers, { skipMoonJourney }).then((metaData) => {
-          if (seq !== loadSeqRef.current) return;
-          applyMetaPayload(requestedTopic, metaData);
-        });
+        if (!postsOnly) {
+          const skipMoonJourney = shouldSkipMoonJourneyRefresh(moonJourneyCacheRef.current);
+          fetchMeta(requestedTopic, headers, { skipMoonJourney }).then((metaData) => {
+            if (seq !== loadSeqRef.current) return;
+            applyMetaPayload(requestedTopic, metaData);
+          });
+          if (requestedTopic === '全部') {
+            fetch('/api/forum/featured')
+              .then((r) => r.json().catch(() => ({})))
+              .then((data) => {
+                if (seq !== loadSeqRef.current) return;
+                setFeaturedPosts(data.featured_posts || []);
+              });
+          }
+        }
         const postsRes = await postsResPromise;
         if (seq !== loadSeqRef.current) return;
         const data = await postsRes.json().catch(() => ({}));
@@ -448,17 +681,79 @@ export default function ForumPage() {
     } finally {
       if (bootstrap && seq === loadSeqRef.current) {
         setPageBootstrapping(false);
+        setFeedRefreshing(false);
+        initialLoadDoneRef.current = true;
         loadedWithTokenRef.current = sessionRef.current?.access_token ?? null;
       }
     }
   }, [topic, sort, activeTag, fetchMeta, applyMetaPayload]);
 
+  const handleMatureAcknowledged = useCallback(() => {
+    setMatureAcked(true);
+    clearForumFeedCache();
+    load(true, { bootstrap: true, feedOnly: initialLoadDoneRef.current });
+  }, [load]);
+
+  const handleMatureDismiss = useCallback(() => {
+    setActiveTag(null);
+    setTopic('全部');
+  }, []);
+
+  const selectTopic = useCallback((nextTopic) => {
+    if (nextTopic === topicRef.current) return;
+    setActiveTag(null);
+    setTopic(nextTopic);
+  }, []);
+
   useEffect(() => {
+    const prev = filterSnapshotRef.current;
+    const topicChanged = prev.topic !== topic;
+    const sortChanged = prev.sort !== sort;
+    const tagChanged = prev.activeTag !== activeTag;
+    filterSnapshotRef.current = { topic, sort, activeTag };
+
+    const postsOnly = initialLoadDoneRef.current && !topicChanged && (tagChanged || sortChanged);
+
     offsetRef.current = 0;
     setOffset(0);
     setLoadError(false);
-    load(true, { bootstrap: true });
-  }, [topic, sort, activeTag, load]);
+
+    if (isMatureForumTopic(topic)) {
+      const acked = readMatureGateAck(sessionRef.current?.user?.id);
+      setMatureAcked(acked);
+      if (!sessionRef.current || !acked) {
+        setPosts([]);
+        setPageBootstrapping(false);
+        setFeedRefreshing(false);
+        setHasMore(false);
+        return;
+      }
+    }
+
+    const cached = readForumFeedCache(sort, topic, activeTag);
+    if (cached) {
+      applyForumCache(cached, {
+        setPosts,
+        setMeta,
+        setFeaturedPosts,
+        setMetaTopic,
+        setTagLabels,
+        setViewerClanType,
+        setHasMore,
+        offsetRef,
+        setOffset,
+      });
+      setPageBootstrapping(false);
+      setFeedRefreshing(false);
+      load(true, { bootstrap: false, silent: true, postsOnly });
+    } else {
+      load(true, {
+        bootstrap: true,
+        feedOnly: initialLoadDoneRef.current,
+        postsOnly,
+      });
+    }
+  }, [topic, sort, activeTag, load, session?.access_token]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -471,29 +766,59 @@ export default function ForumPage() {
   }, [authLoading, session?.access_token, pageBootstrapping, posts, load]);
 
   useEffect(() => {
-    setActiveTag(null);
-  }, [topic]);
-
-  useEffect(() => {
     const interval = setInterval(() => {
+      if (document.visibilityState && document.visibilityState !== 'visible') return;
+      if (posts === null || pageBootstrapping) return;
+      const cached = readForumFeedCache(sort, topic, activeTag);
+      if (cached && !isForumFeedCacheStale(cached)) return;
+      load(true, { bootstrap: false, silent: true });
       const skipMoonJourney = shouldSkipMoonJourneyRefresh(moonJourneyCacheRef.current);
       loadMeta({ skipMoonJourney });
-    }, 60_000);
+    }, FORUM_FEED_STALE_MS);
     return () => clearInterval(interval);
-  }, [loadMeta]);
+  }, [posts, pageBootstrapping, sort, topic, activeTag, load, loadMeta]);
+
+  useEffect(() => {
+    if (!posts || pageBootstrapping) return;
+    writeForumFeedCache(sort, topic, activeTag, {
+      posts,
+      meta,
+      featuredPosts,
+      metaTopic,
+      tagLabels,
+      viewerClanType,
+      hasMore,
+      offset: offsetRef.current,
+    });
+  }, [posts, meta, featuredPosts, metaTopic, tagLabels, viewerClanType, hasMore, pageBootstrapping, sort, topic, activeTag]);
 
   useEffect(() => {
     function onFocus() {
+      if (document.visibilityState && document.visibilityState !== 'visible') return;
       const skipMoonJourney = shouldSkipMoonJourneyRefresh(moonJourneyCacheRef.current);
       loadMeta({ skipMoonJourney });
+      if (posts === null || pageBootstrapping) return;
+      const cached = readForumFeedCache(sort, topic, activeTag);
+      if (cached && !isForumFeedCacheStale(cached)) return;
+      load(true, { bootstrap: false, silent: true });
     }
     window.addEventListener('focus', onFocus);
-    return () => window.removeEventListener('focus', onFocus);
-  }, [loadMeta]);
+    window.addEventListener('pageshow', onFocus);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('pageshow', onFocus);
+    };
+  }, [loadMeta, posts, pageBootstrapping, sort, topic, activeTag, load]);
 
   useEffect(() => {
     setForm((f) => ({ ...f, topic: topic === '全部' ? '社群' : topic }));
   }, [topic]);
+
+  useEffect(() => {
+    if (isMatureForumTopic(form.topic)) {
+      setForm((f) => (f.visibility === 'members_only' ? f : { ...f, visibility: 'members_only' }));
+    }
+  }, [form.topic]);
 
   useEffect(() => {
     if (!bookmarkToast) return undefined;
@@ -503,14 +828,17 @@ export default function ForumPage() {
 
   function openCompose() {
     const draft = readForumDraft(FORUM_POST_DRAFT_KEY);
+    const nextTopic = draft?.topic || (topic === '全部' ? '社群' : topic);
     setForm({
       title: draft?.title || '',
       content: draft?.content || '',
-      topic: draft?.topic || (topic === '全部' ? '社群' : topic),
+      topic: nextTopic,
       tags: Array.isArray(draft?.tags)
         ? [...new Set(draft.tags.map((t) => canonicalForumTagKey(t)).filter(Boolean))]
         : (draft?.mood_tag ? [canonicalForumTagKey(draft.mood_tag)] : []),
-      visibility: draft?.visibility === 'members_only' ? 'members_only' : 'public',
+      visibility: isMatureForumTopic(nextTopic) || draft?.visibility === 'members_only'
+        ? 'members_only'
+        : 'public',
       polls: Array.isArray(draft?.polls) ? draft.polls : [],
     });
     setDraftNotice(draft?.savedAt ? '已恢復草稿' : '');
@@ -572,7 +900,8 @@ export default function ForumPage() {
       clearForumDraft(FORUM_POST_DRAFT_KEY);
       setDraftNotice('');
       setShowCompose(false);
-      load(true);
+      clearForumFeedCache();
+      load(true, { bootstrap: false, silent: true });
       loadMeta();
     } catch {
       setSubmitError('發文失敗，請稍後再試。');
@@ -635,18 +964,52 @@ export default function ForumPage() {
   }, [posts, topic, sort, activeTag, hasMore, meta]);
 
   const isPremium = isPremiumUser(profile);
-  const feedLoading = posts === null && pageBootstrapping;
+  const shellLoading = pageBootstrapping && posts === null;
+  const feedLoading = feedRefreshing || (posts === null && !shellLoading);
   const isEmpty = !feedLoading && Array.isArray(posts) && posts.length === 0;
   const feedPosts = posts || [];
   const showEmptyState = isEmpty && !loadError;
   const showWelcomeCard = isEmpty && sort !== 'clan' && !loadError;
 
+  if (shellLoading) {
+    return (
+      <>
+        <SeoHead
+          title={FORUM_DISPLAY_NAME}
+          description="黑貓樹洞 — 在月光下匿名分享心情、認識同 Mirror 家族的朋友，參與 Black Cat Under The Moon 社群。"
+          path="/forum"
+          jsonLd={[organizationJsonLd(), webSiteJsonLd()]}
+        />
+        <PageLoadingShell
+          label="正在載入樹洞…"
+          pageClassName="app-page--forum"
+          loadingCalm
+          warmBackground
+          showStarfield={false}
+          maxWidth="100%"
+          headerBrand={<ForumHeaderLogo />}
+          headerVariant="forum"
+          nav={(
+            <ForumHeaderAuth
+              onBookmarksClick={() => {}}
+              moonJourney={null}
+              extra={null}
+            />
+          )}
+        />
+      </>
+    );
+  }
+
   return (
     <>
       <SeoHead
-        title={FORUM_DISPLAY_NAME}
-        description="黑貓樹洞 — 在月光下匿名分享心情、認識同 Mirror 家族的朋友，參與 Black Cat Under The Moon 社群。"
+        title={matureTopicActive ? `${MATURE_FORUM_TOPIC} · ${FORUM_DISPLAY_NAME}` : FORUM_DISPLAY_NAME}
+        description={matureTopicActive
+          ? '黑貓樹洞成熟話題版 — 已登入會員的文字討論空間，分享親密關係、界線與同意。'
+          : '黑貓樹洞 — 在月光下匿名分享心情、認識同 Mirror 家族的朋友，參與 Black Cat Under The Moon 社群。'}
         path="/forum"
+        noindex={matureTopicActive}
         jsonLd={[organizationJsonLd(), webSiteJsonLd()]}
       />
       <AppShell
@@ -696,7 +1059,7 @@ export default function ForumPage() {
             <div className="forum-filters-panel forum-panel">
               <div
                 ref={topicsRowRef}
-                className="pixel-filter-row pixel-filter-row--topics"
+                className="pixel-filter-row pixel-filter-row--topics forum-h-scroll"
                 role="tablist"
                 aria-label="論壇分類"
               >
@@ -704,11 +1067,14 @@ export default function ForumPage() {
                   <button
                     key={t}
                     type="button"
-                    onClick={() => setTopic(t)}
-                    className={`forum-topic-badge${topic === t ? ' forum-topic-badge--active' : ''}`}
+                    onClick={() => selectTopic(t)}
+                    className={`forum-topic-badge${topic === t ? ' forum-topic-badge--active' : ''}${t === MATURE_FORUM_TOPIC ? ' forum-topic-badge--mature' : ''}`}
                     style={topicBadgeStyle(t)}
                   >
                     {TOPIC_STYLES[t]?.emoji ? `${TOPIC_STYLES[t].emoji} ` : ''}{t}
+                    {t === MATURE_FORUM_TOPIC && (
+                      <span className="forum-topic-badge__age" aria-label="年滿18歲">18+</span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -716,7 +1082,7 @@ export default function ForumPage() {
               {(topic !== '全部' && (presetTagsDisplay.length > 0 || activeTag)) && (
                 <div className="forum-preset-tags-row" role="group" aria-label="官方標籤">
                   <span className="forum-preset-tags-row__label">標籤</span>
-                  <div className="forum-preset-tags-row__scroll">
+                  <div ref={presetTagsScrollRef} className="forum-preset-tags-row__scroll forum-h-scroll">
                     {(() => {
                       const displayTags = activeTag && !presetTagsDisplay.some((t) => t.tag === activeTag)
                         ? [{ tag: activeTag, display_label: tagLabels[activeTag] || activeTag, count: 0, official: false }, ...presetTagsDisplay]
@@ -746,7 +1112,7 @@ export default function ForumPage() {
               {userHotTagsDisplay.length > 0 && (
                 <div className="forum-hot-tags-row" role="group" aria-label="熱門標籤">
                   <span className="forum-hot-tags-row__label">{topic === '全部' ? '熱門' : '社群'}</span>
-                  <div className="forum-hot-tags-row__scroll">
+                  <div ref={hotTagsScrollRef} className="forum-hot-tags-row__scroll forum-h-scroll">
                     {userHotTagsDisplay.map(({ tag, display_label: displayLabel, count }) => {
                       const isActive = activeTag === tag;
                       return (
@@ -803,14 +1169,15 @@ export default function ForumPage() {
             {topic === '全部' && (
               <div className="forum-treehole-panels forum-treehole-panels--mobile">
                 <GatheringPanel count={meta?.gathering_count} />
+                <FeaturedPostsPanel featuredPosts={featuredPosts} />
                 <HotTopicsPanel hotPosts={meta?.hot_posts} />
               </div>
             )}
 
             <div className="forum-feed">
                 {feedLoading && (
-                  <div className="forum-feed-loading" aria-live="polite">
-                    <MoonLoading label="正在載入樹洞…" theme="forum" size={32} />
+                  <div className="forum-feed-loading" aria-busy="true" aria-live="polite">
+                    <MoonLoading label="正在載入貼文…" variant="inline" centered calm size={58} />
                   </div>
                 )}
 
@@ -819,7 +1186,7 @@ export default function ForumPage() {
                 {!feedLoading && loadError && (
                   <div className="forum-feed-error" role="alert">
                     <p className="forum-feed-error__text">貼文載入失敗，請稍後再試。</p>
-                    <button type="button" className="pixel-btn forum-feed-error__retry" onClick={() => load(true, { bootstrap: true })}>
+                    <button type="button" className="pixel-btn forum-feed-error__retry" onClick={() => load(true, { bootstrap: true, feedOnly: true })}>
                       重新載入
                     </button>
                   </div>
@@ -882,6 +1249,12 @@ export default function ForumPage() {
                               {post.visibility === 'members_only' && (
                                 <span className="forum-visibility-badge">🔒 會員限定</span>
                               )}
+                              {post.is_pinned && (
+                                <span className="forum-visibility-badge">📌 圍爐置頂</span>
+                              )}
+                              {post.is_highlighted && (
+                                <span className="forum-visibility-badge">✨ 月光加冕</span>
+                              )}
                             </div>
                             {post.title && <h3 className="pixel-post-title">{post.title}</h3>}
                             <p className="pixel-post-content">
@@ -918,7 +1291,7 @@ export default function ForumPage() {
                   </div>
                 )}
 
-            {hasMore && (
+            {hasMore && !feedLoading && (
               <button type="button" onClick={() => load(false)} className="pixel-btn pixel-btn--ghost" style={{ margin: '0 auto' }}>
                 載入更多
               </button>
@@ -927,6 +1300,7 @@ export default function ForumPage() {
           </div>
 
           <div className="forum-sidebar forum-sidebar--right">
+            <FeaturedPostsPanel featuredPosts={featuredPosts} />
             <HotTopicsPanel hotPosts={meta?.hot_posts} />
           </div>
           <div className="forum-scroll-end" data-scroll-end aria-hidden="true" />
@@ -940,6 +1314,14 @@ export default function ForumPage() {
             onBookmarkChange={handleBookmarkChange}
           />
         )}
+
+        <ForumMatureGate
+          open={showMatureGate}
+          session={session}
+          loginRedirect="/forum"
+          onAcknowledged={handleMatureAcknowledged}
+          onDismiss={handleMatureDismiss}
+        />
 
         {showCompose && (
         <ForumComposeOverlay onClose={closeCompose}>
@@ -955,7 +1337,14 @@ export default function ForumPage() {
               <form onSubmit={handleSubmit} className="pixel-form">
                 <select
                   value={form.topic}
-                  onChange={(e) => setForm((f) => ({ ...f, topic: e.target.value }))}
+                  onChange={(e) => {
+                    const nextTopic = e.target.value;
+                    setForm((f) => ({
+                      ...f,
+                      topic: nextTopic,
+                      visibility: isMatureForumTopic(nextTopic) ? 'members_only' : f.visibility,
+                    }));
+                  }}
                   className="pixel-select"
                 >
                   {FORUM_TOPICS.filter((t) => t !== '全部').map((t) => (
@@ -975,6 +1364,17 @@ export default function ForumPage() {
                   maxLength={100}
                   className="pixel-input"
                 />
+                {isMatureForumTopic(form.topic) ? (
+                  <div className="forum-mature-compose-notice" role="note">
+                    <p className="forum-mature-compose-notice__title">親密話題發文須知</p>
+                    <ul className="forum-mature-compose-notice__rules">
+                      {MATURE_POST_RULES_SUMMARY.map((rule) => (
+                        <li key={rule}>{rule}</li>
+                      ))}
+                    </ul>
+                    <p className="forum-visibility-field__hint">此版貼文一律為會員限定，不會出現在公開首頁。</p>
+                  </div>
+                ) : (
                 <fieldset className="forum-visibility-field">
                   <legend className="forum-visibility-field__legend">可見範圍</legend>
                   <div className="forum-visibility-field__options">
@@ -1003,6 +1403,7 @@ export default function ForumPage() {
                     <p className="forum-visibility-field__hint">會員限定貼文僅登入用戶可閱讀，未登入者不會在列表看到。</p>
                   )}
                 </fieldset>
+                )}
                 <ForumComposeField
                   value={form.content}
                   onChange={(content) => setForm((f) => ({ ...f, content }))}

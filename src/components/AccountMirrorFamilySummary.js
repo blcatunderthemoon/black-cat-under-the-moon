@@ -111,9 +111,6 @@ export default function AccountMirrorFamilySummary({ card, displayName }) {
               查看完整鏡像卡<span className="account-btn-arrow" aria-hidden="true"> ▶</span>
             </Link>
           ) : null}
-          <Link href="/cat-families" className="account-mirror-family__guide-link">
-            了解貓家族
-          </Link>
         </div>
       </div>
     </article>

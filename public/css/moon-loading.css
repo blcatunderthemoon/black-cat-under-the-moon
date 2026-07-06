@@ -1,59 +1,84 @@
-/* Moon-phase loading animation */
-.moon-loading {
+/* Moon-phase loading — unified blue→purple gradient (sitewide) */
+:root {
+  --moon-send-gradient: linear-gradient(155deg, #00e5ff 0%, #7c5cfc 52%, #bd93f9 100%);
+  --moon-loading-gap: 8px;
+  --moon-loading-size: 48px;
+}
+
+.loading-send-stack {
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: var(--moon-loading-gap);
   background: transparent;
+  animation: none !important;
+  opacity: 1 !important;
 }
 
-.moon-loading--centered {
+.loading-send-stack--centered {
   width: 100%;
+}
+
+.app-main > .loading-send-stack--centered,
+.app-page--centered > main > .loading-send-stack--centered {
+  flex: 1 1 auto;
+  min-height: min(55vh, 480px);
   justify-content: center;
 }
 
-.moon-loading__img {
-  display: block;
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  background: transparent;
+.moon-page-loading {
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  justify-content: center;
+  background: var(--bg-deep);
 }
 
-/* Near-black PNG art → white lines so moon phases read on dark bg */
-.moon-loading--night .moon-loading__img {
-  mix-blend-mode: normal;
-  filter: brightness(0) invert(1);
-  opacity: 0.92;
+.account-mirror-loading {
+  width: 100%;
+  min-height: min(42vh, 320px);
+  justify-content: center;
 }
 
-.moon-loading--hero .moon-loading__img {
-  width: 56px;
-  height: 56px;
-  filter: brightness(0) invert(1);
-  opacity: 0.95;
+.app-page--page-loading > .app-main,
+.app-page--page-loading > main {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-height: min(72vh, 600px);
 }
 
-/* Echo / Mirror submit — blue→purple gradient moon (mask tracks phase frames) */
+.page-loading {
+  flex: 1;
+  width: 100%;
+  min-height: min(60vh, 520px);
+  justify-content: center;
+}
+
 .moon-loading--send,
 #loading-screen .moon-loading {
   position: relative;
   display: inline-grid;
   place-items: center;
-  width: 56px;
-  height: 56px;
+  width: var(--moon-loading-size, 48px);
+  height: var(--moon-loading-size, 48px);
   gap: 0;
+  flex-shrink: 0;
+  contain: layout style paint;
+  transform: translateZ(0);
 }
 
+.moon-loading--send .moon-loading__phase,
 .moon-loading--send::before,
 #loading-screen .moon-loading::before {
   content: '';
   grid-area: 1 / 1;
-  width: 56px;
-  height: 56px;
-  background: var(--moon-send-gradient, linear-gradient(155deg, #00e5ff 0%, #7c5cfc 52%, #bd93f9 100%));
+  width: var(--moon-loading-size, 48px);
+  height: var(--moon-loading-size, 48px);
+  background: var(--moon-send-gradient);
   -webkit-mask-image: var(--moon-mask-url);
   mask-image: var(--moon-mask-url);
   -webkit-mask-size: contain;
@@ -64,46 +89,82 @@
   mask-position: center;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+  opacity: 1;
+  animation: none !important;
+  transition: none;
+  will-change: opacity;
+}
+
+.moon-loading--send:has(.moon-loading__phase)::before {
+  display: none;
+  content: none;
+}
+
+.moon-loading--send .moon-loading__phase {
+  content: none;
 }
 
 .moon-loading--send .moon-loading__img,
 #loading-screen .moon-loading__img {
-  grid-area: 1 / 1;
-  width: 56px;
-  height: 56px;
-  opacity: 0 !important;
-  pointer-events: none;
-  filter: none !important;
-  mix-blend-mode: normal !important;
+  display: none !important;
 }
 
-.loading-send-stack .loading-text {
+.moon-loading__img {
+  display: block;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.moon-loading--hero {
+  --moon-loading-size: 72px;
+}
+
+.loading-send-stack .loading-text,
+.loading-send-stack .moon-loading__label,
+.moon-loading__label,
+.moon-loading__label.loading-text {
   margin: 0;
   padding: 0;
   line-height: 1.25;
-  background: var(--moon-send-gradient, linear-gradient(155deg, #00e5ff 0%, #7c5cfc 52%, #bd93f9 100%));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-}
-
-.moon-loading--send .moon-loading__label .loading-dots::after,
-.loading-send-stack .loading-text .loading-dots::after {
-  background: var(--moon-send-gradient, linear-gradient(155deg, #00e5ff 0%, #7c5cfc 52%, #bd93f9 100%));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-}
-
-/* Forum warm pages — keep soft tint, no halo */
-.moon-loading--forum .moon-loading__img {
-  mix-blend-mode: lighten;
-  filter: drop-shadow(0 0 10px rgba(255, 159, 67, 0.55));
-}
-
-.moon-loading__label {
-  margin: 0;
   text-align: center;
+  font-family: 'Zpix', 'Press Start 2P', monospace;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  background: var(--moon-send-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: none !important;
+  opacity: 1 !important;
+}
+
+.loading-send-stack .loading-text .loading-dots::after,
+.moon-loading__label .loading-dots::after {
+  background: var(--moon-send-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.moon-loading {
+  display: inline-grid;
+  place-items: center;
+}
+
+.moon-loading--centered {
+  width: 100%;
+  justify-content: center;
+}
+
+.moon-loading--night .moon-loading__img,
+.moon-loading--forum .moon-loading__img {
+  opacity: 0 !important;
+}
+
+.moon-loading--night:not(.moon-loading--send)::before,
+.moon-loading--forum:not(.moon-loading--send)::before {
+  display: none;
 }

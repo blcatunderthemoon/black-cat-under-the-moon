@@ -174,8 +174,12 @@ function MatchCardDrawer({ open, onClose, partnerResponseId, myResponseId, partn
           <button type="button" className="match-card-drawer__close" onClick={onClose} aria-label="關閉">✕</button>
         </header>
         <div className="match-card-drawer__body">
-          {loading && <p className="match-card-drawer__loading">載入共鳴分析卡…</p>}
-          {error && !loading && <p className="match-card-drawer__loading">{error}</p>}
+          {loading && (
+            <div className="match-card-drawer__loading">
+              <MoonLoading label="載入共鳴分析卡…" centered={false} />
+            </div>
+          )}
+          {error && !loading && <p className="match-card-drawer__loading match-card-drawer__error">{error}</p>}
           {!loading && !error && html && (
             <iframe
               ref={frameRef}
@@ -357,7 +361,7 @@ export default function MatchesPage() {
           </>
         }
       >
-        {state === 'loading' && <MoonLoading label="載入中…" />}
+        {state === 'loading' && <MoonLoading label="載入中…" variant="hero" />}
 
         {state === 'locked' && <LockedScreen />}
 

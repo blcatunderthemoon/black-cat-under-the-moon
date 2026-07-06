@@ -22,10 +22,53 @@ import {
 } from '../../lib/inbox-channel.js';
 import { getMirrorCardPageTitle } from '../../lib/mirror-personality.js';
 import { DEFAULT_LETTER_PREFS } from '../../lib/letter-gameplay.js';
-import MoonLoading from '../../components/MoonLoading.js';
+import PageLoadingShell from '../../components/PageLoadingShell.js';
+import { readMirrorCardSlugCache, writeMirrorCardSlugCache } from '../../lib/mirror-card-cache.js';
 import PhotoExchangePanel from '../../components/PhotoExchangePanel.js';
 import PhotoExchangeOverlay from '../../components/PhotoExchangeOverlay.js';
 import MirrorVisitorPremiumUpsell, { buildMirrorVisitorPremiumPerks } from '../../components/MirrorVisitorPremiumUpsell.js';
+
+function MirrorOwnerBioSection({ bio, displayName, variant = 'default' }) {
+  const text = String(bio || '').trim();
+  if (!text) return null;
+  const name = String(displayName || '').trim();
+  const isVisitor = variant === 'visitor';
+
+  return (
+    <section
+      className={`mirror-card-bio${isVisitor ? ' mirror-card-bio--visitor' : ''}`}
+      aria-label="自我介紹"
+    >
+      <div className="mirror-card-bio__glow" aria-hidden="true" />
+      <span className="mirror-card-bio__rivet mirror-card-bio__rivet--tl" aria-hidden="true" />
+      <span className="mirror-card-bio__rivet mirror-card-bio__rivet--tr" aria-hidden="true" />
+      <span className="mirror-card-bio__rivet mirror-card-bio__rivet--bl" aria-hidden="true" />
+      <span className="mirror-card-bio__rivet mirror-card-bio__rivet--br" aria-hidden="true" />
+
+      <header className="mirror-card-bio__head">
+        <span className="mirror-card-bio__icon" aria-hidden="true">✦</span>
+        <div className="mirror-card-bio__head-text">
+          <p className="mirror-card-bio__eyebrow">// 自我介紹</p>
+          {isVisitor && name ? (
+            <h2 className="mirror-card-bio__title">
+              <PixelMixedLabel
+                text={`關於 ${name}`}
+                zhClass="mirror-card-bio__title-zh"
+                enClass="mirror-card-bio__title-en"
+              />
+            </h2>
+          ) : (
+            <h2 className="mirror-card-bio__title">自我介紹</h2>
+          )}
+        </div>
+      </header>
+
+      <blockquote className="mirror-card-bio__body">
+        <p className="mirror-card-bio__text">{text}</p>
+      </blockquote>
+    </section>
+  );
+}
 
 function MirrorReportConfirmOverlay({ open, onConfirm, onCancel, confirming }) {
   if (!open) return null;
@@ -169,6 +212,7 @@ export default function MirrorCardSlugPage() {
     if (r.ok) {
       const refreshed = await r.json();
       setData(refreshed);
+      writeMirrorCardSlugCache(slug, refreshed);
       const pe = refreshed.photo_exchange;
       if (pe?.is_owner) {
         setHasExchangePhoto(!!pe.has_exchange_photo);
@@ -181,8 +225,25 @@ export default function MirrorCardSlugPage() {
   }
 
   useEffect(() => {
-    if (!slug) return;
-    setLoading(true);
+    if (!slug) return undefined;
+    const cached = readMirrorCardSlugCache(slug);
+    const hasCache = Boolean(cached);
+    if (hasCache) {
+      setData(cached);
+      setLoading(false);
+      const pe = cached.photo_exchange;
+      if (pe?.is_owner) {
+        setHasExchangePhoto(!!pe.has_exchange_photo);
+        setExchangePhotoUrl(pe.exchange_photo_url || '');
+      } else if (pe) {
+        setHasExchangePhoto(!!pe.has_exchange_photo);
+        setExchangePhotoUrl(pe.viewer_exchange_photo_url || '');
+      }
+    } else {
+      setLoading(true);
+    }
+
+    let cancelled = false;
     const headers = {};
     if (session?.access_token) {
       headers.Authorization = `Bearer ${session.access_token}`;
@@ -193,7 +254,9 @@ export default function MirrorCardSlugPage() {
         return r.json();
       })
       .then((d) => {
+        if (cancelled) return;
         setData(d);
+        writeMirrorCardSlugCache(slug, d);
         const pe = d.photo_exchange;
         if (pe?.is_owner) {
           setHasExchangePhoto(!!pe.has_exchange_photo);
@@ -202,9 +265,17 @@ export default function MirrorCardSlugPage() {
           setHasExchangePhoto(!!pe.has_exchange_photo);
           setExchangePhotoUrl(pe.viewer_exchange_photo_url || '');
         }
+        setLoadError(null);
         setLoading(false);
       })
-      .catch((e) => { setLoadError(e.message); setLoading(false); });
+      .catch((e) => {
+        if (cancelled) return;
+        if (!hasCache) {
+          setLoadError(e.message);
+          setLoading(false);
+        }
+      });
+    return () => { cancelled = true; };
   }, [slug, session?.access_token]);
 
   useEffect(() => {
@@ -511,15 +582,13 @@ export default function MirrorCardSlugPage() {
     return (
       <>
         <Head><link rel="stylesheet" href="/css/questionnaire.css" /></Head>
-        <AppShell
-          title="Mirror Card"
+        <PageLoadingShell
+          label="載入中…"
           headerVariant="account"
           pageClassName="app-page--mirror-card"
           backHref="/index.html"
           nav={<AppHeaderAuth redirectPath="/mirror-card" />}
-        >
-          <MoonLoading label="載入中…" />
-        </AppShell>
+        />
       </>
     );
   }
@@ -603,9 +672,9 @@ export default function MirrorCardSlugPage() {
             slug={slug}
           />
 
-          {showVisitorPremiumUpsell && (
-            <MirrorVisitorPremiumUpsell perks={visitorPremiumPerks} />
-          )}
+          {is_owner ? (
+            <MirrorOwnerBioSection bio={owner?.bio} displayName={owner?.display_name} />
+          ) : null}
 
           {is_owner && session && photoExchange && (
             <div className="mirror-photo-exchange-wrap">
@@ -626,7 +695,18 @@ export default function MirrorCardSlugPage() {
           )}
 
           {!is_owner && (
-            <div className="mirror-card-actions">
+            <div className="mirror-card-visitor-panel">
+              <MirrorOwnerBioSection
+                bio={owner?.bio}
+                displayName={owner?.display_name}
+                variant="visitor"
+              />
+
+              {showVisitorPremiumUpsell && (
+                <MirrorVisitorPremiumUpsell perks={visitorPremiumPerks} />
+              )}
+
+              <div className="mirror-card-actions">
               {session && messaging && (
                 <>
                   {letterNotice?.ok && (
@@ -743,6 +823,7 @@ export default function MirrorCardSlugPage() {
                   {reporting ? '提交中…' : '檢舉此用戶'}
                 </button>
               </div>
+            </div>
             </div>
           )}
 

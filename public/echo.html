@@ -25,7 +25,7 @@
 <link rel="stylesheet" href="css/questionnaire.css">
 <link rel="stylesheet" href="css/auth-nav.css">
 <link rel="stylesheet" href="css/mobile-webview-scroll.css?v=20260706safari">
-<link rel="stylesheet" href="css/moon-loading.css?v=20260710n">
+<link rel="stylesheet" href="css/moon-loading.css?v=20260711n">
 <script src="/js/posthog-init.js" defer></script>
 <style>
   /* Match standalone: loader until first question is ready (keep logo + top bar visible) */
@@ -238,7 +238,14 @@
       <button type="button" class="match-card-drawer__close" id="match-card-drawer-close" aria-label="關閉">✕</button>
     </header>
     <div class="match-card-drawer__body">
-      <p class="match-card-drawer__loading" id="match-card-drawer-loading">載入共鳴分析卡…</p>
+      <div class="match-card-drawer__loading" id="match-card-drawer-loading">
+        <div class="loading-send-stack loading-send-stack--centered">
+          <div class="moon-loading moon-loading--send" role="status" aria-live="polite" style="--moon-mask-url: url('/loading/FirstQuarterloading.png'); --moon-loading-size: 28px">
+            <img class="moon-loading__img" src="/loading/FirstQuarterloading.png" alt="" width="28" height="28" decoding="async" draggable="false" />
+          </div>
+          <p class="moon-loading__label loading-text">載入共鳴分析卡…</p>
+        </div>
+      </div>
       <iframe id="match-card-drawer-frame" class="match-card-drawer__frame" title="共鳴分析卡" sandbox="allow-scripts allow-same-origin allow-downloads" style="display:none;"></iframe>
     </div>
   </aside>
@@ -268,7 +275,7 @@
 </footer>
 
 <script src="js/site-config.js"></script>
-<script src="js/moon-loading.js?v=20260710n"></script>
+<script src="js/moon-loading.js?v=20260711n"></script>
 <script src="js/mobile-document-scroll.js"></script>
 <script src="js/questionnaire.js?v=20260709a"></script>
 <script src="js/me-cache.js?v=20260706name"></script>

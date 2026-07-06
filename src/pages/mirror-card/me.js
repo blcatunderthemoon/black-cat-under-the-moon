@@ -5,7 +5,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../lib/auth-context.js';
-import MoonLoading from '../../components/MoonLoading.js';
+import PageLoadingShell from '../../components/PageLoadingShell.js';
 
 export default function MirrorCardMePage() {
   const { session, loading } = useAuth();
@@ -38,5 +38,5 @@ export default function MirrorCardMePage() {
     };
   }, [session, loading, router]);
 
-  return <MoonLoading label="載入中…" />;
+  return <PageLoadingShell label="載入中…" pageClassName="moon-page-loading" />;
 }

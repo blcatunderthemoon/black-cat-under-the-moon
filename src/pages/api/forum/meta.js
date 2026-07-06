@@ -22,6 +22,7 @@ import {
 
 import { getStartOfWeekHongKongIso } from '../../../lib/hong-kong-time.js';
 import { getMoonJourneyForUser } from '../../../lib/moon-journey.js';
+import { applyExcludeMatureTopics, getMatureTopicDbValues } from '../../../lib/forum-mature.js';
 
 const HOT_POST_LIMIT = 3;
 
@@ -50,7 +51,7 @@ export default async function handler(req, res) {
 
   const [recentPostsRes, hotPostsRes, commentAuthorsRes] = await Promise.all([
 
-    admin
+    applyExcludeMatureTopics(admin
 
       .from('forum_posts')
 
@@ -58,9 +59,9 @@ export default async function handler(req, res) {
 
       .in('visibility', visibilityFilter)
 
-      .gte('created_at', oneDayAgo),
+      .gte('created_at', oneDayAgo)),
 
-    admin
+    applyExcludeMatureTopics(admin
 
       .from('forum_posts')
 
@@ -72,7 +73,7 @@ export default async function handler(req, res) {
 
       .order('created_at', { ascending: false })
 
-      .limit(40),
+      .limit(40)),
 
     admin
 
@@ -98,7 +99,7 @@ export default async function handler(req, res) {
 
 
 
-  const hotPostRows = hotPostsRes.data || [];
+  const hotPostRows = (hotPostsRes.data || []).filter((p) => !getMatureTopicDbValues().includes(p.topic));
 
   const hotPosts = hotPostRows
 

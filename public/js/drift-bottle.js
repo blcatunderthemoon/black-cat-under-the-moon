@@ -1676,7 +1676,10 @@ async function findBottle() {
     document.getElementById('found-wrap').classList.add('found-visible');
 
     const listEl = document.getElementById('found-list');
-    listEl.innerHTML = '<div class="no-replies" style="opacity:.5">載入中…</div>';
+    listEl.innerHTML = window.MoonLoadingHtml
+      ? window.MoonLoadingHtml('載入中…', { size: 24 })
+      : '<div class="no-replies" style="opacity:.5">載入中…</div>';
+    if (window.initMoonLoadingIn) window.initMoonLoadingIn(listEl);
     document.getElementById('found-heading').textContent = '拾瓶人的回聲';
     const capturedId = foundBottleId;
     fetch(API.replies + '?id=' + capturedId)
@@ -1835,7 +1838,10 @@ async function loadBottleById(id) {
     if (reportBtn) { reportBtn.disabled = false; reportBtn.textContent = '⚑'; reportBtn.style.color = 'rgba(255,255,255,.18)'; }
     document.getElementById('found-wrap').classList.add('found-visible');
     const listEl = document.getElementById('found-list');
-    listEl.innerHTML = '<div class="no-replies" style="opacity:.5">載入中…</div>';
+    listEl.innerHTML = window.MoonLoadingHtml
+      ? window.MoonLoadingHtml('載入中…', { size: 24 })
+      : '<div class="no-replies" style="opacity:.5">載入中…</div>';
+    if (window.initMoonLoadingIn) window.initMoonLoadingIn(listEl);
     document.getElementById('found-heading').textContent = '拾瓶人的回聲';
     const capturedId = foundBottleId;
     fetch(API.replies + '?id=' + capturedId)
