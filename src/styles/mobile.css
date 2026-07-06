@@ -1302,3 +1302,33 @@
     scroll-margin-bottom: calc(96px + var(--mobile-keyboard-inset, 0px));
   }
 }
+
+/* iOS WebKit — pixel / Press Start fonts render smaller than Android Chrome */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 768px), (hover: none) and (pointer: coarse) {
+    .app-header__nav-link {
+      font-size: 13px;
+    }
+
+    .site-footer.site-footer--app .site-legal-link {
+      font-size: 12px;
+    }
+
+    .site-footer.site-footer--app .site-footer__copy--legal {
+      font-size: 11px;
+    }
+
+    .app-page--forum .site-footer.site-footer--app .site-legal-link {
+      font-size: 11px;
+    }
+
+    .app-page--forum .site-footer.site-footer--app .site-footer__copy--legal {
+      font-size: 10px;
+    }
+
+    .forum-header-logout-btn,
+    .forum-header-name-group .app-header__nav-link {
+      font-size: 13px;
+    }
+  }
+}

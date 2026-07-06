@@ -148,7 +148,7 @@ html:has(.mode-top-bar--quiz) {
   text-overflow: clip;
   text-align: right;
   white-space: nowrap;
-  font-size: clamp(7px, 2.5vw, 11px);
+  font-size: clamp(10px, 3vw, 12px);
   line-height: 1.35;
 }
 
@@ -159,7 +159,7 @@ html:has(.mode-top-bar--quiz) {
   overflow: hidden;
   text-overflow: clip;
   text-align: right;
-  font-size: clamp(7px, 2.5vw, 11px);
+  font-size: clamp(10px, 3vw, 12px);
 }
 
 .mode-top-bar__spacer {
@@ -778,7 +778,7 @@ html:has(.mode-top-bar--quiz) {
     flex: 0 1 auto;
     order: 0;
     max-width: min(150px, 34vw);
-    font-size: 9px;
+    font-size: 11px;
     line-height: 1.4;
     padding-top: 0;
   }
@@ -792,7 +792,7 @@ html:has(.mode-top-bar--quiz) {
   .mode-top-bar--index.mode-top-bar--greeting .welcome-greeting:not([hidden]):not(.welcome-greeting--in-nav) {
     flex: 0 1 auto;
     max-width: none;
-    font-size: clamp(6px, 2.4vw, 9px);
+    font-size: clamp(10px, 3vw, 12px);
     line-height: 1.35;
     padding-right: 4px;
   }
@@ -804,7 +804,7 @@ html:has(.mode-top-bar--quiz) {
 
   .mode-top-bar--index.mode-top-bar--greeting .auth-nav-badge__item {
     padding: 0 5px;
-    font-size: 8px;
+    font-size: 10px;
   }
 
   .mode-top-bar--index.mode-top-bar--greeting .auth-nav-badge__item--icon {

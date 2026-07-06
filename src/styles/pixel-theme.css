@@ -10487,6 +10487,21 @@
   position: relative;
 }
 
+.forum-comment-form__box .forum-compose-field__label {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.forum-comment-field__count {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  margin: 0;
+  pointer-events: none;
+  font-size: 0.72rem;
+  opacity: 0.75;
+}
+
 .forum-comment-form__input {
   display: block;
   width: 100%;

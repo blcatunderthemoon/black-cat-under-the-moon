@@ -119,7 +119,7 @@ export default function App({ Component, pageProps }) {
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="preload" href="/js/zpix.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         <link rel="stylesheet" href="/css/auth-nav.css" />
-        <link rel="stylesheet" href="/css/mobile-webview-scroll.css" />
+        <link rel="stylesheet" href="/css/mobile-webview-scroll.css?v=20260706ios" />
         <link
           href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap"
           rel="stylesheet"

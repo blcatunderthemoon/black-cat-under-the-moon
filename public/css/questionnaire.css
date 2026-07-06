@@ -63,7 +63,11 @@ html::-webkit-scrollbar {
   --mobile-vv-offset-top: 0px;
 }
 
-html { font-size: 16px; }
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
 body {
   background: var(--bg-deep);
   color: var(--text);
@@ -71,6 +75,8 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   position: relative;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body.body-scroll-locked {

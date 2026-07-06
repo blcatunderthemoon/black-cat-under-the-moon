@@ -420,3 +420,80 @@ body:has(#already-screen.active) #progress-wrap.mode-top-bar--result {
 body:has(#already-screen.active) #site-footer {
   z-index: 300;
 }
+
+/* ============================================================
+   iOS WebKit typography — pixel / Press Start fonts render smaller
+   than Android Chrome; keep body text readable on iPhone Safari.
+   @supports (-webkit-touch-callout: none) targets iOS (all browsers).
+   ============================================================ */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 768px), (hover: none) and (pointer: coarse) {
+    .welcome-title.pixel-font {
+      font-size: 18px;
+      line-height: 2.2;
+    }
+
+    .welcome-sub {
+      font-size: 14px;
+      line-height: 2;
+    }
+
+    .welcome-cta-btn__label,
+    .welcome-cta-btn__star {
+      font-size: 15px;
+    }
+
+    .welcome-screen .welcome-socials .mode-social-link {
+      font-size: 0.82rem;
+      padding: 6px 13px;
+    }
+
+    .welcome-screen .welcome-socials .mode-social-link svg {
+      width: 13px;
+      height: 13px;
+    }
+
+    .site-legal-link,
+    .welcome-legal-link {
+      font-size: 12px;
+      padding: 2px 8px;
+    }
+
+    .site-footer__copy--legal,
+    .welcome-legal-copy {
+      font-size: 11px;
+    }
+
+    .mode-top-bar--index .welcome-greeting,
+    .mode-top-bar--index.mode-top-bar--greeting .welcome-greeting--in-nav,
+    .mode-top-bar--index.mode-top-bar--greeting .welcome-greeting:not([hidden]):not(.welcome-greeting--in-nav) {
+      font-size: clamp(11px, 3.2vw, 13px);
+    }
+
+    .auth-nav-badge__item {
+      font-size: 11px;
+    }
+
+    .auth-nav-badge__item--logout,
+    .auth-nav-badge__item--signup {
+      font-size: 10px;
+    }
+
+    .mode-select-title.pixel-font {
+      font-size: 15px;
+    }
+
+    .mode-select-sub {
+      font-size: 13px;
+    }
+
+    .mode-card-badge.pixel-font,
+    .mode-card-cta.pixel-font {
+      font-size: 9px;
+    }
+
+    .mode-card-desc {
+      font-size: 0.88rem;
+    }
+  }
+}

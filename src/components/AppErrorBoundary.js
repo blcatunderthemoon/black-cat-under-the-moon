@@ -10,6 +10,10 @@ export default class AppErrorBoundary extends Component {
     return { error };
   }
 
+  componentDidCatch(error, info) {
+    console.error('[app-error-boundary]', error, info?.componentStack);
+  }
+
   render() {
     if (this.state.error) {
       return (

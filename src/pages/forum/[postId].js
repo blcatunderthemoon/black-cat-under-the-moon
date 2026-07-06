@@ -14,8 +14,9 @@ import { FORUM_DISPLAY_NAME } from '../../lib/forum-welcome.js';
 import SeoHead from '../../components/SeoHead.js';
 import ForumPostTags from '../../components/ForumPostTags.js';
 import ForumAuthorName from '../../components/ForumAuthorName.js';
-import ForumComposeField from '../../components/ForumComposeField.js';
+import ForumCommentField from '../../components/ForumCommentField.js';
 import ForumMarkdownBody from '../../components/ForumMarkdownBody.js';
+import ForumSectionErrorBoundary from '../../components/ForumSectionErrorBoundary.js';
 import {
   clearForumDraft,
   forumCommentDraftKey,
@@ -57,10 +58,15 @@ function formatDate(dateStr) {
   return new Date(dateStr).toLocaleDateString('zh-HK', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
+function normalizeRouteId(value) {
+  if (Array.isArray(value)) return value[0] || '';
+  return value || '';
+}
+
 export default function ForumPostPage() {
-  const { session } = useAuth();
+  const { session, loading: authLoading } = useAuth();
   const router = useRouter();
-  const { postId } = router.query;
+  const postId = normalizeRouteId(router.query.postId);
   const commentsRef = useRef(null);
 
   const [data, setData] = useState(null);
@@ -441,6 +447,7 @@ export default function ForumPostPage() {
         {!post ? (
           <MoonLoading label="載入中…" theme="forum" />
         ) : (
+          <ForumSectionErrorBoundary fallbackLabel="貼文">
           <>
             <article className="pixel-card forum-post-card">
               <div className="forum-post-card__tag-row">
@@ -596,13 +603,15 @@ export default function ForumPostPage() {
               )}
             </section>
 
-            {session ? (
+            {authLoading ? (
+              <div className="forum-comments-empty">載入帳戶狀態…</div>
+            ) : session ? (
               <form onSubmit={handleComment} className="forum-comment-form">
-                <ForumComposeField
+                <ForumCommentField
+                  postId={postId}
                   value={comment}
                   onChange={setComment}
                   label="回覆"
-                  accessToken={session?.access_token}
                   maxLength={500}
                   minRows={3}
                   placeholder="留下你的想法…（最多 500 字）"
@@ -627,6 +636,7 @@ export default function ForumPostPage() {
               </div>
             )}
           </>
+          </ForumSectionErrorBoundary>
         )}
       </AppShell>
       {showBookmarks && (
