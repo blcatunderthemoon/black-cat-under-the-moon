@@ -5031,6 +5031,9 @@ body:has(.mode-select-screen.active) {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: geometricPrecision;
 }
+.pcard-hide-identity-meta .pcard-profile-meta {
+  display: none !important;
+}
 .pcard-profile-dot {
   display: inline-flex;
   align-items: center;
@@ -5206,6 +5209,34 @@ body:has(.mode-select-screen.active) {
   box-shadow: 0 0 14px rgba(0,229,255,0.4);
 }
 .mirror-download-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.mirror-download-meta-toggle {
+  flex: 1 1 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  font-family: 'Zpix', 'Press Start 2P', monospace;
+  font-size: 8px;
+  line-height: 1.45;
+  letter-spacing: 0.03em;
+  color: var(--text-dim);
+  cursor: pointer;
+  user-select: none;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+}
+.mirror-download-meta-toggle input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: var(--cyan);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.mirror-download-meta-toggle__text {
+  line-height: 1.45;
+}
 .mirror-retry-btn {
   font-family: 'Press Start 2P', monospace;
   font-size: 9px;

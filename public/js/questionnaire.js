@@ -3995,6 +3995,7 @@ function showMirrorResult(scores, mainType, shadowType, hiddenTags, skipAutoSave
   }, 120);
 
   document.getElementById('mirror-download-btn').onclick = downloadPersonalityCard;
+  initMirrorDownloadMetaToggle();
   preloadMirrorCaptureEngine();
   upgradeMirrorCatImage(pcard, catImgSrc);
   var retryBtn = document.getElementById('mirror-retry-btn');
@@ -4380,7 +4381,8 @@ function buildPcardExportStyle(rgb) {
     root + ' .pcard-section{border-color:' + r(0.22) + '!important;}' +
     root + ' .pcard-tag{border-color:' + r(0.50) + '!important;background:' + r(0.08) + '!important;color:' + r(1) + '!important;}' +
     root + ' .pcard-profile-tag{border-color:' + r(0.35) + '!important;background:' + r(0.07) + '!important;}' +
-    root + ' .pcard-owner-name{border-color:' + r(0.45) + '!important;background:' + r(0.10) + '!important;box-shadow:inset 0 1px 0 rgba(255,255,255,0.05),0 0 12px ' + r(0.18) + '!important;text-shadow:0 0 10px ' + r(0.55) + '!important;}'
+    root + ' .pcard-owner-name{border-color:' + r(0.45) + '!important;background:' + r(0.10) + '!important;box-shadow:inset 0 1px 0 rgba(255,255,255,0.05),0 0 12px ' + r(0.18) + '!important;text-shadow:0 0 10px ' + r(0.55) + '!important;}' +
+    root + '.pcard-hide-identity-meta .pcard-profile-meta{display:none!important;}'
   );
 }
 
@@ -4693,6 +4695,33 @@ var MIRROR_DOWNLOAD_BTN_IDLE_HTML =
   '<span class="mirror-download-btn__label">下載性格卡片</span>' +
   '<span class="mirror-download-btn__icon" aria-hidden="true">↓</span>';
 
+function syncMirrorIdentityMetaVisibility() {
+  var pcard = document.getElementById('personality-card');
+  var toggle = document.getElementById('mirror-download-meta-toggle');
+  if (!pcard) return;
+  var show = !toggle || toggle.checked;
+  pcard.classList.toggle('pcard-hide-identity-meta', !show);
+}
+
+function updateMirrorDownloadMetaToggleVisibility() {
+  var wrap = document.getElementById('mirror-download-meta-toggle-wrap');
+  var pcard = document.getElementById('personality-card');
+  if (!wrap) return;
+  wrap.hidden = !(pcard && pcard.querySelector('.pcard-profile-meta'));
+}
+
+function initMirrorDownloadMetaToggle() {
+  var toggle = document.getElementById('mirror-download-meta-toggle');
+  if (!toggle) return;
+  if (toggle.dataset.bound !== '1') {
+    toggle.dataset.bound = '1';
+    toggle.addEventListener('change', syncMirrorIdentityMetaVisibility);
+  }
+  toggle.checked = true;
+  syncMirrorIdentityMetaVisibility();
+  updateMirrorDownloadMetaToggleVisibility();
+}
+
 function setMirrorDownloadBtnIdle(btn) {
   if (!btn) return;
   btn.innerHTML = MIRROR_DOWNLOAD_BTN_IDLE_HTML;
@@ -4742,6 +4771,11 @@ async function downloadPersonalityCard() {
 
     clone = orig.cloneNode(true);
     clone.removeAttribute('id');
+    if (clone.classList.contains('pcard-hide-identity-meta')) {
+      clone.querySelectorAll('.pcard-profile-meta').forEach(function (el) {
+        el.remove();
+      });
+    }
     const rect = orig.getBoundingClientRect();
     const w = Math.round(rect.width);
     const h = Math.round(rect.height);
