@@ -188,6 +188,14 @@ async function handlePatch(req, res) {
       .catch((syncErr) => {
         console.error('[me] forum name sync failed:', syncErr?.message || syncErr);
       });
+
+    admin.auth.admin
+      .updateUserById(user.id, {
+        user_metadata: { display_name: updates.display_name },
+      })
+      .catch((syncErr) => {
+        console.error('[me] auth metadata name sync failed:', syncErr?.message || syncErr);
+      });
   }
 
   return res.status(200).json({ profile: data });

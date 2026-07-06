@@ -167,9 +167,14 @@
   }
 
   var meCache = null;
-  var ME_CACHE_KEY = 'bcutm_me_cache';
+  var activeUserId = null;
+
+  var meCacheApi = window.BcutmMeCache || {};
+  var ME_CACHE_KEY = meCacheApi.CACHE_KEY || 'bcutm_me_cache';
+  var PROFILE_UPDATED_EVENT = meCacheApi.EVENT || 'bcutm:profile-updated';
 
   function readMeCache(userId) {
+    if (meCacheApi.read) return meCacheApi.read(userId);
     if (!userId) return null;
     try {
       var raw = sessionStorage.getItem(ME_CACHE_KEY);
@@ -183,6 +188,10 @@
   }
 
   function writeMeCache(userId, data) {
+    if (meCacheApi.write) {
+      meCacheApi.write(userId, data);
+      return;
+    }
     if (!userId || !data) return;
     try {
       sessionStorage.setItem(ME_CACHE_KEY, JSON.stringify({ v: 1, userId: userId, data: data, at: Date.now() }));
@@ -190,7 +199,42 @@
   }
 
   function clearMeCache() {
+    if (meCacheApi.clear) {
+      meCacheApi.clear();
+      return;
+    }
     try { sessionStorage.removeItem(ME_CACHE_KEY); } catch (e) {}
+  }
+
+  function applyMeData(data) {
+    if (!data || !activeUserId) return;
+    meCache = data;
+    var serverName = data.profile && data.profile.display_name;
+    showLoggedIn(
+      serverName,
+      data.unread_inbox_count || 0,
+      !!(data.profile && data.profile.subscription_tier === 'premium'),
+      data
+    );
+  }
+
+  function bindProfileSync() {
+    if (document.documentElement.dataset.authNavProfileSync) return;
+    document.documentElement.dataset.authNavProfileSync = '1';
+
+    window.addEventListener(PROFILE_UPDATED_EVENT, function (e) {
+      var detail = e.detail || {};
+      if (!detail.userId || detail.userId !== activeUserId || !detail.data) return;
+      applyMeData(detail.data);
+    });
+
+    window.addEventListener('storage', function (e) {
+      if (e.key !== ME_CACHE_KEY || !e.newValue || !activeUserId) return;
+      try {
+        var parsed = JSON.parse(e.newValue);
+        if (parsed && parsed.userId === activeUserId && parsed.data) applyMeData(parsed.data);
+      } catch (err) {}
+    });
   }
 
   function getHongKongHour() {
@@ -566,6 +610,7 @@
 
   function init() {
     bindPremiumMoonInteractions();
+    bindProfileSync();
     if (document.body.hasAttribute('data-no-auth-nav')) return;
     var loggedInOnly = document.body.hasAttribute('data-auth-nav-logged-in-only');
 
@@ -588,6 +633,7 @@
       payload.email
     )) || null;
     var userId = payload && payload.sub;
+    activeUserId = userId;
     var cached = userId ? readMeCache(userId) : null;
     if (cached) meCache = cached;
     var cachedName = cached && cached.profile && cached.profile.display_name;

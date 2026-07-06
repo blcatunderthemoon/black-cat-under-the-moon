@@ -11,6 +11,7 @@ import { NavLink } from './AppShell.js';
 import ForumBookmarksPanel from './ForumBookmarksPanel.js';
 import HeaderPremiumMoon from './HeaderPremiumMoon.js';
 import { isPremiumUser } from '../lib/premium.js';
+import { readMeCache } from '../lib/me-cache.js';
 
 export default function ForumHeaderAuth({ extra = null, moonJourney = null, redirectPath = '/forum', onBookmarksClick = null }) {
   const { session, profile, displayName, signOut, loading } = useAuth();
@@ -45,16 +46,17 @@ export default function ForumHeaderAuth({ extra = null, moonJourney = null, redi
     );
   }
 
+  const meData = profile ?? (session.user?.id ? readMeCache(session.user.id) : null);
   const name = displayName || '';
-  const unread = profile?.unread_inbox_count || 0;
-  const isPremium = isPremiumUser(profile);
+  const unread = meData?.unread_inbox_count || 0;
+  const isPremium = isPremiumUser(meData);
 
   return (
     <>
       <span className="forum-header-name-group">
         <NavLink href="/mirror-card/me">{name}</NavLink>
         {isPremium && (
-          <HeaderPremiumMoon profile={profile} className="forum-header-moon" />
+          <HeaderPremiumMoon profile={meData} className="forum-header-moon" />
         )}
       </span>
       <span className="forum-header-icon-group">

@@ -9,7 +9,7 @@ import { useRouter } from 'next/router';
 import { createClient } from '@supabase/supabase-js';
 import { resolveBrowserSession, readStoredAuthSession, sessionFromStored } from './browser-session.js';
 import { resolveDisplayName } from './display-name.js';
-import { readMeCache, writeMeCache, clearMeCache } from './me-cache.js';
+import { readMeCache, writeMeCache, clearMeCache, ME_CACHE_KEY, PROFILE_UPDATED_EVENT } from './me-cache.js';
 import { clearInboxThreadsCache } from './inbox-threads-cache.js';
 import { clearMoonJourneyCache } from './moon-journey-cache.js';
 
@@ -195,6 +195,38 @@ export function AuthProvider({ children }) {
       window.removeEventListener('pageshow', onVisible);
     };
   }, [session?.access_token, router.events, refreshProfile]);
+
+  // Keep headers in sync when profile cache updates (account rename, other tabs).
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const applyCachedProfile = (userId, data) => {
+      if (!userId || userId !== sessionRef.current?.user?.id || !data) return;
+      setProfile(data);
+    };
+
+    const onProfileUpdated = (e) => {
+      const { userId, data } = e.detail || {};
+      applyCachedProfile(userId, data);
+    };
+
+    const onStorage = (e) => {
+      if (e.key !== ME_CACHE_KEY || !e.newValue) return;
+      try {
+        const parsed = JSON.parse(e.newValue);
+        applyCachedProfile(parsed?.userId, parsed?.data);
+      } catch {
+        /* ignore */
+      }
+    };
+
+    window.addEventListener(PROFILE_UPDATED_EVENT, onProfileUpdated);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener(PROFILE_UPDATED_EVENT, onProfileUpdated);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, []);
 
   const signIn = async (email, password) => {
     const client = getBrowserClient();

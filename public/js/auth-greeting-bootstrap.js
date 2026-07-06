@@ -1,10 +1,13 @@
 /**
- * Index greeting — paint immediately from session cache / JWT (before auth-nav.js).
+ * Index greeting — paint from session cache / JWT, then stay in sync with profile updates.
  */
 (function () {
   'use strict';
 
-  var ME_CACHE_KEY = 'bcutm_me_cache';
+  var meCacheApi = window.BcutmMeCache || {};
+  var ME_CACHE_KEY = meCacheApi.CACHE_KEY || 'bcutm_me_cache';
+  var PROFILE_UPDATED_EVENT = meCacheApi.EVENT || 'bcutm:profile-updated';
+  var activeUserId = null;
 
   function getToken() {
     try {
@@ -36,6 +39,7 @@
   }
 
   function readMeCache(userId) {
+    if (meCacheApi.read) return meCacheApi.read(userId);
     if (!userId) return null;
     try {
       var raw = sessionStorage.getItem(ME_CACHE_KEY);
@@ -66,30 +70,69 @@
     return (h >= 6 && h < 18) ? '早上好' : '晚上好';
   }
 
-  var token = getToken();
-  if (!token) return;
+  function paintGreeting(name, isPremium) {
+    var el = document.getElementById('welcome-greeting');
+    if (!el) return;
+    var trimmed = String(name || '').trim();
+    if (!trimmed) {
+      el.hidden = true;
+      el.textContent = '';
+      var topBar = document.querySelector('.mode-top-bar--index');
+      if (topBar) topBar.classList.remove('mode-top-bar--greeting');
+      return;
+    }
+    el.textContent = greetingPrefix() + '。 ' + trimmed + (isPremium ? '' : ' 🌙');
+    el.hidden = false;
+    var topBarActive = document.querySelector('.mode-top-bar--index');
+    if (topBarActive) topBarActive.classList.add('mode-top-bar--greeting');
+  }
 
-  var payload = decodeJwt(token);
-  if (!payload || !payload.sub) return;
+  function paintFromMeData(data) {
+    if (!data || !data.profile) return;
+    paintGreeting(data.profile.display_name, data.profile.subscription_tier === 'premium');
+  }
 
-  if (payload.exp && Date.now() > payload.exp * 1000) return;
+  function bootstrap() {
+    var token = getToken();
+    if (!token) return;
 
-  var cached = readMeCache(payload.sub);
-  var name = String(
-    (cached && cached.profile && cached.profile.display_name) ||
-    (payload.user_metadata && payload.user_metadata.display_name) ||
-    payload.email ||
-    ''
-  ).trim();
-  if (!name) return;
+    var payload = decodeJwt(token);
+    if (!payload || !payload.sub) return;
+    if (payload.exp && Date.now() > payload.exp * 1000) return;
 
-  var el = document.getElementById('welcome-greeting');
-  if (!el) return;
+    activeUserId = payload.sub;
+    var cached = readMeCache(payload.sub);
+    var name = String(
+      (cached && cached.profile && cached.profile.display_name) ||
+      (payload.user_metadata && payload.user_metadata.display_name) ||
+      payload.email ||
+      ''
+    ).trim();
+    if (!name) return;
 
-  var isPremium = !!(cached && cached.profile && cached.profile.subscription_tier === 'premium');
-  el.textContent = greetingPrefix() + '。 ' + name + (isPremium ? '' : ' 🌙');
-  el.hidden = false;
+    var isPremium = !!(cached && cached.profile && cached.profile.subscription_tier === 'premium');
+    paintGreeting(name, isPremium);
+  }
 
-  var topBar = document.querySelector('.mode-top-bar--index');
-  if (topBar) topBar.classList.add('mode-top-bar--greeting');
+  function bindProfileSync() {
+    if (document.documentElement.dataset.greetingProfileSync) return;
+    document.documentElement.dataset.greetingProfileSync = '1';
+
+    window.addEventListener(PROFILE_UPDATED_EVENT, function (e) {
+      var detail = e.detail || {};
+      if (!detail.userId || detail.userId !== activeUserId || !detail.data) return;
+      paintFromMeData(detail.data);
+    });
+
+    window.addEventListener('storage', function (e) {
+      if (e.key !== ME_CACHE_KEY || !e.newValue || !activeUserId) return;
+      try {
+        var parsed = JSON.parse(e.newValue);
+        if (parsed && parsed.userId === activeUserId && parsed.data) paintFromMeData(parsed.data);
+      } catch (err) {}
+    });
+  }
+
+  bootstrap();
+  bindProfileSync();
 })();

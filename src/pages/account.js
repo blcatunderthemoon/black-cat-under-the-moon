@@ -24,6 +24,7 @@ import {
   readMoonJourneyCacheEntry,
   resolveMoonJourneyUpdate,
 } from '../lib/moon-journey-cache.js';
+import { patchMeCacheDisplayName } from '../lib/me-cache.js';
 
 export default function AccountPage() {
   const router = useRouter();
@@ -149,6 +150,15 @@ export default function AccountPage() {
       if (r.ok) {
         setSaveOk(true);
         setSaveMsg('✅ 已儲存！');
+        const userId = session.user.id;
+        const newName = nameCheck.value;
+        patchMeCacheDisplayName(userId, newName);
+        try {
+          const client = getBrowserClient();
+          await client.auth.updateUser({ data: { display_name: newName } });
+        } catch {
+          /* server already syncs metadata; client update is best-effort */
+        }
         await refreshProfile();
       } else {
         setSaveOk(false);
