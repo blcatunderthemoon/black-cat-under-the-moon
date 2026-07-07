@@ -639,7 +639,9 @@
     var cachedName = cached && cached.profile && cached.profile.display_name;
     var isPremium = !!(cached && cached.profile && cached.profile.subscription_tier === 'premium');
     var unread = (cached && cached.unread_inbox_count) || 0;
-    showLoggedIn(cachedName || immediateName, unread, isPremium, cached, { profilePending: true });
+    showLoggedIn(cachedName || immediateName, unread, isPremium, cached, { profilePending: !cached });
+
+    if (meCacheApi.isFresh && meCacheApi.isFresh(userId)) return;
 
     fetch('/api/me', {
       headers: { Authorization: 'Bearer ' + token },

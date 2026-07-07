@@ -11,6 +11,7 @@ import { NavLink } from './AppShell.js';
 import ForumBookmarksPanel from './ForumBookmarksPanel.js';
 import HeaderPremiumMoon from './HeaderPremiumMoon.js';
 import { isPremiumUser } from '../lib/premium.js';
+import { canModerateForum } from '../lib/forum-roles.js';
 import { readMeCache } from '../lib/me-cache.js';
 
 export default function ForumHeaderAuth({ extra = null, moonJourney = null, redirectPath = '/forum', onBookmarksClick = null }) {
@@ -50,6 +51,7 @@ export default function ForumHeaderAuth({ extra = null, moonJourney = null, redi
   const name = displayName || '';
   const unread = meData?.unread_inbox_count || 0;
   const isPremium = isPremiumUser(meData);
+  const isForumStaff = canModerateForum(meData?.profile?.forum_role);
 
   return (
     <>
@@ -60,6 +62,16 @@ export default function ForumHeaderAuth({ extra = null, moonJourney = null, redi
         )}
       </span>
       <span className="forum-header-icon-group">
+        {isForumStaff && (
+          <Link
+            href="/forum/guardian"
+            className="app-header__nav-link app-header__nav-link--icon forum-header-guardian-btn"
+            title="月光守護者"
+            aria-label="月光守護者治理面板"
+          >
+            <span className="app-header__nav-icon" aria-hidden="true">🛡️</span>
+          </Link>
+        )}
         <button
           type="button"
           className="app-header__nav-link app-header__nav-link--icon forum-header-bookmark-btn"

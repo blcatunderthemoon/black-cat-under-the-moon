@@ -4,7 +4,11 @@
  */
 
 import { getOptionalUser, requireUser, sendAuthError, getAdminClient, getServiceOrUserClient, getProfile } from '../../../../lib/server-auth.js';
-import { getForumRole, canModerateForum } from '../../../../lib/forum-roles.js';
+import { getForumRole, canModerateForum, canAdminForum } from '../../../../lib/forum-roles.js';
+import {
+  canModerateStoredTopic,
+  getModeratorTopicsForUser,
+} from '../../../../lib/forum-moderator-assignments.js';
 import {
   getViewerBookmarkedPostIds,
   getViewerLikedCommentIds,
@@ -17,6 +21,39 @@ import { canonicalForumTagKey } from '../../../../lib/forum-tags.js';
 import { resolveForumAuthorDisplayName } from '../../../../lib/forum-author-names.js';
 import { awardMoonJourneyExp, MOON_JOURNEY_EXP } from '../../../../lib/moon-journey.js';
 import { isMatureForumTopicStored } from '../../../../lib/forum-mature.js';
+import { isStoryPost, validateStoryCoverUrl } from '../../../../lib/forum-story.js';
+import {
+  fetchStoryChapters,
+  serializeStoryChapters,
+} from '../../../../lib/forum-story-chapters.js';
+
+const POST_DETAIL_COLUMNS = `
+  id, author_id, title, content, topic, mood_tag, anonymous_name_snapshot,
+  like_count, comment_count, visibility, is_pinned, is_highlighted, created_at,
+  cover_image_url, synopsis
+`;
+
+const POST_DETAIL_COLUMNS_LEGACY = `
+  id, author_id, title, content, topic, mood_tag, anonymous_name_snapshot,
+  like_count, comment_count, visibility, is_pinned, is_highlighted, created_at
+`;
+
+async function fetchForumPost(admin, postId) {
+  const withStory = await admin
+    .from('forum_posts')
+    .select(POST_DETAIL_COLUMNS)
+    .eq('id', postId)
+    .maybeSingle();
+  if (!withStory.error) return withStory;
+  if (withStory.error?.code === '42703') {
+    return admin
+      .from('forum_posts')
+      .select(POST_DETAIL_COLUMNS_LEGACY)
+      .eq('id', postId)
+      .maybeSingle();
+  }
+  return withStory;
+}
 
 async function fetchPostComments(admin, postId) {
   const withLikes = await admin
@@ -53,7 +90,8 @@ export default async function handler(req, res) {
   if (!id || typeof id !== 'string') return res.status(400).json({ error: 'Post ID required' });
 
   if (req.method === 'GET') return handleGet(req, res, id);
-  if (req.method === 'PATCH' || req.method === 'DELETE') {
+  if (req.method === 'PATCH') return handlePatchStoryMeta(req, res, id);
+  if (req.method === 'DELETE') {
     return res.status(403).json({
       error: '帖子發出後無法修改或刪除。',
       code: 'author_cannot_modify_post',
@@ -67,17 +105,12 @@ export default async function handler(req, res) {
 async function handleGet(req, res, postId) {
   const admin = getServiceOrUserClient(req);
 
-  const viewer = await getOptionalUser(req);
-  const profile = viewer ? await getProfile(viewer.id) : null;
+  const [viewer, postResult] = await Promise.all([
+    getOptionalUser(req),
+    fetchForumPost(admin, postId),
+  ]);
 
-  const { data: post, error } = await admin
-    .from('forum_posts')
-    .select('id, author_id, title, content, topic, mood_tag, anonymous_name_snapshot, like_count, comment_count, visibility, is_pinned, is_highlighted, created_at')
-    .eq('id', postId)
-    .maybeSingle();
-
-  const isModerator = canModerateForum(getForumRole(profile));
-
+  const { data: post, error } = postResult;
   if (error || !post) return res.status(404).json({ error: 'Post not found' });
 
   if (!viewer) {
@@ -86,10 +119,6 @@ async function handleGet(req, res, postId) {
     res.setHeader('Cache-Control', 'private, no-cache');
   }
 
-  // Visibility gate
-  if (post.visibility === 'hidden' && !isModerator) {
-    return res.status(404).json({ error: 'Post not found' });
-  }
   if (isMatureForumTopicStored(post.topic) && !viewer) {
     return res.status(401).json({
       error: '請登入並確認年齡後才能瀏覽此版塊。',
@@ -103,13 +132,20 @@ async function handleGet(req, res, postId) {
     });
   }
 
+  const profilePromise = viewer
+    ? getProfile(viewer.id)
+    : Promise.resolve(null);
+
   const [
+    profile,
     comments,
     { data: mirrorCard },
     { data: authorProfile },
     tagsByPostId,
     polls,
+    storyChapters,
   ] = await Promise.all([
+    profilePromise,
     fetchPostComments(admin, postId),
     admin
       .from('mirror_cards')
@@ -123,7 +159,25 @@ async function handleGet(req, res, postId) {
       .maybeSingle(),
     getTagsByPostIds(admin, [postId]),
     getPollsForPost(admin, postId, viewer?.id),
+    isStoryPost(post) ? fetchStoryChapters(admin, post) : Promise.resolve([]),
   ]);
+
+  const role = getForumRole(profile);
+  let viewerCanModerate = false;
+  let canViewHidden = false;
+
+  if (canModerateForum(role) && viewer) {
+    const moderatorTopics = role === 'moderator'
+      ? await getModeratorTopicsForUser(admin, viewer.id)
+      : null;
+    const actor = { role, moderatorTopics, viaDashboard: false };
+    viewerCanModerate = canModerateStoredTopic(actor, post.topic);
+    canViewHidden = viewerCanModerate || canAdminForum(role);
+  }
+
+  if (post.visibility === 'hidden' && !canViewHidden) {
+    return res.status(404).json({ error: 'Post not found' });
+  }
 
   const authorIds = [...new Set((comments || []).map((c) => c.author_id).filter(Boolean))];
   const commentIds = (comments || []).map((c) => c.id);
@@ -201,11 +255,12 @@ async function handleGet(req, res, postId) {
       is_pinned: post.is_pinned || false,
       is_highlighted: post.is_highlighted || false,
       is_hidden: post.visibility === 'hidden',
-      viewer_can_moderate: isModerator,
+      viewer_can_moderate: viewerCanModerate,
     },
     tag_labels: tagLabels,
     comments: enrichedComments,
     polls,
+    chapters: isStoryPost(post) ? serializeStoryChapters(storyChapters) : undefined,
     viewer_logged_in: !!viewer,
   });
 }
@@ -316,4 +371,57 @@ async function handleBookmark(req, res, postId) {
   }
 
   return res.status(200).json({ success: true, bookmarked: true });
+}
+
+async function handlePatchStoryMeta(req, res, postId) {
+  let user;
+  try {
+    user = await requireUser(req);
+  } catch (err) {
+    return sendAuthError(res, err);
+  }
+
+  const admin = getAdminClient();
+  const { data: post, error: postError } = await admin
+    .from('forum_posts')
+    .select('id, author_id, topic')
+    .eq('id', postId)
+    .maybeSingle();
+
+  if (postError || !post || !isStoryPost(post)) {
+    return res.status(404).json({ error: 'Story not found' });
+  }
+  if (post.author_id !== user.id) {
+    return res.status(403).json({ error: '只有作者可以更新故事資料。' });
+  }
+
+  const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
+  const updates = {};
+
+  if (Object.prototype.hasOwnProperty.call(body, 'cover_image_url')) {
+    const coverCheck = validateStoryCoverUrl(body.cover_image_url);
+    if (!coverCheck.ok) return res.status(400).json({ error: coverCheck.error });
+    updates.cover_image_url = coverCheck.value;
+  }
+
+  if (!Object.keys(updates).length) {
+    return res.status(400).json({ error: '沒有可更新的欄位。' });
+  }
+
+  const { data: updated, error: updateError } = await admin
+    .from('forum_posts')
+    .update(updates)
+    .eq('id', postId)
+    .select('cover_image_url, synopsis')
+    .single();
+
+  if (updateError) {
+    if (updateError.code === '42703') {
+      return res.status(503).json({ error: '故事欄位尚未設定。' });
+    }
+    console.error('[forum/posts] story meta update failed:', updateError.message);
+    return res.status(500).json({ error: '更新失敗。' });
+  }
+
+  return res.status(200).json({ post: updated });
 }

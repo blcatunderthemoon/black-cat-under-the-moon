@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
-export default function ForumComposeOverlay({ onClose, children }) {
+export default function ForumComposeOverlay({ children, modalClassName = '', ariaLabelledBy = 'forum-compose-title' }) {
   useEffect(() => {
     const html = document.documentElement;
     html.classList.add('body-scroll-locked');
@@ -15,13 +15,13 @@ export default function ForumComposeOverlay({ onClose, children }) {
   if (typeof document === 'undefined') return null;
 
   return createPortal(
-    <div className="forum-compose-overlay" onClick={onClose} role="presentation">
+    <div className="forum-compose-overlay" role="presentation">
       <div
-        className="pixel-card forum-compose-modal"
+        className={['pixel-card', 'forum-compose-modal', modalClassName].filter(Boolean).join(' ')}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="forum-compose-title"
+        aria-labelledby={ariaLabelledBy}
       >
         {children}
       </div>

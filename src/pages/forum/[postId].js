@@ -17,6 +17,9 @@ import ForumAuthorName from '../../components/ForumAuthorName.js';
 import ForumCommentField from '../../components/ForumCommentField.js';
 import ForumMarkdownBody from '../../components/ForumMarkdownBody.js';
 import ForumSectionErrorBoundary from '../../components/ForumSectionErrorBoundary.js';
+import ForumModToolbar from '../../components/ForumModToolbar.js';
+import ForumStoryReader from '../../components/ForumStoryReader.js';
+import { isStoryPost } from '../../lib/forum-story.js';
 import {
   clearForumDraft,
   forumCommentDraftKey,
@@ -25,9 +28,15 @@ import MoonLoading from '../../components/MoonLoading.js';
 import ForumMatureGate from '../../components/ForumMatureGate.js';
 import {
   isMatureForumTopicStored,
-  readMatureGateAck,
+  resolveMatureGateAck,
+  fetchMatureGateAck,
   MATURE_FORUM_TOPIC,
 } from '../../lib/forum-mature.js';
+import { readStoredAuthSession } from '../../lib/browser-session.js';
+import {
+  readForumPostBootstrap,
+  writeForumPostCache,
+} from '../../lib/forum-post-cache.js';
 
 function AuthorLinks({ author, isMine }) {
   return (
@@ -64,58 +73,13 @@ function formatDate(dateStr) {
   return new Date(dateStr).toLocaleDateString('zh-HK', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
-function ForumModToolbar({ post, accessToken, onUpdated }) {
-  const [busy, setBusy] = useState(false);
-
-  async function modFetch(method, path, body) {
-    if (!accessToken || busy) return;
-    setBusy(true);
-    try {
-      const res = await fetch(path, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: body ? JSON.stringify(body) : undefined,
-      });
-      if (res.ok) onUpdated?.();
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <div className="forum-mod-toolbar" style={{ marginBottom: 12, padding: '10px 12px', background: 'rgba(124,92,252,0.12)', borderRadius: 8, border: '1px solid rgba(124,92,252,0.25)' }}>
-      <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 600, color: 'var(--purple-light)' }}>🛡️ 守護者工具列</p>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        {post.is_hidden || post.visibility === 'hidden' ? (
-          <button type="button" className="pixel-btn pixel-btn--ghost" disabled={busy} onClick={() => modFetch('POST', `/api/forum/moderation/posts/${post.id}/unhide`)}>
-            恢復月光
-          </button>
-        ) : (
-          <button type="button" className="pixel-btn pixel-btn--ghost" disabled={busy} onClick={() => modFetch('POST', `/api/forum/moderation/posts/${post.id}/hide`, {})}>
-            夜幕降臨
-          </button>
-        )}
-        <button type="button" className="pixel-btn pixel-btn--ghost" disabled={busy} onClick={() => modFetch('POST', `/api/forum/moderation/posts/${post.id}/pin`, { pinned: !post.is_pinned })}>
-          {post.is_pinned ? '取消置頂' : '圍爐置頂'}
-        </button>
-        <button type="button" className="pixel-btn pixel-btn--ghost" disabled={busy} onClick={() => modFetch('POST', `/api/forum/moderation/posts/${post.id}/highlight`, { highlighted: !post.is_highlighted })}>
-          {post.is_highlighted ? '取消加冕' : '月光加冕'}
-        </button>
-      </div>
-    </div>
-  );
-}
-
 function normalizeRouteId(value) {
   if (Array.isArray(value)) return value[0] || '';
   return value || '';
 }
 
 export default function ForumPostPage() {
-  const { session, loading: authLoading } = useAuth();
+  const { session, profile, refreshProfile, loading: authLoading } = useAuth();
   const router = useRouter();
   const postId = normalizeRouteId(router.query.postId);
   const commentsRef = useRef(null);
@@ -136,6 +100,8 @@ export default function ForumPostPage() {
   const [likingPost, setLikingPost] = useState(false);
   const [opOnly, setOpOnly] = useState(false);
   const [matureAcked, setMatureAcked] = useState(false);
+  const loadedTokenRef = useRef(undefined);
+  const loadSeqRef = useRef(0);
 
   const redirectPath = postId ? `/forum/${postId}` : '/forum';
   const breadcrumbs = [
@@ -158,8 +124,66 @@ export default function ForumPostPage() {
 
   useEffect(() => {
     if (!postId) return;
+    loadedTokenRef.current = undefined;
+    const bootstrap = readForumPostBootstrap(postId);
+    setData(bootstrap ?? null);
+    setLoadError(null);
+    setLoadErrorCode('');
+
+    if (bootstrap?.post && isStoryPost(bootstrap.post) && !Array.isArray(bootstrap.chapters)) {
+      const stored = readStoredAuthSession();
+      const token = stored?.access_token ?? null;
+      const headers = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      let cancelled = false;
+      fetch(`/api/forum/posts/${encodeURIComponent(postId)}/chapters`, { headers })
+        .then(async (r) => {
+          if (!r.ok) return null;
+          return r.json().catch(() => null);
+        })
+        .then((payload) => {
+          if (cancelled || !payload?.chapters) return;
+          setData((prev) => {
+            if (!prev?.post || Array.isArray(prev.chapters)) return prev;
+            const next = { ...prev, chapters: payload.chapters };
+            writeForumPostCache(postId, next);
+            return next;
+          });
+        })
+        .catch(() => {});
+
+      return () => { cancelled = true; };
+    }
+
+    return undefined;
+  }, [postId]);
+
+  useEffect(() => {
+    if (!router.isReady || !postId) return undefined;
+
+    const stored = readStoredAuthSession();
+    const token = session?.access_token ?? stored?.access_token ?? null;
+    if (loadedTokenRef.current === token) {
+      return undefined;
+    }
+
+    const seq = ++loadSeqRef.current;
     const headers = {};
-    if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    let cancelled = false;
+    const bootstrap = readForumPostBootstrap(postId);
+    const prefetchChapters = bootstrap?.post
+      && isStoryPost(bootstrap.post)
+      && !Array.isArray(bootstrap.chapters);
+
+    const chaptersPromise = prefetchChapters
+      ? fetch(`/api/forum/posts/${encodeURIComponent(postId)}/chapters`, { headers })
+        .then(async (r) => (r.ok ? r.json().catch(() => null) : null))
+        .catch(() => null)
+      : Promise.resolve(null);
+
     fetch(`/api/forum/posts/${encodeURIComponent(postId)}`, { headers })
       .then(async (r) => {
         const payload = await r.json().catch(() => ({}));
@@ -171,19 +195,77 @@ export default function ForumPostPage() {
         return payload;
       })
       .then((payload) => {
+        if (cancelled || seq !== loadSeqRef.current) return;
         setLoadError(null);
         setLoadErrorCode('');
         setData(payload);
+        writeForumPostCache(postId, payload);
+        loadedTokenRef.current = token;
       })
       .catch((e) => {
+        if (cancelled || seq !== loadSeqRef.current) return;
+        if (readForumPostBootstrap(postId)) return;
         setLoadError(e.message);
         setLoadErrorCode(e.code || '');
       });
-  }, [postId, session?.access_token]);
+
+    chaptersPromise.then((chaptersPayload) => {
+      if (cancelled || seq !== loadSeqRef.current || !chaptersPayload?.chapters) return;
+      setData((prev) => {
+        if (!prev?.post || Array.isArray(prev.chapters)) return prev;
+        const next = { ...prev, chapters: chaptersPayload.chapters };
+        if (!prev._bootstrap) writeForumPostCache(postId, next);
+        return next;
+      });
+    });
+
+    return () => { cancelled = true; };
+  }, [postId, router.isReady, session?.access_token]);
 
   useEffect(() => {
-    setMatureAcked(readMatureGateAck(session?.user?.id));
-  }, [postId, session?.user?.id]);
+    if (!router.isReady || !postId || !data?.post || !isStoryPost(data.post)) return undefined;
+    if (Array.isArray(data.chapters)) return undefined;
+
+    const stored = readStoredAuthSession();
+    const token = session?.access_token ?? stored?.access_token ?? null;
+    const headers = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    let cancelled = false;
+    fetch(`/api/forum/posts/${encodeURIComponent(postId)}/chapters`, { headers })
+      .then(async (r) => (r.ok ? r.json().catch(() => null) : null))
+      .then((payload) => {
+        if (cancelled || !payload?.chapters) return;
+        setData((prev) => {
+          if (!prev?.post || Array.isArray(prev.chapters)) return prev;
+          const next = { ...prev, chapters: payload.chapters };
+          writeForumPostCache(postId, next);
+          return next;
+        });
+      })
+      .catch(() => {});
+
+    return () => { cancelled = true; };
+  }, [postId, router.isReady, data?.post, data?.chapters, session?.access_token]);
+
+  useEffect(() => {
+    const userId = session?.user?.id;
+    const serverMatureAck = !!profile?.profile?.forum_mature_acknowledged;
+    if (!userId) {
+      setMatureAcked(false);
+      return undefined;
+    }
+
+    const localOrProfile = resolveMatureGateAck(userId, serverMatureAck);
+    setMatureAcked(localOrProfile);
+    if (localOrProfile || !session?.access_token) return undefined;
+
+    let cancelled = false;
+    fetchMatureGateAck(session.access_token, userId).then((acked) => {
+      if (!cancelled) setMatureAcked(acked);
+    });
+    return () => { cancelled = true; };
+  }, [postId, session?.user?.id, session?.access_token, profile?.profile?.forum_mature_acknowledged]);
 
   useEffect(() => {
     if (!postId) return undefined;
@@ -489,6 +571,7 @@ export default function ForumPostPage() {
   }, []);
 
   const comments = data?.comments || [];
+  const commentsBootstrapping = !!data?._bootstrap;
   const visibleComments = useMemo(() => {
     if (!opOnly) return comments;
     return comments.filter((c) => c.is_op);
@@ -497,6 +580,23 @@ export default function ForumPostPage() {
     () => comments.some((c) => !c.is_op),
     [comments],
   );
+
+  const post = data?.post;
+  const storyChapters = data?.chapters;
+  const isStoryReading = !!(post && isStoryPost(post) && router.query.read === '1');
+
+  const handleChaptersChange = useCallback((updatedChapters) => {
+    setData((d) => (d ? { ...d, chapters: updatedChapters } : d));
+  }, []);
+
+  const handlePostUpdate = useCallback((patch) => {
+    setData((d) => {
+      if (!d?.post) return d;
+      const next = { ...d, post: { ...d.post, ...patch } };
+      if (postId) writeForumPostCache(postId, next);
+      return next;
+    });
+  }, [postId]);
 
   if (loadError) {
     const isMatureLoginRequired = loadErrorCode === 'mature_login_required';
@@ -562,7 +662,6 @@ export default function ForumPostPage() {
     );
   }
 
-  const post = data?.post;
   const needsMatureAck = post && isMatureForumTopicStored(post.topic) && !matureAcked;
   const commentCount = comments.length || post?.comment_count || 0;
 
@@ -582,7 +681,10 @@ export default function ForumPostPage() {
           open
           session={session}
           loginRedirect={redirectPath}
-          onAcknowledged={() => setMatureAcked(true)}
+          onAcknowledged={() => {
+            setMatureAcked(true);
+            refreshProfile?.({ force: true });
+          }}
           onDismiss={() => router.push('/forum')}
         />
       </>
@@ -608,7 +710,49 @@ export default function ForumPostPage() {
         ) : (
           <ForumSectionErrorBoundary fallbackLabel="貼文">
           <>
-            <article className="pixel-card forum-post-card">
+            <div className="forum-post-detail-stack">
+              {post.viewer_can_moderate && session?.access_token && (
+                <ForumModToolbar
+                  post={post}
+                  accessToken={session.access_token}
+                  onUpdated={reloadPost}
+                  className="forum-mod-toolbar--above-card"
+                />
+              )}
+            <article className={isStoryPost(post)
+              ? 'forum-story-reader-shell'
+              : `pixel-card forum-post-card${post.is_highlighted ? ' forum-post-card--crowned' : ''}`}>
+              {isStoryPost(post) ? (
+                <ForumStoryReader
+                  post={post}
+                  chapters={storyChapters}
+                  pollsById={pollsById}
+                  loggedIn={!!session}
+                  accessToken={session?.access_token}
+                  onPollVote={handlePollVote}
+                  onLike={handleLike}
+                  onBookmark={handleBookmark}
+                  onScrollToComments={scrollToComments}
+                  onChaptersChange={handleChaptersChange}
+                  onPostUpdate={handlePostUpdate}
+                  likingPost={likingPost}
+                  bookmarking={bookmarking}
+                  reportNotice={reportNotice}
+                  reportButton={session && !post.is_mine ? (
+                    <button
+                      type="button"
+                      className="forum-btn-report-inline forum-story-reader__report"
+                      disabled={reportedKeys.has(`post:${post.id}`)}
+                      onClick={() => openReportConfirm('post', post.id)}
+                      title="檢舉"
+                      aria-label="檢舉"
+                    >
+                      {reportedKeys.has(`post:${post.id}`) ? '已檢舉' : '⚑'}
+                    </button>
+                  ) : null}
+                />
+              ) : (
+              <>
               <div className="forum-post-card__tag-row">
                 <div className="forum-post-card__tags">
                   <span className="pixel-tag" style={{ color: 'var(--purple-light)' }}>{post.topic}</span>
@@ -623,7 +767,10 @@ export default function ForumPostPage() {
                     <span className="forum-visibility-badge">📌 圍爐置頂</span>
                   )}
                   {post.is_highlighted && (
-                    <span className="forum-visibility-badge">✨ 月光加冕</span>
+                    <span className="forum-crown-badge" aria-label="月光加冕">
+                      <span className="forum-crown-badge__sigil" aria-hidden="true">✨</span>
+                      <span className="forum-crown-badge__text">月光加冕</span>
+                    </span>
                   )}
                 </div>
                 {session && !post.is_mine && (
@@ -639,13 +786,6 @@ export default function ForumPostPage() {
                   </button>
                 )}
               </div>
-              {post.viewer_can_moderate && session?.access_token && (
-                <ForumModToolbar
-                  post={post}
-                  accessToken={session.access_token}
-                  onUpdated={reloadPost}
-                />
-              )}
               {post.title && (
                 <header className="forum-post-card__header">
                   <h1 className="forum-post-card__title">{post.title}</h1>
@@ -702,8 +842,12 @@ export default function ForumPostPage() {
               {reportNotice && (
                 <p className="forum-report-notice" role="status">{reportNotice}</p>
               )}
+              </>
+              )}
             </article>
+            </div>
 
+            {!isStoryReading && (
             <section id="forum-comments" ref={commentsRef} className="forum-comments-section">
               <div className="forum-comments-section__head">
                 <h2 className="forum-comments-section__title">
@@ -723,7 +867,11 @@ export default function ForumPostPage() {
                   </button>
                 )}
               </div>
-              {comments.length === 0 ? (
+              {commentsBootstrapping ? (
+                <div className="forum-comments-empty forum-comments-empty--loading">
+                  <MoonLoading label="正在載入留言…" variant="inline" centered smooth size={48} />
+                </div>
+              ) : comments.length === 0 ? (
                 <div className="forum-comments-empty">
                   這裡還冷清清的… 扔個留言進來一起取暖吧！💬
                 </div>
@@ -778,7 +926,9 @@ export default function ForumPostPage() {
               )}
             </section>
 
-            {authLoading ? (
+            )}
+
+            {!isStoryReading && (authLoading && !session && !readStoredAuthSession()?.access_token ? (
               <div className="forum-comments-empty forum-comments-empty--loading">
                 <MoonLoading label="載入帳戶狀態…" centered={false} size={24} />
               </div>
@@ -811,7 +961,7 @@ export default function ForumPostPage() {
                   登入後才可以留言 →
                 </Link>
               </div>
-            )}
+            ))}
           </>
           </ForumSectionErrorBoundary>
         )}

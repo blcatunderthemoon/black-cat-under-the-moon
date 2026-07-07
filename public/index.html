@@ -24,13 +24,14 @@
 </script>
 <title>🌙 Black Cat Under The Moon：靈魂共鳴社群</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="prefetch" href="/forum">
 <link rel="preload" href="js/zpix.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/questionnaire.css?v=20260706ios">
 <link rel="stylesheet" href="css/auth-nav.css?v=20260706ios">
 <link rel="stylesheet" href="css/mobile-webview-scroll.css?v=20260706safari">
-<link rel="stylesheet" href="css/welcome-atmosphere.css">
+<link rel="stylesheet" href="css/welcome-atmosphere.css?v=20260708presence2">
 <script src="/js/posthog-init.js" defer></script>
 <style>
 @keyframes logoHover {
@@ -104,7 +105,7 @@
     </div>
   </div>
 </div>
-<script src="/js/me-cache.js?v=20260706name"></script>
+<script src="/js/me-cache.js?v=20260707perf"></script>
 <script src="/js/auth-greeting-bootstrap.js?v=20260706name"></script>
 
 
@@ -199,7 +200,7 @@
       <div class="mode-card-icon"><img class="mode-card-icon__img" src="icon/echoicon.png" alt="" width="54" height="54" aria-hidden="true"></div>
       <div class="mode-card-badge pixel-font">ECHO MODE</div>
       <div class="mode-card-name"><span class="name-zh">【月下緣份】</span></div>
-      <div class="mode-card-desc">讓靈貓為你分析心靈契合度，尋找靈魂同頻者</div>
+      <div class="mode-card-desc">靈貓分析心靈契合度<br>── 尋找靈魂同頻者</div>
       <div class="mode-card-cta pixel-font">開始連線 ▸</div>
     </div>
     <a class="mode-card mode-d" href="/forum" style="text-decoration:none; color:inherit;">
@@ -240,6 +241,18 @@
   </footer>
   <div class="mode-select-scroll-end" aria-hidden="true"></div>
 </div>
+
+<aside class="site-presence" id="site-presence" hidden aria-live="polite" aria-label="即時在線人數">
+  <span class="site-presence__sigil" aria-hidden="true">🌙</span>
+  <span class="site-presence__content">
+    <span class="site-presence__eyebrow">今夜同遊</span>
+    <span class="site-presence__line">
+      <span class="site-presence__count" data-presence-count>0</span>
+      <span class="site-presence__label">隻黑貓在夜空</span>
+      <span class="site-presence__dot" aria-hidden="true"></span>
+    </span>
+  </span>
+</aside>
 
 <button type="button" class="welcome-mascot" id="welcome-mascot" aria-label="黑貓守夜">
   <span class="welcome-mascot__bubble" hidden></span>
@@ -291,10 +304,12 @@
         <rect x="17" y="15" width="1" height="1" fill="#6b5a94"/>
       </g>
       <g class="welcome-mascot__charm">
-        <rect x="14" y="18" width="2" height="2" fill="#ffe066"/>
-        <rect x="16" y="18" width="2" height="2" fill="#ffe066"/>
-        <rect x="15" y="20" width="2" height="2" fill="#ffe066"/>
-        <rect x="17" y="19" width="2" height="2" fill="#3a3660"/>
+        <rect x="14" y="17" width="2" height="2" fill="#ffe066"/>
+        <rect x="14" y="19" width="2" height="2" fill="#ffe066"/>
+        <rect x="14" y="21" width="2" height="2" fill="#ffe066"/>
+        <rect x="16" y="17" width="2" height="2" fill="#ffe066"/>
+        <rect x="16" y="21" width="2" height="2" fill="#ffe066"/>
+        <rect x="18" y="19" width="2" height="2" fill="#ffe066"/>
       </g>
     </svg>
   </span>
@@ -401,8 +416,9 @@
 }());
 </script>
 
-<script src="/js/welcome-mascot.js"></script>
-<script src="/js/me-cache.js?v=20260706name"></script>
+<script src="/js/welcome-mascot.js?v=20260708catmoon"></script>
+<script src="/js/site-presence.js?v=20260707b"></script>
+<script src="/js/me-cache.js?v=20260707perf"></script>
 <script src="/js/auth-nav.js?v=20260706name"></script>
 
 </body>

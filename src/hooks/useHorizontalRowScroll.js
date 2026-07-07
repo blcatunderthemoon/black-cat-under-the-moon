@@ -1,140 +1,108 @@
 /**
- * Horizontal scroll for overflow rows (hidden scrollbar + wheel + drag).
+ * Horizontal scroll rows: hidden scrollbar, native touch swipe, desktop drag + wheel.
  *
- * Usage:
- *   <div ref={ref} className="… forum-h-scroll">…chips/buttons…</div>
- *   useHorizontalRowScroll(ref, null, true);
- *
- * Desktop (mouse): mousedown + document mousemove — works when dragging from <button>.
- * Touch: pointer events + setPointerCapture.
+ * - Touch / coarse pointer: no custom drag — rely on overflow-x + touch-action (pan-x).
+ * - Fine pointer (mouse): pointer drag after threshold; wheel scroll when hovered.
  */
 import { useLayoutEffect } from 'react';
 
 const DRAG_THRESHOLD_PX = 5;
-const DESKTOP_DRAG_MQ = '(hover: hover) and (pointer: fine)';
+const FINE_POINTER_MQ = '(hover: hover) and (pointer: fine)';
 
-export default function useHorizontalRowScroll(rowRef, dragRef, active = true) {
+export default function useHorizontalRowScroll(rowRef, active = true) {
   useLayoutEffect(() => {
     if (!active) return undefined;
     const row = rowRef.current;
     if (!row) return undefined;
 
-    const useMouseDrag = typeof window !== 'undefined'
-      && window.matchMedia(DESKTOP_DRAG_MQ).matches;
+    let finePointer = typeof window !== 'undefined'
+      && window.matchMedia(FINE_POINTER_MQ).matches;
 
-    let activePointerId = null;
+    const mq = typeof window !== 'undefined' ? window.matchMedia(FINE_POINTER_MQ) : null;
+
+    let pointerId = null;
     let startX = 0;
     let startScroll = 0;
+    let tracking = false;
     let dragging = false;
     let suppressClick = false;
-    let tracking = false;
 
     function maxScrollLeft() {
       return Math.max(0, row.scrollWidth - row.clientWidth);
     }
 
-    function isScrollable() {
-      return maxScrollLeft() > 0;
+    function canScroll() {
+      return maxScrollLeft() > 1;
     }
 
     function applyDrag(clientX) {
+      if (!canScroll()) return;
       const dx = clientX - startX;
       row.scrollLeft = Math.max(0, Math.min(startScroll - dx, maxScrollLeft()));
     }
 
-    function onMove(clientX, e) {
-      if (!tracking) return;
-      const dx = clientX - startX;
-      if (!dragging && Math.abs(dx) > DRAG_THRESHOLD_PX) {
+    function resetDragState() {
+      row.classList.remove('forum-h-scroll--tracking', 'forum-h-scroll--dragging');
+      if (pointerId !== null) {
+        try {
+          row.releasePointerCapture(pointerId);
+        } catch {
+          /* ignore */
+        }
+      }
+      tracking = false;
+      dragging = false;
+      pointerId = null;
+    }
+
+    function onWheel(e) {
+      if (!canScroll()) return;
+      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      if (!delta) return;
+      e.preventDefault();
+      row.scrollLeft = Math.max(0, Math.min(row.scrollLeft + delta, maxScrollLeft()));
+    }
+
+    function onPointerDown(e) {
+      if (!finePointer || e.button !== 0 || tracking) return;
+      pointerId = e.pointerId;
+      startX = e.clientX;
+      startScroll = row.scrollLeft;
+      tracking = true;
+      dragging = false;
+      row.classList.add('forum-h-scroll--tracking');
+    }
+
+    function onPointerMove(e) {
+      if (!finePointer || !tracking || e.pointerId !== pointerId) return;
+
+      const dx = e.clientX - startX;
+      if (!dragging) {
+        if (Math.abs(dx) <= DRAG_THRESHOLD_PX) return;
+        if (!canScroll()) {
+          resetDragState();
+          return;
+        }
         dragging = true;
         row.classList.add('forum-h-scroll--dragging');
         row.classList.remove('forum-h-scroll--tracking');
-      }
-      if (dragging) {
-        e?.preventDefault?.();
-        applyDrag(clientX);
-      }
-    }
-
-    function begin(clientX) {
-      if (!isScrollable()) return false;
-      startX = clientX;
-      startScroll = row.scrollLeft;
-      dragging = false;
-      suppressClick = false;
-      tracking = true;
-      row.classList.add('forum-h-scroll--tracking');
-      return true;
-    }
-
-    function finish(e) {
-      if (!tracking) return;
-      if (e?.pointerId !== undefined && activePointerId !== null && e.pointerId !== activePointerId) {
-        return;
-      }
-
-      row.classList.remove('forum-h-scroll--tracking', 'forum-h-scroll--dragging');
-
-      if (dragging) {
-        suppressClick = true;
-        if (dragRef) dragRef.current = true;
-      }
-
-      if (!useMouseDrag && activePointerId !== null) {
         try {
-          row.releasePointerCapture(activePointerId);
+          row.setPointerCapture(pointerId);
         } catch {
           /* ignore */
         }
       }
 
-      tracking = false;
-      dragging = false;
-      activePointerId = null;
-    }
-
-    function onWheel(e) {
-      if (!isScrollable()) return;
-      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-      if (!delta) return;
       e.preventDefault();
-      row.scrollLeft += delta;
-    }
-
-    function onMouseDown(e) {
-      if (!useMouseDrag || e.button !== 0 || tracking) return;
-      begin(e.clientX);
-    }
-
-    function onMouseMove(e) {
-      if (!useMouseDrag || !tracking) return;
-      onMove(e.clientX, e);
-    }
-
-    function onMouseUp() {
-      if (!useMouseDrag || !tracking) return;
-      finish();
-    }
-
-    function onPointerDown(e) {
-      if (useMouseDrag || e.button !== 0 || tracking) return;
-      if (!begin(e.clientX)) return;
-      activePointerId = e.pointerId;
-      try {
-        row.setPointerCapture(e.pointerId);
-      } catch {
-        /* unsupported */
-      }
-    }
-
-    function onPointerMove(e) {
-      if (useMouseDrag || !tracking || e.pointerId !== activePointerId) return;
-      onMove(e.clientX, e);
+      applyDrag(e.clientX);
     }
 
     function onPointerEnd(e) {
-      if (useMouseDrag || !tracking) return;
-      finish(e);
+      if (!finePointer || !tracking) return;
+      if (e.pointerId !== pointerId) return;
+
+      if (dragging) suppressClick = true;
+      resetDragState();
     }
 
     function onClickCapture(e) {
@@ -142,34 +110,50 @@ export default function useHorizontalRowScroll(rowRef, dragRef, active = true) {
       e.preventDefault();
       e.stopPropagation();
       suppressClick = false;
-      if (dragRef) dragRef.current = false;
     }
 
+    function onDragStart(e) {
+      e.preventDefault();
+    }
+
+    function bindFinePointerHandlers() {
+      row.addEventListener('pointerdown', onPointerDown, true);
+      document.addEventListener('pointermove', onPointerMove, { passive: false });
+      document.addEventListener('pointerup', onPointerEnd);
+      document.addEventListener('pointercancel', onPointerEnd);
+    }
+
+    function unbindFinePointerHandlers() {
+      row.removeEventListener('pointerdown', onPointerDown, true);
+      document.removeEventListener('pointermove', onPointerMove);
+      document.removeEventListener('pointerup', onPointerEnd);
+      document.removeEventListener('pointercancel', onPointerEnd);
+      resetDragState();
+    }
+
+    const onMqChange = (e) => {
+      if (e.matches && !finePointer) {
+        finePointer = true;
+        bindFinePointerHandlers();
+      } else if (!e.matches && finePointer) {
+        finePointer = false;
+        unbindFinePointerHandlers();
+      }
+    };
+
     row.addEventListener('wheel', onWheel, { passive: false });
-    row.addEventListener('mousedown', onMouseDown, true);
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-    row.addEventListener('pointerdown', onPointerDown, true);
-    row.addEventListener('pointermove', onPointerMove);
-    row.addEventListener('pointerup', onPointerEnd);
-    row.addEventListener('pointercancel', onPointerEnd);
+    if (finePointer) bindFinePointerHandlers();
+    mq?.addEventListener('change', onMqChange);
     row.addEventListener('click', onClickCapture, true);
-    row.addEventListener('dragstart', (e) => e.preventDefault());
+    row.addEventListener('dragstart', onDragStart);
 
     return () => {
+      mq?.removeEventListener('change', onMqChange);
       row.removeEventListener('wheel', onWheel);
-      row.removeEventListener('mousedown', onMouseDown, true);
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-      row.removeEventListener('pointerdown', onPointerDown, true);
-      row.removeEventListener('pointermove', onPointerMove);
-      row.removeEventListener('pointerup', onPointerEnd);
-      row.removeEventListener('pointercancel', onPointerEnd);
+      unbindFinePointerHandlers();
       row.removeEventListener('click', onClickCapture, true);
-      row.classList.remove('forum-h-scroll--tracking', 'forum-h-scroll--dragging');
-      tracking = false;
-      dragging = false;
-      activePointerId = null;
+      row.removeEventListener('dragstart', onDragStart);
+      resetDragState();
     };
-  }, [rowRef, dragRef, active]);
+  }, [rowRef, active]);
 }

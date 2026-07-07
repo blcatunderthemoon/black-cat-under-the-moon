@@ -4,14 +4,15 @@
  * Requires Bearer token in Authorization header.
  */
 
-import { requireUser, getProfile, ensureProfile, getSubscriptionTier, sendAuthError, getAdminClient } from '../../lib/server-auth.js';
+import { requireUser, getProfile, ensureProfile, getSubscriptionTier, sendAuthError, getAdminClient, resolveSubscriptionTier } from '../../lib/server-auth.js';
 import { filterContent } from '../../lib/content-filter.js';
 import { validateDisplayName } from '../../lib/display-name-policy.js';
 import { isDisplayNameTaken } from '../../lib/display-name-uniqueness.js';
 import { getQuotaUsage } from '../../lib/permissions.js';
 import { normalizeLetterPrefs } from '../../lib/letter-gameplay.js';
 import { buildMoonJourneySummary } from '../../lib/moon-journey.js';
-import { getForumRole } from '../../lib/forum-roles.js';
+import { getForumRole, canModerateForum, canAdminForum } from '../../lib/forum-roles.js';
+import { getModeratorTopicsForUser } from '../../lib/forum-moderator-assignments.js';
 import { databaseNowIso } from '../../lib/hong-kong-time.js';
 
 export default async function handler(req, res) {
@@ -30,7 +31,6 @@ async function handleGet(req, res) {
     return res.status(401).json({ error: 'no_profile', code: 'NO_PROFILE' });
   }
 
-  const subscriptionTier = await getSubscriptionTier(user.id);
   const admin = getAdminClient();
 
   const [{ count: unreadCount }, { data: mirrorCard }, { data: claimedResponse }, { data: subscription }] = await Promise.all([
@@ -50,19 +50,24 @@ async function handleGet(req, res) {
       .maybeSingle(),
   ]);
 
-  const activeLetterQuota = subscriptionTier === 'premium'
-    ? await getQuotaUsage(user.id, 'active_letter_monthly')
-    : null;
+  const subscriptionTier = resolveSubscriptionTier(subscription);
 
-  const photoExchangeQuota = subscriptionTier === 'premium'
-    ? await getQuotaUsage(user.id, 'photo_exchange_monthly')
-    : null;
+  const [activeLetterQuota, photoExchangeQuota] = subscriptionTier === 'premium'
+    ? await Promise.all([
+      getQuotaUsage(user.id, 'active_letter_monthly', subscriptionTier),
+      getQuotaUsage(user.id, 'photo_exchange_monthly', subscriptionTier),
+    ])
+    : [null, null];
 
-  const { data: profileRow } = await admin
-    .from('profiles')
-    .select('exchange_photo_url, exchange_photo_updated_at, moon_journey_exp, moon_journey_level, moon_checkin_streak, moon_last_checkin_date')
-    .eq('id', user.id)
-    .maybeSingle();
+  const forumRole = getForumRole(profile);
+  let moderatorTopics = null;
+  if (forumRole === 'moderator') {
+    try {
+      moderatorTopics = await getModeratorTopicsForUser(admin, user.id);
+    } catch {
+      moderatorTopics = [];
+    }
+  }
 
   return res.status(200).json({
     user: { id: user.id, email: user.email || null, email_verified: user.email_confirmed_at != null },
@@ -72,15 +77,19 @@ async function handleGet(req, res) {
       bio: profile.bio,
       status: profile.status,
       subscription_tier: subscriptionTier,
-      forum_role: getForumRole(profile),
+      forum_role: forumRole,
+      forum_moderator_topics: moderatorTopics,
+      is_forum_staff: canModerateForum(forumRole),
+      can_admin_forum: canAdminForum(forumRole),
       created_at: profile.created_at,
-      exchange_photo_url: profileRow?.exchange_photo_url || null,
-      exchange_photo_updated_at: profileRow?.exchange_photo_updated_at || null,
+      exchange_photo_url: profile.exchange_photo_url || null,
+      exchange_photo_updated_at: profile.exchange_photo_updated_at || null,
       notification_prefs: {
         email_on_match: profile.notification_prefs?.email_on_match !== false,
         email_on_letter: profile.notification_prefs?.email_on_letter !== false,
       },
       letter_prefs: normalizeLetterPrefs(profile.letter_prefs, subscriptionTier),
+      forum_mature_acknowledged: !!profile.forum_mature_ack_at,
     },
     mirror_card: mirrorCard
       ? {
@@ -102,7 +111,7 @@ async function handleGet(req, res) {
       : null,
     active_letter_quota: activeLetterQuota,
     photo_exchange_quota: photoExchangeQuota,
-    moon_journey: buildMoonJourneySummary(profileRow),
+    moon_journey: buildMoonJourneySummary(profile),
   });
 }
 

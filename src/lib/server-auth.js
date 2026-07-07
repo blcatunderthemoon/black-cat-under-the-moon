@@ -176,6 +176,21 @@ export async function ensureProfile(user) {
 }
 
 /**
+ * Derive subscription tier from a subscriptions row (or null).
+ */
+export function resolveSubscriptionTier(subscription) {
+  if (!subscription) return 'free';
+  if (subscription.status === 'manual' || subscription.status === 'active' || subscription.status === 'past_due') {
+    if (subscription.current_period_end) {
+      const expired = new Date(subscription.current_period_end) < new Date();
+      if (expired) return 'free';
+    }
+    return 'premium';
+  }
+  return 'free';
+}
+
+/**
  * Get the subscription tier for a user.
  * Returns 'free' if no subscription row or expired.
  */
@@ -192,15 +207,7 @@ export async function getSubscriptionTier(userId) {
 
   if (!data) return 'free';
 
-  if (data.status === 'manual' || data.status === 'active' || data.status === 'past_due') {
-    if (data.current_period_end) {
-      const expired = new Date(data.current_period_end) < new Date();
-      if (expired) return 'free';
-    }
-    return 'premium';
-  }
-
-  return 'free';
+  return resolveSubscriptionTier(data);
 }
 
 /** Batch lookup subscription tiers for multiple users (single DB round-trip). */

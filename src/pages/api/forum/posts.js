@@ -25,6 +25,12 @@ import {
   applyExcludeMatureTopics,
   validateMaturePostContent,
 } from '../../../lib/forum-mature.js';
+import {
+  isStoryTopic,
+  STORY_CONTENT_MAX,
+  STORY_SYNOPSIS_MAX,
+  validateStoryCoverUrl,
+} from '../../../lib/forum-story.js';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
@@ -46,7 +52,9 @@ const POST_LIST_COLUMNS = `
   is_pinned,
   is_highlighted,
   pinned_at,
-  created_at
+  created_at,
+  cover_image_url,
+  synopsis
 `;
 
 const POST_LIST_COLUMNS_LEGACY = `
@@ -365,11 +373,17 @@ async function handlePost(req, res) {
     tags: tagsPayload,
     visibility,
     polls: pollsPayload,
+    cover_image_url: coverPayload,
+    synopsis: synopsisPayload,
   } = body;
 
-  const rawTags = Array.isArray(tagsPayload)
-    ? tagsPayload
-    : (legacyMoodTag ? [legacyMoodTag] : []);
+  const storyPost = isStoryTopic(topic);
+
+  const rawTags = storyPost
+    ? []
+    : (Array.isArray(tagsPayload)
+      ? tagsPayload
+      : (legacyMoodTag ? [legacyMoodTag] : []));
   const tagValidation = validateForumTags(rawTags);
   if (!tagValidation.ok) {
     return res.status(400).json({ error: tagValidation.error });
@@ -378,8 +392,25 @@ async function handlePost(req, res) {
   if (!content?.trim() || content.trim().length < 10) {
     return res.status(400).json({ error: '內容最少需要 10 個字。' });
   }
-  if (content.length > 2000) {
-    return res.status(400).json({ error: '內容最多 2000 字。' });
+
+  const contentMax = storyPost ? STORY_CONTENT_MAX : 2000;
+  if (content.length > contentMax) {
+    return res.status(400).json({ error: `內容最多 ${contentMax} 字。` });
+  }
+
+  if (storyPost && !title?.trim()) {
+    return res.status(400).json({ error: '故事需要標題。' });
+  }
+
+  let coverImageUrl = null;
+  let synopsis = null;
+  if (storyPost) {
+    const coverCheck = validateStoryCoverUrl(coverPayload);
+    if (!coverCheck.ok) return res.status(400).json({ error: coverCheck.error });
+    coverImageUrl = coverCheck.value;
+    if (synopsisPayload != null && String(synopsisPayload).trim()) {
+      synopsis = String(synopsisPayload).trim().slice(0, STORY_SYNOPSIS_MAX);
+    }
   }
   if (topic && !isValidPostTopic(topic)) {
     return res.status(400).json({ error: '無效的分類。' });
@@ -424,19 +455,36 @@ async function handlePost(req, res) {
   }
 
   const admin = getAdminClient();
-  const { data: post, error } = await admin
+  const insertRow = {
+    author_id: user.id,
+    title: title?.trim().slice(0, 100) || null,
+    content: content.trim(),
+    topic: topic || '社群',
+    mood_tag: tagValidation.tags[0] || null,
+    anonymous_name_snapshot: profile.display_name,
+    visibility: postVisibility,
+    ...(storyPost ? {
+      cover_image_url: coverImageUrl,
+      synopsis,
+    } : {}),
+  };
+
+  let postResult = await admin
     .from('forum_posts')
-    .insert({
-      author_id: user.id,
-      title: title?.trim().slice(0, 100) || null,
-      content: content.trim(),
-      topic: topic || '社群',
-      mood_tag: tagValidation.tags[0] || null,
-      anonymous_name_snapshot: profile.display_name,
-      visibility: postVisibility,
-    })
+    .insert(insertRow)
     .select('id, title, topic, created_at')
     .single();
+
+  if (postResult.error?.code === '42703' && storyPost) {
+    const { cover_image_url: _c, synopsis: _s, ...fallbackRow } = insertRow;
+    postResult = await admin
+      .from('forum_posts')
+      .insert(fallbackRow)
+      .select('id, title, topic, created_at')
+      .single();
+  }
+
+  const { data: post, error } = postResult;
 
   if (error) return res.status(500).json({ error: '發文失敗，請稍後再試。' });
 
@@ -459,6 +507,15 @@ async function handlePost(req, res) {
       await admin.from('forum_posts').delete().eq('id', post.id);
       return res.status(500).json({ error: pollResult.error || '建立投票失敗。' });
     }
+  }
+
+  if (storyPost) {
+    await admin.from('forum_story_chapters').insert({
+      story_post_id: post.id,
+      chapter_number: 1,
+      title: null,
+      content: content.trim(),
+    }).then(() => {}).catch(() => {});
   }
 
   dispatchForumMentions({

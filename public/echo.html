@@ -22,7 +22,7 @@
 <link rel="preload" href="js/zpix.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/questionnaire.css">
+<link rel="stylesheet" href="css/questionnaire.css?v=20260707toggle">
 <link rel="stylesheet" href="css/auth-nav.css">
 <link rel="stylesheet" href="css/mobile-webview-scroll.css?v=20260706safari">
 <link rel="stylesheet" href="css/moon-loading.css?v=20260711n">
@@ -217,8 +217,19 @@
     <div id="personality-card"></div>
     <div class="mirror-actions">
       <label class="mirror-download-meta-toggle" id="mirror-download-meta-toggle-wrap" hidden>
-        <input type="checkbox" id="mirror-download-meta-toggle" checked>
-        <span class="mirror-download-meta-toggle__text">顯示標籤 · MBTI · 星座</span>
+        <input type="checkbox" id="mirror-download-meta-toggle" class="mirror-download-meta-toggle__input" checked>
+        <span class="mirror-download-meta-toggle__switch" aria-hidden="true">
+          <span class="mirror-download-meta-toggle__thumb"></span>
+        </span>
+        <span class="mirror-download-meta-toggle__copy">
+          <span class="mirror-download-meta-toggle__lead">顯示標籤</span>
+          <span class="mirror-download-meta-toggle__hint">下載卡片時一併顯示</span>
+        </span>
+        <span class="mirror-download-meta-toggle__preview" aria-hidden="true">
+          <span class="mirror-download-meta-toggle__tag mirror-download-meta-toggle__tag--label">標籤</span>
+          <span class="mirror-download-meta-toggle__tag mirror-download-meta-toggle__tag--mbti">MBTI</span>
+          <span class="mirror-download-meta-toggle__tag mirror-download-meta-toggle__tag--zodiac">星座</span>
+        </span>
       </label>
       <button class="mirror-download-btn pixel-font" id="mirror-download-btn" type="button">
         <span class="mirror-download-btn__label">下載性格卡片</span>

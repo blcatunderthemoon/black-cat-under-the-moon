@@ -27,6 +27,7 @@ import { readMirrorCardSlugCache, writeMirrorCardSlugCache } from '../../lib/mir
 import PhotoExchangePanel from '../../components/PhotoExchangePanel.js';
 import PhotoExchangeOverlay from '../../components/PhotoExchangeOverlay.js';
 import MirrorVisitorPremiumUpsell, { buildMirrorVisitorPremiumPerks } from '../../components/MirrorVisitorPremiumUpsell.js';
+import MirrorVisitorDualActions from '../../components/MirrorVisitorDualActions.js';
 
 function MirrorOwnerBioSection({ bio, displayName, variant = 'default' }) {
   const text = String(bio || '').trim();
@@ -48,7 +49,11 @@ function MirrorOwnerBioSection({ bio, displayName, variant = 'default' }) {
       <header className="mirror-card-bio__head">
         <span className="mirror-card-bio__icon" aria-hidden="true">✦</span>
         <div className="mirror-card-bio__head-text">
-          <p className="mirror-card-bio__eyebrow">// 自我介紹</p>
+          <p className="mirror-card-bio__eyebrow">
+            <span className="mirror-card-bio__eyebrow-prefix" aria-hidden="true">//</span>
+            <span className="mirror-card-bio__eyebrow-label">自我介紹</span>
+            <span className="mirror-card-bio__eyebrow-line" aria-hidden="true" />
+          </p>
           {isVisitor && name ? (
             <h2 className="mirror-card-bio__title">
               <PixelMixedLabel
@@ -633,6 +638,13 @@ export default function MirrorCardSlugPage() {
   const hidePhotoExchangePremiumPanel = showVisitorPremiumUpsell
     && photoExchange?.reason === 'premium_required'
     && !photoExchange?.can_respond;
+  const useDualVisitorActions = !!session
+    && data?.viewer_tier === 'premium'
+    && messaging
+    && photoExchange
+    && !hidePhotoExchangePremiumPanel
+    && messaging.reason !== 'blocked'
+    && photoExchange.reason !== 'blocked';
   const headerTitle = (
     <span className="mirror-card-header-title">
       <AppHeaderMixedText
@@ -706,87 +718,110 @@ export default function MirrorCardSlugPage() {
                 <MirrorVisitorPremiumUpsell perks={visitorPremiumPerks} />
               )}
 
+              {session && messaging && letterNotice?.ok && (
+                <p className="mirror-report-notice mirror-report-notice--ok mirror-report-notice--center" role="status">
+                  信件已發送！
+                  {letterNotice.threadId && (
+                    <>
+                      {' '}
+                      <Link href={`/inbox/${letterNotice.threadId}`} className="pixel-link">
+                        查看對話 →
+                      </Link>
+                    </>
+                  )}
+                </p>
+              )}
+
+              {useDualVisitorActions && session && messaging && (
+                <MirrorVisitorDualActions
+                  messaging={messaging}
+                  photoExchange={photoExchange}
+                  ownerName={owner?.display_name}
+                  busy={photoExchangeBusy}
+                  onOpenLetter={openLetterComposer}
+                  onPhotoRequest={() => openPhotoExchange('request')}
+                  onPhotoRespond={() => openPhotoExchange('respond')}
+                  exchangePhotoHref={exchangePhotoHref}
+                />
+              )}
+
               <div className="mirror-card-actions">
               {session && messaging && (
                 <>
-                  {letterNotice?.ok && (
-                    <p className="mirror-report-notice mirror-report-notice--ok mirror-report-notice--center" role="status">
-                      信件已發送！
-                      {letterNotice.threadId && (
-                        <>
-                          {' '}
-                          <Link href={`/inbox/${letterNotice.threadId}`} className="pixel-link">
-                            查看對話 →
-                          </Link>
-                        </>
+                  {!useDualVisitorActions && (
+                    <>
+                      {messaging.can_send && (
+                        messaging.existing_thread_id ? (
+                          <div className="mirror-action-row__primary">
+                            <Link
+                              href={`/inbox/${messaging.existing_thread_id}`}
+                              className="mirror-letter-btn mirror-letter-btn--link"
+                            >
+                              <span className="mirror-letter-btn__icon" aria-hidden="true">✉</span>
+                              <span>查看對話</span>
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={openLetterComposer}
+                              className="mirror-letter-btn mirror-letter-btn--ghost"
+                            >
+                              再留一封信
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={openLetterComposer}
+                            className="mirror-letter-btn mirror-letter-btn--full"
+                          >
+                            <span className="mirror-letter-btn__icon" aria-hidden="true">✉</span>
+                            <span>留信</span>
+                          </button>
+                        )
                       )}
-                    </p>
-                  )}
 
-                  {messaging.can_send && (
-                    messaging.existing_thread_id ? (
-                      <div className="mirror-action-row__primary">
+                      {!messaging.can_send && messaging.reason === 'channel_active' && messaging.existing_thread_id && (
                         <Link
                           href={`/inbox/${messaging.existing_thread_id}`}
-                          className="mirror-letter-btn mirror-letter-btn--link"
+                          className="mirror-letter-btn mirror-letter-btn--full"
                         >
                           <span className="mirror-letter-btn__icon" aria-hidden="true">✉</span>
-                          <span>查看對話</span>
+                          <span>繼續對話</span>
                         </Link>
-                        <button
-                          type="button"
-                          onClick={openLetterComposer}
-                          className="mirror-letter-btn mirror-letter-btn--ghost"
-                        >
-                          再留一封信
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={openLetterComposer}
-                        className="mirror-letter-btn mirror-letter-btn--full"
-                      >
-                        <span className="mirror-letter-btn__icon" aria-hidden="true">✉</span>
-                        <span>留信</span>
-                      </button>
-                    )
+                      )}
+
+                      {!messaging.can_send && messaging.reason === 'premium_required' && !showVisitorPremiumUpsell && (
+                        <div className="mirror-letter-upsell">
+                          <p className="mirror-letter-upsell__text">{MOONLIGHT_PASSPORT_BRAND} 可主動留信聯絡有共鳴的人</p>
+                          <Link href="/premium" className="mirror-letter-btn mirror-letter-btn--ghost">
+                            了解 {MOONLIGHT_PASSPORT_BRAND}
+                          </Link>
+                        </div>
+                      )}
+
+                      {!messaging.can_send && messaging.reason === 'quota_exhausted' && (
+                        <p className="mirror-letter-upsell__text mirror-letter-upsell__text--warn">
+                          本月主動投信額度已用完（每月 3 封）
+                        </p>
+                      )}
+
+                      {!messaging.can_send && messaging.reason === 'blocked' && (
+                        <p className="mirror-letter-upsell__text mirror-letter-upsell__text--warn">
+                          無法聯絡此用戶
+                        </p>
+                      )}
+                    </>
                   )}
 
-                  {!messaging.can_send && messaging.reason === 'channel_active' && messaging.existing_thread_id && (
-                    <Link
-                      href={`/inbox/${messaging.existing_thread_id}`}
-                      className="mirror-letter-btn mirror-letter-btn--full"
-                    >
-                      <span className="mirror-letter-btn__icon" aria-hidden="true">✉</span>
-                      <span>繼續對話</span>
-                    </Link>
-                  )}
-
-                  {!messaging.can_send && messaging.reason === 'premium_required' && !showVisitorPremiumUpsell && (
-                    <div className="mirror-letter-upsell">
-                      <p className="mirror-letter-upsell__text">{MOONLIGHT_PASSPORT_BRAND} 可主動留信聯絡有共鳴的人</p>
-                      <Link href="/premium" className="mirror-letter-btn mirror-letter-btn--ghost">
-                        了解 {MOONLIGHT_PASSPORT_BRAND}
-                      </Link>
-                    </div>
-                  )}
-
-                  {!messaging.can_send && messaging.reason === 'quota_exhausted' && (
+                  {useDualVisitorActions && !messaging.can_send && messaging.reason === 'quota_exhausted' && (
                     <p className="mirror-letter-upsell__text mirror-letter-upsell__text--warn">
                       本月主動投信額度已用完（每月 3 封）
-                    </p>
-                  )}
-
-                  {!messaging.can_send && messaging.reason === 'blocked' && (
-                    <p className="mirror-letter-upsell__text mirror-letter-upsell__text--warn">
-                      無法聯絡此用戶
                     </p>
                   )}
                 </>
               )}
 
-              {session && photoExchange && !hidePhotoExchangePremiumPanel && (
+              {session && photoExchange && !hidePhotoExchangePremiumPanel && !useDualVisitorActions && (
                 <div className="mirror-photo-exchange-wrap">
                   <PhotoExchangePanel
                     photoExchange={photoExchange}
@@ -802,6 +837,12 @@ export default function MirrorCardSlugPage() {
                     </p>
                   )}
                 </div>
+              )}
+
+              {useDualVisitorActions && photoExchangeNotice && (
+                <p className={photoExchangeNoticeClass} role="status">
+                  {photoExchangeNotice.text}
+                </p>
               )}
 
               <div className="mirror-card-actions__footer">

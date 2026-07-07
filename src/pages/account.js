@@ -316,10 +316,16 @@ export default function AccountPage() {
         maxWidth="520px"
         nav={<AppHeaderAuth redirectPath="/account" />}
       >
-        <section id="mirror-card" className="pixel-card pixel-card--moon account-mirror-section">
+        <section id="mirror-card" className="pixel-card pixel-card--moon account-mirror-section account-mirror-section--family">
           {mirrorCard ? (
             <>
-              <h2 className="pixel-section-title">// 貓家族</h2>
+              <header className="account-mirror-section__head">
+                <p className="mirror-card-bio__eyebrow account-mirror-section__eyebrow">
+                  <span className="mirror-card-bio__eyebrow-prefix" aria-hidden="true">//</span>
+                  <span className="mirror-card-bio__eyebrow-label">貓家族</span>
+                  <span className="mirror-card-bio__eyebrow-line" aria-hidden="true" />
+                </p>
+              </header>
               <AccountMirrorFamilySummary
                 card={mirrorCard}
                 displayName={profile?.profile?.display_name}

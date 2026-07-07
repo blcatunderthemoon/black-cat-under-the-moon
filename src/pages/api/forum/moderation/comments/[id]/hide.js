@@ -2,7 +2,7 @@
  * POST /api/forum/moderation/comments/[id]/hide
  */
 
-import { resolveModerationActor } from '../../../../../../lib/forum-moderation-auth.js';
+import { resolveModerationActorForComment } from '../../../../../../lib/forum-moderation-auth.js';
 import { hideForumComment } from '../../../../../../lib/forum-moderation.js';
 
 function parseBody(req) {
@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   const { id } = req.query;
   if (!id || typeof id !== 'string') return res.status(400).json({ error: 'Comment ID required' });
 
-  const actor = await resolveModerationActor(req, res);
+  const actor = await resolveModerationActorForComment(req, res, id);
   if (!actor) return undefined;
 
   const { note } = parseBody(req);

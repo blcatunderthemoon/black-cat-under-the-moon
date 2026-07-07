@@ -3,7 +3,7 @@
  * Body: { tags: string[] }
  */
 
-import { resolveModerationActor } from '../../../../../../lib/forum-moderation-auth.js';
+import { resolveModerationActorForPost } from '../../../../../../lib/forum-moderation-auth.js';
 import { updateForumPostTags } from '../../../../../../lib/forum-moderation.js';
 
 function parseBody(req) {
@@ -16,7 +16,7 @@ export default async function handler(req, res) {
   const { id } = req.query;
   if (!id || typeof id !== 'string') return res.status(400).json({ error: 'Post ID required' });
 
-  const actor = await resolveModerationActor(req, res);
+  const actor = await resolveModerationActorForPost(req, res, id);
   if (!actor) return undefined;
 
   const { tags } = parseBody(req);

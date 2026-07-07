@@ -160,7 +160,9 @@ export async function getHotForumTags(admin, { topic = null, visibilityFilter, l
   let postQuery = admin
     .from('forum_posts')
     .select('id')
-    .in('visibility', visibilityFilter);
+    .in('visibility', visibilityFilter)
+    .order('created_at', { ascending: false })
+    .limit(400);
 
   if (topic) {
     const dbTopics = getTopicDbValues(topic);

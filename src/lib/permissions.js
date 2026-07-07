@@ -466,9 +466,9 @@ export async function consumeQuota(userId, quotaType) {
  * Read current quota usage without consuming.
  * Returns { used, limit, remaining }.
  */
-export async function getQuotaUsage(userId, quotaType) {
+export async function getQuotaUsage(userId, quotaType, knownTier) {
   const admin = getAdminClient();
-  const tier = await getSubscriptionTier(userId);
+  const tier = knownTier ?? await getSubscriptionTier(userId);
   const limit = resolveQuotaLimit(quotaType, tier);
   if (isUnlimitedQuota(quotaType, tier)) {
     return { used: 0, limit: null, remaining: null, unlimited: true };

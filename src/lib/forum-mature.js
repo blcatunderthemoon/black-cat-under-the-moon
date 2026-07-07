@@ -74,6 +74,58 @@ export function readMatureGateAck(userId) {
   }
 }
 
+/** Resolve ack from server profile and/or local device cache. */
+export function resolveMatureGateAck(userId, serverAcknowledged = false) {
+  if (serverAcknowledged && userId) {
+    writeMatureGateAck(userId);
+    return true;
+  }
+  return readMatureGateAck(userId);
+}
+
+export async function persistMatureGateAck({ userId, accessToken }) {
+  if (userId) writeMatureGateAck(userId);
+  if (!accessToken) return { ok: true };
+
+  try {
+    const r = await fetch('/api/forum/mature-ack', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const payload = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      return { ok: false, error: payload.error || 'persist_failed' };
+    }
+    if (userId) writeMatureGateAck(userId);
+    return { ok: true, acknowledged_at: payload.acknowledged_at };
+  } catch {
+    return { ok: false, error: 'network_error' };
+  }
+}
+
+export async function fetchMatureGateAck(accessToken, userId) {
+  if (!accessToken) return readMatureGateAck(userId);
+  const localAcked = readMatureGateAck(userId);
+  try {
+    const r = await fetch('/api/forum/mature-ack', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: 'no-store',
+    });
+    if (!r.ok) return localAcked;
+    const payload = await r.json().catch(() => ({}));
+    if (payload.acknowledged) {
+      return resolveMatureGateAck(userId, true);
+    }
+    if (localAcked) {
+      const persisted = await persistMatureGateAck({ userId, accessToken });
+      return persisted.ok;
+    }
+    return false;
+  } catch {
+    return localAcked;
+  }
+}
+
 export function writeMatureGateAck(userId) {
   if (typeof window === 'undefined' || !userId) return;
   try {

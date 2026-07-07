@@ -184,6 +184,21 @@
     display: none;
   }
 
+  .forum-filters-panel .forum-preset-tags-row__scroll.forum-h-scroll,
+  .forum-filters-panel .forum-hot-tags-row__scroll.forum-h-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    min-width: 0;
+  }
+
+  .forum-filters-panel .forum-preset-tags-row__scroll.forum-h-scroll::-webkit-scrollbar,
+  .forum-filters-panel .forum-hot-tags-row__scroll.forum-h-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
   .forum-filters-panel .pixel-filter-row--topics .forum-topic-badge {
     font-size: 12px;
     font-weight: 600;
@@ -641,6 +656,19 @@
     padding: 0 4px;
   }
 
+  .mirror-dual-actions__row {
+    gap: 8px;
+  }
+
+  .mirror-dual-btn {
+    min-height: 58px;
+    padding: 10px 8px;
+  }
+
+  .mirror-dual-btn__label {
+    font-size: 10px;
+  }
+
   .app-page--thread .app-main {
     padding-left: max(8px, env(safe-area-inset-left, 0px));
     padding-right: max(8px, env(safe-area-inset-right, 0px));
@@ -943,8 +971,8 @@
 
   .app-header--account .auth-nav-badge--user-toolbar {
     min-height: 0;
-    margin-top: 4px;
-    padding: 5px 6px 6px;
+    margin-top: 2px;
+    padding: 4px 6px 5px;
     border-top: none;
     background: rgba(12, 11, 24, 0.92);
   }

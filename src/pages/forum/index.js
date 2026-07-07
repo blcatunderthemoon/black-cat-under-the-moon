@@ -2,7 +2,7 @@
  * /forum — Forum post list + compose
  */
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo, useId } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../lib/auth-context.js';
@@ -11,7 +11,6 @@ import ForumHeaderAuth from '../../components/ForumHeaderAuth.js';
 import ForumHeaderLogo from '../../components/ForumHeaderLogo.js';
 import ForumBookmarksPanel from '../../components/ForumBookmarksPanel.js';
 import ForumAuthorName from '../../components/ForumAuthorName.js';
-import HeaderPremiumMoon from '../../components/HeaderPremiumMoon.js';
 import { isPremiumUser } from '../../lib/premium.js';
 import ForumCampfireGlow from '../../components/ForumCampfireGlow.js';
 import SeoHead from '../../components/SeoHead.js';
@@ -32,13 +31,17 @@ import MirrorFamilyBadge from '../../components/MirrorFamilyBadge.js';
 import ForumComposeField from '../../components/ForumComposeField.js';
 import ForumComposeOverlay from '../../components/ForumComposeOverlay.js';
 import ForumTagField from '../../components/ForumTagField.js';
+import ForumStoryBookshelf from '../../components/ForumStoryBookshelf.js';
+import ForumStoryComposeFields from '../../components/ForumStoryComposeFields.js';
 import ForumPostTags from '../../components/ForumPostTags.js';
 import { formatForumTagLabel, canonicalForumTagKey } from '../../lib/forum-tags.js';
+import { isStoryTopic, STORY_CONTENT_MAX } from '../../lib/forum-story.js';
 import {
   clearForumDraft,
   FORUM_POST_DRAFT_KEY,
   readForumDraft,
-  writeForumDraft,
+  hasForumPostDraftContent,
+  persistForumPostDraft,
 } from '../../lib/forum-draft-storage.js';
 import {
   readForumFeedCache,
@@ -62,9 +65,10 @@ import {
   isMatureForumTopic,
   MATURE_FORUM_TOPIC,
   MATURE_POST_RULES_SUMMARY,
-  readMatureGateAck,
+  resolveMatureGateAck,
+  fetchMatureGateAck,
 } from '../../lib/forum-mature.js';
-import useHorizontalRowScroll from '../../hooks/useHorizontalRowScroll.js';
+import ForumHorizontalScroll from '../../components/ForumHorizontalScroll.js';
 
 const SORT_OPTIONS = [
   { id: 'latest', label: '最新', icon: '🕐', hint: '依發文時間由新到舊' },
@@ -105,18 +109,65 @@ function scrollTopicBadgeIntoView(row, badge, behavior = 'smooth') {
   });
 }
 
+function welcomeBadgeLabel(moodTag) {
+  if (moodTag === '版規') return '📌 版規';
+  if (moodTag === '指南') return '📌 指南';
+  return '📌 官方';
+}
+
 function WelcomeCard({ topic }) {
   const welcome = getWelcomePost(topic);
   const ts = TOPIC_STYLES[topic] || TOPIC_STYLES['全部'];
+  const bodyId = useId();
+  const storageKey = `bcutm_forum_welcome_open:${topic}`;
+  const [open, setOpen] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return sessionStorage.getItem(storageKey) === '1';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggle = () => {
+    setOpen((prev) => {
+      const next = !prev;
+      try {
+        sessionStorage.setItem(storageKey, next ? '1' : '0');
+      } catch {
+        /* private mode */
+      }
+      return next;
+    });
+  };
+
   return (
     <article
-      className="forum-welcome-card"
+      className={`forum-welcome-card${open ? ' forum-welcome-card--open' : ' forum-welcome-card--collapsed'}`}
       style={{ borderColor: `${ts.accent}55` }}
     >
-      <h3 className="forum-welcome-card__title">
-        {ts.emoji} {welcome.title}
-      </h3>
-      <p className="forum-welcome-card__content">{welcome.content}</p>
+      <button
+        type="button"
+        className="forum-welcome-card__header"
+        onClick={toggle}
+        aria-expanded={open}
+        aria-controls={bodyId}
+      >
+        <h3 className="forum-welcome-card__title">
+          <span className="forum-welcome-card__title-text">
+            {ts.emoji} {welcome.title}
+          </span>
+          <span className="forum-welcome-card__chevron" aria-hidden="true">{open ? '▾' : '▸'}</span>
+        </h3>
+        <span className="forum-welcome-card__badge">{welcomeBadgeLabel(welcome.mood_tag)}</span>
+      </button>
+      <div
+        id={bodyId}
+        className="forum-welcome-card__body"
+        hidden={!open}
+      >
+        <p className="forum-welcome-card__content">{welcome.content}</p>
+      </div>
     </article>
   );
 }
@@ -140,9 +191,9 @@ function EmptyState({ topic, onCompose, canCompose, sort, viewerClanType }) {
       ) : isClanEmpty ? (
         <>
           <h2 className="forum-empty__headline">同族暫時未有貼文</h2>
-          <p className="forum-empty__subline">
+          <p className="forum-empty__subline forum-empty__subline--inline">
             <MirrorFamilyBadge type={viewerClanType} variant="compact" className="forum-empty__clan-badge" />
-            {' '}的貓咪還沒開口，來點第一把火吧 🔥
+            <span className="forum-empty__subline-text">的貓咪還沒開口，來點第一把火吧 🔥</span>
           </p>
           <button type="button" className="forum-empty__cta" onClick={onCompose}>
             立刻發文
@@ -194,8 +245,7 @@ function FeaturedPostsPanel({ featuredPosts }) {
       <ol className="forum-hot-list">
         {featuredPosts.map((p) => (
           <li key={p.id}>
-            <Link href={`/forum/${p.id}`} className="forum-hot-item">
-              <span className="forum-hot-item__rank" aria-hidden="true">✨</span>
+            <Link href={`/forum/${p.id}`} className="forum-hot-item forum-hot-item--crowned">
               <div className="forum-hot-item__body">
                 <p className="forum-hot-item__title">{p.title || p.topic}</p>
                 <span className="forum-hot-item__meta">
@@ -281,7 +331,7 @@ function applyForumCache(entry, {
 }
 
 export default function ForumPage() {
-  const { session, profile, loading: authLoading } = useAuth();
+  const { session, profile, refreshProfile, loading: authLoading } = useAuth();
   const router = useRouter();
   const [posts, setPosts] = useState(null);
   const [topic, setTopic] = useState('全部');
@@ -304,6 +354,7 @@ export default function ForumPage() {
   const [feedRefreshing, setFeedRefreshing] = useState(false);
   const [matureAcked, setMatureAcked] = useState(false);
   const topicRef = useRef(topic);
+  const topicsRowRef = useRef(null);
   const initialLoadDoneRef = useRef(false);
   const filterSnapshotRef = useRef({ topic, sort, activeTag });
 
@@ -315,17 +366,13 @@ export default function ForumPage() {
     tags: [],
     visibility: 'public',
     polls: [],
+    cover_image_url: '',
+    synopsis: '',
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [draftNotice, setDraftNotice] = useState('');
   const offsetRef = useRef(0);
-  const topicsRowRef = useRef(null);
-  const topicsRowDragRef = useRef(false);
-  const presetTagsScrollRef = useRef(null);
-  const presetTagsDragRef = useRef(false);
-  const hotTagsScrollRef = useRef(null);
-  const hotTagsDragRef = useRef(false);
   const loadSeqRef = useRef(0);
   const sessionRef = useRef(session);
   const loadedWithTokenRef = useRef(undefined);
@@ -402,12 +449,27 @@ export default function ForumPage() {
   }, [topic]);
 
   const matureTopicActive = isMatureForumTopic(topic);
+  const serverMatureAck = !!profile?.profile?.forum_mature_acknowledged;
   const showMatureGate = matureTopicActive && (!session || !matureAcked);
 
   useEffect(() => {
-    if (!matureTopicActive) return;
-    setMatureAcked(readMatureGateAck(session?.user?.id));
-  }, [matureTopicActive, topic, session?.user?.id]);
+    if (!matureTopicActive) return undefined;
+    const userId = session?.user?.id;
+    if (!userId) {
+      setMatureAcked(false);
+      return undefined;
+    }
+
+    const localOrProfile = resolveMatureGateAck(userId, serverMatureAck);
+    setMatureAcked(localOrProfile);
+    if (localOrProfile || !session?.access_token) return undefined;
+
+    let cancelled = false;
+    fetchMatureGateAck(session.access_token, userId).then((acked) => {
+      if (!cancelled) setMatureAcked(acked);
+    });
+    return () => { cancelled = true; };
+  }, [matureTopicActive, topic, session?.user?.id, session?.access_token, serverMatureAck]);
 
   const applyMetaPayload = useCallback((requestedTopic, data) => {
     if (requestedTopic !== topicRef.current) return;
@@ -470,13 +532,6 @@ export default function ForumPage() {
     if (topic === '全部') return meta?.hot_tags || [];
     return meta?.user_hot_tags || [];
   }, [topic, meta, metaMatchesTopic]);
-
-  const showPresetTagsRow = topic !== '全部' && (presetTagsDisplay.length > 0 || activeTag);
-  const showHotTagsRow = userHotTagsDisplay.length > 0;
-
-  useHorizontalRowScroll(topicsRowRef, topicsRowDragRef, true);
-  useHorizontalRowScroll(presetTagsScrollRef, presetTagsDragRef, showPresetTagsRow);
-  useHorizontalRowScroll(hotTagsScrollRef, hotTagsDragRef, showHotTagsRow);
 
   const load = useCallback(async (reset = false, { bootstrap = false, silent = false, feedOnly = false, postsOnly = false } = {}) => {
     const seq = ++loadSeqRef.current;
@@ -580,9 +635,10 @@ export default function ForumPage() {
 
   const handleMatureAcknowledged = useCallback(() => {
     setMatureAcked(true);
+    refreshProfile?.({ force: true });
     clearForumFeedCache();
     load(true, { bootstrap: true, feedOnly: initialLoadDoneRef.current });
-  }, [load]);
+  }, [load, refreshProfile]);
 
   const handleMatureDismiss = useCallback(() => {
     setActiveTag(null);
@@ -596,8 +652,6 @@ export default function ForumPage() {
   }, []);
 
   useEffect(() => {
-    if (authLoading) return;
-
     const prev = filterSnapshotRef.current;
     const topicChanged = prev.topic !== topic;
     const sortChanged = prev.sort !== sort;
@@ -611,7 +665,10 @@ export default function ForumPage() {
     setLoadError(false);
 
     if (isMatureForumTopic(topic)) {
-      const acked = readMatureGateAck(sessionRef.current?.user?.id);
+      const acked = resolveMatureGateAck(
+        sessionRef.current?.user?.id,
+        !!profile?.profile?.forum_mature_acknowledged,
+      );
       setMatureAcked(acked);
       if (!sessionRef.current || !acked) {
         setPosts([]);
@@ -645,7 +702,7 @@ export default function ForumPage() {
         postsOnly,
       });
     }
-  }, [topic, sort, activeTag, load, authLoading]);
+  }, [topic, sort, activeTag, load, profile?.profile?.forum_mature_acknowledged]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -731,6 +788,8 @@ export default function ForumPage() {
         ? 'members_only'
         : 'public',
       polls: Array.isArray(draft?.polls) ? draft.polls : [],
+      cover_image_url: draft?.cover_image_url || '',
+      synopsis: draft?.synopsis || '',
     });
     setDraftNotice(draft?.savedAt ? '已恢復草稿' : '');
     setShowCompose(true);
@@ -739,15 +798,14 @@ export default function ForumPage() {
   useEffect(() => {
     if (!showCompose) return undefined;
     const timer = setInterval(() => {
-      if (!form.content.trim() && !form.title.trim()) return;
-      writeForumDraft(FORUM_POST_DRAFT_KEY, form);
+      if (!hasForumPostDraftContent(form)) return;
+      persistForumPostDraft(form);
       setDraftNotice('草稿已自動儲存');
     }, 3000);
     return () => clearInterval(timer);
   }, [showCompose, form]);
 
-  function closeCompose() {
-    clearForumDraft(FORUM_POST_DRAFT_KEY);
+  function resetComposeForm() {
     setForm({
       title: '',
       content: '',
@@ -755,18 +813,26 @@ export default function ForumPage() {
       tags: [],
       visibility: 'public',
       polls: [],
+      cover_image_url: '',
+      synopsis: '',
     });
+  }
+
+  function closeCompose() {
+    clearForumDraft(FORUM_POST_DRAFT_KEY);
+    resetComposeForm();
     setSubmitError('');
     setDraftNotice('');
     setShowCompose(false);
-    if (typeof document !== 'undefined') {
-      document.body.style.overflow = '';
-    }
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
     if (!form.content.trim()) { setSubmitError('請填寫內容。'); return; }
+    if (isStoryTopic(form.topic) && !form.title.trim()) {
+      setSubmitError('故事需要標題。');
+      return;
+    }
     setSubmitting(true);
     setSubmitError('');
     try {
@@ -787,6 +853,8 @@ export default function ForumPage() {
         tags: [],
         visibility: 'public',
         polls: [],
+        cover_image_url: '',
+        synopsis: '',
       });
       clearForumDraft(FORUM_POST_DRAFT_KEY);
       setDraftNotice('');
@@ -860,7 +928,7 @@ export default function ForumPage() {
   const isEmpty = !feedLoading && Array.isArray(posts) && posts.length === 0;
   const feedPosts = posts || [];
   const showEmptyState = isEmpty && !loadError;
-  const showWelcomeCard = isEmpty && sort !== 'clan' && !loadError;
+  const showWelcomeCard = topic !== '全部' && sort !== 'clan' && !loadError && !feedLoading;
 
   if (shellLoading) {
     return (
@@ -948,9 +1016,9 @@ export default function ForumPage() {
 
           <div className="forum-main">
             <div className="forum-filters-panel forum-panel">
-              <div
+              <ForumHorizontalScroll
                 ref={topicsRowRef}
-                className="pixel-filter-row pixel-filter-row--topics forum-h-scroll"
+                className="pixel-filter-row pixel-filter-row--topics"
                 role="tablist"
                 aria-label="論壇分類"
               >
@@ -968,12 +1036,12 @@ export default function ForumPage() {
                     )}
                   </button>
                 ))}
-              </div>
+              </ForumHorizontalScroll>
 
-              {(topic !== '全部' && (presetTagsDisplay.length > 0 || activeTag)) && (
+              {(topic !== '全部' && !isStoryTopic(topic) && (presetTagsDisplay.length > 0 || activeTag)) && (
                 <div className="forum-preset-tags-row" role="group" aria-label="官方標籤">
                   <span className="forum-preset-tags-row__label">標籤</span>
-                  <div ref={presetTagsScrollRef} className="forum-preset-tags-row__scroll forum-h-scroll">
+                  <ForumHorizontalScroll className="forum-preset-tags-row__scroll">
                     {(() => {
                       const displayTags = activeTag && !presetTagsDisplay.some((t) => t.tag === activeTag)
                         ? [{ tag: activeTag, display_label: tagLabels[activeTag] || activeTag, count: 0, official: false }, ...presetTagsDisplay]
@@ -996,14 +1064,14 @@ export default function ForumPage() {
                         );
                       });
                     })()}
-                  </div>
+                  </ForumHorizontalScroll>
                 </div>
               )}
 
-              {userHotTagsDisplay.length > 0 && (
+              {userHotTagsDisplay.length > 0 && !isStoryTopic(topic) && (
                 <div className="forum-hot-tags-row" role="group" aria-label="熱門標籤">
                   <span className="forum-hot-tags-row__label">{topic === '全部' ? '熱門' : '社群'}</span>
-                  <div ref={hotTagsScrollRef} className="forum-hot-tags-row__scroll forum-h-scroll">
+                  <ForumHorizontalScroll className="forum-hot-tags-row__scroll">
                     {userHotTagsDisplay.map(({ tag, display_label: displayLabel, count }) => {
                       const isActive = activeTag === tag;
                       return (
@@ -1021,7 +1089,7 @@ export default function ForumPage() {
                         </button>
                       );
                     })}
-                  </div>
+                  </ForumHorizontalScroll>
                 </div>
               )}
 
@@ -1093,11 +1161,20 @@ export default function ForumPage() {
                   />
                 )}
 
-                {!feedLoading && feedPosts.length > 0 && (
+                {!feedLoading && feedPosts.length > 0 && isStoryTopic(topic) && (
+                  <ForumStoryBookshelf
+                    posts={feedPosts}
+                    session={session}
+                    bookmarkingIds={bookmarkingIds}
+                    onBookmark={toggleBookmark}
+                  />
+                )}
+
+                {!feedLoading && feedPosts.length > 0 && !isStoryTopic(topic) && (
                   <ul className="pixel-list">
                     {feedPosts.map((post) => (
                       <li key={post.id}>
-                        <article className="pixel-post-card">
+                        <article className={`pixel-post-card${post.is_highlighted ? ' pixel-post-card--crowned' : ''}`}>
                           {session && (
                             <button
                               type="button"
@@ -1144,7 +1221,10 @@ export default function ForumPage() {
                                 <span className="forum-visibility-badge">📌 圍爐置頂</span>
                               )}
                               {post.is_highlighted && (
-                                <span className="forum-visibility-badge">✨ 月光加冕</span>
+                                <span className="forum-crown-badge" aria-label="月光加冕">
+                                  <span className="forum-crown-badge__sigil" aria-hidden="true">✨</span>
+                                  <span className="forum-crown-badge__text">月光加冕</span>
+                                </span>
                               )}
                             </div>
                             {post.title && <h3 className="pixel-post-title">{post.title}</h3>}
@@ -1215,46 +1295,88 @@ export default function ForumPage() {
         />
 
         {showCompose && (
-        <ForumComposeOverlay onClose={closeCompose}>
-              <div className="forum-compose-modal__head">
-                <h2 id="forum-compose-title" className="forum-compose-modal__title">新貼文</h2>
-                {isPremium && (
-                  <HeaderPremiumMoon profile={profile} className="forum-compose-premium-tag__moon" />
-                )}
+        <ForumComposeOverlay
+          modalClassName={isStoryTopic(form.topic) ? 'forum-compose-modal--story' : ''}
+        >
+              <button
+                type="button"
+                className="forum-compose-modal__close"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  closeCompose();
+                }}
+                aria-label="關閉並捨棄草稿"
+              >
+                ×
+              </button>
+              <div className={`forum-compose-modal__head${isStoryTopic(form.topic) ? ' forum-compose-modal__head--story' : ''}`}>
+                <div className="forum-compose-modal__head-copy">
+                  {isStoryTopic(form.topic) && (
+                    <p className="forum-compose-modal__eyebrow">📖 黑貓書櫃</p>
+                  )}
+                  <h2 id="forum-compose-title" className="forum-compose-modal__title">
+                    {isStoryTopic(form.topic) ? '新故事' : '新貼文'}
+                  </h2>
+                  {isStoryTopic(form.topic) && (
+                    <p className="forum-compose-modal__subtitle">放上封面與簡介，讓讀者從書櫃翻開你的故事</p>
+                  )}
+                </div>
               </div>
               {draftNotice && (
                 <p className="forum-compose-draft-notice" role="status">{draftNotice}</p>
               )}
-              <form onSubmit={handleSubmit} className="pixel-form">
-                <select
-                  value={form.topic}
-                  onChange={(e) => {
-                    const nextTopic = e.target.value;
-                    setForm((f) => ({
-                      ...f,
-                      topic: nextTopic,
-                      visibility: isMatureForumTopic(nextTopic) ? 'members_only' : f.visibility,
-                    }));
-                  }}
-                  className="pixel-select"
-                >
-                  {FORUM_TOPICS.filter((t) => t !== '全部').map((t) => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                </select>
+              <form onSubmit={handleSubmit} className={`pixel-form${isStoryTopic(form.topic) ? ' forum-compose-form--story' : ''}`}>
+                <label className="forum-compose-form__field">
+                  <span className="forum-compose-form__label">分類</span>
+                  <select
+                    value={form.topic}
+                    onChange={(e) => {
+                      const nextTopic = e.target.value;
+                      setForm((f) => ({
+                        ...f,
+                        topic: nextTopic,
+                        visibility: isMatureForumTopic(nextTopic) ? 'members_only' : f.visibility,
+                        tags: isStoryTopic(nextTopic) ? [] : f.tags,
+                      }));
+                    }}
+                    className="pixel-select"
+                  >
+                    {FORUM_TOPICS.filter((t) => t !== '全部').map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </label>
+                {!isStoryTopic(form.topic) && (
                 <ForumTagField
                   tags={form.tags}
                   topic={form.topic}
                   onChange={(tags) => setForm((f) => ({ ...f, tags }))}
                   disabled={submitting}
                 />
-                <input
-                  placeholder="標題（可選）"
-                  value={form.title}
-                  onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                  maxLength={100}
-                  className="pixel-input"
-                />
+                )}
+                <label className="forum-compose-form__field">
+                  <span className="forum-compose-form__label">
+                    {isStoryTopic(form.topic) ? '故事標題' : '標題'}
+                    {isStoryTopic(form.topic) && <span className="forum-compose-form__required">必填</span>}
+                  </span>
+                  <input
+                    placeholder={isStoryTopic(form.topic) ? '為這本書取個名字…' : '標題（可選）'}
+                    value={form.title}
+                    onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                    maxLength={100}
+                    className="pixel-input"
+                    required={isStoryTopic(form.topic)}
+                  />
+                </label>
+                {isStoryTopic(form.topic) && (
+                  <ForumStoryComposeFields
+                    coverUrl={form.cover_image_url}
+                    synopsis={form.synopsis}
+                    onCoverChange={(cover_image_url) => setForm((f) => ({ ...f, cover_image_url }))}
+                    onSynopsisChange={(synopsis) => setForm((f) => ({ ...f, synopsis }))}
+                    disabled={submitting}
+                  />
+                )}
                 {isMatureForumTopic(form.topic) ? (
                   <div className="forum-mature-compose-notice" role="note">
                     <p className="forum-mature-compose-notice__title">親密話題發文須知</p>
@@ -1266,7 +1388,7 @@ export default function ForumPage() {
                     <p className="forum-visibility-field__hint">此版貼文一律為會員限定，不會出現在公開首頁。</p>
                   </div>
                 ) : (
-                <fieldset className="forum-visibility-field">
+                <fieldset className={`forum-visibility-field${isStoryTopic(form.topic) ? ' forum-visibility-field--story' : ''}`}>
                   <legend className="forum-visibility-field__legend">可見範圍</legend>
                   <div className="forum-visibility-field__options">
                     <label className={`forum-visibility-option${form.visibility === 'public' ? ' forum-visibility-option--active' : ''}`}>
@@ -1301,14 +1423,18 @@ export default function ForumPage() {
                   polls={form.polls}
                   onPollsChange={(polls) => setForm((f) => ({ ...f, polls }))}
                   accessToken={session?.access_token}
-                  maxLength={2000}
-                  minRows={5}
-                  placeholder="說說你想說的…（10–2000 字）"
+                  maxLength={isStoryTopic(form.topic) ? STORY_CONTENT_MAX : 2000}
+                  minRows={isStoryTopic(form.topic) ? 12 : 5}
+                  placeholder={isStoryTopic(form.topic)
+                    ? '正文內容…（10–20000 字，支援較長篇幅）'
+                    : '說說你想說的…（10–2000 字）'}
                   required
                   disabled={submitting}
+                  className={isStoryTopic(form.topic) ? 'forum-compose-field--story' : ''}
+                  label={isStoryTopic(form.topic) ? '正文' : '內容'}
                 />
                 {submitError && <p className="pixel-error">{submitError}</p>}
-                <div className="forum-compose-actions">
+                <div className={`forum-compose-actions${isStoryTopic(form.topic) ? ' forum-compose-actions--story' : ''}`}>
                   <button
                     type="button"
                     onClick={(e) => {
@@ -1317,10 +1443,10 @@ export default function ForumPage() {
                     }}
                     className="forum-compose-actions__cancel"
                   >
-                    取消
+                    取消並捨棄
                   </button>
                   <button type="submit" disabled={submitting} className="forum-compose-actions__submit">
-                    {submitting ? '發送中…' : '發文'}
+                    {submitting ? '發送中…' : (isStoryTopic(form.topic) ? '📚 放上書架' : '發文')}
                   </button>
                 </div>
               </form>

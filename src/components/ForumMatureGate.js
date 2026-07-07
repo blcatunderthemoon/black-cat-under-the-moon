@@ -5,7 +5,7 @@ import {
   MATURE_FORUM_TOPIC,
   MATURE_POST_RULES_SUMMARY,
   MATURE_DECLINE_WARNING,
-  writeMatureGateAck,
+  persistMatureGateAck,
 } from '../lib/forum-mature.js';
 
 function MatureGateRules() {
@@ -30,6 +30,7 @@ export default function ForumMatureGate({
 }) {
   const [checked, setChecked] = useState(false);
   const [declined, setDeclined] = useState(false);
+  const [saving, setSaving] = useState(false);
   const userId = session?.user?.id;
 
   useEffect(() => {
@@ -143,13 +144,18 @@ export default function ForumMatureGate({
             <button
               type="button"
               className="forum-mature-modal__btn forum-mature-modal__btn--primary"
-              disabled={!checked}
-              onClick={() => {
-                writeMatureGateAck(userId);
+              disabled={!checked || saving}
+              onClick={async () => {
+                setSaving(true);
+                await persistMatureGateAck({
+                  userId,
+                  accessToken: session?.access_token,
+                });
+                setSaving(false);
                 onAcknowledged?.();
               }}
             >
-              進入 {MATURE_FORUM_TOPIC}
+              {saving ? '儲存中…' : `進入 ${MATURE_FORUM_TOPIC}`}
             </button>
             <button
               type="button"
@@ -163,7 +169,7 @@ export default function ForumMatureGate({
             </button>
           </div>
           <p className="forum-mature-modal__persist-note">
-            確認後會記在此裝置，之後進入此版不會再詢問。
+            確認後會記在你的帳號，之後進入此版不會再詢問。
           </p>
         </div>
       </>

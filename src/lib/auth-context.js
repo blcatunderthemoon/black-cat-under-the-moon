@@ -9,7 +9,7 @@ import { useRouter } from 'next/router';
 import { createClient } from '@supabase/supabase-js';
 import { resolveBrowserSession, readStoredAuthSession, sessionFromStored } from './browser-session.js';
 import { resolveDisplayName } from './display-name.js';
-import { readMeCache, writeMeCache, clearMeCache, ME_CACHE_KEY, PROFILE_UPDATED_EVENT } from './me-cache.js';
+import { readMeCache, writeMeCache, clearMeCache, ME_CACHE_KEY, PROFILE_UPDATED_EVENT, isMeCacheFresh } from './me-cache.js';
 import { clearInboxThreadsCache } from './inbox-threads-cache.js';
 import { clearMoonJourneyCache } from './moon-journey-cache.js';
 import { clearMirrorCardCache } from './mirror-card-cache.js';
@@ -45,10 +45,13 @@ export function AuthProvider({ children }) {
   const sessionRef = useRef(session);
   sessionRef.current = session;
 
-  const refreshProfile = useCallback(async () => {
+  const refreshProfile = useCallback(async ({ force = false } = {}) => {
     const s = sessionRef.current;
     if (!s?.access_token || !s?.user?.id) return null;
     const userId = s.user.id;
+    if (!force && isMeCacheFresh(userId)) {
+      return readMeCache(userId);
+    }
     try {
       const r = await fetch('/api/me', {
         headers: { Authorization: `Bearer ${s.access_token}` },
@@ -144,10 +147,13 @@ export function AuthProvider({ children }) {
     }
     const userId = session.user?.id;
     const cached = userId ? readMeCache(userId) : null;
+    const cacheFresh = userId ? isMeCacheFresh(userId) : false;
     if (cached) {
       setProfile(cached);
       setProfileHydrated(true);
     }
+
+    if (cacheFresh) return undefined;
 
     const token = session.access_token;
     let cancelled = false;
@@ -191,16 +197,22 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (!session?.access_token) return;
 
-    const onRoute = () => { refreshProfile(); };
+    let refreshTimer = null;
+    const scheduleRefresh = () => {
+      if (refreshTimer) clearTimeout(refreshTimer);
+      refreshTimer = setTimeout(() => { refreshProfile(); }, 120);
+    };
+    const onRoute = () => { scheduleRefresh(); };
     const onVisible = () => {
       if (document.visibilityState && document.visibilityState !== 'visible') return;
-      refreshProfile();
+      scheduleRefresh();
     };
 
     router.events.on('routeChangeComplete', onRoute);
     window.addEventListener('focus', onVisible);
     window.addEventListener('pageshow', onVisible);
     return () => {
+      if (refreshTimer) clearTimeout(refreshTimer);
       router.events.off('routeChangeComplete', onRoute);
       window.removeEventListener('focus', onVisible);
       window.removeEventListener('pageshow', onVisible);

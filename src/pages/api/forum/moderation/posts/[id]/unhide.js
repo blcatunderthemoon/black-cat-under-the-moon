@@ -2,7 +2,7 @@
  * POST /api/forum/moderation/posts/[id]/unhide
  */
 
-import { resolveModerationActor } from '../../../../../../lib/forum-moderation-auth.js';
+import { resolveModerationActorForPost } from '../../../../../../lib/forum-moderation-auth.js';
 import { unhideForumPost } from '../../../../../../lib/forum-moderation.js';
 
 export default async function handler(req, res) {
@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   const { id } = req.query;
   if (!id || typeof id !== 'string') return res.status(400).json({ error: 'Post ID required' });
 
-  const actor = await resolveModerationActor(req, res);
+  const actor = await resolveModerationActorForPost(req, res, id);
   if (!actor) return undefined;
 
   const result = await unhideForumPost(id, { actorId: actor.actorId });

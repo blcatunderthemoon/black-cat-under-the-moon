@@ -4,6 +4,7 @@
 
 export const ME_CACHE_KEY = 'bcutm_me_cache';
 export const PROFILE_UPDATED_EVENT = 'bcutm:profile-updated';
+export const ME_CACHE_TTL_MS = 60_000;
 
 const CACHE_KEY = ME_CACHE_KEY;
 
@@ -16,17 +17,27 @@ function notifyProfileUpdated(userId, data) {
   }
 }
 
-export function readMeCache(userId) {
+export function readMeCacheEntry(userId) {
   if (typeof window === 'undefined' || !userId) return null;
   try {
     const raw = sessionStorage.getItem(CACHE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed?.data || parsed.userId !== userId) return null;
-    return parsed.data;
+    return parsed;
   } catch {
     return null;
   }
+}
+
+export function readMeCache(userId) {
+  return readMeCacheEntry(userId)?.data ?? null;
+}
+
+export function isMeCacheFresh(userId, maxAgeMs = ME_CACHE_TTL_MS) {
+  const entry = readMeCacheEntry(userId);
+  if (!entry?.at) return false;
+  return Date.now() - entry.at < maxAgeMs;
 }
 
 export function writeMeCache(userId, data) {

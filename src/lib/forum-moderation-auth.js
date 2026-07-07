@@ -4,6 +4,12 @@
 
 import { isDashboardKeyValid } from './dashboard-auth.js';
 import { getForumRole, canModerateForum, canAdminForum } from './forum-roles.js';
+import {
+  canModerateStoredTopic,
+  getModeratorTopicsForUser,
+  getPostStoredTopic,
+  getCommentPostStoredTopic,
+} from './forum-moderator-assignments.js';
 import { requireUser, getProfile, sendAuthError, getAdminClient } from './server-auth.js';
 
 async function resolveDashboardActorId() {
@@ -19,7 +25,7 @@ async function resolveDashboardActorId() {
 }
 
 /**
- * @returns {Promise<{ actorId: string|null, role: string, viaDashboard: boolean }|null>}
+ * @returns {Promise<{ actorId: string|null, role: string, viaDashboard: boolean, moderatorTopics?: string[] }|null>}
  */
 export async function resolveModerationActor(req, res, { requireAdmin = false } = {}) {
   const dashKey = req.headers['x-dashboard-key'] || '';
@@ -56,5 +62,56 @@ export async function resolveModerationActor(req, res, { requireAdmin = false } 
     return null;
   }
 
-  return { actorId: user.id, role, viaDashboard: false };
+  const admin = getAdminClient();
+  const moderatorTopics = role === 'moderator'
+    ? await getModeratorTopicsForUser(admin, user.id)
+    : null;
+
+  return {
+    actorId: user.id,
+    role,
+    viaDashboard: false,
+    moderatorTopics,
+  };
+}
+
+export function assertModerationTopicAccess(res, actor, storedTopic) {
+  if (canModerateStoredTopic(actor, storedTopic)) return true;
+  res.status(403).json({
+    error: '你未被指派管理此版塊。',
+    code: 'topic_access_denied',
+  });
+  return false;
+}
+
+/** Resolve actor and verify they may moderate the post (by post id). */
+export async function resolveModerationActorForPost(req, res, postId, options = {}) {
+  const actor = await resolveModerationActor(req, res, options);
+  if (!actor) return null;
+
+  const admin = getAdminClient();
+  const storedTopic = await getPostStoredTopic(admin, postId);
+  if (!storedTopic) {
+    res.status(404).json({ error: 'Post not found' });
+    return null;
+  }
+  if (!assertModerationTopicAccess(res, actor, storedTopic)) return null;
+
+  return { ...actor, storedTopic };
+}
+
+/** Resolve actor and verify they may moderate the comment's parent post topic. */
+export async function resolveModerationActorForComment(req, res, commentId, options = {}) {
+  const actor = await resolveModerationActor(req, res, options);
+  if (!actor) return null;
+
+  const admin = getAdminClient();
+  const storedTopic = await getCommentPostStoredTopic(admin, commentId);
+  if (!storedTopic) {
+    res.status(404).json({ error: 'Comment not found' });
+    return null;
+  }
+  if (!assertModerationTopicAccess(res, actor, storedTopic)) return null;
+
+  return { ...actor, storedTopic };
 }

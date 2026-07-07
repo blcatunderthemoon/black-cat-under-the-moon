@@ -48,3 +48,24 @@ export function clearForumDraft(key) {
     /* ignore */
   }
 }
+
+export function hasForumPostDraftContent(form) {
+  if (!form || typeof form !== 'object') return false;
+  return Boolean(
+    form.title?.trim()
+    || form.content?.trim()
+    || form.synopsis?.trim()
+    || form.cover_image_url?.trim()
+    || (Array.isArray(form.tags) && form.tags.length > 0)
+    || (Array.isArray(form.polls) && form.polls.some((poll) => poll?.question?.trim())),
+  );
+}
+
+export function persistForumPostDraft(form) {
+  if (!hasForumPostDraftContent(form)) {
+    clearForumDraft(FORUM_POST_DRAFT_KEY);
+    return false;
+  }
+  writeForumDraft(FORUM_POST_DRAFT_KEY, form);
+  return true;
+}

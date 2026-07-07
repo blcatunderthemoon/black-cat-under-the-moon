@@ -260,6 +260,26 @@ CREATE INDEX IF NOT EXISTS forum_moderation_log_created_idx
   ON public.forum_moderation_log (created_at DESC);
 ```
 
+### 4.3.1 `forum_moderator_assignments`（版塊版主範圍）
+
+版主可指派 **全部** 或個別分類（感情、社群…）。管理員隱含全部版塊。
+
+```sql
+-- 見 supabase/migrations/20250707000000_forum_moderator_assignments.sql
+CREATE TABLE IF NOT EXISTS public.forum_moderator_assignments (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  topic       text NOT NULL,  -- '全部' 或 FORUM_POST_TOPICS 內的值
+  assigned_by uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (user_id, topic)
+);
+```
+
+- Dashboard：`/dashboard/forum/team` → 欄位「負責版塊」
+- API：`PATCH /api/dashboard/forum-moderators` 支援 `moderator_topics: string[]`
+- 權限：`canModerateStoredTopic(actor, post.topic)`（含 legacy topic 對照）
+
 ### 4.4 Inbox 通知（檢舉達門檻）
 
 新增 `inbox_messages.message_type` 值（或沿用 `payload` 區分）：
@@ -282,7 +302,7 @@ CREATE INDEX IF NOT EXISTS forum_moderation_log_created_idx
 }
 ```
 
-**收件人：** 所有 `forum_role IN ('moderator','admin')` 且 `status = 'active'` 的 `profiles.id`。
+**收件人：** `forum_role = admin` 或 `moderator` 且 `forum_moderator_assignments` 涵蓋該帖 `topic`（`全部` = 全站）。
 
 **去重：** 同一 `target_id` 在 24 小時內只發一次 alert（避免洗版）。
 

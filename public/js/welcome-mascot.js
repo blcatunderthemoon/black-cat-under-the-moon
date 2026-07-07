@@ -226,20 +226,37 @@
       pauseUntil = Date.now() + 5000;
     });
 
+    function alignBubble() {
+      if (!bubble || bubble.hidden) return;
+      bubble.classList.remove('welcome-mascot__bubble--edge-left', 'welcome-mascot__bubble--edge-right');
+      var rect = bubble.getBoundingClientRect();
+      if (rect.left < 8) {
+        bubble.classList.add('welcome-mascot__bubble--edge-left');
+      } else if (rect.right > window.innerWidth - 8) {
+        bubble.classList.add('welcome-mascot__bubble--edge-right');
+      }
+    }
+
     function randomIdle() {
       if (reducedMotion) return;
       if (walking) return;
       var roll = Math.random();
-      btn.classList.remove('welcome-mascot--tail', 'welcome-mascot--blink', 'welcome-mascot--moon');
-      if (roll < 0.22) {
+      btn.classList.remove('welcome-mascot--tail', 'welcome-mascot--blink', 'welcome-mascot--moon', 'welcome-mascot--sparkle', 'welcome-mascot--whiskers');
+      if (roll < 0.18) {
         btn.classList.add('welcome-mascot--tail');
         setTimeout(function () { btn.classList.remove('welcome-mascot--tail'); }, 1400);
-      } else if (roll < 0.52) {
+      } else if (roll < 0.42) {
         btn.classList.add('welcome-mascot--blink');
         setTimeout(function () { btn.classList.remove('welcome-mascot--blink'); }, 180);
-      } else if (roll < 0.72) {
+      } else if (roll < 0.58) {
         btn.classList.add('welcome-mascot--moon');
         setTimeout(function () { btn.classList.remove('welcome-mascot--moon'); }, 2200);
+      } else if (roll < 0.74) {
+        btn.classList.add('welcome-mascot--sparkle');
+        setTimeout(function () { btn.classList.remove('welcome-mascot--sparkle'); }, 900);
+      } else if (roll < 0.88) {
+        btn.classList.add('welcome-mascot--whiskers');
+        setTimeout(function () { btn.classList.remove('welcome-mascot--whiskers'); }, 400);
       }
     }
 
@@ -287,16 +304,26 @@
       if (!bubble) return;
       pauseUntil = Date.now() + 4000;
       bubble.textContent = pickLine();
-      bubble.classList.add('welcome-mascot__bubble--visible');
       bubble.hidden = false;
+      bubble.classList.remove('welcome-mascot__bubble--edge-left', 'welcome-mascot__bubble--edge-right');
+      bubble.classList.add('welcome-mascot__bubble--visible');
+      requestAnimationFrame(function () {
+        alignBubble();
+        requestAnimationFrame(alignBubble);
+      });
       if (bubbleTimer) clearTimeout(bubbleTimer);
       bubbleTimer = setTimeout(function () {
         bubble.classList.remove('welcome-mascot__bubble--visible');
         bubbleTimer = setTimeout(function () {
           bubble.hidden = true;
+          bubble.classList.remove('welcome-mascot__bubble--edge-left', 'welcome-mascot__bubble--edge-right');
         }, 280);
       }, 2600);
     });
+
+    window.addEventListener('resize', function () {
+      if (bubble && !bubble.hidden) alignBubble();
+    }, { passive: true });
   }
 
   if (document.readyState === 'loading') {

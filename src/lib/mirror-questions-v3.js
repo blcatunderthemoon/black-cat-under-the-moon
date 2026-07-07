@@ -123,7 +123,7 @@ export const MIRROR_PSYCH_QUESTIONS_V3 = [
     part: 2,
     label: 'Q8',
     domain: 'intimacy',
-    text: '你同另一半傾訴，話今日好攰、好想有人陪。對方話：「你已經好叻，自己搞得掂。」你第一個感覺係？',
+    text: '你同另一半傾訴，話今日好攰、好想有人陪。對方話：「你已經好叻架喇，可以自己搞得掂。」你第一個感覺係？',
     type: 'trait_single',
     field: 'm_q8',
     shuffle: true,

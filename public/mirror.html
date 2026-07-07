@@ -23,7 +23,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
 <script src="/js/vendor/html-to-image.min.js"></script>
 <script src="/js/vendor/html2canvas.min.js"></script>
-<link rel="stylesheet" href="css/questionnaire.css?v=20260710r">
+<link rel="stylesheet" href="css/questionnaire.css?v=20260707toggle">
 <link rel="stylesheet" href="css/auth-nav.css">
 <link rel="stylesheet" href="css/mobile-webview-scroll.css?v=20260706safari">
 <link rel="stylesheet" href="css/moon-loading.css?v=20260711n">
@@ -251,8 +251,19 @@
         <a class="mirror-guest-upsell__btn pixel-font" href="/login?redirect=/mirror.html">登入 / 註冊 →</a>
       </div>
       <label class="mirror-download-meta-toggle" id="mirror-download-meta-toggle-wrap" hidden>
-        <input type="checkbox" id="mirror-download-meta-toggle" checked>
-        <span class="mirror-download-meta-toggle__text">顯示標籤 · MBTI · 星座</span>
+        <input type="checkbox" id="mirror-download-meta-toggle" class="mirror-download-meta-toggle__input" checked>
+        <span class="mirror-download-meta-toggle__switch" aria-hidden="true">
+          <span class="mirror-download-meta-toggle__thumb"></span>
+        </span>
+        <span class="mirror-download-meta-toggle__copy">
+          <span class="mirror-download-meta-toggle__lead">顯示標籤</span>
+          <span class="mirror-download-meta-toggle__hint">下載卡片時一併顯示</span>
+        </span>
+        <span class="mirror-download-meta-toggle__preview" aria-hidden="true">
+          <span class="mirror-download-meta-toggle__tag mirror-download-meta-toggle__tag--label">標籤</span>
+          <span class="mirror-download-meta-toggle__tag mirror-download-meta-toggle__tag--mbti">MBTI</span>
+          <span class="mirror-download-meta-toggle__tag mirror-download-meta-toggle__tag--zodiac">星座</span>
+        </span>
       </label>
       <a href="/cat-families" class="mirror-families-btn pixel-font">了解四大貓家族 →</a>
       <button class="mirror-download-btn pixel-font" id="mirror-download-btn" type="button">

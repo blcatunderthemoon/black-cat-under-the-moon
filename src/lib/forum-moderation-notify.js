@@ -3,6 +3,7 @@
  */
 
 import { REPORT_MODERATOR_NOTIFY_THRESHOLD } from './moderation.js';
+import { getModeratorsForStoredTopic } from './forum-moderator-assignments.js';
 import { getAdminClient } from './server-auth.js';
 import { forumListPreviewText } from './forum-list-preview.js';
 import { databaseNowIso } from './hong-kong-time.js';
@@ -67,6 +68,7 @@ export async function notifyForumModerators({
   postTitle,
   preview,
   forumUrl,
+  storedTopic,
 }) {
   if ((reportCount || 0) < REPORT_MODERATOR_NOTIFY_THRESHOLD) return false;
 
@@ -76,11 +78,13 @@ export async function notifyForumModerators({
     return false;
   }
 
-  const { data: moderators } = await admin
-    .from('profiles')
-    .select('id')
-    .in('forum_role', ['moderator', 'admin'])
-    .eq('status', 'active');
+  const moderators = storedTopic
+    ? await getModeratorsForStoredTopic(admin, storedTopic)
+    : (await admin
+      .from('profiles')
+      .select('id')
+      .in('forum_role', ['moderator', 'admin'])
+      .eq('status', 'active')).data || [];
 
   if (!moderators?.length) return false;
 
@@ -129,7 +133,7 @@ export async function buildReportNotifyContext(admin, targetType, targetId) {
   if (targetType === 'post') {
     const { data: post } = await admin
       .from('forum_posts')
-      .select('id, title, content')
+      .select('id, title, content, topic')
       .eq('id', targetId)
       .maybeSingle();
     if (!post) return {};
@@ -137,6 +141,7 @@ export async function buildReportNotifyContext(admin, targetType, targetId) {
       postTitle: post.title,
       preview: forumListPreviewText(post.content, { maxLength: 120 }),
       forumUrl: `/forum/${post.id}`,
+      storedTopic: post.topic,
     };
   }
 
@@ -146,8 +151,14 @@ export async function buildReportNotifyContext(admin, targetType, targetId) {
     .eq('id', targetId)
     .maybeSingle();
   if (!comment) return {};
+  const { data: post } = await admin
+    .from('forum_posts')
+    .select('topic')
+    .eq('id', comment.post_id)
+    .maybeSingle();
   return {
     preview: forumListPreviewText(comment.content, { maxLength: 120 }),
     forumUrl: `/forum/${comment.post_id}#comments`,
+    storedTopic: post?.topic || null,
   };
 }

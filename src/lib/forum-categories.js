@@ -6,7 +6,7 @@
 import { canonicalForumTagKey } from './forum-tags.js';
 
 /** Filter row on /forum (includes 全部). */
-export const FORUM_TOPICS = ['全部', '感情', '社群', '娛樂', '命理', '興趣', '徵友', '親密話題'];
+export const FORUM_TOPICS = ['全部', '感情', '社群', '娛樂', '命理', '興趣', '徵友', '親密話題', '寫故事'];
 
 /** Topics assignable when creating a post (excludes 全部). */
 export const FORUM_POST_TOPICS = FORUM_TOPICS.filter((t) => t !== '全部');
@@ -23,6 +23,7 @@ export const TOPIC_DB_ALIASES = {
   興趣: ['興趣'],
   徵友: ['徵友', '識人徵友'],
   親密話題: ['親密話題'],
+  寫故事: ['寫故事'],
   官方公告: ['官方公告'],
 };
 
@@ -43,6 +44,7 @@ export const TOPIC_STYLES = {
   興趣: { emoji: '🎮', accent: '#4ade80', glow: 'rgba(74, 222, 128, 0.2)' },
   徵友: { emoji: '🌸', accent: '#fb7185', glow: 'rgba(251, 113, 133, 0.22)' },
   親密話題: { emoji: '🌙', accent: '#c084fc', glow: 'rgba(192, 132, 252, 0.22)' },
+  寫故事: { emoji: '📖', accent: '#d4a574', glow: 'rgba(212, 165, 116, 0.24)' },
   官方公告: { emoji: '📢', accent: '#94a3b8', glow: 'rgba(148, 163, 184, 0.2)' },
 };
 

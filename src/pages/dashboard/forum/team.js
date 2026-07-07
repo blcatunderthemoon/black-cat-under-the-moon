@@ -1,11 +1,13 @@
 /**
- * /dashboard/forum/team — assign forum_role (月光守護者 / 管理員)
+ * /dashboard/forum/team — assign forum_role + topic scope (月光守護者 / 管理員)
  */
 
 import { useCallback, useEffect, useState } from 'react';
 import Layout from '../../../components/dashboard/Layout';
 import ForumDashboardNav from '../../../components/dashboard/ForumDashboardNav';
 import { dashFetch, handleDashboardUnauthorized } from '../../../lib/dashboard-fetch.js';
+import { MODERATOR_ASSIGNABLE_TOPICS, formatModeratorTopicsLabel } from '../../../lib/forum-moderator-assignments.js';
+import { TOPIC_STYLES } from '../../../lib/forum-categories.js';
 
 const ROLE_LABELS = {
   member: '一般會員',
@@ -13,15 +15,94 @@ const ROLE_LABELS = {
   admin: '🛡️ 管理員',
 };
 
-function formatDate(iso) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleString('zh-HK', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+function topicChipLabel(topic) {
+  const emoji = TOPIC_STYLES[topic]?.emoji;
+  return emoji ? `${emoji} ${topic}` : topic;
+}
+
+function TopicScopeEditor({ user, disabled, onSave, busy }) {
+  const isAdmin = user.forum_role === 'admin';
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState(user.moderator_topics || ['全部']);
+
+  useEffect(() => {
+    setDraft(user.moderator_topics?.length ? user.moderator_topics : ['全部']);
+  }, [user.id, user.moderator_topics]);
+
+  if (isAdmin) {
+    return <span style={s.scopeLabel}>全部版塊</span>;
+  }
+
+  function toggleTopic(topic) {
+    setDraft((prev) => {
+      if (topic === '全部') return ['全部'];
+      const withoutAll = prev.filter((t) => t !== '全部');
+      if (withoutAll.includes(topic)) {
+        const next = withoutAll.filter((t) => t !== topic);
+        return next.length ? next : ['全部'];
+      }
+      return [...withoutAll, topic];
+    });
+  }
+
+  async function save() {
+    const ok = await onSave(user.id, draft, user.display_name);
+    if (ok) setOpen(false);
+  }
+
+  return (
+    <div style={s.scopeWrap}>
+      <span style={s.scopeLabel}>
+        {formatModeratorTopicsLabel(user.moderator_topics, { emptyLabel: '全部版塊' })}
+      </span>
+      {!open ? (
+        <button
+          type="button"
+          style={s.scopeBtn}
+          disabled={disabled || busy}
+          onClick={() => setOpen(true)}
+        >
+          編輯版塊
+        </button>
+      ) : (
+        <div style={s.topicPicker}>
+          <p style={s.topicPickerHint}>選擇此版主負責的版塊（可多選；「全部」= 所有版塊）</p>
+          <div style={s.topicGrid}>
+            {MODERATOR_ASSIGNABLE_TOPICS.map((topic) => {
+              const checked = draft.includes(topic);
+              return (
+                <label key={topic} style={{ ...s.topicOption, ...(checked ? s.topicOptionOn : {}) }}>
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleTopic(topic)}
+                    style={s.topicCheck}
+                  />
+                  {topicChipLabel(topic)}
+                </label>
+              );
+            })}
+          </div>
+          <div style={s.topicActions}>
+            <button type="button" style={s.scopeBtnPrimary} disabled={busy} onClick={save}>
+              儲存版塊
+            </button>
+            <button
+              type="button"
+              style={s.scopeBtn}
+              disabled={busy}
+              onClick={() => {
+                setDraft(user.moderator_topics?.length ? user.moderator_topics : ['全部']);
+                setOpen(false);
+              }}
+            >
+              取消
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function ForumTeamPage() {
@@ -97,47 +178,74 @@ export default function ForumTeamPage() {
     return () => { cancelled = true; };
   }, [searchQ]);
 
-  async function setRole(userId, forumRole, displayName) {
-    const label = ROLE_LABELS[forumRole] || forumRole;
-    if (forumRole === 'member' && !window.confirm(`確定撤銷「${displayName || userId}」的版主權限？`)) {
-      return;
-    }
-    setBusyId(userId);
+  async function patchModerator(body, displayName, successLabel) {
+    setBusyId(body.user_id);
     setMsg('');
     try {
       const res = await dashFetch('/api/dashboard/forum-moderators', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId, forum_role: forumRole }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!res.ok) {
         if (res.status === 401) {
           handleDashboardUnauthorized();
-          return;
+          return false;
         }
         setMsgOk(false);
         setMsg(data.error || '更新失敗');
-        return;
+        return false;
       }
       setMsgOk(true);
-      setMsg(`✓ 已將 ${displayName || '用戶'} 設為 ${label}`);
+      setMsg(`✓ 已更新 ${displayName || '用戶'}：${successLabel}`);
       await loadStaff();
       if (searchQ) {
         setSearchResults((prev) => prev.map((u) => (
-          u.id === userId ? { ...u, forum_role: forumRole } : u
+          u.id === body.user_id
+            ? {
+              ...u,
+              forum_role: data.forum_role ?? u.forum_role,
+              moderator_topics: data.moderator_topics ?? u.moderator_topics,
+            }
+            : u
         )));
       }
+      return true;
     } catch {
       setMsgOk(false);
       setMsg('網路錯誤，請重試');
+      return false;
     } finally {
       setBusyId(null);
     }
   }
 
+  async function setRole(userId, forumRole, displayName) {
+    const label = ROLE_LABELS[forumRole] || forumRole;
+    if (forumRole === 'member' && !window.confirm(`確定撤銷「${displayName || userId}」的版主權限？`)) {
+      return;
+    }
+
+    const body = { user_id: userId, forum_role: forumRole };
+    if (forumRole === 'moderator') {
+      body.moderator_topics = ['全部'];
+    }
+
+    await patchModerator(body, displayName, label);
+  }
+
+  async function saveTopics(userId, topics, displayName) {
+    return patchModerator(
+      { user_id: userId, moderator_topics: topics },
+      displayName,
+      `負責版塊：${formatModeratorTopicsLabel(topics)}`,
+    );
+  }
+
   function RoleSelect({ user }) {
     const current = user.forum_role || 'member';
+
     return (
       <select
         value={current}
@@ -159,8 +267,9 @@ export default function ForumTeamPage() {
         <ForumDashboardNav />
 
         <p style={s.hint}>
-          指派 <strong>月光守護者</strong>（版主）或 <strong>管理員</strong>。版主可於前台使用守護者工具列；管理員另可硬刪內容。
-          變更會寫入審計日誌。
+          指派 <strong>月光守護者</strong>（版主）或 <strong>管理員</strong>。
+          版主可指定負責 <strong>全部版塊</strong> 或個別分類（如感情、社群）；
+          管理員自動擁有全部版塊權限。變更會寫入審計日誌。
         </p>
 
         {msg && (
@@ -181,6 +290,7 @@ export default function ForumTeamPage() {
                     <th style={s.th}>顯示名稱</th>
                     <th style={s.th}>Email</th>
                     <th style={s.th}>角色</th>
+                    <th style={s.th}>負責版塊</th>
                     <th style={s.th}>狀態</th>
                     <th style={s.th}>操作</th>
                   </tr>
@@ -191,6 +301,14 @@ export default function ForumTeamPage() {
                       <td style={s.td}>{user.display_name || '—'}</td>
                       <td style={s.td}>{user.email || user.id.slice(0, 8)}</td>
                       <td style={s.td}>{ROLE_LABELS[user.forum_role] || user.forum_role}</td>
+                      <td style={s.td}>
+                        <TopicScopeEditor
+                          user={user}
+                          disabled={busyId === user.id}
+                          busy={busyId === user.id}
+                          onSave={saveTopics}
+                        />
+                      </td>
                       <td style={s.td}>{user.status || 'active'}</td>
                       <td style={s.td}>
                         <RoleSelect user={user} />
@@ -288,6 +406,54 @@ const s = {
   td: {
     padding: '10px 12px',
     borderBottom: '1px solid #1a1830',
-    verticalAlign: 'middle',
+    verticalAlign: 'top',
   },
+  scopeWrap: { display: 'flex', flexDirection: 'column', gap: 8, minWidth: 160 },
+  scopeLabel: { fontSize: 12, color: '#d4c5f9', lineHeight: 1.5 },
+  scopeBtn: {
+    alignSelf: 'flex-start',
+    padding: '4px 10px',
+    borderRadius: 6,
+    border: '1px solid #2a2850',
+    background: 'transparent',
+    color: '#bd93f9',
+    fontSize: 12,
+    cursor: 'pointer',
+  },
+  scopeBtnPrimary: {
+    alignSelf: 'flex-start',
+    padding: '6px 12px',
+    borderRadius: 6,
+    border: '1px solid #7c5cbf',
+    background: '#2a1848',
+    color: '#f0e8ff',
+    fontSize: 12,
+    cursor: 'pointer',
+  },
+  topicPicker: {
+    padding: 10,
+    borderRadius: 8,
+    border: '1px solid #2a2850',
+    background: '#0a0c1a',
+  },
+  topicPickerHint: { margin: '0 0 8px', fontSize: 11, color: '#9490b0', lineHeight: 1.5 },
+  topicGrid: { display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 },
+  topicOption: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    padding: '4px 8px',
+    borderRadius: 999,
+    border: '1px solid #2a2850',
+    fontSize: 11,
+    color: '#c4b5fd',
+    cursor: 'pointer',
+  },
+  topicOptionOn: {
+    borderColor: '#7c5cbf',
+    background: 'rgba(124, 92, 191, 0.2)',
+    color: '#f0e8ff',
+  },
+  topicCheck: { margin: 0 },
+  topicActions: { display: 'flex', gap: 8, flexWrap: 'wrap' },
 };
