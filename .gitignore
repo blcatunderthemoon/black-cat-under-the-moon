@@ -32,8 +32,18 @@ src/pages/dashboard/**
 !src/pages/dashboard/forum/**
 src/pages/api/dashboard/**
 !src/pages/api/dashboard/ping.js
+!src/pages/api/dashboard/forum-moderators.js
 src/components/dashboard/
+!src/components/dashboard/Layout.js
+!src/components/dashboard/Sidebar.js
+!src/components/dashboard/Header.js
+!src/components/dashboard/ForumDashboardNav.js
 src/styles/dashboard/
+!src/styles/dashboard/Layout.module.css
+!src/styles/dashboard/Sidebar.module.css
+!src/styles/dashboard/Header.module.css
+!src/styles/dashboard/ForumDashboardNav.module.css
+!src/styles/dashboard/globals.css
 src/lib/seed-data.js
 
 # Internal scripts (build scripts below are committed for Vercel)
