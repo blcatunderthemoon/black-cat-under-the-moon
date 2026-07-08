@@ -22,6 +22,7 @@ const nextConfig = {
       "base-uri 'self'",
       "form-action 'self'",
       "frame-ancestors 'none'",
+      "trusted-types twKxV6 default goog#html nextjs nextjs#bundler ProseMirrorClipboard",
     ].join('; ');
 
     const corsImageHeaders = [

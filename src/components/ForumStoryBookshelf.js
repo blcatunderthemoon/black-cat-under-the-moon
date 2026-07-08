@@ -37,6 +37,9 @@ export default function ForumStoryBookshelf({
                 )}
                 <Link href={href} className={`forum-story-book__link${post.members_gated ? ' forum-story-book__link--gated' : ''}`}>
                   <div className="forum-story-book__cover-wrap">
+                    {post.story_completed && (
+                      <span className="forum-story-book__complete-ribbon" aria-label="已完結">完結</span>
+                    )}
                     {post.cover_image_url ? (
                       <img
                         className="forum-story-book__cover"

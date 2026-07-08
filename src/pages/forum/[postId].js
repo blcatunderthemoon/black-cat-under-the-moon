@@ -2,7 +2,7 @@
  * /forum/[postId] — Post detail + comments
  */
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, useSyncExternalStore } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -37,6 +37,24 @@ import {
   readForumPostBootstrap,
   writeForumPostCache,
 } from '../../lib/forum-post-cache.js';
+
+function mergeStoryPostFields(prevPost, nextPost) {
+  if (!prevPost || !nextPost) return nextPost || prevPost;
+  const merged = { ...prevPost, ...nextPost };
+  if (nextPost.cover_image_url == null && prevPost.cover_image_url) {
+    merged.cover_image_url = prevPost.cover_image_url;
+  }
+  if ((nextPost.synopsis == null || nextPost.synopsis === '') && prevPost.synopsis) {
+    merged.synopsis = prevPost.synopsis;
+  }
+  if (nextPost.view_count == null && prevPost.view_count != null) {
+    merged.view_count = prevPost.view_count;
+  }
+  if (nextPost.story_completed == null && prevPost.story_completed != null) {
+    merged.story_completed = prevPost.story_completed;
+  }
+  return merged;
+}
 
 function AuthorLinks({ author, isMine }) {
   return (
@@ -133,8 +151,9 @@ export default function ForumPostPage() {
     if (bootstrap?.post && isStoryPost(bootstrap.post) && !Array.isArray(bootstrap.chapters)) {
       const stored = readStoredAuthSession();
       const token = stored?.access_token ?? null;
-      const headers = {};
-      if (token) headers.Authorization = `Bearer ${token}`;
+      if (!token) return undefined;
+
+      const headers = { Authorization: `Bearer ${token}` };
 
       let cancelled = false;
       fetch(`/api/forum/posts/${encodeURIComponent(postId)}/chapters`, { headers })
@@ -174,7 +193,8 @@ export default function ForumPostPage() {
 
     let cancelled = false;
     const bootstrap = readForumPostBootstrap(postId);
-    const prefetchChapters = bootstrap?.post
+    const prefetchChapters = token
+      && bootstrap?.post
       && isStoryPost(bootstrap.post)
       && !Array.isArray(bootstrap.chapters);
 
@@ -198,8 +218,16 @@ export default function ForumPostPage() {
         if (cancelled || seq !== loadSeqRef.current) return;
         setLoadError(null);
         setLoadErrorCode('');
-        setData(payload);
-        writeForumPostCache(postId, payload);
+        setData((prev) => {
+          const next = !prev?.post || !payload?.post
+            ? payload
+            : {
+              ...payload,
+              post: mergeStoryPostFields(prev.post, payload.post),
+            };
+          writeForumPostCache(postId, next);
+          return next;
+        });
         loadedTokenRef.current = token;
       })
       .catch((e) => {
@@ -228,6 +256,7 @@ export default function ForumPostPage() {
 
     const stored = readStoredAuthSession();
     const token = session?.access_token ?? stored?.access_token ?? null;
+    if (!token) return undefined;
     const headers = {};
     if (token) headers.Authorization = `Bearer ${token}`;
 
@@ -581,6 +610,13 @@ export default function ForumPostPage() {
     [comments],
   );
 
+  const storedAccessToken = useSyncExternalStore(
+    () => () => {},
+    () => readStoredAuthSession()?.access_token ?? null,
+    () => null,
+  );
+  const accessToken = session?.access_token ?? storedAccessToken;
+
   const post = data?.post;
   const storyChapters = data?.chapters;
   const isStoryReading = !!(post && isStoryPost(post) && router.query.read === '1');
@@ -592,7 +628,13 @@ export default function ForumPostPage() {
   const handlePostUpdate = useCallback((patch) => {
     setData((d) => {
       if (!d?.post) return d;
-      const next = { ...d, post: { ...d.post, ...patch } };
+      const cleaned = Object.fromEntries(
+        Object.entries(patch).filter(([, value]) => value !== undefined),
+      );
+      const next = {
+        ...d,
+        post: mergeStoryPostFields(d.post, { ...d.post, ...cleaned }),
+      };
       if (postId) writeForumPostCache(postId, next);
       return next;
     });
@@ -710,8 +752,8 @@ export default function ForumPostPage() {
         ) : (
           <ForumSectionErrorBoundary fallbackLabel="貼文">
           <>
-            <div className="forum-post-detail-stack">
-              {post.viewer_can_moderate && session?.access_token && (
+            <div className={`forum-post-detail-stack${isStoryReading ? ' forum-post-detail-stack--story-reading' : ''}`}>
+              {post.viewer_can_moderate && session?.access_token && !isStoryReading && (
                 <ForumModToolbar
                   post={post}
                   accessToken={session.access_token}
@@ -726,9 +768,11 @@ export default function ForumPostPage() {
                 <ForumStoryReader
                   post={post}
                   chapters={storyChapters}
+                  chapterCount={data?.chapter_count}
                   pollsById={pollsById}
-                  loggedIn={!!session}
-                  accessToken={session?.access_token}
+                  loggedIn={!!accessToken}
+                  loginHref={`/login?redirect=${encodeURIComponent(router.asPath)}`}
+                  accessToken={accessToken}
                   onPollVote={handlePollVote}
                   onLike={handleLike}
                   onBookmark={handleBookmark}

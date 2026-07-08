@@ -19,7 +19,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Post ID required' });
   }
 
-  if (req.method === 'GET') return handleGet(res, id);
+  if (req.method === 'GET') return handleGet(req, res, id);
   if (req.method === 'POST') return handlePost(req, res, id);
   return res.status(405).json({ error: 'Method not allowed' });
 }
@@ -35,7 +35,13 @@ async function loadStoryPost(admin, postId) {
   return data;
 }
 
-async function handleGet(res, postId) {
+async function handleGet(req, res, postId) {
+  try {
+    await requireUser(req);
+  } catch (err) {
+    return sendAuthError(res, err);
+  }
+
   const admin = getAdminClient();
   const post = await loadStoryPost(admin, postId);
   if (!post) return res.status(404).json({ error: 'Story not found' });

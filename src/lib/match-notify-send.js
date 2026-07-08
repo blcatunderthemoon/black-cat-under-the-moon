@@ -18,6 +18,8 @@ import {
   resolveResponseAuthUserId,
   resolveResponseDeliveryEmail,
 } from './match-response-auth.js';
+import { applyMatchTestEmailRedirection, isMatchTestEmailMode } from './match-test-email.js';
+import { isSuccessfulSentMatchNote } from './match-sent-record.js';
 import { buildMatchCardHtml } from '../pages/api/match_card/template.js';
 
 function getSupabase() {
@@ -78,8 +80,9 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
   const userMap = Object.fromEntries((users || []).map((u) => [Number(u.id), u]));
   const premiumCtx = await buildMatchResponsePremiumContext(users || []);
 
-  const { data: sentRows } = await supabase.from('sent_matches').select('user_a_id, user_b_id, sent_at');
-  const monthlyCounts = buildMonthlyMatchCounts(sentRows || []);
+  const { data: sentRows } = await supabase.from('sent_matches').select('user_a_id, user_b_id, sent_at, notes');
+  const successfulSentRows = (sentRows || []).filter((row) => isSuccessfulSentMatchNote(row.notes));
+  const monthlyCounts = buildMonthlyMatchCounts(successfulSentRows);
 
   const quotaFor = (row) =>
     getResponseMatchQuota(
@@ -112,7 +115,7 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
     if (authA && !userA.user_id) authA = await linkResponseToAuthUser(supabase, userA, authA);
     if (authB && !userB.user_id) authB = await linkResponseToAuthUser(supabase, userB, authB);
 
-    const shouldDeliverInbox = deliverInbox || (hasPremium && !!(authA || authB));
+    const shouldDeliverInbox = deliverInbox || hasPremium;
 
     if (!skipQuotaCheck && !pairCanDeliverMatch(quotaA, quotaB)) {
       results.push({
@@ -134,11 +137,13 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
     const deliveries = [];
 
     for (const [receiver, partner] of [[userA, userB], [userB, userA]]) {
-      const toEmail = await resolveResponseDeliveryEmail(supabase, receiver);
-      if (!toEmail) {
+      const intendedEmail = await resolveResponseDeliveryEmail(supabase, receiver);
+      if (!intendedEmail) {
         deliveries.push({ to: receiver.id, skipped: true, reason: 'No email address' });
         continue;
       }
+
+      const { to: toEmail, redirected, original } = applyMatchTestEmailRedirection(intendedEmail);
 
       try {
         const cardHtml = buildMatchCardHtml({
@@ -150,10 +155,11 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
         });
         const safeA = String(receiver.name).replace(/[^\w\u4e00-\u9fff]/g, '_');
         const safeB = String(partner.name).replace(/[^\w\u4e00-\u9fff]/g, '_');
+        const subjectPrefix = redirected ? `[TEST → ${original}] ` : '';
         await transporter.sendMail({
           from: `"Black Cat Under The Moon" <${process.env.GMAIL_USER}>`,
           to: toEmail,
-          subject: `你與 ${partner.name} 配對成功 ✨ | Black Cat Under The Moon`,
+          subject: `${subjectPrefix}你與 ${partner.name} 配對成功 ✨ | Black Cat Under The Moon`,
           html: buildEmailHtml({ receiver, partner, score }),
           text: buildTextEmail({ receiver, partner, score }),
           attachments: [{
@@ -162,7 +168,12 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
             contentType: 'text/html; charset=utf-8',
           }],
         });
-        deliveries.push({ to: receiver.id, delivered: true });
+        deliveries.push({
+          to: receiver.id,
+          delivered: true,
+          redirected_to: redirected ? toEmail : undefined,
+          intended_email: redirected ? original : undefined,
+        });
       } catch (err) {
         deliveries.push({ to: receiver.id, delivered: false, error: err.message });
       }
@@ -185,22 +196,32 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
     if (anyDelivered) noteParts.push('郵件已送出');
     if (inbox?.delivered) noteParts.push('Inbox 已投送');
     if (hasPremium) noteParts.push('Moonlight Passport');
+    if (isMatchTestEmailMode()) noteParts.push('測試信箱');
 
-    await supabase.from('sent_matches').upsert(
-      {
-        user_a_id: normA,
-        user_b_id: normB,
-        match_score: score,
-        notes: noteParts.length ? `自動記錄（${noteParts.join('、')}）` : '自動記錄（發送失敗）',
-      },
-      { onConflict: 'user_a_id,user_b_id', ignoreDuplicates: false },
-    );
+    if (anyDelivered || inbox?.delivered) {
+      await supabase.from('sent_matches').upsert(
+        {
+          user_a_id: normA,
+          user_b_id: normB,
+          match_score: score,
+          notes: `自動記錄（${noteParts.join('、')}）`,
+        },
+        { onConflict: 'user_a_id,user_b_id', ignoreDuplicates: false },
+      );
 
-    await supabase
-      .from('email_drafts')
-      .delete()
-      .eq('user_a_id', normA)
-      .eq('user_b_id', normB);
+      await supabase
+        .from('email_drafts')
+        .delete()
+        .eq('user_a_id', normA)
+        .eq('user_b_id', normB);
+    } else if (hasPremium) {
+      // Remove phantom records that blocked re-send without real delivery.
+      await supabase
+        .from('sent_matches')
+        .delete()
+        .eq('user_a_id', normA)
+        .eq('user_b_id', normB);
+    }
 
     results.push({
       userAId: aId,
@@ -212,7 +233,8 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
       user_b_quota: quotaB,
       deliveries,
       inbox,
-      recorded: true,
+      recorded: anyDelivered || !!inbox?.delivered,
+      test_email_mode: isMatchTestEmailMode(),
     });
   }
 

@@ -45,15 +45,20 @@ export async function fetchStoryChapters(admin, post) {
   return data;
 }
 
-export function serializeStoryChapters(chapters) {
+export function serializeStoryChapters(chapters, { includeContent = true } = {}) {
   return (chapters || []).map((ch) => ({
     id: ch.id,
     chapter_number: ch.chapter_number,
     title: ch.title || null,
     display_title: chapterDisplayTitle(ch),
-    content: ch.content,
+    ...(includeContent ? { content: ch.content } : {}),
     created_at: ch.created_at,
   }));
+}
+
+/** Chapter list metadata only (no body) — for locked previews if needed. */
+export function serializeStoryChapterMeta(chapters) {
+  return serializeStoryChapters(chapters, { includeContent: false });
 }
 
 export function getChapterByNumber(chapters, chapterNumber) {

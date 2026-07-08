@@ -26,6 +26,8 @@ function listPostToBootstrap(listPost, tagLabels = {}) {
       is_highlighted: listPost.is_highlighted,
       cover_image_url: listPost.cover_image_url,
       synopsis: listPost.synopsis,
+      view_count: listPost.view_count ?? 0,
+      story_completed: !!listPost.story_completed,
       content_truncated: listPost.content_truncated,
       members_gated: listPost.members_gated,
       author: {

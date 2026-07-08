@@ -30,6 +30,10 @@ export default function ForumStoryReadingView({
 
   const totalChapters = chapters.length;
   const progressLabel = totalChapters > 0 ? `第 ${currentNum} / ${totalChapters} 章` : '';
+  const chapterTitle = chapter.display_title || chapterDisplayTitle(chapter);
+  const isGenericChapterTitle = /^第\s*\d+\s*章$/.test(String(chapterTitle).trim());
+  const showChapterNav = totalChapters > 1;
+  const showChapterHeading = showChapterNav || !isGenericChapterTitle;
 
   if (!chapter) {
     return (
@@ -43,10 +47,10 @@ export default function ForumStoryReadingView({
   }
 
   return (
-    <article className={`forum-story-reading forum-story-reading--${READ_MODE}`}>
-      <header className="forum-story-reading__header">
-        <div className="forum-story-reading__header-card">
-          <div className="forum-story-reading__header-row">
+    <article className={`forum-story-reading forum-story-reading--${READ_MODE}${showChapterNav ? '' : ' forum-story-reading--solo'}`}>
+      <div className="forum-story-reading__sheet">
+        <header className="forum-story-reading__header">
+          <div className="forum-story-reading__topbar">
             <button type="button" className="forum-story-reading__back" onClick={onExitRead}>
               <span className="forum-story-reading__back-icon" aria-hidden="true">←</span>
               返回書頁
@@ -56,7 +60,7 @@ export default function ForumStoryReadingView({
             )}
           </div>
 
-          {totalChapters > 0 && (
+          {showChapterNav && (
             <div
               className="forum-story-reading__progress-track"
               role="progressbar"
@@ -74,51 +78,52 @@ export default function ForumStoryReadingView({
 
           <div className="forum-story-reading__meta">
             <p className="forum-story-reading__book-title">{post.title || '無題'}</p>
-            <div className="forum-story-reading__chapter-row">
-              <button
-                type="button"
-                className="forum-story-reading__chapter-step forum-story-reading__chapter-step--prev"
-                disabled={!prevChapter}
-                onClick={() => prevChapter && onGoChapter(prevChapter.chapter_number)}
-                aria-label={
-                  prevChapter
-                    ? `上一章：${prevChapter.display_title || chapterDisplayTitle(prevChapter)}`
-                    : '已是第一章'
-                }
-              >
-                <span className="forum-story-reading__chapter-step-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="15 18 9 12 15 6" />
-                  </svg>
-                </span>
-              </button>
-              <h1 className="forum-story-reading__chapter-title">
-                {chapter.display_title || chapterDisplayTitle(chapter)}
-              </h1>
-              <button
-                type="button"
-                className="forum-story-reading__chapter-step forum-story-reading__chapter-step--next"
-                disabled={!nextChapter}
-                onClick={() => nextChapter && onGoChapter(nextChapter.chapter_number)}
-                aria-label={
-                  nextChapter
-                    ? `下一章：${nextChapter.display_title || chapterDisplayTitle(nextChapter)}`
-                    : '已是最後一章'
-                }
-              >
-                <span className="forum-story-reading__chapter-step-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="9 18 15 12 9 6" />
-                  </svg>
-                </span>
-              </button>
-            </div>
+            {showChapterHeading && (
+              showChapterNav ? (
+                <div className="forum-story-reading__chapter-row">
+                  <button
+                    type="button"
+                    className="forum-story-reading__chapter-step forum-story-reading__chapter-step--prev"
+                    disabled={!prevChapter}
+                    onClick={() => prevChapter && onGoChapter(prevChapter.chapter_number)}
+                    aria-label={
+                      prevChapter
+                        ? `上一章：${prevChapter.display_title || chapterDisplayTitle(prevChapter)}`
+                        : '已是第一章'
+                    }
+                  >
+                    <span className="forum-story-reading__chapter-step-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="15 18 9 12 15 6" />
+                      </svg>
+                    </span>
+                  </button>
+                  <h1 className="forum-story-reading__chapter-title">{chapterTitle}</h1>
+                  <button
+                    type="button"
+                    className="forum-story-reading__chapter-step forum-story-reading__chapter-step--next"
+                    disabled={!nextChapter}
+                    onClick={() => nextChapter && onGoChapter(nextChapter.chapter_number)}
+                    aria-label={
+                      nextChapter
+                        ? `下一章：${nextChapter.display_title || chapterDisplayTitle(nextChapter)}`
+                        : '已是最後一章'
+                    }
+                  >
+                    <span className="forum-story-reading__chapter-step-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="9 18 15 12 9 6" />
+                      </svg>
+                    </span>
+                  </button>
+                </div>
+              ) : (
+                <h1 className="forum-story-reading__chapter-title forum-story-reading__chapter-title--solo">{chapterTitle}</h1>
+              )
+            )}
           </div>
-        </div>
-      </header>
+        </header>
 
-      <div className={`forum-story-reader__book forum-story-reader__book--${READ_MODE} forum-story-reading__book`}>
-        <span className="forum-story-reader__book-spine" aria-hidden="true" />
         <div className={`forum-story-reader__page forum-story-reader__page--${READ_MODE} forum-story-reading__page`}>
           <ForumMarkdownBody
             content={chapter.content}

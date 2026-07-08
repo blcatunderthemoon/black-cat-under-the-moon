@@ -1,0 +1,674 @@
+import { useState, useCallback, useEffect } from 'react';
+import styles from '../../styles/dashboard/EmailAutomation.module.css';
+import { useAdminApi } from '../../lib/admin-api-context.js';
+
+const DIM_KEYS = ['attraction', 'emotional', 'lifestyle', 'communication', 'relationship', 'conflictSafety'];
+const DIM_LABELS = ['🔥 火花', '💞 情感', '📅 步調', '💬 溝通', '💑 期望', '🛡️ 安全感'];
+
+function scoreColor(s) {
+  if (s == null) return '#a89cc8';
+  if (s >= 60) return '#4ade80';
+  if (s >= 40) return '#fbbf24';
+  return '#f87171';
+}
+
+/** Derive the stable pair key used as checkbox map key */
+function pairKey(p) {
+  return `${p.user_a_id}:${p.user_b_id}`;
+}
+
+function MatchQuotaBadge({ quota }) {
+  if (!quota) return null;
+  if (quota.is_premium) {
+    return <span className={styles.quotaBadgePremium}>🌙 無限制</span>;
+  }
+  const full = quota.at_limit;
+  return (
+    <span className={`${styles.quotaBadge} ${full ? styles.quotaBadgeFull : ''}`}>
+      本月 {quota.used}/{quota.limit}
+    </span>
+  );
+}
+
+export function EmailAutomationPanel() {
+  const apiFetch = useAdminApi();
+  // ── Filter ────────────────────────────────────────────────────────────────
+  const [minScore, setMinScore] = useState('60');
+  const [loadingPairs, setLoadingPairs] = useState(false);
+
+  // ── Pairs data ────────────────────────────────────────────────────────────
+  const [pairs, setPairs] = useState(null);       // null = not loaded yet
+  const [pairsTotal, setPairsTotal] = useState(0);
+  const [pairsSummary, setPairsSummary] = useState(null);
+  const [testEmailMode, setTestEmailMode] = useState(false);
+  const [testEmail, setTestEmail] = useState('');
+  const [sentFilter, setSentFilter] = useState('unsent'); // 'unsent' | 'sent' | 'all'
+  const [hideQuotaFull, setHideQuotaFull] = useState(true);
+  const [viewMode, setViewMode] = useState('all'); // 'all' | 'premium'
+
+  // ── Drafts data ───────────────────────────────────────────────────────────
+  const [drafts, setDrafts] = useState(null);
+  const [loadingDrafts, setLoadingDrafts] = useState(false);
+
+  // ── Checkbox state ────────────────────────────────────────────────────────
+  const [checked, setChecked] = useState({});     // { "aId:bId": true }
+
+  // ── Action state ──────────────────────────────────────────────────────────
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [sending, setSending]         = useState(false);
+  const [sendResults, setSendResults] = useState(null);   // per-pair result map
+
+  // ── Draft-row send/delete state ───────────────────────────────────────────
+  const [draftActionId, setDraftActionId] = useState(null);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Fetch helpers
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const fetchPairs = useCallback(async () => {
+    setLoadingPairs(true);
+    setChecked({});
+    setSendResults(null);
+    try {
+      const params = new URLSearchParams({ mode: 'pairs', minScore: minScore || '0' });
+      if (viewMode === 'premium') params.set('premium_only', '1');
+      const res  = await apiFetch(`/api/dashboard/email-automation?${params}`);
+      const data = await res.json();
+      setPairs(data.pairs || []);
+      setPairsTotal(data.total || 0);
+      setPairsSummary(data.summary || null);
+      setTestEmailMode(!!data.test_email_mode);
+      setTestEmail(data.test_email || '');
+    } catch {
+      setPairs([]);
+      setPairsSummary(null);
+    } finally {
+      setLoadingPairs(false);
+    }
+  }, [minScore, viewMode, apiFetch]);
+
+  const fetchDrafts = useCallback(async () => {
+    setLoadingDrafts(true);
+    try {
+      const res  = await apiFetch('/api/dashboard/email-automation?mode=drafts');
+      const data = await res.json();
+      setDrafts(data.drafts || []);
+    } catch {
+      setDrafts([]);
+    } finally {
+      setLoadingDrafts(false);
+    }
+  }, [apiFetch]);
+
+  // Load both on first render
+  const initialLoad = useCallback(() => {
+    fetchPairs();
+    fetchDrafts();
+  }, [fetchPairs, fetchDrafts]);
+
+  useEffect(() => {
+    if (pairs !== null) fetchPairs();
+  }, [viewMode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Checkbox helpers
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const isPairSelectable = (p) => !p.quota_blocked;
+
+  const toggleRow = (p) => {
+    if (!isPairSelectable(p)) return;
+    const key = pairKey(p);
+    setChecked((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const selectAll = () => {
+    const next = {};
+    visiblePairs.forEach((p) => {
+      if (isPairSelectable(p)) next[pairKey(p)] = true;
+    });
+    setChecked(next);
+  };
+
+  const deselectAll = () => setChecked({});
+
+  const visiblePairs = (pairs || []).filter((p) => {
+    if (sentFilter === 'unsent' && p.already_sent) return false;
+    if (sentFilter === 'sent' && !p.already_sent) return false;
+    if (hideQuotaFull && p.quota_blocked) return false;
+    return true;
+  });
+  const unsentCount = (pairs || []).filter((p) => !p.already_sent).length;
+  const sentCount = (pairs || []).filter((p) => p.already_sent).length;
+  const selectedPairs = visiblePairs.filter((p) => isPairSelectable(p) && checked[pairKey(p)]);
+  const selectedCount = selectedPairs.length;
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Save draft
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const handleSaveDraft = async () => {
+    if (!selectedCount) return;
+    setSavingDraft(true);
+    try {
+      const payload = selectedPairs.map((p) => ({
+        userAId:         p.user_a_id,
+        userBId:         p.user_b_id,
+        match_score:     p.match_score,
+        score_breakdown: p.score_breakdown || null,
+      }));
+      const res  = await apiFetch('/api/dashboard/create-gmail-drafts', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ pairs: payload }),
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(`存入 Gmail 草稿失敗：${data.error}\n${data.hint || ''}`); return; }
+      await Promise.all([fetchPairs(), fetchDrafts()]);
+      setChecked({});
+    } finally {
+      setSavingDraft(false);
+    }
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Send emails (for selected pairs OR a specific draft pair)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const doSend = async (pairsToSend, { deliverInbox = false } = {}) => {
+    setSending(true);
+    setSendResults(null);
+    try {
+      const payload = pairsToSend.map((p) => ({
+        userAId:         p.user_a_id ?? p.userAId,
+        userBId:         p.user_b_id ?? p.userBId,
+        match_score:     p.match_score,
+        score_breakdown: p.score_breakdown || null,
+      }));
+      const res  = await apiFetch('/api/dashboard/send-emails', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ pairs: payload, deliver_inbox: deliverInbox }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(`發送失敗：${data.error || res.status}\n${data.hint || ''}`);
+        return;
+      }
+
+      const failures = (data.results || []).filter((r) => !r.recorded);
+      if (failures.length) {
+        const lines = failures.map((r) => {
+          const emailErrors = (r.deliveries || [])
+            .filter((d) => d.delivered === false)
+            .map((d) => d.error || d.reason)
+            .filter(Boolean);
+          const inboxReason = r.inbox?.reason;
+          return `#${r.userAId}×#${r.userBId}: ${emailErrors.join('; ') || inboxReason || r.error || '未知錯誤'}`;
+        });
+        alert(`部分配對未成功投送（可重新發送）：\n${lines.join('\n')}`);
+      }
+
+      // Build a result map keyed by normalised pair key for inline display
+      const resultMap = {};
+      for (const r of data.results || []) {
+        const [a, b] = r.userAId <= r.userBId ? [r.userAId, r.userBId] : [r.userBId, r.userAId];
+        resultMap[`${a}:${b}`] = r;
+      }
+      setSendResults(resultMap);
+
+      // Refresh data
+      await Promise.all([fetchPairs(), fetchDrafts()]);
+      setChecked({});
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleSendSelected = () => {
+    if (!selectedCount) return;
+    const deliverInbox = selectedPairs.some((p) => p.has_premium);
+    const label = deliverInbox ? 'Email + Inbox（Passport 即時）' : 'Email';
+    if (!confirm(`確認發送 ${selectedCount} 對連線通知（${label}）？此操作不可撤回。`)) return;
+    doSend(selectedPairs, { deliverInbox });
+  };
+
+  const handleSendPremiumInstant = () => {
+    const ready = (pairs || []).filter((p) => p.premium_instant_ready && !p.already_sent);
+    if (!ready.length) {
+      alert('暫無可即時發送的 Moonlight Passport 連線（需雙方已認領問卷且配額未滿）');
+      return;
+    }
+    if (!confirm(`確認即時發送 ${ready.length} 對 Moonlight Passport 連線（Email + Inbox）？`)) return;
+    doSend(ready, { deliverInbox: true });
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Draft actions
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const handleDeleteDraft = async (draft) => {
+    if (!confirm(`確認刪除此草稿？`)) return;
+    setDraftActionId(draft.id);
+    try {
+      await apiFetch(`/api/dashboard/email-automation?draftId=${draft.id}`, { method: 'DELETE' });
+      await fetchDrafts();
+    } finally {
+      setDraftActionId(null);
+    }
+  };
+
+  const handleSendDraft = async (draft) => {
+    if (!confirm(`確認發送此草稿連線通知郵件？`)) return;
+    setDraftActionId(draft.id);
+    try {
+      await doSend(
+        [{ user_a_id: draft.user_a_id, user_b_id: draft.user_b_id, match_score: draft.match_score }],
+        { deliverInbox: false },
+      );
+    } finally {
+      setDraftActionId(null);
+    }
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Render helpers
+  // ─────────────────────────────────────────────────────────────────────────
+
+  function renderSendStatus(key) {
+    if (!sendResults) return null;
+    const r = sendResults[key];
+    if (!r) return null;
+    if (r.error) return <span className={`${styles.badge} ${styles.badgeError}`}>❌ 失敗</span>;
+    // Draft result
+    if (r.draftsCreated) {
+      const allOk = r.draftsCreated.every((d) => d.saved || d.skipped);
+      return allOk
+        ? <span className={`${styles.badge} ${styles.badgeDraft}`}>📝 Gmail 草稿已建立</span>
+        : <span className={`${styles.badge} ${styles.badgeError}`}>⚠ 部分失敗</span>;
+    }
+    // Send result
+    const allOk = r.deliveries?.every((d) => d.delivered || d.skipped) && (r.inbox_delivered || !r.has_premium || r.inbox?.delivered !== false);
+    const recorded = r.recorded;
+    if (!recorded) {
+      return <span className={`${styles.badge} ${styles.badgeError}`}>❌ 未投送</span>;
+    }
+    return allOk
+      ? <span className={`${styles.badge} ${styles.badgeSuccess}`}>✅ 已送出</span>
+      : <span className={`${styles.badge} ${styles.badgeError}`}>⚠ 部分失敗</span>;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // JSX
+  // ─────────────────────────────────────────────────────────────────────────
+
+  return (
+    <div className={styles.page}>
+
+        {testEmailMode && (
+          <div className={styles.testBanner}>
+            🧪 測試模式：所有配對 email 會轉去 <strong>{testEmail}</strong>（Inbox 仍投送給實際帳號）
+          </div>
+        )}
+
+        {/* ── Filter bar ─────────────────────────────────────────────────── */}
+        <div className={styles.filterBar}>
+          <div className={styles.filterGroup}>
+            <label className={styles.filterLabel}>最低配對分數（0–100）</label>
+            <input
+              className={styles.filterInput}
+              type="number"
+              min={0}
+              max={100}
+              placeholder="例：60"
+              value={minScore}
+              onChange={(e) => setMinScore(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && initialLoad()}
+            />
+          </div>
+          <button
+            className={styles.loadBtn}
+            onClick={initialLoad}
+            disabled={loadingPairs}
+          >
+            {loadingPairs ? '計算中…' : '載入配對'}
+          </button>
+        </div>
+
+        {/* ── Moonlight Passport instant queue ───────────────────────────── */}
+        {pairsSummary && (
+          <div className={styles.premiumPanel}>
+            <div className={styles.premiumPanelHead}>
+              <div>
+                <p className={styles.premiumPanelTitle}>⚡ Moonlight Passport 即時連線</p>
+                <p className={styles.premiumPanelCopy}>
+                  付費會員配額無限制。已認領問卷且雙方 Inbox 就緒的配對，可一鍵發送 Email + Inbox 高亮。
+                </p>
+              </div>
+              <button
+                type="button"
+                className={styles.premiumInstantBtn}
+                onClick={handleSendPremiumInstant}
+                disabled={sending || !pairsSummary.premium_instant_ready}
+              >
+                {sending ? '發送中…' : `即時發送全部（${pairsSummary.premium_instant_ready}）`}
+              </button>
+            </div>
+            <div className={styles.premiumStats}>
+              <span>🌙 含 Passport 配對：<strong>{pairsSummary.premium_pairs}</strong></span>
+              <span>⚡ 可即時發送：<strong>{pairsSummary.premium_instant_ready}</strong></span>
+              <span>⚠ 配額已滿：<strong>{pairsSummary.quota_blocked}</strong></span>
+            </div>
+          </div>
+        )}
+
+        {/* ── View mode tabs ─────────────────────────────────────────────── */}
+        <div className={styles.viewTabs}>
+          <button
+            type="button"
+            className={`${styles.viewTab} ${viewMode === 'all' ? styles.viewTabActive : ''}`}
+            onClick={() => setViewMode('all')}
+          >
+            全部配對
+          </button>
+          <button
+            type="button"
+            className={`${styles.viewTab} ${viewMode === 'premium' ? styles.viewTabActive : ''}`}
+            onClick={() => setViewMode('premium')}
+          >
+            🌙 Moonlight Passport
+          </button>
+        </div>
+
+        {pairs !== null && (
+          <div className={styles.pairFilters}>
+            <div className={styles.pairFiltersRow}>
+              <span className={styles.pairFiltersLabel}>發送狀態</span>
+              <div className={styles.pairFilterTabs} role="tablist" aria-label="發送狀態篩選">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={sentFilter === 'unsent'}
+                  className={`${styles.pairFilterTab} ${sentFilter === 'unsent' ? styles.pairFilterTabActive : ''}`}
+                  onClick={() => setSentFilter('unsent')}
+                >
+                  未發送
+                  <span className={styles.pairFilterCount}>{unsentCount}</span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={sentFilter === 'sent'}
+                  className={`${styles.pairFilterTab} ${sentFilter === 'sent' ? styles.pairFilterTabActive : ''}`}
+                  onClick={() => setSentFilter('sent')}
+                >
+                  已發送
+                  <span className={styles.pairFilterCount}>{sentCount}</span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={sentFilter === 'all'}
+                  className={`${styles.pairFilterTab} ${sentFilter === 'all' ? styles.pairFilterTabActive : ''}`}
+                  onClick={() => setSentFilter('all')}
+                >
+                  全部
+                  <span className={styles.pairFilterCount}>{pairs.length}</span>
+                </button>
+              </div>
+            </div>
+            <label className={styles.pairFilterCheckbox}>
+              <input
+                type="checkbox"
+                checked={hideQuotaFull}
+                onChange={(e) => setHideQuotaFull(e.target.checked)}
+              />
+              隱藏配額已滿
+            </label>
+          </div>
+        )}
+
+        {/* ── Global pairs table ─────────────────────────────────────────── */}
+        <div className={styles.sectionCard}>
+          <div className={styles.sectionHeader}>
+            <span className={styles.sectionTitle}>
+              {viewMode === 'premium' ? 'Moonlight Passport 配對' : '全域配對清單'}
+            </span>
+            <div className={styles.bulkToolbar}>
+              {pairs !== null && visiblePairs.length > 0 && (
+                <>
+                  <button type="button" className={styles.selectAllBtn} onClick={selectAll}>全選</button>
+                  <button type="button" className={styles.selectAllBtn} onClick={deselectAll}>取消全選</button>
+                </>
+              )}
+              {pairs !== null && (
+                <span className={styles.countBadge}>
+                  {visiblePairs.length}
+                  {visiblePairs.length !== pairs.length ? ` / ${pairs.length}` : ''}
+                  {' '}對
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className={styles.tableWrap}>
+            {pairs === null ? (
+              <div className={styles.emptyState}>
+                <span className={styles.emptyIcon}>🌙</span>
+                設定分數門檻後點擊「載入配對」以查看所有符合條件的配對
+              </div>
+            ) : visiblePairs.length === 0 ? (
+              <div className={styles.emptyState}>
+                <span className={styles.emptyIcon}>🔍</span>
+                {pairs.length > 0
+                  ? (sentFilter === 'unsent'
+                    ? '此篩選下暫無未發送配對 — 可切換至「已發送」或「全部」'
+                    : sentFilter === 'sent'
+                      ? '此篩選下暫無已發送配對'
+                      : '篩選條件下暫無可顯示配對 — 可取消「隱藏配額已滿」')
+                  : '此分數門檻下暫無配對結果'}
+              </div>
+            ) : (
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th>用戶 A</th>
+                    <th>用戶 B</th>
+                    <th>智能分</th>
+                    {DIM_LABELS.map((l) => <th key={l}>{l}</th>)}
+                    <th>狀態</th>
+                    <th>發送結果</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visiblePairs.map((p) => {
+                    const key   = pairKey(p);
+                    const selectable = isPairSelectable(p);
+                    const isChk = selectable && !!checked[key];
+                    const b     = p.score_breakdown || {};
+                    return (
+                      <tr
+                        key={key}
+                        className={`${styles.tableRow} ${isChk ? styles.checked : ''} ${p.quota_blocked ? styles.quotaBlockedRow : ''} ${!selectable ? styles.rowNotSelectable : ''}`}
+                        onClick={() => toggleRow(p)}
+                      >
+                        <td onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            className={styles.checkbox}
+                            checked={isChk}
+                            disabled={!selectable}
+                            title={selectable ? undefined : '配額已滿，無法選取'}
+                            onChange={() => toggleRow(p)}
+                          />
+                        </td>
+                        <td style={{ fontWeight: 600, color: 'var(--text)' }}>
+                          <div className={styles.userCell}>
+                            <span>
+                              {p.user_a?.name}{' '}
+                              <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
+                                ({p.user_a?.identity})
+                              </span>
+                            </span>
+                            <MatchQuotaBadge quota={p.user_a_quota} />
+                          </div>
+                        </td>
+                        <td style={{ fontWeight: 600, color: 'var(--text)' }}>
+                          <div className={styles.userCell}>
+                            <span>
+                              {p.user_b?.name}{' '}
+                              <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
+                                ({p.user_b?.identity})
+                              </span>
+                            </span>
+                            <MatchQuotaBadge quota={p.user_b_quota} />
+                          </div>
+                        </td>
+                        <td>
+                          <span className={styles.scoreBadge} style={{ color: scoreColor(p.match_score) }}>
+                            {p.match_score}
+                          </span>
+                        </td>
+                        {DIM_KEYS.map((k) => (
+                          <td key={k} className={styles.dimScore}>{b[k] ?? '—'}</td>
+                        ))}
+                        <td>
+                          {p.has_premium && (
+                            <span className={`${styles.badge} ${styles.badgePremium}`}>🌙 Passport</span>
+                          )}
+                          {p.inbox_ready && !p.already_sent && (
+                            <span className={`${styles.badge} ${styles.badgeInbox}`}>📬 Inbox 就緒</span>
+                          )}
+                          {p.quota_blocked && !p.already_sent && (
+                            <span className={`${styles.badge} ${styles.badgeQuota}`}>⚠ 配額已滿</span>
+                          )}
+                          {p.already_sent && (
+                            <span className={`${styles.badge} ${styles.badgeSent}`}>✉ 已發送</span>
+                          )}
+                          {!p.already_sent && p.in_draft && (
+                            <span className={`${styles.badge} ${styles.badgeDraft}`}>📝 草稿</span>
+                          )}
+                        </td>
+                        <td>{renderSendStatus(key)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+
+        {/* ── Draft queue ────────────────────────────────────────────────── */}
+        <div className={styles.sectionCard}>
+          <div className={styles.sectionHeader}>
+            <span className={styles.sectionTitle}>草稿佇列</span>
+            {drafts !== null && (
+              <span className={styles.countBadge}>{drafts.length} 個草稿</span>
+            )}
+          </div>
+
+          <div className={styles.tableWrap}>
+            {drafts === null ? (
+              <div className={styles.emptyState}>
+                <span className={styles.emptyIcon}>📝</span>
+                {loadingDrafts ? '載入中…' : '點擊「載入配對」以同步草稿'}
+              </div>
+            ) : drafts.length === 0 ? (
+              <div className={styles.emptyState}>
+                <span className={styles.emptyIcon}>✨</span>
+                草稿佇列是空的 — 從上方選取配對後點擊「存入草稿」
+              </div>
+            ) : (
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>用戶 A</th>
+                    <th>用戶 B</th>
+                    <th>配對分數</th>
+                    <th>建立時間</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {drafts.map((d) => {
+                    const dKey = `${Math.min(d.user_a_id, d.user_b_id)}:${Math.max(d.user_a_id, d.user_b_id)}`;
+                    const busy = draftActionId === d.id || sending;
+                    return (
+                      <tr key={d.id} className={styles.tableRow}>
+                        <td style={{ fontWeight: 600, color: 'var(--text)' }}>
+                          {d.user_a?.name ?? `ID ${d.user_a_id}`}
+                          <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
+                            {d.user_a?.identity ? ` (${d.user_a.identity})` : ''}
+                          </span>
+                        </td>
+                        <td style={{ fontWeight: 600, color: 'var(--text)' }}>
+                          {d.user_b?.name ?? `ID ${d.user_b_id}`}
+                          <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
+                            {d.user_b?.identity ? ` (${d.user_b.identity})` : ''}
+                          </span>
+                        </td>
+                        <td>
+                          <span className={styles.scoreBadge} style={{ color: scoreColor(d.match_score) }}>
+                            {d.match_score ?? '—'}
+                          </span>
+                        </td>
+                        <td style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+                          {d.created_at
+                            ? new Date(d.created_at).toLocaleString('zh-HK', {
+                                year: 'numeric', month: '2-digit', day: '2-digit',
+                                hour: '2-digit', minute: '2-digit',
+                              })
+                            : '—'}
+                        </td>
+                        <td>
+                          <button
+                            className={styles.draftSendBtn}
+                            onClick={() => handleSendDraft(d)}
+                            disabled={busy}
+                          >
+                            {draftActionId === d.id && sending ? '發送中…' : '✉ 立即發送'}
+                          </button>
+                          <button
+                            className={styles.deleteBtn}
+                            onClick={() => handleDeleteDraft(d)}
+                            disabled={busy}
+                          >
+                            刪除
+                          </button>
+                          {renderSendStatus(dKey)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+
+      {/* ── Floating action bar ───────────────────────────────────────────── */}
+      {selectedCount > 0 && (
+        <div className={styles.floatingBar}>
+          <span className={styles.floatingBarLabel}>已選 {selectedCount} 對</span>
+          <button
+            className={styles.draftBtn}
+            onClick={handleSaveDraft}
+            disabled={savingDraft || sending}
+          >
+            {savingDraft ? '建立中…' : '📝 存入 Gmail 草稿'}
+          </button>
+          <button
+            className={styles.sendBtn}
+            onClick={handleSendSelected}
+            disabled={sending || savingDraft}
+          >
+            {sending ? '發送中…' : viewMode === 'premium' ? '⚡ 即時發送（Email + Inbox）' : '✉ 立即發送'}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

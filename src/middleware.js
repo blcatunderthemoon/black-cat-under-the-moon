@@ -41,6 +41,11 @@ export function middleware(request) {
   }
 
   const provided = request.headers.get('x-dashboard-key');
+  const bearer = request.headers.get('authorization');
+  if (bearer?.startsWith('Bearer ')) {
+    return NextResponse.next();
+  }
+
   if (!provided || provided !== secret) {
     return new NextResponse(JSON.stringify({ error: 'Unauthorised.' }), {
       status: 401,

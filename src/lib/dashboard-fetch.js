@@ -1,6 +1,16 @@
 /**
- * Client-side fetch helper for station dashboard (x-dashboard-key from sessionStorage).
+ * Client-side fetch helper for station dashboard.
+ * Localhost: x-dashboard-key from sessionStorage.
+ * Production: Bearer token (forum admin session).
  */
+
+import { isLocalDashboardClient } from './dashboard-access.js';
+
+let bearerToken = '';
+
+export function setDashboardBearerToken(token) {
+  bearerToken = token || '';
+}
 
 export function getDashboardKey() {
   if (typeof sessionStorage === 'undefined') return '';
@@ -8,10 +18,17 @@ export function getDashboardKey() {
 }
 
 export function dashboardHeaders(extra = {}) {
-  const key = getDashboardKey();
+  if (isLocalDashboardClient()) {
+    const key = getDashboardKey();
+    return {
+      ...extra,
+      ...(key ? { 'x-dashboard-key': key } : {}),
+    };
+  }
+
   return {
     ...extra,
-    ...(key ? { 'x-dashboard-key': key } : {}),
+    ...(bearerToken ? { Authorization: `Bearer ${bearerToken}` } : {}),
   };
 }
 
@@ -24,6 +41,10 @@ export async function dashboardFetch(url, options = {}) {
 export const dashFetch = dashboardFetch;
 
 export function handleDashboardUnauthorized() {
+  if (typeof window !== 'undefined' && !isLocalDashboardClient()) {
+    window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+    return;
+  }
   if (typeof sessionStorage !== 'undefined') {
     sessionStorage.removeItem('dashKey');
   }

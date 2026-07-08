@@ -1,17 +1,20 @@
 import { useRouter } from 'next/router';
-import { useCallback, useMemo, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react';
 import {
   getStoryReadingChapter,
   readStoryReadingResume,
 } from '../lib/forum-story-reading-progress.js';
+import { recordStoryView } from '../lib/forum-story-views.js';
 import ForumStoryBookHub from './ForumStoryBookHub.js';
 import ForumStoryReadingView from './ForumStoryReadingView.js';
 
 export default function ForumStoryReader({
   post,
   chapters: chaptersProp,
+  chapterCount,
   pollsById,
   loggedIn,
+  loginHref = '/login',
   accessToken,
   onPollVote,
   onLike,
@@ -48,6 +51,10 @@ export default function ForumStoryReader({
   }, [clientMounted, post?.id, chapters, chaptersLoading, reading]);
 
   const goRead = useCallback((chNum) => {
+    if (!loggedIn) {
+      router.push(loginHref);
+      return;
+    }
     if (!chapters?.length) return;
     const target = chNum ?? getStoryReadingChapter(post.id, chapters);
     router.push(
@@ -58,14 +65,38 @@ export default function ForumStoryReader({
       undefined,
       { shallow: true },
     );
-  }, [router, post.id, chapters]);
+  }, [router, post.id, chapters, loggedIn, loginHref]);
 
   const exitRead = useCallback(() => {
     const { read: _r, ch: _c, ...rest } = router.query;
     router.push({ pathname: router.pathname, query: rest }, undefined, { shallow: true });
   }, [router]);
 
+  useEffect(() => {
+    if (reading && !loggedIn) {
+      router.replace(loginHref);
+    }
+  }, [reading, loggedIn, loginHref, router]);
+
+  useEffect(() => {
+    if (!post?.id) return undefined;
+    let cancelled = false;
+    recordStoryView(post.id, accessToken).then((viewCount) => {
+      if (!cancelled && viewCount != null) {
+        onPostUpdate?.({ view_count: viewCount });
+      }
+    });
+    return () => { cancelled = true; };
+  }, [post?.id, accessToken, onPostUpdate]);
+
   if (reading) {
+    if (!loggedIn) {
+      return (
+        <div className="forum-story-reading forum-story-reading--loading">
+          <p className="forum-story-reading__loading">請先登入…</p>
+        </div>
+      );
+    }
     if (chaptersLoading) {
       return (
         <div className="forum-story-reading forum-story-reading--loading">
@@ -92,7 +123,10 @@ export default function ForumStoryReader({
     <ForumStoryBookHub
       post={post}
       chapters={chapters || []}
-      chaptersLoading={chaptersLoading}
+      chaptersLoading={loggedIn && chaptersLoading}
+      chapterCount={chapterCount}
+      loggedIn={loggedIn}
+      loginHref={loginHref}
       resumeChapterNumber={resumeChapterNumber}
       hasReadingProgress={hasReadingProgress}
       readingResumeReady={clientMounted}

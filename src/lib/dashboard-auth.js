@@ -5,6 +5,7 @@
  */
 
 import { isProduction } from './production-guard.js';
+import { resolveModerationActor } from './forum-moderation-auth.js';
 
 export function checkDashboardAuth(req, res) {
   const secret = process.env.DASHBOARD_SECRET;
@@ -34,4 +35,16 @@ export function isDashboardKeyValid(provided) {
   const secret = process.env.DASHBOARD_SECRET;
   if (!secret) return !isProduction();
   return (provided || '') === secret;
+}
+
+/** Dashboard API: local key, dev bypass, or production forum admin Bearer. */
+export async function authorizeDashboardAccess(req, res) {
+  const dashKey = req.headers['x-dashboard-key'] || '';
+  if (isDashboardKeyValid(dashKey)) return true;
+
+  const secret = process.env.DASHBOARD_SECRET;
+  if (!secret && !isProduction()) return true;
+
+  const actor = await resolveModerationActor(req, res, { requireAdmin: true });
+  return !!actor;
 }

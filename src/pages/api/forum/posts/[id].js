@@ -21,38 +21,38 @@ import { canonicalForumTagKey } from '../../../../lib/forum-tags.js';
 import { resolveForumAuthorDisplayName } from '../../../../lib/forum-author-names.js';
 import { awardMoonJourneyExp, MOON_JOURNEY_EXP } from '../../../../lib/moon-journey.js';
 import { isMatureForumTopicStored } from '../../../../lib/forum-mature.js';
-import { isStoryPost, validateStoryCoverUrl } from '../../../../lib/forum-story.js';
+import { isStoryPost, validateStoryCoverUrl, STORY_SYNOPSIS_MAX } from '../../../../lib/forum-story.js';
 import {
   fetchStoryChapters,
   serializeStoryChapters,
 } from '../../../../lib/forum-story-chapters.js';
 
-const POST_DETAIL_COLUMNS = `
-  id, author_id, title, content, topic, mood_tag, anonymous_name_snapshot,
-  like_count, comment_count, visibility, is_pinned, is_highlighted, created_at,
-  cover_image_url, synopsis
-`;
-
-const POST_DETAIL_COLUMNS_LEGACY = `
+const POST_DETAIL_CORE = `
   id, author_id, title, content, topic, mood_tag, anonymous_name_snapshot,
   like_count, comment_count, visibility, is_pinned, is_highlighted, created_at
 `;
 
+const POST_DETAIL_COLUMN_TIERS = [
+  `${POST_DETAIL_CORE.trim()}, view_count, story_completed, cover_image_url, synopsis`,
+  `${POST_DETAIL_CORE.trim()}, view_count, cover_image_url, synopsis`,
+  `${POST_DETAIL_CORE.trim()}, cover_image_url, synopsis`,
+  `
+  id, author_id, title, content, topic, mood_tag, anonymous_name_snapshot,
+  like_count, comment_count, visibility, is_pinned, is_highlighted, created_at
+`,
+];
+
 async function fetchForumPost(admin, postId) {
-  const withStory = await admin
-    .from('forum_posts')
-    .select(POST_DETAIL_COLUMNS)
-    .eq('id', postId)
-    .maybeSingle();
-  if (!withStory.error) return withStory;
-  if (withStory.error?.code === '42703') {
-    return admin
+  for (const columns of POST_DETAIL_COLUMN_TIERS) {
+    const result = await admin
       .from('forum_posts')
-      .select(POST_DETAIL_COLUMNS_LEGACY)
+      .select(columns)
       .eq('id', postId)
       .maybeSingle();
+    if (!result.error) return result;
+    if (result.error?.code !== '42703') return result;
   }
-  return withStory;
+  return { data: null, error: { message: 'Post columns unavailable', code: '42703' } };
 }
 
 async function fetchPostComments(admin, postId) {
@@ -99,6 +99,7 @@ export default async function handler(req, res) {
   }
   if (req.method === 'POST' && req.query.action === 'like') return handleLike(req, res, id);
   if (req.method === 'POST' && req.query.action === 'bookmark') return handleBookmark(req, res, id);
+  if (req.method === 'POST' && req.query.action === 'view') return handleStoryView(req, res, id);
   return res.status(405).json({ error: 'Method not allowed' });
 }
 
@@ -255,12 +256,16 @@ async function handleGet(req, res, postId) {
       is_pinned: post.is_pinned || false,
       is_highlighted: post.is_highlighted || false,
       is_hidden: post.visibility === 'hidden',
+      view_count: post.view_count ?? 0,
+      story_completed: !!post.story_completed,
       viewer_can_moderate: viewerCanModerate,
     },
     tag_labels: tagLabels,
     comments: enrichedComments,
     polls,
-    chapters: isStoryPost(post) ? serializeStoryChapters(storyChapters) : undefined,
+    chapters: viewer && isStoryPost(post) ? serializeStoryChapters(storyChapters) : undefined,
+    chapters_locked: isStoryPost(post) && !viewer,
+    chapter_count: isStoryPost(post) ? storyChapters.length : undefined,
     viewer_logged_in: !!viewer,
   });
 }
@@ -373,6 +378,38 @@ async function handleBookmark(req, res, postId) {
   return res.status(200).json({ success: true, bookmarked: true });
 }
 
+async function handleStoryView(req, res, postId) {
+  const admin = getAdminClient();
+  const { data: post, error } = await admin
+    .from('forum_posts')
+    .select('id, author_id, topic, view_count')
+    .eq('id', postId)
+    .maybeSingle();
+
+  if (error?.code === '42703') {
+    return res.status(200).json({ view_count: 0 });
+  }
+  if (error || !post || !isStoryPost(post)) {
+    return res.status(404).json({ error: 'Story not found' });
+  }
+
+  const viewer = await getOptionalUser(req);
+  const current = post.view_count ?? 0;
+  if (viewer?.id === post.author_id) {
+    return res.status(200).json({ view_count: current });
+  }
+
+  const next = current + 1;
+  admin
+    .from('forum_posts')
+    .update({ view_count: next })
+    .eq('id', postId)
+    .then(() => {})
+    .catch(() => {});
+
+  return res.status(200).json({ view_count: next });
+}
+
 async function handlePatchStoryMeta(req, res, postId) {
   let user;
   try {
@@ -404,16 +441,43 @@ async function handlePatchStoryMeta(req, res, postId) {
     updates.cover_image_url = coverCheck.value;
   }
 
+  if (Object.prototype.hasOwnProperty.call(body, 'synopsis')) {
+    if (body.synopsis == null || body.synopsis === '') {
+      updates.synopsis = null;
+    } else {
+      const text = String(body.synopsis).trim();
+      updates.synopsis = text ? text.slice(0, STORY_SYNOPSIS_MAX) : null;
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'story_completed')) {
+    updates.story_completed = !!body.story_completed;
+  }
+
   if (!Object.keys(updates).length) {
     return res.status(400).json({ error: '沒有可更新的欄位。' });
   }
 
-  const { data: updated, error: updateError } = await admin
-    .from('forum_posts')
-    .update(updates)
-    .eq('id', postId)
-    .select('cover_image_url, synopsis')
-    .single();
+  const PATCH_SELECT_TIERS = [
+    'cover_image_url, synopsis, view_count, story_completed',
+    'cover_image_url, synopsis, view_count',
+    'cover_image_url, synopsis',
+  ];
+
+  let updated = null;
+  let updateError = null;
+  for (const columns of PATCH_SELECT_TIERS) {
+    const result = await admin
+      .from('forum_posts')
+      .update(updates)
+      .eq('id', postId)
+      .select(columns)
+      .single();
+    updated = result.data;
+    updateError = result.error;
+    if (!updateError) break;
+    if (updateError?.code !== '42703') break;
+  }
 
   if (updateError) {
     if (updateError.code === '42703') {

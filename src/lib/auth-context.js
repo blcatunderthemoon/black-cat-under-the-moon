@@ -295,7 +295,9 @@ export function AuthProvider({ children }) {
   };
 
   const meData = profile ?? (session?.user?.id ? readMeCache(session.user.id) : null);
-  const displayName = session ? resolveDisplayName(session, meData) : null;
+  const displayName = session
+    ? resolveDisplayName(session, meData, { profileHydrated })
+    : null;
 
   return (
     <AuthContext.Provider value={{ session, profile, profileHydrated, displayName, refreshProfile, signIn, signUp, signOut, resetPassword, loading: session === undefined }}>

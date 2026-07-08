@@ -26,25 +26,41 @@ tmp/
 # Root-level design assets (not served by Next.js; production copies belong in public/)
 /*.png
 
-# Dashboard (internal use only)
+# Dashboard (internal use only — exceptions whitelisted for production/shared code)
 src/pages/dashboard/**
 !src/pages/dashboard/forum/
 !src/pages/dashboard/forum/**
+!src/pages/dashboard/email-automation.js
+!src/pages/dashboard/forum-monitor.js
 src/pages/api/dashboard/**
 !src/pages/api/dashboard/ping.js
 !src/pages/api/dashboard/forum-moderators.js
+!src/pages/api/dashboard/forum-monitor.js
+!src/pages/api/dashboard/users.js
+!src/pages/api/dashboard/email-automation.js
+!src/pages/api/dashboard/create-gmail-drafts.js
+!src/pages/api/dashboard/send-emails.js
 src/components/dashboard/
 !src/components/dashboard/Layout.js
 !src/components/dashboard/Sidebar.js
 !src/components/dashboard/Header.js
 !src/components/dashboard/ForumDashboardNav.js
-src/styles/dashboard/
+src/styles/dashboard/*
 !src/styles/dashboard/Layout.module.css
 !src/styles/dashboard/Sidebar.module.css
 !src/styles/dashboard/Header.module.css
 !src/styles/dashboard/ForumDashboardNav.module.css
 !src/styles/dashboard/globals.css
+!src/styles/dashboard/EmailAutomation.module.css
 src/lib/seed-data.js
+
+# Website forum admin (production — not under dashboard ignore rules above)
+#   src/pages/admin/**
+#   src/pages/api/admin/**
+#   src/pages/forum/guardian/**
+#   src/components/forum-admin/**
+#   src/components/admin/**
+#   src/components/ForumAdminNav.js
 
 # Internal scripts (build scripts below are committed for Vercel)
 scripts/*

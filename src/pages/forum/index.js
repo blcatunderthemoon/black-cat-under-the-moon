@@ -32,6 +32,7 @@ import ForumComposeField from '../../components/ForumComposeField.js';
 import ForumComposeOverlay from '../../components/ForumComposeOverlay.js';
 import ForumTagField from '../../components/ForumTagField.js';
 import ForumStoryBookshelf from '../../components/ForumStoryBookshelf.js';
+import ForumStorySearchBar from '../../components/ForumStorySearchBar.js';
 import ForumStoryComposeFields from '../../components/ForumStoryComposeFields.js';
 import ForumPostTags from '../../components/ForumPostTags.js';
 import { formatForumTagLabel, canonicalForumTagKey } from '../../lib/forum-tags.js';
@@ -353,10 +354,12 @@ export default function ForumPage() {
   const [pageBootstrapping, setPageBootstrapping] = useState(true);
   const [feedRefreshing, setFeedRefreshing] = useState(false);
   const [matureAcked, setMatureAcked] = useState(false);
+  const [storySearch, setStorySearch] = useState('');
+  const [storySearchDebounced, setStorySearchDebounced] = useState('');
   const topicRef = useRef(topic);
   const topicsRowRef = useRef(null);
   const initialLoadDoneRef = useRef(false);
-  const filterSnapshotRef = useRef({ topic, sort, activeTag });
+  const filterSnapshotRef = useRef({ topic, sort, activeTag, storySearchDebounced });
 
   const defaultTopic = topic === '全部' ? '社群' : topic;
   const [form, setForm] = useState({
@@ -533,12 +536,27 @@ export default function ForumPage() {
     return meta?.user_hot_tags || [];
   }, [topic, meta, metaMatchesTopic]);
 
+  useEffect(() => {
+    if (!isStoryTopic(topic)) {
+      setStorySearch('');
+      setStorySearchDebounced('');
+      return undefined;
+    }
+    const timer = window.setTimeout(() => {
+      setStorySearchDebounced(storySearch.trim());
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [storySearch, topic]);
+
   const load = useCallback(async (reset = false, { bootstrap = false, silent = false, feedOnly = false, postsOnly = false } = {}) => {
     const seq = ++loadSeqRef.current;
     const newOffset = reset ? 0 : offsetRef.current;
     const requestedTopic = topic;
     const topicParam = topic === '全部' ? '' : `&topic=${encodeURIComponent(topic)}`;
     const tagParam = activeTag ? `&tag=${encodeURIComponent(activeTag)}` : '';
+    const searchParam = isStoryTopic(topic) && storySearchDebounced
+      ? `&q=${encodeURIComponent(storySearchDebounced)}`
+      : '';
     const headers = {};
     const token = sessionRef.current?.access_token;
     if (token) headers.Authorization = `Bearer ${token}`;
@@ -585,7 +603,7 @@ export default function ForumPage() {
     try {
       if (reset) {
         const postsResPromise = fetch(
-          `/api/forum/posts?sort=${sort}&limit=20&offset=0${topicParam}${tagParam}`,
+          `/api/forum/posts?sort=${sort}&limit=20&offset=0${topicParam}${tagParam}${searchParam}`,
           { headers },
         );
         if (!postsOnly) {
@@ -608,7 +626,7 @@ export default function ForumPage() {
         const data = await postsRes.json().catch(() => ({}));
         applyPostsPayload(postsRes, data);
       } else {
-        const r = await fetch(`/api/forum/posts?sort=${sort}&limit=20&offset=${newOffset}${topicParam}${tagParam}`, { headers });
+        const r = await fetch(`/api/forum/posts?sort=${sort}&limit=20&offset=${newOffset}${topicParam}${tagParam}${searchParam}`, { headers });
         const data = await r.json().catch(() => ({}));
         if (seq !== loadSeqRef.current) return;
         applyPostsPayload(r, data);
@@ -631,7 +649,7 @@ export default function ForumPage() {
         loadedWithTokenRef.current = sessionRef.current?.access_token ?? null;
       }
     }
-  }, [topic, sort, activeTag, fetchMeta, applyMetaPayload]);
+  }, [topic, sort, activeTag, storySearchDebounced, fetchMeta, applyMetaPayload]);
 
   const handleMatureAcknowledged = useCallback(() => {
     setMatureAcked(true);
@@ -656,9 +674,12 @@ export default function ForumPage() {
     const topicChanged = prev.topic !== topic;
     const sortChanged = prev.sort !== sort;
     const tagChanged = prev.activeTag !== activeTag;
-    filterSnapshotRef.current = { topic, sort, activeTag };
+    const searchChanged = prev.storySearchDebounced !== storySearchDebounced;
+    filterSnapshotRef.current = { topic, sort, activeTag, storySearchDebounced };
 
-    const postsOnly = initialLoadDoneRef.current && !topicChanged && (tagChanged || sortChanged);
+    const postsOnly = initialLoadDoneRef.current
+      && !topicChanged
+      && (tagChanged || sortChanged || searchChanged);
 
     offsetRef.current = 0;
     setOffset(0);
@@ -679,7 +700,7 @@ export default function ForumPage() {
       }
     }
 
-    const cached = readForumFeedCache(sort, topic, activeTag);
+    const cached = !storySearchDebounced && readForumFeedCache(sort, topic, activeTag);
     if (cached) {
       applyForumCache(cached, {
         setPosts,
@@ -702,7 +723,7 @@ export default function ForumPage() {
         postsOnly,
       });
     }
-  }, [topic, sort, activeTag, load, profile?.profile?.forum_mature_acknowledged]);
+  }, [topic, sort, activeTag, storySearchDebounced, load, profile?.profile?.forum_mature_acknowledged]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -727,7 +748,7 @@ export default function ForumPage() {
   }, [posts, pageBootstrapping, sort, topic, activeTag, load, loadMeta]);
 
   useEffect(() => {
-    if (!posts || pageBootstrapping) return;
+    if (!posts || pageBootstrapping || storySearchDebounced) return;
     writeForumFeedCache(sort, topic, activeTag, {
       posts,
       meta,
@@ -738,7 +759,7 @@ export default function ForumPage() {
       hasMore,
       offset: offsetRef.current,
     });
-  }, [posts, meta, featuredPosts, metaTopic, tagLabels, viewerClanType, hasMore, pageBootstrapping, sort, topic, activeTag]);
+  }, [posts, meta, featuredPosts, metaTopic, tagLabels, viewerClanType, hasMore, pageBootstrapping, sort, topic, activeTag, storySearchDebounced]);
 
   useEffect(() => {
     function onFocus() {
@@ -828,6 +849,10 @@ export default function ForumPage() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (!session?.access_token) {
+      setSubmitError('請先登入後再發文。');
+      return;
+    }
     if (!form.content.trim()) { setSubmitError('請填寫內容。'); return; }
     if (isStoryTopic(form.topic) && !form.title.trim()) {
       setSubmitError('故事需要標題。');
@@ -1140,6 +1165,15 @@ export default function ForumPage() {
                   </div>
                 )}
 
+                {!feedLoading && isStoryTopic(topic) && (
+                  <ForumStorySearchBar
+                    value={storySearch}
+                    onChange={setStorySearch}
+                    onClear={() => setStorySearch('')}
+                    disabled={feedRefreshing}
+                  />
+                )}
+
                 {!feedLoading && showWelcomeCard && <WelcomeCard topic={topic} />}
 
                 {!feedLoading && loadError && (
@@ -1151,7 +1185,13 @@ export default function ForumPage() {
                   </div>
                 )}
 
-                {!feedLoading && showEmptyState && (
+                {!feedLoading && isStoryTopic(topic) && storySearchDebounced && feedPosts.length === 0 && !loadError && (
+                  <div className="forum-story-search-empty" role="status">
+                    找不到「{storySearchDebounced}」相關書名
+                  </div>
+                )}
+
+                {!feedLoading && showEmptyState && !(isStoryTopic(topic) && storySearchDebounced) && (
                   <EmptyState
                     topic={topic}
                     onCompose={openCompose}

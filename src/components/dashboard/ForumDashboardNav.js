@@ -5,6 +5,7 @@ import styles from '../../styles/dashboard/ForumDashboardNav.module.css';
 const ITEMS = [
   { href: '/dashboard/forum', label: '檢舉佇列', icon: '📋' },
   { href: '/dashboard/forum/team', label: '版主團隊', icon: '🛡️' },
+  { href: '/dashboard/forum-monitor', label: '內容監控', icon: '🔍' },
 ];
 
 export default function ForumDashboardNav() {

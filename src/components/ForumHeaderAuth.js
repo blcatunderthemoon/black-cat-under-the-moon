@@ -15,7 +15,7 @@ import { canModerateForum } from '../lib/forum-roles.js';
 import { readMeCache } from '../lib/me-cache.js';
 
 export default function ForumHeaderAuth({ extra = null, moonJourney = null, redirectPath = '/forum', onBookmarksClick = null }) {
-  const { session, profile, displayName, signOut, loading } = useAuth();
+  const { session, profile, displayName, signOut, loading, profileHydrated } = useAuth();
   const router = useRouter();
   const [bookmarksOpen, setBookmarksOpen] = useState(false);
   const useParentBookmarks = typeof onBookmarksClick === 'function';
@@ -48,7 +48,7 @@ export default function ForumHeaderAuth({ extra = null, moonJourney = null, redi
   }
 
   const meData = profile ?? (session.user?.id ? readMeCache(session.user.id) : null);
-  const name = displayName || '';
+  const name = profileHydrated ? (displayName || '') : '';
   const unread = meData?.unread_inbox_count || 0;
   const isPremium = isPremiumUser(meData);
   const isForumStaff = canModerateForum(meData?.profile?.forum_role);
@@ -56,7 +56,11 @@ export default function ForumHeaderAuth({ extra = null, moonJourney = null, redi
   return (
     <>
       <span className="forum-header-name-group">
-        <NavLink href="/mirror-card/me">{name}</NavLink>
+        {profileHydrated && name ? (
+          <NavLink href="/mirror-card/me">{name}</NavLink>
+        ) : (
+          <span className="forum-header-name-placeholder" aria-hidden="true" />
+        )}
         {isPremium && (
           <HeaderPremiumMoon profile={meData} className="forum-header-moon" />
         )}

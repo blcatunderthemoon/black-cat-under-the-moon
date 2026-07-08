@@ -16,7 +16,7 @@ function NavSep() {
 }
 
 export default function AppHeaderAuth({ redirectPath, hideInbox: hideInboxProp, hideName = false }) {
-  const { session, profile, displayName, signOut, loading } = useAuth();
+  const { session, profile, displayName, signOut, loading, profileHydrated } = useAuth();
   const router = useRouter();
   const loginRedirect = redirectPath || router.asPath || '/';
   const onInboxPage = router.pathname === '/inbox' || router.pathname.startsWith('/inbox/');
@@ -39,7 +39,7 @@ export default function AppHeaderAuth({ redirectPath, hideInbox: hideInboxProp, 
   }
 
   const meData = profile ?? (session.user?.id ? readMeCache(session.user.id) : null);
-  const name = displayName || '貓咪';
+  const name = profileHydrated ? (displayName || '貓咪') : null;
   const unread = meData?.unread_inbox_count || 0;
   const isPremium = isPremiumUser(meData);
 
@@ -49,7 +49,7 @@ export default function AppHeaderAuth({ redirectPath, hideInbox: hideInboxProp, 
         <div className="auth-nav-badge__inner">
           {(!hideName || isPremium) && (
             <span className="auth-nav-badge__name-group">
-              {!hideName && (
+              {!hideName && profileHydrated && name && (
                 <Link href="/account" className="auth-nav-badge__item auth-nav-badge__item--name" title={name}>
                   <PixelMixedLabel
                     text={name}
@@ -63,7 +63,7 @@ export default function AppHeaderAuth({ redirectPath, hideInbox: hideInboxProp, 
               )}
             </span>
           )}
-          {!hideName && <NavSep />}
+          {!hideName && profileHydrated && name && <NavSep />}
           <span className="auth-nav-badge__icon-group">
             {!hideInbox && (
               <Link

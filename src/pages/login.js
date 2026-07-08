@@ -7,6 +7,7 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth, getBrowserClient } from '../lib/auth-context.js';
+import { writeMeCache } from '../lib/me-cache.js';
 import { loadRememberLogin, saveRememberLogin } from '../lib/remember-account.js';
 import { resolvePostAuthDestination, navigateAfterAuth } from '../lib/post-auth-redirect.js';
 import { validateEmail } from '../lib/auth-credentials-policy.js';
@@ -58,6 +59,7 @@ export default function LoginPage() {
       return;
     }
     const token = signInData?.session?.access_token;
+    const userId = signInData?.session?.user?.id;
     if (token) {
       const initRes = await fetch('/api/auth/init-profile', {
         method: 'POST',
@@ -71,6 +73,15 @@ export default function LoginPage() {
           setSubmitting(false);
           return;
         }
+      }
+
+      const meRes = await fetch('/api/me', {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store',
+      });
+      if (meRes.ok && userId) {
+        const meData = await meRes.json();
+        writeMeCache(userId, meData);
       }
     }
     saveRememberLogin(rememberMe, email);

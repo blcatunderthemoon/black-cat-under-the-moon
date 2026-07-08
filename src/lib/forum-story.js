@@ -37,3 +37,14 @@ export function storySynopsisPreview(synopsis, fallbackContent, maxLength = 120)
   if (text.length <= maxLength) return text;
   return `${text.slice(0, maxLength).trim()}…`;
 }
+
+/** Synopsis for story detail — prefers synopsis column, legacy short content as fallback. */
+export function resolveStorySynopsis(post) {
+  const synopsis = String(post?.synopsis || '').trim();
+  if (synopsis) return synopsis;
+  const content = String(post?.content || '').trim();
+  if (!content) return '';
+  const flat = content.replace(/\s+/g, ' ').trim();
+  if (flat.length <= STORY_SYNOPSIS_MAX) return content;
+  return '';
+}

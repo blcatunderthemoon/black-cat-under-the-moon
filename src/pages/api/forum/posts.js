@@ -38,7 +38,7 @@ const ratelimit = process.env.UPSTASH_REDIS_REST_URL
   ? new Ratelimit({ redis: Redis.fromEnv(), limiter: Ratelimit.slidingWindow(5, '10 m') })
   : null;
 
-const POST_LIST_COLUMNS = `
+const POST_LIST_CORE = `
   id,
   author_id,
   title,
@@ -52,12 +52,14 @@ const POST_LIST_COLUMNS = `
   is_pinned,
   is_highlighted,
   pinned_at,
-  created_at,
-  cover_image_url,
-  synopsis
+  created_at
 `;
 
-const POST_LIST_COLUMNS_LEGACY = `
+const POST_LIST_COLUMN_TIERS = [
+  `${POST_LIST_CORE.trim()}, cover_image_url, synopsis, view_count, story_completed`,
+  `${POST_LIST_CORE.trim()}, cover_image_url, synopsis, view_count`,
+  `${POST_LIST_CORE.trim()}, cover_image_url, synopsis`,
+  `
   id,
   author_id,
   title,
@@ -69,36 +71,39 @@ const POST_LIST_COLUMNS_LEGACY = `
   comment_count,
   visibility,
   created_at
-`;
+`,
+];
 
-function applyPostListSort(query, sort) {
-  if (sort === 'popular') {
+function applyPostListSort(query, sort, columns) {
+  const hasPinned = String(columns).includes('is_pinned');
+  if (hasPinned) {
+    if (sort === 'popular') {
+      return query
+        .order('is_pinned', { ascending: false })
+        .order('like_count', { ascending: false })
+        .order('created_at', { ascending: false });
+    }
     return query
       .order('is_pinned', { ascending: false })
+      .order('created_at', { ascending: false });
+  }
+  if (sort === 'popular') {
+    return query
       .order('like_count', { ascending: false })
       .order('created_at', { ascending: false });
   }
-  return query
-    .order('is_pinned', { ascending: false })
-    .order('created_at', { ascending: false });
+  return query.order('created_at', { ascending: false });
 }
 
 async function fetchPostList(admin, buildQuery, sort) {
-  let query = buildQuery(POST_LIST_COLUMNS);
-  query = applyPostListSort(query, sort);
-  const result = await query;
-  if (result.error?.code === '42703') {
-    let legacyQuery = buildQuery(POST_LIST_COLUMNS_LEGACY);
-    if (sort === 'popular') {
-      legacyQuery = legacyQuery
-        .order('like_count', { ascending: false })
-        .order('created_at', { ascending: false });
-    } else {
-      legacyQuery = legacyQuery.order('created_at', { ascending: false });
-    }
-    return await legacyQuery;
+  for (const columns of POST_LIST_COLUMN_TIERS) {
+    let query = buildQuery(columns);
+    query = applyPostListSort(query, sort, columns);
+    const result = await query;
+    if (!result.error) return result;
+    if (result.error?.code !== '42703') return result;
   }
-  return result;
+  return { data: [], error: { message: 'Post list columns unavailable', code: '42703' } };
 }
 
 const VALID_SORTS = ['latest', 'popular', 'clan', 'saved'];
@@ -113,6 +118,10 @@ export default async function handler(req, res) {
   if (req.method === 'GET') return handleGet(req, res);
   if (req.method === 'POST') return handlePost(req, res);
   return res.status(405).json({ error: 'Method not allowed' });
+}
+
+function escapeIlikeTerm(value) {
+  return String(value).replace(/[%_\\]/g, '\\$&');
 }
 
 async function handleGet(req, res) {
@@ -132,6 +141,7 @@ async function handleGetInner(req, res) {
   const topic = req.query.topic || null;
   const tag = typeof req.query.tag === 'string' ? req.query.tag.trim() : '';
   const sort = VALID_SORTS.includes(req.query.sort) ? req.query.sort : 'latest';
+  const titleQuery = typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 80) : '';
 
   // Guests see public + members_only in the feed (content gated server-side).
   const visibilityFilter = ['public', 'members_only'];
@@ -273,6 +283,9 @@ async function handleGetInner(req, res) {
       }
       if (clanAuthorIds) {
         query = query.in('author_id', clanAuthorIds);
+      }
+      if (titleQuery) {
+        query = query.ilike('title', `%${escapeIlikeTerm(titleQuery)}%`);
       }
       if (!isMatureForumTopic(topic)) {
         query = applyExcludeMatureTopics(query);

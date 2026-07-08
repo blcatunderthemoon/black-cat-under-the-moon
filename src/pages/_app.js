@@ -6,8 +6,11 @@ import Head from 'next/head';
 import Script from 'next/script';
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
-import { AuthProvider } from '../lib/auth-context.js';
+import { AuthProvider, useAuth } from '../lib/auth-context.js';
 import { isNoIndexPath } from '../lib/site-seo.js';
+import { isLocalDashboardHost } from '../lib/dashboard-access.js';
+import { setDashboardBearerToken } from '../lib/dashboard-fetch.js';
+import { canAdminForum } from '../lib/forum-roles.js';
 import MobileKeyboardGuard from '../components/MobileKeyboardGuard.js';
 import PostHogAnalytics from '../components/PostHogAnalytics.js';
 import AppErrorBoundary from '../components/AppErrorBoundary.js';
@@ -19,7 +22,7 @@ function isAuthPath(pathname) {
   return pathname.startsWith('/auth/');
 }
 
-function DashboardAuthGate({ children }) {
+function LocalDashboardKeyGate({ children }) {
   const [authed, setAuthed] = useState(false);
   const [secured, setSecured] = useState(null); // null = checking
   const [keyInput, setKeyInput] = useState('');
@@ -95,6 +98,63 @@ function DashboardAuthGate({ children }) {
       </form>
     </div>
   );
+}
+
+function ProductionDashboardAdminGate({ children }) {
+  const router = useRouter();
+  const { session, profile, profileHydrated, loading: authLoading } = useAuth();
+  const forumRole = profile?.profile?.forum_role;
+  const isAdmin = canAdminForum(forumRole);
+
+  useEffect(() => {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem('dashKey');
+    }
+    setDashboardBearerToken('');
+  }, []);
+
+  useEffect(() => {
+    if (!profileHydrated || authLoading) return;
+    setDashboardBearerToken(session?.access_token || '');
+  }, [session?.access_token, profileHydrated, authLoading]);
+
+  useEffect(() => {
+    if (!profileHydrated || authLoading) return;
+    if (!session) {
+      router.replace(`/login?redirect=${encodeURIComponent(router.asPath)}`);
+    }
+  }, [profileHydrated, authLoading, session, router]);
+
+  if (!profileHydrated || authLoading) return null;
+  if (!session) return null;
+
+  if (!isAdmin) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#050914', padding: 24 }}>
+        <div style={{ background: '#0b0d22', border: '1px solid #1d2055', borderRadius: 12, padding: 40, maxWidth: 420, textAlign: 'center' }}>
+          <h2 style={{ color: '#bd93f9', margin: '0 0 12px', fontFamily: 'Noto Sans TC, sans-serif' }}>Dashboard 僅限管理員</h2>
+          <p style={{ color: '#9490b0', margin: '0 0 20px', fontSize: 14, lineHeight: 1.6 }}>
+            此頁面需要論壇管理員帳號。請使用已授權的 admin 帳號登入。
+          </p>
+          <a href="/forum" style={{ color: '#bd93f9', fontSize: 14 }}>返回論壇</a>
+        </div>
+      </div>
+    );
+  }
+
+  return children;
+}
+
+function DashboardAuthGate({ children }) {
+  const [isLocal, setIsLocal] = useState(null);
+
+  useEffect(() => {
+    setIsLocal(isLocalDashboardHost(window.location.hostname));
+  }, []);
+
+  if (isLocal === null) return null;
+  if (isLocal) return <LocalDashboardKeyGate>{children}</LocalDashboardKeyGate>;
+  return <ProductionDashboardAdminGate>{children}</ProductionDashboardAdminGate>;
 }
 
 export default function App({ Component, pageProps }) {
