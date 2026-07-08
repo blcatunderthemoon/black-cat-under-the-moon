@@ -29,6 +29,7 @@ import {
   isStoryTopic,
   STORY_CONTENT_MAX,
   STORY_SYNOPSIS_MAX,
+  normalizeForumBodyContent,
   validateStoryCoverUrl,
 } from '../../../lib/forum-story.js';
 import { Ratelimit } from '@upstash/ratelimit';
@@ -406,8 +407,10 @@ async function handlePost(req, res) {
     return res.status(400).json({ error: '內容最少需要 10 個字。' });
   }
 
+  const normalizedContent = normalizeForumBodyContent(content);
+
   const contentMax = storyPost ? STORY_CONTENT_MAX : 2000;
-  if (content.length > contentMax) {
+  if (normalizedContent.length > contentMax) {
     return res.status(400).json({ error: `內容最多 ${contentMax} 字。` });
   }
 
@@ -433,8 +436,8 @@ async function handlePost(req, res) {
     ? 'members_only'
     : (visibility === 'members_only' ? 'members_only' : 'public');
 
-  const pollIdsInContent = extractPollIdsFromContent(content);
-  const pollValidation = validatePollsForContent(content, pollsPayload);
+  const pollIdsInContent = extractPollIdsFromContent(normalizedContent);
+  const pollValidation = validatePollsForContent(normalizedContent, pollsPayload);
   if (!pollValidation.ok) {
     return res.status(400).json({ error: pollValidation.error });
   }
@@ -443,7 +446,7 @@ async function handlePost(req, res) {
   }
 
   // Content moderation
-  const combined = [title, content].filter(Boolean).join(' ');
+  const combined = [title, normalizedContent].filter(Boolean).join(' ');
   const { blocked, crisis } = filterContent(combined);
   if (blocked) {
     if (crisis) return res.status(451).json({ error: 'crisis', crisis: true });
@@ -471,7 +474,7 @@ async function handlePost(req, res) {
   const insertRow = {
     author_id: user.id,
     title: title?.trim().slice(0, 100) || null,
-    content: content.trim(),
+    content: normalizedContent,
     topic: topic || '社群',
     mood_tag: tagValidation.tags[0] || null,
     anonymous_name_snapshot: profile.display_name,
@@ -527,12 +530,12 @@ async function handlePost(req, res) {
       story_post_id: post.id,
       chapter_number: 1,
       title: null,
-      content: content.trim(),
+      content: normalizedContent,
     }).then(() => {}).catch(() => {});
   }
 
   dispatchForumMentions({
-    content: content.trim(),
+    content: normalizedContent,
     actorId: user.id,
     postId: post.id,
   }).catch(() => {});

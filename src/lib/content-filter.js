@@ -16,8 +16,9 @@
 // Triggers warm banner with local helpline numbers instead of a generic error.
 const CRISIS_WORDS = [
   '自殺', '想死', '去死', '燒炭', '跳樓', '吞藥',
-  '割腕', '割脈', '自殘', '了結', '輕生', '求死',
+  '割腕', '割脈', '自殘', '輕生', '求死',
   '不想活', '唔想活', '唔想再活', '結束生命',
+  '了結生命', '了結自己', '了結一生',
   '消失算了', '死咗算', '一了百了',
 ];
 

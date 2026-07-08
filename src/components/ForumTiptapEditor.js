@@ -25,6 +25,7 @@ import {
   getForumEditorMarkdown,
   setForumEditorMarkdown,
 } from '../lib/forum-tiptap-markdown.js';
+import { preserveMarkdownLeadingSpaces } from '../lib/forum-story.js';
 import ForumEditorOverlay from './ForumEditorOverlay.js';
 
 const MENTION_DEBOUNCE_MS = 220;
@@ -144,7 +145,11 @@ export default function ForumTiptapEditor({
       if (/::poll\[|::youtube\[/i.test(initial)) {
         setForumEditorMarkdown(ed, initial);
       } else {
-        ed.commands.setContent(initial, false, { contentType: 'markdown' });
+        ed.commands.setContent(
+          preserveMarkdownLeadingSpaces(initial),
+          false,
+          { contentType: 'markdown' },
+        );
       }
       skipExternalSyncRef.current = true;
     },
@@ -478,6 +483,15 @@ export default function ForumTiptapEditor({
             onClick={() => wrapSelection('||', '||', '隱藏內容')}
           >
             劇透
+          </button>
+          <button
+            type="button"
+            className="forum-compose-field__tool forum-compose-field__tool--hr"
+            title="分隔線"
+            disabled={toolbarDisabled}
+            onClick={() => editor?.chain().focus().setHorizontalRule().run()}
+          >
+            ―
           </button>
           <button
             type="button"

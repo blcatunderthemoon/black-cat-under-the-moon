@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import ForumComposeField from './ForumComposeField.js';
-import { STORY_CONTENT_MAX } from '../lib/forum-story.js';
+import { STORY_CONTENT_MAX, normalizeForumBodyContent } from '../lib/forum-story.js';
 import { STORY_CHAPTER_TITLE_MAX } from '../lib/forum-story-chapters.js';
+import { forumSubmitErrorMessage } from '../lib/forum-submit-error.js';
 
 export default function ForumStoryEditChapter({
   postId,
@@ -17,7 +18,8 @@ export default function ForumStoryEditChapter({
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!content.trim()) {
+    const normalized = normalizeForumBodyContent(content);
+    if (!normalized.trim()) {
       setError('請填寫章節內容。');
       return;
     }
@@ -35,13 +37,13 @@ export default function ForumStoryEditChapter({
           },
           body: JSON.stringify({
             title: title.trim() || null,
-            content: content.trim(),
+            content: normalized,
           }),
         },
       );
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(payload.error || '更新章節失敗。');
+        setError(forumSubmitErrorMessage(payload, '更新章節失敗。'));
         return;
       }
       onSaved?.(payload.chapters);

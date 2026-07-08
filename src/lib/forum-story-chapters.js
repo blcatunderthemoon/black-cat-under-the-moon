@@ -2,7 +2,7 @@
  * Story chapter helpers (寫故事 multi-chapter books).
  */
 
-import { isStoryPost } from './forum-story.js';
+import { isStoryPost, normalizeForumBodyContent } from './forum-story.js';
 
 export const STORY_CHAPTER_TITLE_MAX = 80;
 
@@ -14,8 +14,8 @@ export function chapterDisplayTitle(chapter) {
 }
 
 export function normalizeLegacyChapters(post) {
-  const content = String(post?.content || '').trim();
-  if (!content) return [];
+  const content = normalizeForumBodyContent(post?.content);
+  if (!content.trim()) return [];
   return [{
     id: 'legacy-1',
     chapter_number: 1,

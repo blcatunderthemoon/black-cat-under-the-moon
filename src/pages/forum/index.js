@@ -353,6 +353,7 @@ export default function ForumPage() {
   const [loadError, setLoadError] = useState(false);
   const [pageBootstrapping, setPageBootstrapping] = useState(true);
   const [feedRefreshing, setFeedRefreshing] = useState(false);
+  const [storySearchLoading, setStorySearchLoading] = useState(false);
   const [matureAcked, setMatureAcked] = useState(false);
   const [storySearch, setStorySearch] = useState('');
   const [storySearchDebounced, setStorySearchDebounced] = useState('');
@@ -548,7 +549,7 @@ export default function ForumPage() {
     return () => window.clearTimeout(timer);
   }, [storySearch, topic]);
 
-  const load = useCallback(async (reset = false, { bootstrap = false, silent = false, feedOnly = false, postsOnly = false } = {}) => {
+  const load = useCallback(async (reset = false, { bootstrap = false, silent = false, feedOnly = false, postsOnly = false, searchOnly = false } = {}) => {
     const seq = ++loadSeqRef.current;
     const newOffset = reset ? 0 : offsetRef.current;
     const requestedTopic = topic;
@@ -561,7 +562,9 @@ export default function ForumPage() {
     const token = sessionRef.current?.access_token;
     if (token) headers.Authorization = `Bearer ${token}`;
 
-    if (bootstrap) {
+    if (searchOnly) {
+      setStorySearchLoading(true);
+    } else if (bootstrap) {
       if (!silent) {
         if (feedOnly || initialLoadDoneRef.current) {
           setFeedRefreshing(true);
@@ -641,6 +644,9 @@ export default function ForumPage() {
       }
     } finally {
       if (seq === loadSeqRef.current) {
+        if (searchOnly) {
+          setStorySearchLoading(false);
+        }
         if (bootstrap) {
           setPageBootstrapping(false);
           setFeedRefreshing(false);
@@ -680,6 +686,11 @@ export default function ForumPage() {
     const postsOnly = initialLoadDoneRef.current
       && !topicChanged
       && (tagChanged || sortChanged || searchChanged);
+    const searchOnly = initialLoadDoneRef.current
+      && searchChanged
+      && !topicChanged
+      && !sortChanged
+      && !tagChanged;
 
     offsetRef.current = 0;
     setOffset(0);
@@ -698,6 +709,11 @@ export default function ForumPage() {
         setHasMore(false);
         return;
       }
+    }
+
+    if (searchOnly) {
+      load(true, { bootstrap: false, silent: true, postsOnly: true, searchOnly: true });
+      return;
     }
 
     const cached = !storySearchDebounced && readForumFeedCache(sort, topic, activeTag);
@@ -1165,12 +1181,12 @@ export default function ForumPage() {
                   </div>
                 )}
 
-                {!feedLoading && isStoryTopic(topic) && (
+                {isStoryTopic(topic) && posts !== null && (
                   <ForumStorySearchBar
                     value={storySearch}
                     onChange={setStorySearch}
                     onClear={() => setStorySearch('')}
-                    disabled={feedRefreshing}
+                    disabled={storySearchLoading}
                   />
                 )}
 
@@ -1185,28 +1201,50 @@ export default function ForumPage() {
                   </div>
                 )}
 
-                {!feedLoading && isStoryTopic(topic) && storySearchDebounced && feedPosts.length === 0 && !loadError && (
-                  <div className="forum-story-search-empty" role="status">
-                    找不到「{storySearchDebounced}」相關書名
+                {isStoryTopic(topic) && posts !== null && (
+                  <div className="forum-story-bookshelf-zone" aria-busy={storySearchLoading}>
+                    {storySearchLoading ? (
+                      <div className="forum-story-bookshelf-loading" aria-live="polite">
+                        <MoonLoading label="搜尋中…" variant="inline" centered smooth size={40} />
+                      </div>
+                    ) : (
+                      <>
+                        {storySearchDebounced && feedPosts.length === 0 && !loadError && (
+                          <div className="forum-story-search-empty" role="status">
+                            找不到「{storySearchDebounced}」相關書名
+                          </div>
+                        )}
+
+                        {showEmptyState && !storySearchDebounced && (
+                          <EmptyState
+                            topic={topic}
+                            onCompose={openCompose}
+                            canCompose={!!session}
+                            sort={sort}
+                            viewerClanType={viewerClanType}
+                          />
+                        )}
+
+                        {feedPosts.length > 0 && (
+                          <ForumStoryBookshelf
+                            posts={feedPosts}
+                            session={session}
+                            bookmarkingIds={bookmarkingIds}
+                            onBookmark={toggleBookmark}
+                          />
+                        )}
+                      </>
+                    )}
                   </div>
                 )}
 
-                {!feedLoading && showEmptyState && !(isStoryTopic(topic) && storySearchDebounced) && (
+                {!feedLoading && showEmptyState && !isStoryTopic(topic) && (
                   <EmptyState
                     topic={topic}
                     onCompose={openCompose}
                     canCompose={!!session}
                     sort={sort}
                     viewerClanType={viewerClanType}
-                  />
-                )}
-
-                {!feedLoading && feedPosts.length > 0 && isStoryTopic(topic) && (
-                  <ForumStoryBookshelf
-                    posts={feedPosts}
-                    session={session}
-                    bookmarkingIds={bookmarkingIds}
-                    onBookmark={toggleBookmark}
                   />
                 )}
 

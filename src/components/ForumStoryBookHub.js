@@ -144,6 +144,7 @@ export default function ForumStoryBookHub({
                   src={optimizeForumDisplayUrl(post.cover_image_url)}
                   alt=""
                   className="forum-story-reader__cover-img"
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
                 />
                 <span className="forum-story-reader__cover-spine" aria-hidden="true" />
                 <span className="forum-story-reader__cover-shine" aria-hidden="true" />

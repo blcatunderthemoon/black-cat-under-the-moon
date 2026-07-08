@@ -9766,6 +9766,10 @@
   cursor: not-allowed;
 }
 
+.forum-compose-field__tool--hr {
+  letter-spacing: 0.05em;
+}
+
 .forum-compose-field__tool--image {
   min-width: 34px;
   font-size: 16px;
@@ -9935,6 +9939,7 @@
 
 .forum-tiptap__editor-wrap .ProseMirror p {
   margin: 0 0 0.65rem;
+  white-space: pre-wrap;
 }
 
 .forum-tiptap__editor-wrap .ProseMirror p.is-editor-empty:first-child::before {
@@ -9955,6 +9960,12 @@
   margin: 0.5rem auto;
   border-radius: 8px;
   border: 1px solid rgba(189, 147, 249, 0.22);
+}
+
+.forum-tiptap__editor-wrap .ProseMirror hr {
+  border: none;
+  border-top: 1px solid rgba(189, 147, 249, 0.35);
+  margin: 1rem 0;
 }
 
 .forum-tiptap__count {
@@ -12396,10 +12407,17 @@
 
 .forum-md-body__p {
   margin: 0 0 0.75rem;
+  white-space: pre-wrap;
 }
 
 .forum-md-body__p:last-child {
   margin-bottom: 0;
+}
+
+.forum-md-body hr {
+  border: none;
+  border-top: 1px solid rgba(189, 147, 249, 0.35);
+  margin: 1rem 0;
 }
 
 .forum-md-body strong {
@@ -18250,6 +18268,18 @@ button.forum-tag-chip:hover {
   text-align: center;
 }
 
+.forum-story-bookshelf-zone {
+  min-height: 120px;
+}
+
+.forum-story-bookshelf-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  padding: 24px 16px;
+}
+
 .forum-story-shelf {
   position: relative;
   padding: 8px 4px 20px;
@@ -19008,6 +19038,10 @@ button.forum-tag-chip:hover {
   color: #1a140e;
 }
 
+.forum-story-reader__page--paper .forum-story-reader__body.forum-md-body hr {
+  border-top-color: rgba(107, 76, 42, 0.28);
+}
+
 .forum-story-reader__page--night .forum-story-reader__body.forum-md-body a,
 .forum-story-reader__page--night .forum-story-reader__body.forum-md-body .forum-md-link {
   color: #d4a574;
@@ -19015,6 +19049,10 @@ button.forum-tag-chip:hover {
 
 .forum-story-reader__page--night .forum-story-reader__body.forum-md-body strong {
   color: #f5efe6;
+}
+
+.forum-story-reader__page--night .forum-story-reader__body.forum-md-body hr {
+  border-top-color: rgba(212, 165, 116, 0.32);
 }
 
 .forum-story-reader__page--night .forum-story-reader__body.forum-md-body img,
@@ -19259,12 +19297,11 @@ button.forum-tag-chip:hover {
 }
 
 .forum-story-cover-edit__trigger .forum-story-reader__cover-img {
-  opacity: 0;
-  transition: opacity 0.15s ease;
+  opacity: 1;
 }
 
-.forum-story-cover-edit__trigger .forum-story-cover-edit__img--ready {
-  opacity: 1;
+.forum-story-cover-edit__placeholder--error {
+  color: rgba(232, 180, 140, 0.75);
 }
 
 .forum-story-cover-edit__trigger:disabled {
@@ -20037,6 +20074,15 @@ button.forum-tag-chip:hover {
 .forum-compose-overlay .forum-compose-modal--synopsis {
   max-width: 560px;
   width: min(560px, calc(100vw - 32px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.forum-compose-overlay .forum-compose-modal--synopsis .forum-story-synopsis-modal {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .forum-story-synopsis-modal__head {
@@ -20068,10 +20114,14 @@ button.forum-tag-chip:hover {
   flex-direction: column;
   gap: 6px;
   margin-bottom: 16px;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .forum-story-synopsis-modal__input {
   min-height: 160px;
+  flex: 1 1 auto;
+  resize: vertical;
 }
 
 .forum-story-synopsis-modal__count {
@@ -20382,7 +20432,8 @@ button.forum-tag-chip:hover {
   flex-shrink: 0;
 }
 
-.forum-compose-modal--add-chapter .forum-story-add-chapter__editor {
+.forum-compose-modal--add-chapter .forum-story-add-chapter__editor,
+.forum-compose-modal--add-chapter .forum-story-add-chapter__editor.forum-compose-field {
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
@@ -20421,8 +20472,7 @@ button.forum-tag-chip:hover {
   min-height: 0;
 }
 
-.forum-compose-modal--add-chapter .forum-story-add-chapter__editor .forum-tiptap__editor-wrap .ProseMirror,
-.forum-compose-modal--add-chapter .forum-story-add-chapter__editor .forum-compose-field__preview {
+.forum-compose-modal--add-chapter .forum-story-add-chapter__editor .forum-tiptap__editor-wrap .ProseMirror {
   flex: none;
   min-height: 220px;
   padding: 12px 14px;
@@ -20430,8 +20480,17 @@ button.forum-tag-chip:hover {
 }
 
 .forum-compose-modal--add-chapter .forum-story-add-chapter__editor .forum-compose-field__preview {
+  flex: 1 1 auto;
+  min-height: 0 !important;
+  max-height: none;
+  padding: 12px 14px;
+  box-sizing: border-box;
+  overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  border: 1px solid rgba(212, 165, 116, 0.22);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.22);
 }
 
 .forum-compose-modal--add-chapter .forum-story-add-chapter__head {
@@ -20629,9 +20688,12 @@ button.forum-tag-chip:hover {
     min-height: min(88vh, 760px);
   }
 
-  .forum-compose-modal--add-chapter .forum-story-add-chapter__editor .forum-tiptap__editor-wrap .ProseMirror,
-  .forum-compose-modal--add-chapter .forum-story-add-chapter__editor .forum-compose-field__preview {
+  .forum-compose-modal--add-chapter .forum-story-add-chapter__editor .forum-tiptap__editor-wrap .ProseMirror {
     min-height: min(48vh, 380px);
+  }
+
+  .forum-compose-modal--add-chapter .forum-story-add-chapter__editor .forum-compose-field__preview {
+    min-height: 0 !important;
   }
 
   .forum-story-add-chapter__actions {

@@ -41,19 +41,79 @@ import {
 function mergeStoryPostFields(prevPost, nextPost) {
   if (!prevPost || !nextPost) return nextPost || prevPost;
   const merged = { ...prevPost, ...nextPost };
-  if (nextPost.cover_image_url == null && prevPost.cover_image_url) {
+  if (nextPost.cover_image_url === undefined && prevPost.cover_image_url) {
     merged.cover_image_url = prevPost.cover_image_url;
   }
-  if ((nextPost.synopsis == null || nextPost.synopsis === '') && prevPost.synopsis) {
+  if (nextPost.synopsis === undefined && prevPost.synopsis) {
     merged.synopsis = prevPost.synopsis;
   }
-  if (nextPost.view_count == null && prevPost.view_count != null) {
+  if (nextPost.view_count === undefined && prevPost.view_count != null) {
     merged.view_count = prevPost.view_count;
   }
-  if (nextPost.story_completed == null && prevPost.story_completed != null) {
+  if (nextPost.story_completed === undefined && prevPost.story_completed != null) {
     merged.story_completed = prevPost.story_completed;
   }
   return merged;
+}
+
+function resolveStoryChapters(payload, chaptersPayload, prev) {
+  if (Array.isArray(payload?.chapters)) return payload.chapters;
+  if (chaptersPayload && Array.isArray(chaptersPayload.chapters)) return chaptersPayload.chapters;
+  if (chaptersPayload && isStoryPost(payload?.post)) return [];
+  if (prev?.chapters) return prev.chapters;
+  return undefined;
+}
+
+function mergePostDetailPayload(prev, payload, chaptersPayload) {
+  if (!payload?.post) return prev || payload;
+
+  const chapters = resolveStoryChapters(payload, chaptersPayload, prev);
+  const comments = Array.isArray(payload.comments) ? payload.comments : (prev?.comments ?? []);
+
+  if (!prev?.post) {
+    return {
+      ...payload,
+      chapters,
+      comments,
+      _bootstrap: false,
+    };
+  }
+
+  return {
+    ...prev,
+    ...payload,
+    post: mergeStoryPostFields(prev.post, payload.post),
+    chapters,
+    comments,
+    polls: payload.polls ?? prev.polls,
+    tag_labels: { ...(prev.tag_labels || {}), ...(payload.tag_labels || {}) },
+    _bootstrap: false,
+  };
+}
+
+async function fetchPostDetailBundle(postId, token) {
+  const headers = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const postPromise = fetch(`/api/forum/posts/${encodeURIComponent(postId)}`, { headers })
+    .then(async (r) => {
+      const payload = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        const err = new Error(payload.error || 'Load failed');
+        err.code = payload.code || '';
+        throw err;
+      }
+      return payload;
+    });
+
+  const chaptersPromise = token
+    ? fetch(`/api/forum/posts/${encodeURIComponent(postId)}/chapters`, { headers })
+      .then(async (r) => (r.ok ? r.json().catch(() => null) : null))
+      .catch(() => null)
+    : Promise.resolve(null);
+
+  const [payload, chaptersPayload] = await Promise.all([postPromise, chaptersPromise]);
+  return { payload, chaptersPayload };
 }
 
 function AuthorLinks({ author, isMine }) {
@@ -129,14 +189,18 @@ export default function ForumPostPage() {
 
   const reloadPost = useCallback(async () => {
     if (!postId) return;
-    const headers = {};
-    if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
-    const r = await fetch(`/api/forum/posts/${encodeURIComponent(postId)}`, { headers });
-    const payload = await r.json().catch(() => ({}));
-    if (r.ok) {
+    const token = session?.access_token ?? readStoredAuthSession()?.access_token ?? null;
+    try {
+      const { payload, chaptersPayload } = await fetchPostDetailBundle(postId, token);
       setLoadError(null);
       setLoadErrorCode('');
-      setData(payload);
+      setData((prev) => {
+        const next = mergePostDetailPayload(prev, payload, chaptersPayload);
+        writeForumPostCache(postId, next);
+        return next;
+      });
+    } catch {
+      /* keep current view on soft refresh failure */
     }
   }, [postId, session?.access_token]);
 
@@ -147,35 +211,6 @@ export default function ForumPostPage() {
     setData(bootstrap ?? null);
     setLoadError(null);
     setLoadErrorCode('');
-
-    if (bootstrap?.post && isStoryPost(bootstrap.post) && !Array.isArray(bootstrap.chapters)) {
-      const stored = readStoredAuthSession();
-      const token = stored?.access_token ?? null;
-      if (!token) return undefined;
-
-      const headers = { Authorization: `Bearer ${token}` };
-
-      let cancelled = false;
-      fetch(`/api/forum/posts/${encodeURIComponent(postId)}/chapters`, { headers })
-        .then(async (r) => {
-          if (!r.ok) return null;
-          return r.json().catch(() => null);
-        })
-        .then((payload) => {
-          if (cancelled || !payload?.chapters) return;
-          setData((prev) => {
-            if (!prev?.post || Array.isArray(prev.chapters)) return prev;
-            const next = { ...prev, chapters: payload.chapters };
-            writeForumPostCache(postId, next);
-            return next;
-          });
-        })
-        .catch(() => {});
-
-      return () => { cancelled = true; };
-    }
-
-    return undefined;
   }, [postId]);
 
   useEffect(() => {
@@ -188,43 +223,15 @@ export default function ForumPostPage() {
     }
 
     const seq = ++loadSeqRef.current;
-    const headers = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
-
     let cancelled = false;
-    const bootstrap = readForumPostBootstrap(postId);
-    const prefetchChapters = token
-      && bootstrap?.post
-      && isStoryPost(bootstrap.post)
-      && !Array.isArray(bootstrap.chapters);
 
-    const chaptersPromise = prefetchChapters
-      ? fetch(`/api/forum/posts/${encodeURIComponent(postId)}/chapters`, { headers })
-        .then(async (r) => (r.ok ? r.json().catch(() => null) : null))
-        .catch(() => null)
-      : Promise.resolve(null);
-
-    fetch(`/api/forum/posts/${encodeURIComponent(postId)}`, { headers })
-      .then(async (r) => {
-        const payload = await r.json().catch(() => ({}));
-        if (!r.ok) {
-          const err = new Error(payload.error || 'Load failed');
-          err.code = payload.code || '';
-          throw err;
-        }
-        return payload;
-      })
-      .then((payload) => {
+    fetchPostDetailBundle(postId, token)
+      .then(({ payload, chaptersPayload }) => {
         if (cancelled || seq !== loadSeqRef.current) return;
         setLoadError(null);
         setLoadErrorCode('');
         setData((prev) => {
-          const next = !prev?.post || !payload?.post
-            ? payload
-            : {
-              ...payload,
-              post: mergeStoryPostFields(prev.post, payload.post),
-            };
+          const next = mergePostDetailPayload(prev, payload, chaptersPayload);
           writeForumPostCache(postId, next);
           return next;
         });
@@ -237,45 +244,8 @@ export default function ForumPostPage() {
         setLoadErrorCode(e.code || '');
       });
 
-    chaptersPromise.then((chaptersPayload) => {
-      if (cancelled || seq !== loadSeqRef.current || !chaptersPayload?.chapters) return;
-      setData((prev) => {
-        if (!prev?.post || Array.isArray(prev.chapters)) return prev;
-        const next = { ...prev, chapters: chaptersPayload.chapters };
-        if (!prev._bootstrap) writeForumPostCache(postId, next);
-        return next;
-      });
-    });
-
     return () => { cancelled = true; };
   }, [postId, router.isReady, session?.access_token]);
-
-  useEffect(() => {
-    if (!router.isReady || !postId || !data?.post || !isStoryPost(data.post)) return undefined;
-    if (Array.isArray(data.chapters)) return undefined;
-
-    const stored = readStoredAuthSession();
-    const token = session?.access_token ?? stored?.access_token ?? null;
-    if (!token) return undefined;
-    const headers = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
-
-    let cancelled = false;
-    fetch(`/api/forum/posts/${encodeURIComponent(postId)}/chapters`, { headers })
-      .then(async (r) => (r.ok ? r.json().catch(() => null) : null))
-      .then((payload) => {
-        if (cancelled || !payload?.chapters) return;
-        setData((prev) => {
-          if (!prev?.post || Array.isArray(prev.chapters)) return prev;
-          const next = { ...prev, chapters: payload.chapters };
-          writeForumPostCache(postId, next);
-          return next;
-        });
-      })
-      .catch(() => {});
-
-    return () => { cancelled = true; };
-  }, [postId, router.isReady, data?.post, data?.chapters, session?.access_token]);
 
   useEffect(() => {
     const userId = session?.user?.id;
@@ -620,6 +590,12 @@ export default function ForumPostPage() {
   const post = data?.post;
   const storyChapters = data?.chapters;
   const isStoryReading = !!(post && isStoryPost(post) && router.query.read === '1');
+  const isStoryBook = !!(post && isStoryPost(post) && !isStoryReading);
+  const storyDetailReady = !isStoryBook || (
+    !commentsBootstrapping
+    && (!accessToken || Array.isArray(storyChapters) || !!data?.chapters_locked)
+  );
+  const storyDetailLoading = isStoryBook && !storyDetailReady;
 
   const handleChaptersChange = useCallback((updatedChapters) => {
     setData((d) => (d ? { ...d, chapters: updatedChapters } : d));
@@ -769,6 +745,7 @@ export default function ForumPostPage() {
                   post={post}
                   chapters={storyChapters}
                   chapterCount={data?.chapter_count}
+                  chaptersLoading={storyDetailLoading && !!accessToken}
                   pollsById={pollsById}
                   loggedIn={!!accessToken}
                   loginHref={`/login?redirect=${encodeURIComponent(router.asPath)}`}
@@ -911,7 +888,7 @@ export default function ForumPostPage() {
                   </button>
                 )}
               </div>
-              {commentsBootstrapping ? (
+              {commentsBootstrapping || storyDetailLoading ? (
                 <div className="forum-comments-empty forum-comments-empty--loading">
                   <MoonLoading label="正在載入留言…" variant="inline" centered smooth size={48} />
                 </div>
@@ -972,7 +949,7 @@ export default function ForumPostPage() {
 
             )}
 
-            {!isStoryReading && (authLoading && !session && !readStoredAuthSession()?.access_token ? (
+            {!isStoryReading && !storyDetailLoading && (authLoading && !session && !readStoredAuthSession()?.access_token ? (
               <div className="forum-comments-empty forum-comments-empty--loading">
                 <MoonLoading label="載入帳戶狀態…" centered={false} size={24} />
               </div>

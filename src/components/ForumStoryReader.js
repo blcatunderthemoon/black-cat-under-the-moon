@@ -12,6 +12,7 @@ export default function ForumStoryReader({
   post,
   chapters: chaptersProp,
   chapterCount,
+  chaptersLoading: chaptersLoadingProp,
   pollsById,
   loggedIn,
   loginHref = '/login',
@@ -37,7 +38,7 @@ export default function ForumStoryReader({
     return null;
   }, [chaptersProp]);
 
-  const chaptersLoading = chapters === null;
+  const chaptersLoading = chaptersLoadingProp ?? (loggedIn && chapters === null);
 
   const { resumeChapterNumber, hasReadingProgress } = useMemo(() => {
     if (!clientMounted || !post?.id || chaptersLoading || !chapters?.length) {
@@ -123,7 +124,7 @@ export default function ForumStoryReader({
     <ForumStoryBookHub
       post={post}
       chapters={chapters || []}
-      chaptersLoading={loggedIn && chaptersLoading}
+      chaptersLoading={chaptersLoading}
       chapterCount={chapterCount}
       loggedIn={loggedIn}
       loginHref={loginHref}

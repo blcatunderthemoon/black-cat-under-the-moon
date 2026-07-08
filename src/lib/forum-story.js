@@ -8,6 +8,23 @@ export const STORY_TOPIC = '寫故事';
 export const STORY_CONTENT_MAX = 20000;
 export const STORY_SYNOPSIS_MAX = 400;
 
+/**
+ * Keep intentional leading indent; only drop trailing whitespace.
+ * Authors use leading spaces (incl. full-width) for paragraph indent.
+ */
+export function normalizeForumBodyContent(content) {
+  return String(content ?? '').replace(/\s+$/u, '');
+}
+
+/**
+ * Markdown discards paragraph leading spaces — encode them so TipTap / react-markdown keep indent.
+ */
+export function preserveMarkdownLeadingSpaces(md) {
+  return String(md || '').replace(/^[ \t\u3000]+/gm, (lead) => (
+    Array.from(lead, (ch) => (ch === '\t' ? '\u00A0\u00A0' : '\u00A0')).join('')
+  ));
+}
+
 export function isStoryTopic(topic) {
   if (!topic) return false;
   return displayTopic(topic) === STORY_TOPIC;

@@ -4,7 +4,7 @@
 
 import { requireUser, sendAuthError, getAdminClient } from '../../../../../../lib/server-auth.js';
 import { filterContent } from '../../../../../../lib/content-filter.js';
-import { isStoryPost, STORY_CONTENT_MAX } from '../../../../../../lib/forum-story.js';
+import { isStoryPost, STORY_CONTENT_MAX, normalizeForumBodyContent } from '../../../../../../lib/forum-story.js';
 import {
   STORY_CHAPTER_TITLE_MAX,
   ensureChapterOneMigrated,
@@ -79,8 +79,8 @@ async function handlePatch(req, res, postId, chapterId) {
   }
 
   if (Object.prototype.hasOwnProperty.call(body, 'content')) {
-    const content = String(body.content || '').trim();
-    if (!content || content.length < 10) {
+    const content = normalizeForumBodyContent(body.content);
+    if (!content.trim() || content.trim().length < 10) {
       return res.status(400).json({ error: '章節內容最少需要 10 個字。' });
     }
     if (content.length > STORY_CONTENT_MAX) {

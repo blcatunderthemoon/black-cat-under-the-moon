@@ -4,6 +4,7 @@
 
 import { POLL_TOKEN_RE } from './forum-poll.js';
 import { YOUTUBE_TOKEN_RE } from './forum-youtube.js';
+import { preserveMarkdownLeadingSpaces } from './forum-story.js';
 
 const EMBED_TOKEN_RE = new RegExp(
   `(${POLL_TOKEN_RE.source}|${YOUTUBE_TOKEN_RE.source})`,
@@ -54,18 +55,6 @@ export function splitMarkdownByEmbeds(md) {
 /** @deprecated use splitMarkdownByEmbeds */
 export function splitMarkdownByPollTokens(md) {
   return splitMarkdownByEmbeds(md);
-}
-
-function hasForumEmbedNodes(editor) {
-  let found = false;
-  editor.state.doc.descendants((node) => {
-    if (node.type.name === 'forumPoll' || node.type.name === 'forumYoutube') {
-      found = true;
-      return false;
-    }
-    return undefined;
-  });
-  return found;
 }
 
 function inlineNodeToMarkdown(node) {
@@ -164,16 +153,14 @@ function serializeEmbedNode(node) {
 export function getForumEditorMarkdown(editor) {
   if (!editor || editor.isDestroyed) return '';
 
-  if (!hasForumEmbedNodes(editor)) {
-    return editor.storage.markdown?.getMarkdown?.() ?? editor.getText();
-  }
-
+  // Always walk the doc ourselves so leading paragraph spaces survive export.
+  // TipTap markdown storage often trims them.
   const segments = [];
   let mdNodes = [];
 
   const flush = () => {
     if (!mdNodes.length) return;
-    const lines = mdNodes.map(blockNodeToMarkdown).filter((line) => line !== '');
+    const lines = mdNodes.map(blockNodeToMarkdown);
     if (lines.length) segments.push(lines.join('\n\n'));
     mdNodes = [];
   };
@@ -189,7 +176,7 @@ export function getForumEditorMarkdown(editor) {
   });
 
   flush();
-  return segments.join('\n\n').trim();
+  return String(segments.join('\n\n') || '').replace(/\s+$/u, '');
 }
 
 /**
@@ -203,7 +190,11 @@ export function setForumEditorMarkdown(editor, md) {
   const hasEmbeds = parts.some((p) => p.type === 'poll' || p.type === 'youtube');
 
   if (!hasEmbeds) {
-    editor.commands.setContent(md || '', false, { contentType: 'markdown' });
+    editor.commands.setContent(
+      preserveMarkdownLeadingSpaces(md || ''),
+      false,
+      { contentType: 'markdown' },
+    );
     return;
   }
 
@@ -218,7 +209,10 @@ export function setForumEditorMarkdown(editor, md) {
     } else if (part.type === 'youtube') {
       chain = chain.insertContent({ type: 'forumYoutube', attrs: { videoId: part.videoId } });
     } else if (part.text) {
-      chain = chain.insertContent(part.text, { contentType: 'markdown' });
+      chain = chain.insertContent(
+        preserveMarkdownLeadingSpaces(part.text),
+        { contentType: 'markdown' },
+      );
     }
   }
 

@@ -1229,11 +1229,15 @@
   .forum-compose-overlay {
     align-items: flex-start;
     justify-content: flex-start;
+    top: var(--mobile-vv-offset-top, 0px);
+    bottom: auto;
     height: var(--mobile-vvh, 100dvh);
     max-height: var(--mobile-vvh, 100dvh);
     padding-top: max(12px, env(safe-area-inset-top, 0px));
     padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
     overscroll-behavior: contain;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .forum-compose-overlay .forum-compose-modal {
@@ -1244,7 +1248,14 @@
     overflow: hidden;
   }
 
-  .forum-compose-overlay .forum-compose-modal .pixel-form {
+  .forum-compose-overlay .forum-compose-modal--synopsis,
+  .forum-compose-overlay .forum-compose-modal--add-chapter {
+    max-height: calc(var(--mobile-vvh, 100dvh) - 24px);
+    min-height: 0;
+  }
+
+  .forum-compose-overlay .forum-compose-modal .pixel-form,
+  .forum-compose-overlay .forum-compose-modal--synopsis .forum-story-synopsis-modal {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
@@ -1252,7 +1263,8 @@
     overscroll-behavior: contain;
   }
 
-  .forum-compose-overlay .forum-compose-actions {
+  .forum-compose-actions,
+  .forum-story-add-chapter__actions {
     position: sticky;
     bottom: 0;
     z-index: 2;
@@ -1337,6 +1349,9 @@
   .pixel-select:focus,
   .forum-comment-form__input:focus,
   .forum-compose-field__textarea:focus,
+  .forum-story-synopsis-edit__input:focus,
+  .forum-story-synopsis-modal__input:focus,
+  .forum-story-add-chapter__input:focus,
   .forum-tiptap__editor-wrap .ProseMirror:focus {
     scroll-margin-bottom: calc(96px + var(--mobile-keyboard-inset, 0px));
   }

@@ -5,7 +5,7 @@
 
 import { requireUser, sendAuthError, getAdminClient } from '../../../../../lib/server-auth.js';
 import { filterContent } from '../../../../../lib/content-filter.js';
-import { isStoryPost, STORY_CONTENT_MAX } from '../../../../../lib/forum-story.js';
+import { isStoryPost, STORY_CONTENT_MAX, normalizeForumBodyContent } from '../../../../../lib/forum-story.js';
 import {
   STORY_CHAPTER_TITLE_MAX,
   ensureChapterOneMigrated,
@@ -68,10 +68,10 @@ async function handlePost(req, res, postId) {
   }
 
   const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
-  const content = String(body.content || '').trim();
+  const content = normalizeForumBodyContent(body.content);
   const title = body.title != null ? String(body.title).trim().slice(0, STORY_CHAPTER_TITLE_MAX) : null;
 
-  if (!content || content.length < 10) {
+  if (!content.trim() || content.trim().length < 10) {
     return res.status(400).json({ error: '章節內容最少需要 10 個字。' });
   }
   if (content.length > STORY_CONTENT_MAX) {

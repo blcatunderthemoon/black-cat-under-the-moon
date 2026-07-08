@@ -17,11 +17,12 @@ export default function ForumStoryCoverEdit({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [pendingCoverUrl, setPendingCoverUrl] = useState(null);
-  const [imgReady, setImgReady] = useState(true);
+  const [imgError, setImgError] = useState(false);
   const canUpload = isCloudinaryForumUploadConfigured();
   const locked = disabled || uploading || !canUpload;
 
   const displayCover = pendingCoverUrl !== null ? pendingCoverUrl : coverUrl;
+  const showCoverImage = !!displayCover && !imgError;
 
   useEffect(() => {
     if (pendingCoverUrl !== null && coverUrl === pendingCoverUrl) {
@@ -37,7 +38,7 @@ export default function ForumStoryCoverEdit({
   }, []);
 
   useEffect(() => {
-    setImgReady(!displayCover);
+    setImgError(false);
   }, [displayCover]);
 
   function clearBlobPreview() {
@@ -127,14 +128,19 @@ export default function ForumStoryCoverEdit({
         disabled={locked}
         aria-label={displayCover ? '更換故事封面' : '上傳故事封面'}
       >
-        {displayCover ? (
+        {showCoverImage ? (
           <img
             key={displayCover}
             src={optimizeForumDisplayUrl(displayCover)}
             alt=""
-            className={`forum-story-reader__cover-img${imgReady ? ' forum-story-cover-edit__img--ready' : ''}`}
-            onLoad={() => setImgReady(true)}
+            className="forum-story-reader__cover-img"
+            onError={() => setImgError(true)}
           />
+        ) : displayCover && imgError ? (
+          <span className="forum-story-cover-edit__placeholder forum-story-cover-edit__placeholder--error">
+            <span className="forum-story-cover-edit__placeholder-icon" aria-hidden="true">⚠️</span>
+            <span className="forum-story-cover-edit__placeholder-text">封面無法載入</span>
+          </span>
         ) : (
           <span className="forum-story-cover-edit__placeholder">
             <span className="forum-story-cover-edit__placeholder-icon" aria-hidden="true">📖</span>
@@ -147,7 +153,8 @@ export default function ForumStoryCoverEdit({
           {uploading ? '更新中…' : (displayCover ? '更換封面' : '選擇圖片')}
         </span>
       </button>
-      {displayCover && (        <button
+      {displayCover && (
+        <button
           type="button"
           className="forum-story-cover-edit__remove"
           onClick={handleRemove}
@@ -156,7 +163,7 @@ export default function ForumStoryCoverEdit({
           移除封面
         </button>
       )}
-      {!canUpload && (
+      {!canUpload && !displayCover && (
         <p className="forum-story-cover-edit__hint">圖片上傳尚未設定。</p>
       )}
       {error && <p className="pixel-error forum-story-cover-edit__error">{error}</p>}
