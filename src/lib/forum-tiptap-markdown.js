@@ -6,6 +6,11 @@ import { POLL_TOKEN_RE } from './forum-poll.js';
 import { YOUTUBE_TOKEN_RE } from './forum-youtube.js';
 import { preserveMarkdownLeadingSpaces, FORUM_BLANK_LINE_MARKER } from './forum-story.js';
 
+/** Stable story separator — survives markdown round-trips better than `---`. */
+export const STORY_HR_TOKEN = '::storyhr[]';
+
+const STORY_HR_LINE_RE = /(?:^|\n)(?:---\s*|::storyhr\[\]\s*)(?=\n|$)/m;
+
 const EMBED_TOKEN_RE = new RegExp(
   `(${POLL_TOKEN_RE.source}|${YOUTUBE_TOKEN_RE.source})`,
   'gi',
@@ -134,26 +139,32 @@ function blockNodeToMarkdown(node) {
   }
 
   if (name === 'horizontalRule') {
-    return '---';
+    return STORY_HR_TOKEN;
   }
 
   return node.textContent || '';
 }
 
-export function splitMarkdownByHorizontalRules(md) {
-  const text = String(md || '');
-  const parts = [];
-  const re = /^---\s*$/gm;
-  let last = 0;
-  let match = re.exec(text);
+export function hasStoryHorizontalRules(md) {
+  return STORY_HR_LINE_RE.test(String(md || ''));
+}
 
-  while (match) {
-    if (match.index > last) {
-      parts.push({ type: 'md', text: text.slice(last, match.index) });
+export function splitMarkdownByHorizontalRules(md) {
+  const text = String(md || '')
+    .replace(/\r\n?/g, '\n')
+    .replace(/(^|\n)---\s*(?=\n|$)/gm, `$1${STORY_HR_TOKEN}`);
+  const parts = [];
+  const token = STORY_HR_TOKEN;
+  let last = 0;
+  let index = text.indexOf(token);
+
+  while (index !== -1) {
+    if (index > last) {
+      parts.push({ type: 'md', text: text.slice(last, index) });
     }
     parts.push({ type: 'hr' });
-    last = match.index + match[0].length;
-    match = re.exec(text);
+    last = index + token.length;
+    index = text.indexOf(token, last);
   }
 
   if (last < text.length) {
@@ -235,7 +246,7 @@ export function getForumEditorMarkdown(editor) {
     }
     if (node.type.name === 'horizontalRule') {
       flush();
-      segments.push('---');
+      segments.push(STORY_HR_TOKEN);
       return;
     }
     mdNodes.push(node);
@@ -256,7 +267,7 @@ export function setForumEditorMarkdown(editor, md) {
 
   const parts = splitMarkdownByEmbeds(md);
   const hasEmbeds = parts.some((p) => p.type === 'poll' || p.type === 'youtube');
-  const hasRules = /(^|\n)---\s*(\n|$)/m.test(String(md || ''));
+  const hasRules = hasStoryHorizontalRules(md);
 
   if (!hasEmbeds && !hasRules) {
     editor.commands.setContent(

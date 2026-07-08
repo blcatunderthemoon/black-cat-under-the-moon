@@ -69,7 +69,7 @@ export default function ForumStoryBookHub({
   }
 
   function openAddChapter() {
-    if (!canSave) return;
+    if (!canSave || post.story_completed) return;
     setEditingSynopsis(false);
     setEditingChapter(null);
     setShowAddChapter(true);
@@ -96,6 +96,7 @@ export default function ForumStoryBookHub({
       onPostUpdate?.({
         story_completed: payload.post?.story_completed ?? next,
       });
+      if (next) setShowAddChapter(false);
     } catch {
       console.warn('更新完結狀態失敗');
     } finally {
@@ -333,7 +334,7 @@ export default function ForumStoryBookHub({
             </div>
           )}
 
-          {canEdit && (
+          {canEdit && !post.story_completed && (
             <div className="forum-story-chapters__author">
               <button
                 type="button"
@@ -385,7 +386,7 @@ export default function ForumStoryBookHub({
         </ForumComposeOverlay>
       )}
 
-      {showAddChapter && canSave && (
+      {showAddChapter && canSave && !post.story_completed && (
         <ForumComposeOverlay
           modalClassName="forum-compose-modal--story forum-compose-modal--add-chapter"
           ariaLabelledBy="forum-story-add-chapter-title"

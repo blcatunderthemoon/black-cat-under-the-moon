@@ -24,6 +24,7 @@ import { ForumYoutubeNode } from '../lib/forum-tiptap-youtube-extension.js';
 import {
   getForumEditorMarkdown,
   setForumEditorMarkdown,
+  hasStoryHorizontalRules,
 } from '../lib/forum-tiptap-markdown.js';
 import { preserveMarkdownLeadingSpaces } from '../lib/forum-story.js';
 import ForumEditorOverlay from './ForumEditorOverlay.js';
@@ -34,7 +35,7 @@ function applyMarkdownToEditor(ed, markdown) {
   const next = String(markdown || '');
   if (!next) return;
   const hasEmbeds = /::poll\[|::youtube\[/i.test(next);
-  const hasRules = /(^|\n)---\s*(\n|$)/m.test(next);
+  const hasRules = hasStoryHorizontalRules(next);
   if (hasEmbeds || hasRules) {
     setForumEditorMarkdown(ed, next);
   } else {
@@ -404,7 +405,7 @@ export default function ForumTiptapEditor({
 
   function insertLineBreak() {
     if (!editor) return;
-    const inserted = editor.chain().focus().splitBlock().run();
+    const inserted = editor.chain().focus().setHardBreak().run();
     if (inserted) syncEditorMarkdown(editor);
   }
 
@@ -576,7 +577,7 @@ export default function ForumTiptapEditor({
             <button
               type="button"
               className="forum-compose-field__tool forum-compose-field__tool--break"
-              title="換行"
+              title="段落內換行"
               disabled={toolbarDisabled}
               onClick={insertLineBreak}
             >

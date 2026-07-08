@@ -26,7 +26,7 @@ export default async function handler(req, res) {
 async function loadStoryPost(admin, postId) {
   const { data, error } = await admin
     .from('forum_posts')
-    .select('id, author_id, title, content, topic, created_at, visibility')
+    .select('id, author_id, title, content, topic, created_at, visibility, story_completed')
     .eq('id', postId)
     .maybeSingle();
   if (error || !data) return null;
@@ -64,6 +64,9 @@ async function handlePost(req, res, postId) {
   if (!post) return res.status(404).json({ error: 'Story not found' });
   if (post.author_id !== user.id) {
     return res.status(403).json({ error: '只有作者可以新增章節。' });
+  }
+  if (post.story_completed) {
+    return res.status(409).json({ error: '此書已標記完結，請先取消完結再新增章節。' });
   }
 
   const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};

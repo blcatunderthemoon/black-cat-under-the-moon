@@ -537,9 +537,14 @@ export default function ForumPostPage() {
     commentsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
+  const post = data?.post;
+  const storyChapters = data?.chapters;
+  const isStoryReading = !!(post && isStoryPost(post) && router.query.read === '1');
+  const isStoryBook = !!(post && isStoryPost(post) && !isStoryReading);
+
   const shellProps = {
     headerVariant: 'forum',
-    pageClassName: 'app-page--forum app-page--forum-post',
+    pageClassName: `app-page--forum app-page--forum-post${isStoryReading ? ' app-page--forum-story-reading' : ''}`,
     warmBackground: true,
     showStarfield: false,
     breadcrumbs,
@@ -587,10 +592,6 @@ export default function ForumPostPage() {
   );
   const accessToken = session?.access_token ?? storedAccessToken;
 
-  const post = data?.post;
-  const storyChapters = data?.chapters;
-  const isStoryReading = !!(post && isStoryPost(post) && router.query.read === '1');
-  const isStoryBook = !!(post && isStoryPost(post) && !isStoryReading);
   const storyDetailReady = !isStoryBook || (
     !commentsBootstrapping
     && (!accessToken || Array.isArray(storyChapters) || !!data?.chapters_locked)

@@ -26,6 +26,8 @@ export default function ForumStoryAddChapter({
       setError('請填寫章節內容。');
       return;
     }
+    contentRef.current = normalized;
+    setContent(normalized);
     setSubmitting(true);
     setError('');
     try {

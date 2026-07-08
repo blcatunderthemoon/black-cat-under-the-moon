@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ForumMarkdownBody from './ForumMarkdownBody.js';
 
 export default function ForumComposeField({
@@ -22,15 +22,30 @@ export default function ForumComposeField({
   const [TiptapEditor, setTiptapEditor] = useState(null);
   const [loadError, setLoadError] = useState('');
   const latestContentRef = useRef(value);
-  const internalFlushRef = useRef(null);
-  const editorFlushRef = flushRef || internalFlushRef;
+  const tiptapFlushRef = useRef(null);
+  const stableFlushRef = useRef(null);
   const [previewContent, setPreviewContent] = useState(value);
+
+  const flushEditorContent = useCallback(() => {
+    const flushed = tiptapFlushRef.current?.() ?? latestContentRef.current ?? value;
+    latestContentRef.current = flushed;
+    if (contentRef) contentRef.current = flushed;
+    return flushed;
+  }, [contentRef, value]);
 
   useEffect(() => {
     latestContentRef.current = value;
     if (contentRef) contentRef.current = value;
     setPreviewContent(value);
   }, [value, contentRef]);
+
+  useEffect(() => {
+    const target = flushRef || stableFlushRef;
+    target.current = flushEditorContent;
+    return () => {
+      target.current = null;
+    };
+  }, [flushRef, flushEditorContent]);
 
   function handleContentChange(next) {
     latestContentRef.current = next;
@@ -40,9 +55,7 @@ export default function ForumComposeField({
   }
 
   function openPreviewTab() {
-    const flushed = editorFlushRef.current?.() ?? latestContentRef.current ?? value;
-    latestContentRef.current = flushed;
-    if (contentRef) contentRef.current = flushed;
+    const flushed = flushEditorContent();
     if (flushed !== value) onChange(flushed);
     setPreviewContent(flushed);
     setTab('preview');
@@ -70,6 +83,8 @@ export default function ForumComposeField({
     return map;
   }, [polls]);
 
+  const previewMinHeight = Math.max(minRows * 24, 120);
+
   return (
     <div className={`forum-compose-field ${className}`.trim()}>
       <div className="forum-compose-field__label-row">
@@ -96,41 +111,44 @@ export default function ForumComposeField({
         </div>
       </div>
 
-      {tab === 'edit' ? (
-        <>
-          {loadError ? (
-            <p className="pixel-error forum-compose-field__preview-empty">{loadError}</p>
-          ) : !TiptapEditor ? (
-            <p className="forum-compose-field__preview-empty">載入編輯器…</p>
-          ) : (
-            <TiptapEditor
-              value={value}
-              onChange={handleContentChange}
-              contentRef={contentRef || latestContentRef}
-              polls={polls}
-              onPollsChange={onPollsChange}
-              accessToken={accessToken}
-              maxLength={maxLength}
-              placeholder={placeholder}
-              disabled={disabled}
-              storyMode={storyMode}
-              flushRef={editorFlushRef}
-            />
-          )}
-          <input
-            type="text"
+      <div
+        className={`forum-compose-field__editor-pane${tab !== 'edit' ? ' forum-compose-field__editor-pane--hidden' : ''}`}
+        aria-hidden={tab !== 'edit'}
+      >
+        {loadError ? (
+          <p className="pixel-error forum-compose-field__preview-empty">{loadError}</p>
+        ) : !TiptapEditor ? (
+          <p className="forum-compose-field__preview-empty">載入編輯器…</p>
+        ) : (
+          <TiptapEditor
             value={value}
-            onChange={() => {}}
-            required={required}
-            tabIndex={-1}
-            aria-hidden="true"
-            className="forum-compose-field__validator"
+            onChange={handleContentChange}
+            contentRef={contentRef || latestContentRef}
+            polls={polls}
+            onPollsChange={onPollsChange}
+            accessToken={accessToken}
+            maxLength={maxLength}
+            placeholder={placeholder}
+            disabled={disabled}
+            storyMode={storyMode}
+            flushRef={tiptapFlushRef}
           />
-        </>
-      ) : (
+        )}
+        <input
+          type="text"
+          value={value}
+          onChange={() => {}}
+          required={required}
+          tabIndex={-1}
+          aria-hidden="true"
+          className="forum-compose-field__validator"
+        />
+      </div>
+
+      {tab === 'preview' && (
         <div
           className="forum-compose-field__preview pixel-textarea"
-          style={{ minHeight: `${Math.max(minRows * 24, 120)}px` }}
+          style={{ minHeight: `${previewMinHeight}px` }}
         >
           {previewContent.trim() ? (
             <ForumMarkdownBody

@@ -32,7 +32,7 @@ export function hasMarkdownChunkText(text) {
 
 /**
  * Story bodies may use single newlines (paste / older saves). Expand to paragraph
- * breaks without breaking markdown lists, headings, or hard breaks (`␠␠\n`).
+ * breaks without breaking markdown lists, headings, hard breaks (`␠␠\n`), or HR tokens.
  */
 export function normalizeStoryMarkdownForDisplay(md) {
   const text = String(md || '').replace(/\r\n?/g, '\n');
@@ -42,14 +42,18 @@ export function normalizeStoryMarkdownForDisplay(md) {
     if (!block || isForumBlankLineChunk(block)) return FORUM_BLANK_LINE_MARKER;
     if (/^(?:[-*+]\s|\d+\.\s)/m.test(block)) return block;
     if (/^#{1,6}\s/m.test(block)) return block;
-    if (/^-{3,}\s*$/.test(block.trim())) return '---';
+    if (/^-{3,}\s*$/.test(block.trim())) return '::storyhr[]';
+    if (/^::storyhr\[\]\s*$/.test(block.trim())) return '::storyhr[]';
     if (/^>\s/m.test(block)) return block;
-    const withRules = block.replace(/\n-{3,}\s*\n/g, '\n\n---\n\n');
+    const withRules = block
+      .replace(/\n-{3,}\s*\n/g, '\n\n::storyhr[]\n\n')
+      .replace(/\n::storyhr\[\]\s*\n/g, '\n\n::storyhr[]\n\n');
     return withRules.replace(/(?<!  )\n/g, '\n\n');
   }).join('\n\n');
 
   return normalized
-    .replace(/(^|\n)(-{3,})\s*(?=\n|$)/gm, '\n\n$2\n\n')
+    .replace(/(^|\n)(-{3,})\s*(?=\n|$)/gm, '\n\n::storyhr[]\n\n')
+    .replace(/(^|\n)(::storyhr\[\])\s*(?=\n|$)/gm, '\n\n$2\n\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }

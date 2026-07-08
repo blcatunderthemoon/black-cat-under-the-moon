@@ -6,6 +6,10 @@ function isMobile() {
   return typeof window !== 'undefined' && window.matchMedia(MOBILE_MQ).matches;
 }
 
+function isInComposeOverlay(el) {
+  return !!el?.closest?.('.forum-compose-overlay');
+}
+
 function findScrollParent(el) {
   let node = el?.parentElement;
   while (node && node !== document.documentElement) {
@@ -14,7 +18,8 @@ function findScrollParent(el) {
     const isModalShell = node.classList?.contains('forum-compose-overlay')
       || node.classList?.contains('forum-compose-modal')
       || node.classList?.contains('forum-story-synopsis-modal')
-      || node.classList?.contains('forum-story-add-chapter');
+      || node.classList?.contains('forum-story-add-chapter')
+      || node.classList?.contains('forum-tiptap__editor-wrap');
     if (scrollable && (node.scrollHeight > node.clientHeight + 1 || isModalShell)) {
       return node;
     }
@@ -49,18 +54,26 @@ function ensureVisible(target) {
     const vv = window.visualViewport;
     if (!vv) return;
 
-    const rect = target.getBoundingClientRect();
+    const focusTarget = target.closest?.('.ProseMirror')
+      || target.closest?.('.forum-tiptap__editor-wrap')
+      || target;
+    const rect = focusTarget.getBoundingClientRect();
     const visibleTop = vv.offsetTop + 12;
     const visibleBottom = vv.offsetTop + vv.height;
-    const actions = target.closest(
+    const inOverlay = isInComposeOverlay(focusTarget);
+    const actions = focusTarget.closest(
       '.forum-compose-actions, .forum-story-add-chapter__actions, .forum-comment-form__footer, .letter-compose__footer, .thread-reply-bar, .thread-compose-dock, .mirror-letter-overlay__btns, .mirror-letter-overlay__footer',
     );
     const actionsRect = actions?.getBoundingClientRect?.();
-    const bottomLimit = visibleBottom - (actionsRect ? Math.max(0, actionsRect.height + 16) : 80);
+    const actionPad = inOverlay ? 8 : 16;
+    const defaultPad = inOverlay ? 12 : 80;
+    const bottomLimit = visibleBottom - (actionsRect ? Math.max(0, actionsRect.height + actionPad) : defaultPad);
 
     if (rect.bottom > bottomLimit) {
       const delta = rect.bottom - bottomLimit;
-      const scrollParent = findScrollParent(target) || findScrollParent(actions);
+      const scrollParent = findScrollParent(focusTarget)
+        || findScrollParent(actions)
+        || focusTarget.closest?.('.forum-compose-overlay');
       if (scrollParent) {
         scrollParent.scrollTop += delta;
       } else {
@@ -68,7 +81,8 @@ function ensureVisible(target) {
       }
     } else if (rect.top < visibleTop) {
       const delta = visibleTop - rect.top;
-      const scrollParent = findScrollParent(target);
+      const scrollParent = findScrollParent(focusTarget)
+        || focusTarget.closest?.('.forum-compose-overlay');
       if (scrollParent) {
         scrollParent.scrollTop -= delta;
       } else {
@@ -80,6 +94,7 @@ function ensureVisible(target) {
   requestAnimationFrame(() => {
     setTimeout(run, 60);
     setTimeout(run, 320);
+    setTimeout(run, 520);
   });
 }
 

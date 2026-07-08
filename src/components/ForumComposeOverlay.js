@@ -6,9 +6,14 @@ export default function ForumComposeOverlay({ children, modalClassName = '', ari
     const html = document.documentElement;
     html.classList.add('body-scroll-locked');
     document.body.classList.add('body-scroll-locked');
+    html.classList.add('forum-compose-overlay-open');
+    if (typeof window !== 'undefined' && window.visualViewport) {
+      window.dispatchEvent(new Event('resize'));
+    }
     return () => {
       html.classList.remove('body-scroll-locked');
       document.body.classList.remove('body-scroll-locked');
+      html.classList.remove('forum-compose-overlay-open');
     };
   }, []);
 

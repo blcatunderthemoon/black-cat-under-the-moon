@@ -9911,6 +9911,10 @@
   max-width: 100%;
 }
 
+.forum-compose-field__editor-pane--hidden {
+  display: none;
+}
+
 .forum-compose-field__preview-empty {
   margin: 0;
   font-size: 13px;
@@ -20865,15 +20869,16 @@ button.forum-tag-chip:hover {
 
 @media (max-width: 599px) {
   .forum-compose-overlay .forum-compose-modal--add-chapter {
-    min-height: min(88vh, 760px);
+    min-height: 0;
+    max-height: calc(var(--mobile-vvh, 100dvh) - 24px);
   }
 
   .forum-compose-modal--add-chapter .forum-story-add-chapter__editor .forum-tiptap__editor-wrap .ProseMirror {
-    min-height: min(48vh, 380px);
+    min-height: 200px;
   }
 
   .forum-compose-modal--add-chapter .forum-story-add-chapter__editor .forum-compose-field__preview {
-    min-height: 0 !important;
+    min-height: 200px !important;
   }
 
   .forum-story-add-chapter__actions {
