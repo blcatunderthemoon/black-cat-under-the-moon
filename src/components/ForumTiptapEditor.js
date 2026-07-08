@@ -265,6 +265,7 @@ export default function ForumTiptapEditor({
     try {
       hydratingRef.current = true;
       applyMarkdownToEditor(editor, next);
+      skipExternalSyncRef.current = true;
     } catch {
       /* editor view not mounted yet */
     } finally {

@@ -140,7 +140,7 @@ function blockNodeToMarkdown(node) {
   return node.textContent || '';
 }
 
-function splitMarkdownByHorizontalRules(md) {
+export function splitMarkdownByHorizontalRules(md) {
   const text = String(md || '');
   const parts = [];
   const re = /^---\s*$/gm;
@@ -242,7 +242,9 @@ export function getForumEditorMarkdown(editor) {
   });
 
   flush();
-  return String(segments.join('\n\n') || '').replace(/\s+$/u, '');
+  return String(segments.join('\n\n') || '')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\s+$/u, '');
 }
 
 /**

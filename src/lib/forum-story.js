@@ -38,7 +38,7 @@ export function normalizeStoryMarkdownForDisplay(md) {
   const text = String(md || '').replace(/\r\n?/g, '\n');
   if (!text) return '';
 
-  return text.split('\n\n').map((block) => {
+  const normalized = text.split('\n\n').map((block) => {
     if (!block || isForumBlankLineChunk(block)) return FORUM_BLANK_LINE_MARKER;
     if (/^(?:[-*+]\s|\d+\.\s)/m.test(block)) return block;
     if (/^#{1,6}\s/m.test(block)) return block;
@@ -47,6 +47,11 @@ export function normalizeStoryMarkdownForDisplay(md) {
     const withRules = block.replace(/\n-{3,}\s*\n/g, '\n\n---\n\n');
     return withRules.replace(/(?<!  )\n/g, '\n\n');
   }).join('\n\n');
+
+  return normalized
+    .replace(/(^|\n)(-{3,})\s*(?=\n|$)/gm, '\n\n$2\n\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 /**

@@ -7,6 +7,7 @@ import { parseForumContentSegments } from '../lib/forum-content-segments.js';
 import { splitLegacyPollBlocks } from '../lib/forum-poll.js';
 import { optimizeForumDisplayUrl } from '../lib/cloudinary-forum-upload.js';
 import { preserveMarkdownLeadingSpaces, isForumBlankLineChunk, hasMarkdownChunkText, normalizeStoryMarkdownForDisplay } from '../lib/forum-story.js';
+import { splitMarkdownByHorizontalRules } from '../lib/forum-tiptap-markdown.js';
 import ForumYoutubeEmbed from './ForumYoutubeEmbed.js';
 import ForumPoll from './ForumPoll.js';
 
@@ -80,6 +81,42 @@ function MarkdownBr() {
   return <br className="forum-md-body__br" />;
 }
 
+const STORY_MARKDOWN_COMPONENTS = {
+  a: MarkdownLink,
+  img: MarkdownImage,
+  p: MarkdownParagraph,
+  hr: MarkdownHr,
+  br: MarkdownBr,
+  input: () => null,
+};
+
+function StoryMarkdownSections({ text, chunkKey }) {
+  const sections = useMemo(
+    () => splitMarkdownByHorizontalRules(normalizeStoryMarkdownForDisplay(text)),
+    [text],
+  );
+
+  return (
+    <>
+      {sections.map((section, index) => {
+        if (section.type === 'hr') {
+          return <MarkdownHr key={`${chunkKey}-hr-${index}`} />;
+        }
+        if (!hasMarkdownChunkText(section.text)) return null;
+        return (
+          <ReactMarkdown
+            key={`${chunkKey}-md-${index}`}
+            remarkPlugins={[remarkGfm]}
+            components={STORY_MARKDOWN_COMPONENTS}
+          >
+            {preserveMarkdownLeadingSpaces(section.text)}
+          </ReactMarkdown>
+        );
+      })}
+    </>
+  );
+}
+
 function MarkdownChunk({ text, storyMode = false }) {
   const parts = useMemo(() => splitLegacyPollBlocks(text), [text]);
 
@@ -100,23 +137,22 @@ function MarkdownChunk({ text, storyMode = false }) {
           return <ForumPoll key={`legacy-poll-${index}`} poll={legacyPoll} legacy />;
         }
         if (!hasMarkdownChunkText(part.text)) return null;
-        const displayText = storyMode
-          ? normalizeStoryMarkdownForDisplay(part.text)
-          : part.text;
+        if (storyMode) {
+          return (
+            <StoryMarkdownSections
+              key={`md-chunk-${index}`}
+              text={part.text}
+              chunkKey={`md-chunk-${index}`}
+            />
+          );
+        }
         return (
           <ReactMarkdown
             key={`md-chunk-${index}`}
             remarkPlugins={[remarkGfm]}
-            components={{
-              a: MarkdownLink,
-              img: MarkdownImage,
-              p: MarkdownParagraph,
-              hr: MarkdownHr,
-              br: MarkdownBr,
-              input: () => null,
-            }}
+            components={STORY_MARKDOWN_COMPONENTS}
           >
-            {preserveMarkdownLeadingSpaces(displayText)}
+            {preserveMarkdownLeadingSpaces(part.text)}
           </ReactMarkdown>
         );
       })}

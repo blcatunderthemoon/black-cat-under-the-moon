@@ -35,6 +35,7 @@ export default function ForumComposeField({
   function handleContentChange(next) {
     latestContentRef.current = next;
     if (contentRef) contentRef.current = next;
+    setPreviewContent(next);
     onChange(next);
   }
 
