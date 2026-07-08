@@ -80,9 +80,8 @@ export function validateStoryCoverUrl(url) {
   return { ok: true, value };
 }
 
-export function storySynopsisPreview(synopsis, fallbackContent, maxLength = 120) {
-  const text = String(synopsis || '').trim()
-    || String(fallbackContent || '').replace(/\s+/g, ' ').trim();
+export function storySynopsisPreview(synopsis, maxLength = 120) {
+  const text = String(synopsis || '').trim();
   if (!text) return '';
   if (text.length <= maxLength) return text;
   return `${text.slice(0, maxLength).trim()}…`;

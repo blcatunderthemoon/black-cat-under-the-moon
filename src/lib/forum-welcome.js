@@ -57,7 +57,14 @@ export const WELCOME_POSTS = {
   },
 };
 
-export function getWelcomePost(topic) {
+export function getWelcomePost(topic, override) {
+  if (override) {
+    return {
+      title: override.title ?? WELCOME_POSTS[topic]?.title ?? WELCOME_POSTS['全部'].title,
+      content: override.content ?? WELCOME_POSTS[topic]?.content ?? WELCOME_POSTS['全部'].content,
+      mood_tag: override.mood_tag ?? WELCOME_POSTS[topic]?.mood_tag ?? WELCOME_POSTS['全部'].mood_tag,
+    };
+  }
   return WELCOME_POSTS[topic] || WELCOME_POSTS['全部'];
 }
 

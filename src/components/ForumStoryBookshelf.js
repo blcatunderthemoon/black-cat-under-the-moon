@@ -17,7 +17,7 @@ export default function ForumStoryBookshelf({
           const href = post.members_gated && !session
             ? `/login?redirect=/forum/${encodeURIComponent(post.id)}`
             : `/forum/${post.id}`;
-          const synopsis = storySynopsisPreview(post.synopsis, post.content, 100);
+          const synopsis = storySynopsisPreview(post.synopsis, 100);
 
           return (
             <li key={post.id} className="forum-story-shelf__item">

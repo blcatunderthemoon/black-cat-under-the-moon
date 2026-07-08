@@ -2,7 +2,7 @@
  * /forum — Forum post list + compose
  */
 
-import { useState, useEffect, useCallback, useRef, useMemo, useId } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../lib/auth-context.js';
@@ -19,10 +19,10 @@ import {
   FORUM_TOPICS,
   TOPIC_STYLES,
   FORUM_DISPLAY_NAME,
-  getWelcomePost,
   getEmptyStateCopy,
   displayTopic,
 } from '../../lib/forum-welcome.js';
+import ForumWelcomeCard, { canEditWelcomeTopic } from '../../components/ForumWelcomeCard.js';
 import {
   getOfficialTagKeysForTopic,
   mergePresetTagsWithCounts,
@@ -108,69 +108,6 @@ function scrollTopicBadgeIntoView(row, badge, behavior = 'smooth') {
     left: Math.max(0, Math.min(target, maxScroll)),
     behavior,
   });
-}
-
-function welcomeBadgeLabel(moodTag) {
-  if (moodTag === '版規') return '📌 版規';
-  if (moodTag === '指南') return '📌 指南';
-  return '📌 官方';
-}
-
-function WelcomeCard({ topic }) {
-  const welcome = getWelcomePost(topic);
-  const ts = TOPIC_STYLES[topic] || TOPIC_STYLES['全部'];
-  const bodyId = useId();
-  const storageKey = `bcutm_forum_welcome_open:${topic}`;
-  const [open, setOpen] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    try {
-      return sessionStorage.getItem(storageKey) === '1';
-    } catch {
-      return false;
-    }
-  });
-
-  const toggle = () => {
-    setOpen((prev) => {
-      const next = !prev;
-      try {
-        sessionStorage.setItem(storageKey, next ? '1' : '0');
-      } catch {
-        /* private mode */
-      }
-      return next;
-    });
-  };
-
-  return (
-    <article
-      className={`forum-welcome-card${open ? ' forum-welcome-card--open' : ' forum-welcome-card--collapsed'}`}
-      style={{ borderColor: `${ts.accent}55` }}
-    >
-      <button
-        type="button"
-        className="forum-welcome-card__header"
-        onClick={toggle}
-        aria-expanded={open}
-        aria-controls={bodyId}
-      >
-        <h3 className="forum-welcome-card__title">
-          <span className="forum-welcome-card__title-text">
-            {ts.emoji} {welcome.title}
-          </span>
-          <span className="forum-welcome-card__chevron" aria-hidden="true">{open ? '▾' : '▸'}</span>
-        </h3>
-        <span className="forum-welcome-card__badge">{welcomeBadgeLabel(welcome.mood_tag)}</span>
-      </button>
-      <div
-        id={bodyId}
-        className="forum-welcome-card__body"
-        hidden={!open}
-      >
-        <p className="forum-welcome-card__content">{welcome.content}</p>
-      </div>
-    </article>
-  );
 }
 
 function EmptyState({ topic, onCompose, canCompose, sort, viewerClanType }) {
@@ -970,6 +907,7 @@ export default function ForumPage() {
   const feedPosts = posts || [];
   const showEmptyState = isEmpty && !loadError;
   const showWelcomeCard = topic !== '全部' && sort !== 'clan' && !loadError && !feedLoading;
+  const canEditWelcome = canEditWelcomeTopic(profile, topic);
 
   if (shellLoading) {
     return (
@@ -1190,7 +1128,13 @@ export default function ForumPage() {
                   />
                 )}
 
-                {!feedLoading && showWelcomeCard && <WelcomeCard topic={topic} />}
+                {!feedLoading && showWelcomeCard && (
+                  <ForumWelcomeCard
+                    topic={topic}
+                    canEdit={canEditWelcome}
+                    accessToken={session?.access_token}
+                  />
+                )}
 
                 {!feedLoading && loadError && (
                   <div className="forum-feed-error" role="alert">

@@ -84,6 +84,29 @@ export function assertModerationTopicAccess(res, actor, storedTopic) {
   return false;
 }
 
+/** Welcome / 版規 cards use canonical topic keys (親密話題, 感情, …). */
+export function assertWelcomeTopicAccess(res, actor, welcomeTopic) {
+  if (!actor) return false;
+  if (welcomeTopic === '全部') {
+    if (!canAdminForum(actor.role) && !actor.viaDashboard) {
+      res.status(403).json({
+        error: '只有管理員可以編輯總覽版規。',
+        code: 'admin_required',
+      });
+      return false;
+    }
+    return true;
+  }
+  return assertModerationTopicAccess(res, actor, welcomeTopic);
+}
+
+export async function resolveModerationActorForWelcomeTopic(req, res, welcomeTopic, options = {}) {
+  const actor = await resolveModerationActor(req, res, options);
+  if (!actor) return null;
+  if (!assertWelcomeTopicAccess(res, actor, welcomeTopic)) return null;
+  return { ...actor, welcomeTopic };
+}
+
 /** Resolve actor and verify they may moderate the post (by post id). */
 export async function resolveModerationActorForPost(req, res, postId, options = {}) {
   const actor = await resolveModerationActor(req, res, options);
