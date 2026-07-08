@@ -8,12 +8,45 @@ export const STORY_TOPIC = '寫故事';
 export const STORY_CONTENT_MAX = 20000;
 export const STORY_SYNOPSIS_MAX = 400;
 
+export const FORUM_BLANK_LINE_MARKER = '\u00A0';
+
 /**
  * Keep intentional leading indent; only drop trailing whitespace.
  * Authors use leading spaces (incl. full-width) for paragraph indent.
  */
 export function normalizeForumBodyContent(content) {
   return String(content ?? '').replace(/\s+$/u, '');
+}
+
+/** Blank-line paragraphs survive markdown as a non-breaking-space block. */
+export function isForumBlankLineChunk(text) {
+  const s = String(text || '');
+  if (!s) return false;
+  return s.split('\n').every((line) => !line.replace(/\u00A0/g, '').trim());
+}
+
+export function hasMarkdownChunkText(text) {
+  const s = String(text || '');
+  return !!s.trim() || isForumBlankLineChunk(s);
+}
+
+/**
+ * Story bodies may use single newlines (paste / older saves). Expand to paragraph
+ * breaks without breaking markdown lists, headings, or hard breaks (`␠␠\n`).
+ */
+export function normalizeStoryMarkdownForDisplay(md) {
+  const text = String(md || '').replace(/\r\n?/g, '\n');
+  if (!text) return '';
+
+  return text.split('\n\n').map((block) => {
+    if (!block || isForumBlankLineChunk(block)) return FORUM_BLANK_LINE_MARKER;
+    if (/^(?:[-*+]\s|\d+\.\s)/m.test(block)) return block;
+    if (/^#{1,6}\s/m.test(block)) return block;
+    if (/^-{3,}\s*$/.test(block.trim())) return '---';
+    if (/^>\s/m.test(block)) return block;
+    const withRules = block.replace(/\n-{3,}\s*\n/g, '\n\n---\n\n');
+    return withRules.replace(/(?<!  )\n/g, '\n\n');
+  }).join('\n\n');
 }
 
 /**

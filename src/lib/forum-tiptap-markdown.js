@@ -4,7 +4,7 @@
 
 import { POLL_TOKEN_RE } from './forum-poll.js';
 import { YOUTUBE_TOKEN_RE } from './forum-youtube.js';
-import { preserveMarkdownLeadingSpaces } from './forum-story.js';
+import { preserveMarkdownLeadingSpaces, FORUM_BLANK_LINE_MARKER } from './forum-story.js';
 
 const EMBED_TOKEN_RE = new RegExp(
   `(${POLL_TOKEN_RE.source}|${YOUTUBE_TOKEN_RE.source})`,
@@ -58,17 +58,20 @@ export function splitMarkdownByPollTokens(md) {
 }
 
 function inlineNodeToMarkdown(node) {
-  if (!node.isText) return '';
-  let text = node.text;
-  for (const mark of node.marks) {
-    if (mark.type.name === 'bold') text = `**${text}**`;
-    else if (mark.type.name === 'italic') text = `*${text}*`;
-    else if (mark.type.name === 'link') {
-      const href = mark.attrs.href || '';
-      text = `[${text}](${href})`;
+  if (node.isText) {
+    let text = node.text;
+    for (const mark of node.marks) {
+      if (mark.type.name === 'bold') text = `**${text}**`;
+      else if (mark.type.name === 'italic') text = `*${text}*`;
+      else if (mark.type.name === 'link') {
+        const href = mark.attrs.href || '';
+        text = `[${text}](${href})`;
+      }
     }
+    return text;
   }
-  return text;
+  if (node.type.name === 'hardBreak') return '  \n';
+  return '';
 }
 
 function blockNodeToMarkdown(node) {
@@ -79,7 +82,7 @@ function blockNodeToMarkdown(node) {
     node.forEach((child) => {
       line += inlineNodeToMarkdown(child);
     });
-    return line;
+    return line || FORUM_BLANK_LINE_MARKER;
   }
 
   if (name === 'heading') {
@@ -137,6 +140,64 @@ function blockNodeToMarkdown(node) {
   return node.textContent || '';
 }
 
+function splitMarkdownByHorizontalRules(md) {
+  const text = String(md || '');
+  const parts = [];
+  const re = /^---\s*$/gm;
+  let last = 0;
+  let match = re.exec(text);
+
+  while (match) {
+    if (match.index > last) {
+      parts.push({ type: 'md', text: text.slice(last, match.index) });
+    }
+    parts.push({ type: 'hr' });
+    last = match.index + match[0].length;
+    match = re.exec(text);
+  }
+
+  if (last < text.length) {
+    parts.push({ type: 'md', text: text.slice(last) });
+  }
+
+  if (!parts.length) {
+    parts.push({ type: 'md', text: '' });
+  }
+
+  return parts;
+}
+
+function loadMarkdownPartsIntoEditor(editor, parts) {
+  editor.commands.clearContent(false);
+
+  let chain = editor.chain();
+  if (!chain) return;
+
+  for (const part of parts) {
+    if (part.type === 'poll') {
+      chain = chain.insertContent({ type: 'forumPoll', attrs: { pollId: part.pollId } });
+    } else if (part.type === 'youtube') {
+      chain = chain.insertContent({ type: 'forumYoutube', attrs: { videoId: part.videoId } });
+    } else if (part.type === 'hr') {
+      chain = chain.insertContent({ type: 'horizontalRule' });
+    } else if (part.text) {
+      const subparts = splitMarkdownByHorizontalRules(part.text);
+      for (const sub of subparts) {
+        if (sub.type === 'hr') {
+          chain = chain.insertContent({ type: 'horizontalRule' });
+        } else if (sub.text) {
+          chain = chain.insertContent(
+            preserveMarkdownLeadingSpaces(sub.text),
+            { contentType: 'markdown' },
+          );
+        }
+      }
+    }
+  }
+
+  chain.run();
+}
+
 function serializeEmbedNode(node) {
   if (node.type.name === 'forumPoll') {
     return `::poll[${node.attrs.pollId}]`;
@@ -170,9 +231,14 @@ export function getForumEditorMarkdown(editor) {
     if (embed) {
       flush();
       segments.push(embed);
-    } else {
-      mdNodes.push(node);
+      return;
     }
+    if (node.type.name === 'horizontalRule') {
+      flush();
+      segments.push('---');
+      return;
+    }
+    mdNodes.push(node);
   });
 
   flush();
@@ -188,8 +254,9 @@ export function setForumEditorMarkdown(editor, md) {
 
   const parts = splitMarkdownByEmbeds(md);
   const hasEmbeds = parts.some((p) => p.type === 'poll' || p.type === 'youtube');
+  const hasRules = /(^|\n)---\s*(\n|$)/m.test(String(md || ''));
 
-  if (!hasEmbeds) {
+  if (!hasEmbeds && !hasRules) {
     editor.commands.setContent(
       preserveMarkdownLeadingSpaces(md || ''),
       false,
@@ -198,23 +265,5 @@ export function setForumEditorMarkdown(editor, md) {
     return;
   }
 
-  editor.commands.clearContent(false);
-
-  let chain = editor.chain();
-  if (!chain) return;
-
-  for (const part of parts) {
-    if (part.type === 'poll') {
-      chain = chain.insertContent({ type: 'forumPoll', attrs: { pollId: part.pollId } });
-    } else if (part.type === 'youtube') {
-      chain = chain.insertContent({ type: 'forumYoutube', attrs: { videoId: part.videoId } });
-    } else if (part.text) {
-      chain = chain.insertContent(
-        preserveMarkdownLeadingSpaces(part.text),
-        { contentType: 'markdown' },
-      );
-    }
-  }
-
-  chain.run();
+  loadMarkdownPartsIntoEditor(editor, parts);
 }

@@ -6,7 +6,7 @@ import { isMentionUserId } from '../lib/forum-mentions.js';
 import { parseForumContentSegments } from '../lib/forum-content-segments.js';
 import { splitLegacyPollBlocks } from '../lib/forum-poll.js';
 import { optimizeForumDisplayUrl } from '../lib/cloudinary-forum-upload.js';
-import { preserveMarkdownLeadingSpaces } from '../lib/forum-story.js';
+import { preserveMarkdownLeadingSpaces, isForumBlankLineChunk, hasMarkdownChunkText, normalizeStoryMarkdownForDisplay } from '../lib/forum-story.js';
 import ForumYoutubeEmbed from './ForumYoutubeEmbed.js';
 import ForumPoll from './ForumPoll.js';
 
@@ -58,7 +58,25 @@ function ForumSpoiler({ text }) {
   );
 }
 
-function MarkdownChunk({ text }) {
+function MarkdownParagraph({ children }) {
+  const childList = Array.isArray(children) ? children : [children];
+  const isSpacer = childList.length > 0 && childList.every((child) => (
+    child === '\u00A0'
+    || (typeof child === 'string' && !child.replace(/\u00A0/g, '').trim())
+  ));
+
+  if (isSpacer) {
+    return <p className="forum-md-body__p forum-md-body__p--spacer" aria-hidden="true" />;
+  }
+
+  return <p className="forum-md-body__p">{children}</p>;
+}
+
+function MarkdownHr() {
+  return <hr className="forum-md-body__hr" />;
+}
+
+function MarkdownChunk({ text, storyMode = false }) {
   const parts = useMemo(() => splitLegacyPollBlocks(text), [text]);
 
   if (!parts.length) return null;
@@ -77,7 +95,10 @@ function MarkdownChunk({ text }) {
           };
           return <ForumPoll key={`legacy-poll-${index}`} poll={legacyPoll} legacy />;
         }
-        if (!String(part.text || '').trim()) return null;
+        if (!hasMarkdownChunkText(part.text)) return null;
+        const displayText = storyMode
+          ? normalizeStoryMarkdownForDisplay(part.text)
+          : part.text;
         return (
           <ReactMarkdown
             key={`md-chunk-${index}`}
@@ -85,11 +106,12 @@ function MarkdownChunk({ text }) {
             components={{
               a: MarkdownLink,
               img: MarkdownImage,
-              p: ({ children }) => <p className="forum-md-body__p">{children}</p>,
+              p: MarkdownParagraph,
+              hr: MarkdownHr,
               input: () => null,
             }}
           >
-            {preserveMarkdownLeadingSpaces(part.text)}
+            {preserveMarkdownLeadingSpaces(displayText)}
           </ReactMarkdown>
         );
       })}
@@ -115,6 +137,7 @@ function resolvePoll(pollId, pollsById, previewPolls) {
 export default function ForumMarkdownBody({
   content,
   className = '',
+  storyMode = false,
   pollsById = {},
   previewPolls = null,
   preview = false,
@@ -176,7 +199,7 @@ export default function ForumMarkdownBody({
             />
           );
         }
-        return <MarkdownChunk key={`md-${index}`} text={seg.text} />;
+        return <MarkdownChunk key={`md-${index}`} text={seg.text} storyMode={storyMode} />;
       })}
     </div>
   );

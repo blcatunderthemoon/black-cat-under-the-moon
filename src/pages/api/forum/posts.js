@@ -445,15 +445,18 @@ async function handlePost(req, res) {
     return res.status(400).json({ error: '缺少投票選項資料。' });
   }
 
-  // Content moderation
-  const combined = [title, normalizedContent].filter(Boolean).join(' ');
-  const { blocked, crisis } = filterContent(combined);
-  if (blocked) {
-    if (crisis) return res.status(451).json({ error: 'crisis', crisis: true });
-    return res.status(422).json({ error: '內容包含不允許的詞語。' });
+  // Content moderation (stories skip keyword filter — fiction often uses dramatic language)
+  if (!storyPost) {
+    const combined = [title, normalizedContent].filter(Boolean).join(' ');
+    const { blocked, crisis } = filterContent(combined);
+    if (blocked) {
+      if (crisis) return res.status(451).json({ error: 'crisis', crisis: true });
+      return res.status(422).json({ error: '內容包含不允許的詞語。' });
+    }
   }
 
   if (isMatureForumTopic(topic)) {
+    const combined = [title, normalizedContent].filter(Boolean).join(' ');
     const matureCheck = validateMaturePostContent(combined);
     if (!matureCheck.ok) {
       return res.status(422).json({ error: matureCheck.error });

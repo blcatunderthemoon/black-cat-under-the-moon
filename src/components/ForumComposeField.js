@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import ForumMarkdownBody from './ForumMarkdownBody.js';
 
 export default function ForumComposeField({
@@ -14,10 +14,24 @@ export default function ForumComposeField({
   disabled = false,
   className = '',
   label = '內容',
+  storyMode = false,
+  contentRef,
 }) {
   const [tab, setTab] = useState('edit');
   const [TiptapEditor, setTiptapEditor] = useState(null);
   const [loadError, setLoadError] = useState('');
+  const latestContentRef = useRef(value);
+
+  useEffect(() => {
+    latestContentRef.current = value;
+    if (contentRef) contentRef.current = value;
+  }, [value, contentRef]);
+
+  function handleContentChange(next) {
+    latestContentRef.current = next;
+    if (contentRef) contentRef.current = next;
+    onChange(next);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -76,7 +90,8 @@ export default function ForumComposeField({
           ) : (
             <TiptapEditor
               value={value}
-              onChange={onChange}
+              onChange={handleContentChange}
+              contentRef={contentRef || latestContentRef}
               polls={polls}
               onPollsChange={onPollsChange}
               accessToken={accessToken}
@@ -100,8 +115,13 @@ export default function ForumComposeField({
           className="forum-compose-field__preview pixel-textarea"
           style={{ minHeight: `${Math.max(minRows * 24, 120)}px` }}
         >
-          {value.trim() ? (
-            <ForumMarkdownBody content={value} preview previewPolls={previewPolls} />
+          {(latestContentRef.current || value).trim() ? (
+            <ForumMarkdownBody
+              content={latestContentRef.current || value}
+              preview
+              previewPolls={previewPolls}
+              storyMode={storyMode}
+            />
           ) : (
             <p className="forum-compose-field__preview-empty">尚無內容可預覽</p>
           )}

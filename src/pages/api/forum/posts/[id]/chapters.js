@@ -4,7 +4,6 @@
  */
 
 import { requireUser, sendAuthError, getAdminClient } from '../../../../../lib/server-auth.js';
-import { filterContent } from '../../../../../lib/content-filter.js';
 import { isStoryPost, STORY_CONTENT_MAX, normalizeForumBodyContent } from '../../../../../lib/forum-story.js';
 import {
   STORY_CHAPTER_TITLE_MAX,
@@ -76,12 +75,6 @@ async function handlePost(req, res, postId) {
   }
   if (content.length > STORY_CONTENT_MAX) {
     return res.status(400).json({ error: `章節內容最多 ${STORY_CONTENT_MAX} 字。` });
-  }
-
-  const { blocked, crisis } = filterContent([title, content].filter(Boolean).join(' '));
-  if (blocked) {
-    if (crisis) return res.status(451).json({ error: 'crisis', crisis: true });
-    return res.status(422).json({ error: '內容包含不允許的詞語。' });
   }
 
   let chapters = await fetchStoryChapters(admin, post);

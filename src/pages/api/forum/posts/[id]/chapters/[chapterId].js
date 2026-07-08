@@ -3,7 +3,6 @@
  */
 
 import { requireUser, sendAuthError, getAdminClient } from '../../../../../../lib/server-auth.js';
-import { filterContent } from '../../../../../../lib/content-filter.js';
 import { isStoryPost, STORY_CONTENT_MAX, normalizeForumBodyContent } from '../../../../../../lib/forum-story.js';
 import {
   STORY_CHAPTER_TITLE_MAX,
@@ -91,14 +90,6 @@ async function handlePatch(req, res, postId, chapterId) {
 
   if (!Object.keys(updates).length) {
     return res.status(400).json({ error: '沒有可更新的欄位。' });
-  }
-
-  const titleForFilter = updates.title !== undefined ? updates.title : chapter.title;
-  const contentForFilter = updates.content !== undefined ? updates.content : chapter.content;
-  const { blocked, crisis } = filterContent([titleForFilter, contentForFilter].filter(Boolean).join(' '));
-  if (blocked) {
-    if (crisis) return res.status(451).json({ error: 'crisis', crisis: true });
-    return res.status(422).json({ error: '內容包含不允許的詞語。' });
   }
 
   const { data: updated, error } = await admin

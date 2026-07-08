@@ -128,6 +128,7 @@ export default function ForumStoryReadingView({
           <ForumMarkdownBody
             content={chapter.content}
             className="forum-story-reader__body forum-md-body"
+            storyMode
             pollsById={pollsById}
             loggedIn={loggedIn}
             accessToken={accessToken}

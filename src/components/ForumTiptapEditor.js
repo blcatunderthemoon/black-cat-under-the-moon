@@ -33,6 +33,7 @@ const MENTION_DEBOUNCE_MS = 220;
 export default function ForumTiptapEditor({
   value,
   onChange,
+  contentRef,
   polls = [],
   onPollsChange,
   accessToken,
@@ -160,6 +161,7 @@ export default function ForumTiptapEditor({
     },
     onUpdate: ({ editor: ed }) => {
       const md = getForumEditorMarkdown(ed);
+      if (contentRef) contentRef.current = md;
       skipExternalSyncRef.current = true;
       onChangeRef.current(md);
 
@@ -491,7 +493,14 @@ export default function ForumTiptapEditor({
             disabled={toolbarDisabled}
             onClick={() => editor?.chain().focus().setHorizontalRule().run()}
           >
-            ―
+            <svg
+              className="forum-compose-field__tool-icon"
+              viewBox="0 0 16 16"
+              aria-hidden="true"
+            >
+              <line x1="2.5" y1="5.5" x2="13.5" y2="5.5" />
+              <line x1="2.5" y1="10.5" x2="13.5" y2="10.5" />
+            </svg>
           </button>
           <button
             type="button"

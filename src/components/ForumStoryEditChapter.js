@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import ForumComposeField from './ForumComposeField.js';
 import { STORY_CONTENT_MAX, normalizeForumBodyContent } from '../lib/forum-story.js';
 import { STORY_CHAPTER_TITLE_MAX } from '../lib/forum-story-chapters.js';
@@ -13,12 +13,13 @@ export default function ForumStoryEditChapter({
 }) {
   const [title, setTitle] = useState(chapter?.title || '');
   const [content, setContent] = useState(chapter?.content || '');
+  const contentRef = useRef(chapter?.content || '');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const normalized = normalizeForumBodyContent(content);
+    const normalized = normalizeForumBodyContent(contentRef.current || content);
     if (!normalized.trim()) {
       setError('請填寫章節內容。');
       return;
@@ -94,12 +95,14 @@ export default function ForumStoryEditChapter({
         label="章節內容"
         value={content}
         onChange={setContent}
+        contentRef={contentRef}
         accessToken={accessToken}
         maxLength={STORY_CONTENT_MAX}
         minRows={14}
         placeholder="編輯這一章的內容…"
         disabled={submitting}
         className="forum-story-add-chapter__editor"
+        storyMode
       />
       <div className="forum-story-add-chapter__actions">
         <button

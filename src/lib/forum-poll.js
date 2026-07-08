@@ -2,6 +2,8 @@
  * Forum poll tokens: ::poll[POLL_UUID]
  */
 
+import { hasMarkdownChunkText } from './forum-story.js';
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export const POLL_TOKEN_RE = /::poll\[([0-9a-f-]{36})\]/gi;
@@ -115,7 +117,7 @@ export function splitLegacyPollBlocks(text) {
   while (match) {
     if (match.index > lastIndex) {
       const chunk = raw.slice(lastIndex, match.index);
-      if (chunk.trim()) parts.push({ type: 'md', text: chunk });
+      if (hasMarkdownChunkText(chunk)) parts.push({ type: 'md', text: chunk });
     }
 
     const title = String(match[2] || '').trim() || '投票';
@@ -138,10 +140,10 @@ export function splitLegacyPollBlocks(text) {
 
   if (lastIndex < raw.length) {
     const chunk = raw.slice(lastIndex);
-    if (chunk.trim()) parts.push({ type: 'md', text: chunk });
+    if (hasMarkdownChunkText(chunk)) parts.push({ type: 'md', text: chunk });
   }
 
-  if (!parts.length && raw.trim()) {
+  if (!parts.length && hasMarkdownChunkText(raw)) {
     parts.push({ type: 'md', text: raw });
   }
 
