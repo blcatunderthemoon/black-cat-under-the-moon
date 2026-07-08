@@ -14,12 +14,14 @@ export default function ForumStoryAddChapter({
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const contentRef = useRef('');
+  const editorFlushRef = useRef(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const normalized = normalizeForumBodyContent(contentRef.current || content);
+    const latest = editorFlushRef.current?.() ?? contentRef.current ?? content;
+    const normalized = normalizeForumBodyContent(latest);
     if (!normalized.trim()) {
       setError('請填寫章節內容。');
       return;
@@ -89,6 +91,7 @@ export default function ForumStoryAddChapter({
         value={content}
         onChange={setContent}
         contentRef={contentRef}
+        flushRef={editorFlushRef}
         accessToken={accessToken}
         maxLength={STORY_CONTENT_MAX}
         minRows={14}

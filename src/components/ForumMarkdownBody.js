@@ -76,6 +76,10 @@ function MarkdownHr() {
   return <hr className="forum-md-body__hr" />;
 }
 
+function MarkdownBr() {
+  return <br className="forum-md-body__br" />;
+}
+
 function MarkdownChunk({ text, storyMode = false }) {
   const parts = useMemo(() => splitLegacyPollBlocks(text), [text]);
 
@@ -108,6 +112,7 @@ function MarkdownChunk({ text, storyMode = false }) {
               img: MarkdownImage,
               p: MarkdownParagraph,
               hr: MarkdownHr,
+              br: MarkdownBr,
               input: () => null,
             }}
           >

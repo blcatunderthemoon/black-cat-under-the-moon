@@ -372,6 +372,7 @@ export default function ForumStoryBookHub({
           ariaLabelledBy="forum-story-edit-chapter-title"
         >
           <ForumStoryEditChapter
+            key={editingChapter.id || `ch-${editingChapter.chapter_number}`}
             postId={post.id}
             chapter={editingChapter}
             accessToken={accessToken}

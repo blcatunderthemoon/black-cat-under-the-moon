@@ -16,21 +16,35 @@ export default function ForumComposeField({
   label = '內容',
   storyMode = false,
   contentRef,
+  flushRef,
 }) {
   const [tab, setTab] = useState('edit');
   const [TiptapEditor, setTiptapEditor] = useState(null);
   const [loadError, setLoadError] = useState('');
   const latestContentRef = useRef(value);
+  const internalFlushRef = useRef(null);
+  const editorFlushRef = flushRef || internalFlushRef;
+  const [previewContent, setPreviewContent] = useState(value);
 
   useEffect(() => {
     latestContentRef.current = value;
     if (contentRef) contentRef.current = value;
+    setPreviewContent(value);
   }, [value, contentRef]);
 
   function handleContentChange(next) {
     latestContentRef.current = next;
     if (contentRef) contentRef.current = next;
     onChange(next);
+  }
+
+  function openPreviewTab() {
+    const flushed = editorFlushRef.current?.() ?? latestContentRef.current ?? value;
+    latestContentRef.current = flushed;
+    if (contentRef) contentRef.current = flushed;
+    if (flushed !== value) onChange(flushed);
+    setPreviewContent(flushed);
+    setTab('preview');
   }
 
   useEffect(() => {
@@ -74,7 +88,7 @@ export default function ForumComposeField({
             role="tab"
             aria-selected={tab === 'preview'}
             className={`forum-compose-field__mode-btn${tab === 'preview' ? ' forum-compose-field__mode-btn--active' : ''}`}
-            onClick={() => setTab('preview')}
+            onClick={openPreviewTab}
           >
             預覽
           </button>
@@ -98,6 +112,8 @@ export default function ForumComposeField({
               maxLength={maxLength}
               placeholder={placeholder}
               disabled={disabled}
+              storyMode={storyMode}
+              flushRef={editorFlushRef}
             />
           )}
           <input
@@ -115,9 +131,9 @@ export default function ForumComposeField({
           className="forum-compose-field__preview pixel-textarea"
           style={{ minHeight: `${Math.max(minRows * 24, 120)}px` }}
         >
-          {(latestContentRef.current || value).trim() ? (
+          {previewContent.trim() ? (
             <ForumMarkdownBody
-              content={latestContentRef.current || value}
+              content={previewContent}
               preview
               previewPolls={previewPolls}
               storyMode={storyMode}

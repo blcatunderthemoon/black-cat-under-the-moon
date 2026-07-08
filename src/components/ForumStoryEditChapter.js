@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ForumComposeField from './ForumComposeField.js';
 import { STORY_CONTENT_MAX, normalizeForumBodyContent } from '../lib/forum-story.js';
 import { STORY_CHAPTER_TITLE_MAX } from '../lib/forum-story-chapters.js';
@@ -14,12 +14,47 @@ export default function ForumStoryEditChapter({
   const [title, setTitle] = useState(chapter?.title || '');
   const [content, setContent] = useState(chapter?.content || '');
   const contentRef = useRef(chapter?.content || '');
+  const editorFlushRef = useRef(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    const body = chapter?.content || '';
+    if (body.trim()) {
+      setContent(body);
+      contentRef.current = body;
+      return undefined;
+    }
+    if (!postId || !accessToken || !chapter) return undefined;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/forum/posts/${encodeURIComponent(postId)}/chapters`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const payload = await res.json().catch(() => ({}));
+        if (!res.ok || cancelled) return;
+        const match = (payload.chapters || []).find(
+          (ch) => String(ch.id) === String(chapter.id)
+            || ch.chapter_number === chapter.chapter_number,
+        );
+        if (match?.content?.trim()) {
+          setContent(match.content);
+          contentRef.current = match.content;
+        }
+      } catch {
+        /* keep empty; user can retry */
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [chapter, postId, accessToken]);
+
   async function handleSubmit(e) {
     e.preventDefault();
-    const normalized = normalizeForumBodyContent(contentRef.current || content);
+    const latest = editorFlushRef.current?.() ?? contentRef.current ?? content;
+    const normalized = normalizeForumBodyContent(latest);
     if (!normalized.trim()) {
       setError('請填寫章節內容。');
       return;
@@ -92,10 +127,12 @@ export default function ForumStoryEditChapter({
         />
       </label>
       <ForumComposeField
+        key={chapter?.id || `ch-${chapter?.chapter_number}`}
         label="章節內容"
         value={content}
         onChange={setContent}
         contentRef={contentRef}
+        flushRef={editorFlushRef}
         accessToken={accessToken}
         maxLength={STORY_CONTENT_MAX}
         minRows={14}

@@ -30,6 +30,22 @@ import ForumEditorOverlay from './ForumEditorOverlay.js';
 
 const MENTION_DEBOUNCE_MS = 220;
 
+function applyMarkdownToEditor(ed, markdown) {
+  const next = String(markdown || '');
+  if (!next) return;
+  const hasEmbeds = /::poll\[|::youtube\[/i.test(next);
+  const hasRules = /(^|\n)---\s*(\n|$)/m.test(next);
+  if (hasEmbeds || hasRules) {
+    setForumEditorMarkdown(ed, next);
+  } else {
+    ed.commands.setContent(
+      preserveMarkdownLeadingSpaces(next),
+      false,
+      { contentType: 'markdown' },
+    );
+  }
+}
+
 export default function ForumTiptapEditor({
   value,
   onChange,
@@ -40,6 +56,8 @@ export default function ForumTiptapEditor({
   maxLength = 2000,
   placeholder = '說說你想說的…',
   disabled = false,
+  storyMode = false,
+  flushRef,
 }) {
   const [mentionOpen, setMentionOpen] = useState(false);
   const [mentionItems, setMentionItems] = useState([]);
@@ -60,13 +78,18 @@ export default function ForumTiptapEditor({
   const youtubeInputRef = useRef(null);
   const mentionTimerRef = useRef(null);
   const skipExternalSyncRef = useRef(false);
+  const hydratingRef = useRef(false);
   const mentionKeyDownRef = useRef(() => false);
   const pollsRef = useRef(polls);
   const onPollsChangeRef = useRef(onPollsChange);
   const onChangeRef = useRef(onChange);
   const valueRef = useRef(value);
   const editorRef = useRef(null);
+  const storyModeRef = useRef(storyMode);
+  const syncEditorMarkdownRef = useRef(() => {});
   const imageUploadEnabled = isCloudinaryForumUploadConfigured();
+
+  storyModeRef.current = storyMode;
 
   valueRef.current = value;
   pollsRef.current = polls;
@@ -143,23 +166,37 @@ export default function ForumTiptapEditor({
     onCreate: ({ editor: ed }) => {
       const initial = valueRef.current;
       if (!initial) return;
-      if (/::poll\[|::youtube\[/i.test(initial)) {
-        setForumEditorMarkdown(ed, initial);
-      } else {
-        ed.commands.setContent(
-          preserveMarkdownLeadingSpaces(initial),
-          false,
-          { contentType: 'markdown' },
-        );
+      hydratingRef.current = true;
+      try {
+        applyMarkdownToEditor(ed, initial);
+        skipExternalSyncRef.current = true;
+      } finally {
+        queueMicrotask(() => {
+          hydratingRef.current = false;
+        });
       }
-      skipExternalSyncRef.current = true;
     },
     editorProps: {
       handleKeyDown(_view, event) {
-        return mentionKeyDownRef.current(event);
+        if (mentionKeyDownRef.current(event)) return true;
+
+        const ed = editorRef.current;
+        if (!ed || ed.isDestroyed || !storyModeRef.current) return false;
+
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          const inserted = event.shiftKey
+            ? ed.chain().focus().setHardBreak().run()
+            : ed.chain().focus().splitBlock().run();
+          if (inserted) syncEditorMarkdownRef.current(ed);
+          return true;
+        }
+
+        return false;
       },
     },
     onUpdate: ({ editor: ed }) => {
+      if (hydratingRef.current) return;
       const md = getForumEditorMarkdown(ed);
       if (contentRef) contentRef.current = md;
       skipExternalSyncRef.current = true;
@@ -210,6 +247,11 @@ export default function ForumTiptapEditor({
     const current = getForumEditorMarkdown(editor);
     const next = value || '';
 
+    if (!next.trim()) {
+      skipExternalSyncRef.current = false;
+      return;
+    }
+
     if (current === next) {
       skipExternalSyncRef.current = false;
       return;
@@ -217,12 +259,18 @@ export default function ForumTiptapEditor({
 
     if (skipExternalSyncRef.current) {
       skipExternalSyncRef.current = false;
+      if (current.trim() || !next.trim()) return;
     }
 
     try {
-      setForumEditorMarkdown(editor, next);
+      hydratingRef.current = true;
+      applyMarkdownToEditor(editor, next);
     } catch {
       /* editor view not mounted yet */
+    } finally {
+      queueMicrotask(() => {
+        hydratingRef.current = false;
+      });
     }
   }, [editor, value]);
 
@@ -329,6 +377,40 @@ export default function ForumTiptapEditor({
     }
     const selected = editor.state.doc.textBetween(from, to);
     editor.chain().focus().insertContentAt({ from, to }, `${before}${selected}${after}`).run();
+  }
+
+  function syncEditorMarkdown(ed) {
+    const md = getForumEditorMarkdown(ed);
+    if (contentRef) contentRef.current = md;
+    skipExternalSyncRef.current = true;
+    onChangeRef.current(md);
+    return md;
+  }
+
+  syncEditorMarkdownRef.current = syncEditorMarkdown;
+
+  useEffect(() => {
+    if (!flushRef) return undefined;
+    flushRef.current = () => {
+      const ed = editorRef.current;
+      if (!ed || ed.isDestroyed) return valueRef.current || '';
+      return syncEditorMarkdown(ed);
+    };
+    return () => {
+      flushRef.current = null;
+    };
+  }, [flushRef, editor]);
+
+  function insertLineBreak() {
+    if (!editor) return;
+    const inserted = editor.chain().focus().splitBlock().run();
+    if (inserted) syncEditorMarkdown(editor);
+  }
+
+  function insertHorizontalRule() {
+    if (!editor) return;
+    const inserted = editor.chain().focus().setHorizontalRule().run();
+    if (inserted) syncEditorMarkdown(editor);
   }
 
   function openYoutubeDialog() {
@@ -444,7 +526,10 @@ export default function ForumTiptapEditor({
     }
   }
 
-  const charCount = editor ? getForumEditorMarkdown(editor).length : value.length;
+  const editorMarkdown = editor ? getForumEditorMarkdown(editor) : '';
+  const charCount = editor
+    ? (editorMarkdown.length || String(value || '').length)
+    : String(value || '').length;
   const toolbarDisabled = disabled || uploading || !editor;
 
   if (!editor) {
@@ -486,12 +571,23 @@ export default function ForumTiptapEditor({
           >
             劇透
           </button>
+          {storyMode && (
+            <button
+              type="button"
+              className="forum-compose-field__tool forum-compose-field__tool--break"
+              title="換行"
+              disabled={toolbarDisabled}
+              onClick={insertLineBreak}
+            >
+              換行
+            </button>
+          )}
           <button
             type="button"
             className="forum-compose-field__tool forum-compose-field__tool--hr"
             title="分隔線"
             disabled={toolbarDisabled}
-            onClick={() => editor?.chain().focus().setHorizontalRule().run()}
+            onClick={insertHorizontalRule}
           >
             <svg
               className="forum-compose-field__tool-icon"
