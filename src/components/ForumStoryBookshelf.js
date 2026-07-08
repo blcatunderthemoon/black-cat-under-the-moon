@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { optimizeForumDisplayUrl } from '../lib/cloudinary-forum-upload.js';
-import { storySynopsisPreview } from '../lib/forum-story.js';
+import { storyFeedPreviewText } from '../lib/forum-story.js';
 import ForumAuthorName from './ForumAuthorName.js';
 
 export default function ForumStoryBookshelf({
@@ -17,7 +17,7 @@ export default function ForumStoryBookshelf({
           const href = post.members_gated && !session
             ? `/login?redirect=/forum/${encodeURIComponent(post.id)}`
             : `/forum/${post.id}`;
-          const synopsis = storySynopsisPreview(post.synopsis, 100);
+          const synopsis = storyFeedPreviewText(post, 100);
 
           return (
             <li key={post.id} className="forum-story-shelf__item">

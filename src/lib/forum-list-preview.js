@@ -2,6 +2,8 @@
  * Plain-text preview for forum feed cards (strip markdown syntax).
  */
 
+import { isStoryPost, storySynopsisPreview } from './forum-story.js';
+
 const IMAGE_URL_RE = /(?:res\.cloudinary\.com\/[^/]+\/image\/upload|\.(?:jpg|jpeg|png|gif|webp)(?:\?|$))/i;
 
 const IMAGE_MARK = '🖼 圖片';
@@ -63,6 +65,16 @@ export const FORUM_LIST_PREVIEW_MAX = 220;
  * @returns {object}
  */
 export function mapForumPostListPreview(post) {
+  if (isStoryPost(post)) {
+    const synopsisRaw = String(post?.synopsis || '').trim();
+    const synopsisPreview = storySynopsisPreview(post?.synopsis, FORUM_LIST_PREVIEW_MAX);
+    return {
+      ...post,
+      content: synopsisPreview,
+      content_truncated: synopsisRaw.length > FORUM_LIST_PREVIEW_MAX,
+    };
+  }
+
   const fullLength = post?.content?.length || 0;
   return {
     ...post,

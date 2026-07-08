@@ -5,6 +5,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
+import { storyFeedPreviewText, isStoryPost } from '../lib/forum-story.js';
 import { TOPIC_STYLES } from '../lib/forum-welcome.js';
 import ForumPostTags from './ForumPostTags.js';
 import ForumAuthorName from './ForumAuthorName.js';
@@ -145,7 +146,9 @@ export default function ForumBookmarksPanel({ open, onClose, accessToken, onBook
         ) : (
           <ul className="pixel-list forum-bookmarks-list">
             {posts.map((post) => {
-              const preview = forumListPreviewText(post.content || '', { maxLength: 160 });
+              const preview = isStoryPost(post)
+                ? storyFeedPreviewText(post, 160)
+                : forumListPreviewText(post.content || '', { maxLength: 160 });
               return (
               <li key={post.id}>
                 <article className="forum-bookmarks-item">

@@ -36,7 +36,7 @@ import ForumStorySearchBar from '../../components/ForumStorySearchBar.js';
 import ForumStoryComposeFields from '../../components/ForumStoryComposeFields.js';
 import ForumPostTags from '../../components/ForumPostTags.js';
 import { formatForumTagLabel, canonicalForumTagKey } from '../../lib/forum-tags.js';
-import { isStoryTopic, STORY_CONTENT_MAX } from '../../lib/forum-story.js';
+import { isStoryTopic, isStoryPost, storyFeedPreviewText, STORY_CONTENT_MAX } from '../../lib/forum-story.js';
 import {
   clearForumDraft,
   FORUM_POST_DRAFT_KEY,
@@ -1250,9 +1250,14 @@ export default function ForumPage() {
                               )}
                             </div>
                             {post.title && <h3 className="pixel-post-title">{post.title}</h3>}
-                            <p className="pixel-post-content">
-                              {post.content}
-                            </p>
+                            {(() => {
+                              const preview = isStoryPost(post)
+                                ? storyFeedPreviewText(post, 160)
+                                : post.content;
+                              return preview ? (
+                                <p className="pixel-post-content">{preview}</p>
+                              ) : null;
+                            })()}
                             <div className="pixel-post-footer">
                               <span className="pixel-post-footer__author">
                                 <ForumAuthorName

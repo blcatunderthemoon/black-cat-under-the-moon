@@ -92,13 +92,12 @@ export function storySynopsisPreview(synopsis, maxLength = 120) {
   return `${text.slice(0, maxLength).trim()}…`;
 }
 
-/** Synopsis for story detail — prefers synopsis column, legacy short content as fallback. */
+/** Synopsis for story detail — synopsis column only (never chapter body). */
 export function resolveStorySynopsis(post) {
-  const synopsis = String(post?.synopsis || '').trim();
-  if (synopsis) return synopsis;
-  const content = String(post?.content || '').trim();
-  if (!content) return '';
-  const flat = content.replace(/\s+/g, ' ').trim();
-  if (flat.length <= STORY_SYNOPSIS_MAX) return content;
-  return '';
+  return String(post?.synopsis || '').trim();
+}
+
+/** Feed / card preview for story posts — synopsis only. */
+export function storyFeedPreviewText(post, maxLength = 120) {
+  return storySynopsisPreview(post?.synopsis, maxLength);
 }
