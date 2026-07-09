@@ -238,6 +238,30 @@ export default function ForumTiptapEditor({
   }, []);
 
   useEffect(() => {
+    if (!editor || editor.isDestroyed) return undefined;
+    const prose = editor.view?.dom;
+    if (!prose) return undefined;
+    const scrollParent = prose.closest('.forum-tiptap__editor-wrap');
+    if (!scrollParent) return undefined;
+
+    const onWheel = (event) => {
+      const { scrollTop, scrollHeight, clientHeight } = scrollParent;
+      if (scrollHeight <= clientHeight + 1) return;
+
+      const delta = event.deltaY;
+      const atTop = scrollTop <= 0;
+      const atBottom = scrollTop + clientHeight >= scrollHeight - 1;
+      if ((delta < 0 && atTop) || (delta > 0 && atBottom)) return;
+
+      scrollParent.scrollTop += delta;
+      event.preventDefault();
+    };
+
+    prose.addEventListener('wheel', onWheel, { passive: false });
+    return () => prose.removeEventListener('wheel', onWheel);
+  }, [editor]);
+
+  useEffect(() => {
     if (!editor) return;
     editor.setEditable(!disabled && !uploading);
   }, [editor, disabled, uploading]);

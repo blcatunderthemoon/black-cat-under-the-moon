@@ -130,6 +130,23 @@ export default function ForumStoryBookHub({
   return (
     <article className="forum-story-reader forum-story-reader--hub">
       <div className={`forum-story-reader__masthead${showCoverColumn ? ' forum-story-reader__masthead--with-cover' : ''}`}>
+        {canEdit && (
+          <div className="forum-story-reader__complete-action">
+            <button
+              type="button"
+              className={`forum-story-complete-btn${post.story_completed ? ' forum-story-complete-btn--done' : ''}`}
+              onClick={toggleStoryCompleted}
+              disabled={togglingComplete}
+              aria-pressed={!!post.story_completed}
+            >
+              {togglingComplete
+                ? '更新中…'
+                : post.story_completed
+                  ? '取消完結'
+                  : '標記完結'}
+            </button>
+          </div>
+        )}
         {showCoverColumn && (
           <div className="forum-story-reader__cover-wrap">
             {canEditCover ? (
@@ -199,23 +216,6 @@ export default function ForumStoryBookHub({
                 👁 {formatStoryViewCount(post.view_count)} 閱讀
               </span>
             </div>
-            {canEdit && (
-              <div className="forum-story-reader__meta-actions">
-                <button
-                  type="button"
-                  className={`forum-story-complete-btn${post.story_completed ? ' forum-story-complete-btn--done' : ''}`}
-                  onClick={toggleStoryCompleted}
-                  disabled={togglingComplete}
-                  aria-pressed={!!post.story_completed}
-                >
-                  {togglingComplete
-                    ? '更新中…'
-                    : post.story_completed
-                      ? '取消完結'
-                      : '標記完結'}
-                </button>
-              </div>
-            )}
           </div>
         </div>
 

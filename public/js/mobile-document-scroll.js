@@ -181,6 +181,60 @@
     return document.scrollingElement || document.body;
   }
 
+  function isContentEditableTarget(target) {
+    if (!target) return false;
+    if (target.isContentEditable) return true;
+    return !!(target.closest && target.closest('.ProseMirror'));
+  }
+
+  function getCaretRect(target) {
+    var root = (target.closest && target.closest('.ProseMirror')) || (target.isContentEditable ? target : null);
+    var selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return null;
+
+    var range = selection.getRangeAt(0);
+    if (root && !root.contains(range.commonAncestorContainer)) return null;
+
+    var rects = range.getClientRects();
+    if (rects.length > 0) {
+      var rect = rects[rects.length - 1];
+      var lineHeight = rect.height > 0 ? rect.height : 20;
+      return {
+        top: rect.top,
+        bottom: rect.top + lineHeight,
+        left: rect.left,
+        right: rect.right,
+        width: rect.width,
+        height: lineHeight,
+      };
+    }
+
+    var box = range.getBoundingClientRect();
+    if (box.width > 0 || box.height > 0) return box;
+    if (box.top !== 0 || box.left !== 0) {
+      return {
+        top: box.top,
+        bottom: box.top + 20,
+        left: box.left,
+        right: box.right,
+        width: 0,
+        height: 20,
+      };
+    }
+    return null;
+  }
+
+  function getFocusVisibleRect(target) {
+    if (isContentEditableTarget(target)) {
+      var caretRect = getCaretRect(target);
+      if (caretRect) return caretRect;
+    }
+    return target.getBoundingClientRect();
+  }
+
+  var lastKeyboardInset = 0;
+  var keyboardCloseTimer = null;
+
   function updateViewportVars() {
     var root = document.documentElement;
     var vv = window.visualViewport;
@@ -189,6 +243,7 @@
       root.style.setProperty('--mobile-keyboard-inset', '0px');
       root.style.setProperty('--mobile-vv-offset-top', '0px');
       root.classList.remove('mobile-keyboard-open');
+      lastKeyboardInset = 0;
       return;
     }
     var keyboardInset = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
@@ -196,14 +251,17 @@
     root.style.setProperty('--mobile-keyboard-inset', keyboardInset + 'px');
     root.style.setProperty('--mobile-vv-offset-top', Math.round(vv.offsetTop) + 'px');
     root.classList.toggle('mobile-keyboard-open', keyboardInset > 50);
+    lastKeyboardInset = keyboardInset;
   }
 
-  function ensureFieldVisible(target) {
+  function ensureFieldVisible(target, options) {
     if (!isMobileCoarse() || !target || !target.getBoundingClientRect) return;
+    var singlePass = options && options.singlePass;
     var run = function () {
       var vv = window.visualViewport;
       if (!vv) return;
-      var rect = target.getBoundingClientRect();
+      var rect = getFocusVisibleRect(target);
+      if (!rect) return;
       var visibleTop = vv.offsetTop + 12;
       var visibleBottom = vv.offsetTop + vv.height;
       var bottomLimit = visibleBottom - 80;
@@ -218,6 +276,10 @@
         else window.scrollBy(0, -up);
       }
     };
+    if (singlePass) {
+      requestAnimationFrame(function () { setTimeout(run, 80); });
+      return;
+    }
     requestAnimationFrame(function () {
       setTimeout(run, 60);
       setTimeout(run, 320);
@@ -230,9 +292,21 @@
     updateViewportVars();
     var vv = window.visualViewport;
     var onVv = function () {
+      var prevInset = lastKeyboardInset;
       updateViewportVars();
+      var keyboardInset = lastKeyboardInset;
+      var keyboardClosing = prevInset > 50 && keyboardInset <= 50;
       var active = document.activeElement;
-      if (active && active.matches && active.matches(FOCUSABLE)) ensureFieldVisible(active);
+      if (!active || !active.matches || !active.matches(FOCUSABLE)) return;
+      if (keyboardClosing) {
+        clearTimeout(keyboardCloseTimer);
+        keyboardCloseTimer = setTimeout(function () {
+          ensureFieldVisible(active, { singlePass: true });
+        }, 160);
+        return;
+      }
+      clearTimeout(keyboardCloseTimer);
+      ensureFieldVisible(active);
     };
     if (vv) {
       vv.addEventListener('resize', onVv);
