@@ -22,6 +22,14 @@ function isAuthPath(pathname) {
   return pathname.startsWith('/auth/');
 }
 
+function DashboardLoadingScreen({ label = '載入 Dashboard…' }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#050914', color: '#9490b0', fontFamily: 'Noto Sans TC, sans-serif', fontSize: 14 }}>
+      {label}
+    </div>
+  );
+}
+
 function LocalDashboardKeyGate({ children }) {
   const [authed, setAuthed] = useState(false);
   const [secured, setSecured] = useState(null); // null = checking
@@ -55,7 +63,7 @@ function LocalDashboardKeyGate({ children }) {
       });
   }, []);
 
-  if (secured === null) return null;
+  if (secured === null) return <DashboardLoadingScreen label="驗證 Dashboard 金鑰…" />;
   if (authed) return children;
 
   async function handleSubmit(e) {
@@ -129,7 +137,7 @@ function ProductionDashboardAdminGate({ children }) {
     }
   }, [profileHydrated, authLoading, session, router]);
 
-  if (!profileHydrated || authLoading) return null;
+  if (!profileHydrated || authLoading) return <DashboardLoadingScreen label="驗證管理員權限…" />;
   if (!session) return null;
 
   if (!isAdmin) {
@@ -156,7 +164,7 @@ function DashboardAuthGate({ children }) {
     setIsLocal(isLocalDashboardHost(window.location.hostname));
   }, []);
 
-  if (isLocal === null) return null;
+  if (isLocal === null) return <DashboardLoadingScreen />;
   if (isLocal) return <LocalDashboardKeyGate>{children}</LocalDashboardKeyGate>;
   return <ProductionDashboardAdminGate>{children}</ProductionDashboardAdminGate>;
 }
