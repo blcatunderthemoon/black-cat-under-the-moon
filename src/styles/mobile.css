@@ -206,6 +206,17 @@
     padding: 6px 10px;
   }
 
+  .forum-filters-panel .pixel-filter-row--topics .forum-topic-badge--mature {
+    padding: 5px 8px;
+    font-size: 11px;
+    gap: 3px;
+  }
+
+  .forum-filters-panel .forum-topic-badge--mature .forum-topic-badge__age {
+    padding: 0 4px;
+    font-size: 8px;
+  }
+
   .forum-filters-panel .forum-topic-badge--active {
     transform: none;
   }

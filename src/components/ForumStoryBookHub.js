@@ -201,30 +201,33 @@ export default function ForumStoryBookHub({
               </>
             )}
           </div>
-        </header>
 
-        <div className="forum-story-reader__meta-toolbar">
-          <div className="forum-story-reader__meta-row">
-            <div className="forum-story-reader__stats">
-              <span className="forum-story-reader__stat">
+          <div className="forum-story-reader__stats" aria-label="書籍數據">
+            <span className="forum-story-reader__stat">
+              <span className="forum-story-reader__stat-icon" aria-hidden="true">📖</span>
+              <span className="forum-story-reader__stat-text">
                 {chaptersLoading ? '載入章節…' : `共 ${visibleChapterCount ?? 0} 章`}
               </span>
-              <span className="forum-story-reader__meta-dot" aria-hidden="true">·</span>
-              <span className="forum-story-reader__stat">{post.comment_count || 0} 留言</span>
-              <span className="forum-story-reader__meta-dot" aria-hidden="true">·</span>
-              <span className="forum-story-reader__stat" title="累計閱讀次數">
-                👁 {formatStoryViewCount(post.view_count)} 閱讀
+            </span>
+            <span className="forum-story-reader__stat">
+              <span className="forum-story-reader__stat-icon" aria-hidden="true">💬</span>
+              <span className="forum-story-reader__stat-text">{post.comment_count || 0} 留言</span>
+            </span>
+            <span className="forum-story-reader__stat" title="累計閱讀次數">
+              <span className="forum-story-reader__stat-icon" aria-hidden="true">👁</span>
+              <span className="forum-story-reader__stat-text">
+                {formatStoryViewCount(post.view_count)} 閱讀
               </span>
-            </div>
+            </span>
           </div>
-        </div>
+        </header>
 
         {showSynopsisBlock && (
         <figure className="forum-story-reader__synopsis-block">
           <figcaption className="forum-story-reader__synopsis-head">
             <div className="forum-story-reader__synopsis-head-main">
-              <span className="forum-story-reader__synopsis-sigil" aria-hidden="true">📜</span>
               <span className="forum-story-reader__synopsis-label">簡介</span>
+              <span className="forum-story-reader__synopsis-sigil" aria-hidden="true">📜</span>
             </div>
             {canEdit && (
               <button
@@ -276,7 +279,13 @@ export default function ForumStoryBookHub({
                     <button
                       type="button"
                       className={`forum-story-chapters__link${locked ? ' forum-story-chapters__link--locked' : ''}`}
-                      onClick={() => onReadChapter(ch.chapter_number)}
+                      onClick={() => {
+                        if (locked) {
+                          window.location.href = loginHref;
+                          return;
+                        }
+                        onReadChapter(ch.chapter_number);
+                      }}
                       aria-label={
                         locked
                           ? `${ch.display_title}（登入後可閱讀）`

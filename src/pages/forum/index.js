@@ -1008,10 +1008,17 @@ export default function ForumPage() {
                     onClick={() => selectTopic(t)}
                     className={`forum-topic-badge${topic === t ? ' forum-topic-badge--active' : ''}${t === MATURE_FORUM_TOPIC ? ' forum-topic-badge--mature' : ''}`}
                     style={topicBadgeStyle(t)}
+                    aria-label={t === MATURE_FORUM_TOPIC ? '親密話題 18+' : undefined}
                   >
-                    {TOPIC_STYLES[t]?.emoji ? `${TOPIC_STYLES[t].emoji} ` : ''}{t}
-                    {t === MATURE_FORUM_TOPIC && (
-                      <span className="forum-topic-badge__age" aria-label="年滿18歲">18+</span>
+                    {t === MATURE_FORUM_TOPIC ? (
+                      <>
+                        {TOPIC_STYLES[t]?.emoji ? `${TOPIC_STYLES[t].emoji} ` : ''}親密
+                        <span className="forum-topic-badge__age" aria-hidden="true">18+</span>
+                      </>
+                    ) : (
+                      <>
+                        {TOPIC_STYLES[t]?.emoji ? `${TOPIC_STYLES[t].emoji} ` : ''}{t}
+                      </>
                     )}
                   </button>
                 ))}

@@ -4,7 +4,7 @@ import {
   getStoryReadingChapter,
   readStoryReadingResume,
 } from '../lib/forum-story-reading-progress.js';
-import { GUEST_FREE_CHAPTER_COUNT } from '../lib/forum-story-chapters.js';
+import { GUEST_FREE_CHAPTER_COUNT, isGuestReadableChapter } from '../lib/forum-story-chapters.js';
 import { recordStoryView } from '../lib/forum-story-views.js';
 import ForumStoryBookHub from './ForumStoryBookHub.js';
 import ForumStoryReadingView from './ForumStoryReadingView.js';
@@ -39,7 +39,7 @@ export default function ForumStoryReader({
     return null;
   }, [chaptersProp]);
 
-  const chaptersLoading = chaptersLoadingProp ?? (chapters === null && loggedIn);
+  const chaptersLoading = chaptersLoadingProp ?? chapters == null;
 
   const { resumeChapterNumber, hasReadingProgress } = useMemo(() => {
     if (!clientMounted || !post?.id || chaptersLoading || !chapters?.length) {
@@ -61,6 +61,10 @@ export default function ForumStoryReader({
     const requested = chNum ?? (
       loggedIn ? fallback : Math.min(fallback, GUEST_FREE_CHAPTER_COUNT)
     );
+    if (!loggedIn && !isGuestReadableChapter(requested, false)) {
+      router.push(loginHref);
+      return;
+    }
     router.push(
       {
         pathname: router.pathname,
@@ -69,7 +73,7 @@ export default function ForumStoryReader({
       undefined,
       { shallow: true },
     );
-  }, [router, post.id, chapters, loggedIn]);
+  }, [router, post.id, chapters, loggedIn, loginHref]);
 
   const exitRead = useCallback(() => {
     const { read: _r, ch: _c, ...rest } = router.query;

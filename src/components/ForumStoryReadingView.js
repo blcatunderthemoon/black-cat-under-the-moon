@@ -24,6 +24,14 @@ export default function ForumStoryReadingView({
   const isLast = !nextChapter;
   const isLocked = !isGuestReadableChapter(currentNum, loggedIn);
 
+  function goChapterIfAllowed(chNum) {
+    if (!loggedIn && !isGuestReadableChapter(chNum, false)) {
+      window.location.href = loginHref;
+      return;
+    }
+    onGoChapter(chNum);
+  }
+
   useEffect(() => {
     if (post?.id && currentNum && !isLocked) {
       saveStoryReadingChapter(post.id, currentNum);
@@ -88,7 +96,7 @@ export default function ForumStoryReadingView({
                     type="button"
                     className="forum-story-reading__chapter-step forum-story-reading__chapter-step--prev"
                     disabled={!prevChapter}
-                    onClick={() => prevChapter && onGoChapter(prevChapter.chapter_number)}
+                    onClick={() => prevChapter && goChapterIfAllowed(prevChapter.chapter_number)}
                     aria-label={
                       prevChapter
                         ? `上一章：${prevChapter.display_title || chapterDisplayTitle(prevChapter)}`
@@ -106,7 +114,7 @@ export default function ForumStoryReadingView({
                     type="button"
                     className="forum-story-reading__chapter-step forum-story-reading__chapter-step--next"
                     disabled={!nextChapter}
-                    onClick={() => nextChapter && onGoChapter(nextChapter.chapter_number)}
+                    onClick={() => nextChapter && goChapterIfAllowed(nextChapter.chapter_number)}
                     aria-label={
                       nextChapter
                         ? `下一章：${nextChapter.display_title || chapterDisplayTitle(nextChapter)}`
@@ -157,7 +165,7 @@ export default function ForumStoryReadingView({
               <button
                 type="button"
                 className="forum-story-reading__nav-btn forum-story-reading__nav-btn--prev"
-                onClick={() => onGoChapter(prevChapter.chapter_number)}
+                onClick={() => goChapterIfAllowed(prevChapter.chapter_number)}
               >
                 <span className="forum-story-reading__nav-arrow" aria-hidden="true">‹</span>
                 <span className="forum-story-reading__nav-copy">
@@ -183,7 +191,7 @@ export default function ForumStoryReadingView({
               <button
                 type="button"
                 className="forum-story-reading__nav-btn forum-story-reading__nav-btn--prev"
-                onClick={() => onGoChapter(prevChapter.chapter_number)}
+                onClick={() => goChapterIfAllowed(prevChapter.chapter_number)}
               >
                 <span className="forum-story-reading__nav-arrow" aria-hidden="true">‹</span>
                 <span className="forum-story-reading__nav-copy">
@@ -201,7 +209,7 @@ export default function ForumStoryReadingView({
               <button
                 type="button"
                 className="forum-story-reading__nav-btn forum-story-reading__nav-btn--next"
-                onClick={() => onGoChapter(nextChapter.chapter_number)}
+                onClick={() => goChapterIfAllowed(nextChapter.chapter_number)}
               >
                 <span className="forum-story-reading__nav-copy">
                   <span className="forum-story-reading__nav-label">下一章</span>

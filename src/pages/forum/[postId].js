@@ -594,7 +594,7 @@ export default function ForumPostPage() {
 
   const storyDetailReady = !isStoryBook || (
     !commentsBootstrapping
-    && (!accessToken || Array.isArray(storyChapters) || !!data?.chapters_locked)
+    && Array.isArray(storyChapters)
   );
   const storyDetailLoading = isStoryBook && !storyDetailReady;
 
