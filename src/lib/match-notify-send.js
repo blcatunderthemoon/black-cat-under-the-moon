@@ -19,7 +19,7 @@ import {
   resolveResponseDeliveryEmail,
 } from './match-response-auth.js';
 import { applyMatchTestEmailRedirection, isMatchTestEmailMode } from './match-test-email.js';
-import { isSuccessfulSentMatchNote } from './match-sent-record.js';
+import { isSuccessfulSentMatchNote, shouldDeliverInboxForPair } from './match-sent-record.js';
 import { buildMatchCardHtml } from '../pages/api/match_card/template.js';
 
 function getSupabase() {
@@ -42,6 +42,11 @@ function getTransporter() {
     host: 'smtp.gmail.com',
     port: 587,
     secure: false,
+    // Prefer IPv4 — avoids ENETUNREACH on IPv6-only routes in some local networks.
+    family: 4,
+    connectionTimeout: 20_000,
+    greetingTimeout: 20_000,
+    socketTimeout: 30_000,
     auth: {
       user: process.env.GMAIL_USER,
       pass: process.env.GMAIL_APP_PASSWORD,
@@ -115,7 +120,7 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
     if (authA && !userA.user_id) authA = await linkResponseToAuthUser(supabase, userA, authA);
     if (authB && !userB.user_id) authB = await linkResponseToAuthUser(supabase, userB, authB);
 
-    const shouldDeliverInbox = deliverInbox || hasPremium;
+    const shouldDeliverInbox = deliverInbox || shouldDeliverInboxForPair(authA, authB);
 
     if (!skipQuotaCheck && !pairCanDeliverMatch(quotaA, quotaB)) {
       results.push({
@@ -188,6 +193,8 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
         matchSummary: intelligence.dimensionScores || {},
         skipEmailNotify: true,
       });
+    } else {
+      inbox = { delivered: false, reason: 'no_registered_users', skipped: true };
     }
 
     const [normA, normB] = normalisePair(aId, bId);
@@ -215,12 +222,21 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
         .eq('user_a_id', normA)
         .eq('user_b_id', normB);
     } else if (hasPremium) {
-      // Remove phantom records that blocked re-send without real delivery.
-      await supabase
+      // Only remove failed placeholder rows — never erase a prior successful send on retry.
+      const { data: existing } = await supabase
         .from('sent_matches')
-        .delete()
+        .select('notes')
         .eq('user_a_id', normA)
-        .eq('user_b_id', normB);
+        .eq('user_b_id', normB)
+        .maybeSingle();
+
+      if (existing && !isSuccessfulSentMatchNote(existing.notes)) {
+        await supabase
+          .from('sent_matches')
+          .delete()
+          .eq('user_a_id', normA)
+          .eq('user_b_id', normB);
+      }
     }
 
     results.push({
@@ -229,6 +245,8 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
       score,
       has_premium: hasPremium,
       inbox_delivered: !!inbox?.delivered,
+      user_a_registered: !!authA,
+      user_b_registered: !!authB,
       user_a_quota: quotaA,
       user_b_quota: quotaB,
       deliveries,

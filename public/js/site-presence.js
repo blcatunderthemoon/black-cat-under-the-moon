@@ -1,33 +1,13 @@
 /**
- * Index landing — live visitor count via /api/public/presence (heartbeat + poll).
+ * Index landing — polls /api/public/presence and updates the on-page counter chip.
+ * Heartbeat registration is handled by site-presence-heartbeat.js (site-wide).
  */
-(function initSitePresence(global) {
-  if (global.__BCUTM_SITE_PRESENCE_BOOTED) return;
-  global.__BCUTM_SITE_PRESENCE_BOOTED = true;
+(function initSitePresenceDisplay(global) {
+  if (global.__BCUTM_SITE_PRESENCE_DISPLAY) return;
+  global.__BCUTM_SITE_PRESENCE_DISPLAY = true;
 
-  var SESSION_KEY = 'bcutm_presence_id';
-  var HEARTBEAT_MS = 25000;
   var POLL_MS = 12000;
   var box = null;
-  var timers = [];
-
-  function getSessionId() {
-    try {
-      var existing = sessionStorage.getItem(SESSION_KEY);
-      if (existing) return existing;
-      var id = (global.crypto && global.crypto.randomUUID)
-        ? global.crypto.randomUUID()
-        : ('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-          var r = Math.random() * 16 | 0;
-          var v = c === 'x' ? r : ((r & 0x3) | 0x8);
-          return v.toString(16);
-        }));
-      sessionStorage.setItem(SESSION_KEY, id);
-      return id;
-    } catch (e) {
-      return null;
-    }
-  }
 
   function setVisible(show) {
     if (!box) return;
@@ -66,50 +46,14 @@
       .catch(function () {});
   }
 
-  function heartbeat() {
-    var sessionId = getSessionId();
-    if (!sessionId) return fetchCount();
-    return fetch('/api/public/presence', {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ session_id: sessionId }),
-    })
-      .then(function (res) { return res.ok ? res.json() : null; })
-      .then(function (data) {
-        if (data && data.enabled) updateCount(data.count);
-        else updateCount(null);
-      })
-      .catch(function () {});
-  }
-
-  function schedule(fn, ms) {
-    var id = global.setInterval(fn, ms);
-    timers.push(id);
-    return id;
-  }
-
   function boot() {
     box = global.document.getElementById('site-presence');
     if (!box) return;
 
-    heartbeat().then(fetchCount);
-    schedule(heartbeat, HEARTBEAT_MS);
-    schedule(fetchCount, POLL_MS);
-
+    fetchCount();
+    global.setInterval(fetchCount, POLL_MS);
     global.document.addEventListener('visibilitychange', function () {
-      if (!global.document.hidden) heartbeat().then(fetchCount);
-    });
-
-    global.addEventListener('pagehide', function () {
-      var sessionId = getSessionId();
-      if (!sessionId || !global.navigator.sendBeacon) return;
-      try {
-        global.navigator.sendBeacon(
-          '/api/public/presence',
-          new Blob([JSON.stringify({ session_id: sessionId })], { type: 'application/json' }),
-        );
-      } catch (e) {}
+      if (!global.document.hidden) fetchCount();
     });
   }
 

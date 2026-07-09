@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Keep build output under node_modules (less likely to be corrupted than .next at repo root).
+  distDir: 'node_modules/.cache/next',
   async redirects() {
     return [
       { source: '/', destination: '/index.html', permanent: false },

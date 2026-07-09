@@ -12,6 +12,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { getDashboardSecret } from './lib/dashboard-secret.js';
 
 function isProduction() {
   return process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production';
@@ -25,7 +26,7 @@ export function middleware(request) {
     return NextResponse.next();
   }
 
-  const secret = process.env.DASHBOARD_SECRET;
+  const secret = getDashboardSecret();
 
   if (!secret) {
     if (isProduction()) {

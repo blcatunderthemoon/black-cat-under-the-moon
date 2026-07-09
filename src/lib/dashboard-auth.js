@@ -6,9 +6,12 @@
 
 import { isProduction } from './production-guard.js';
 import { resolveModerationActor } from './forum-moderation-auth.js';
+import { getDashboardSecret } from './dashboard-secret.js';
+
+export { getDashboardSecret } from './dashboard-secret.js';
 
 export function checkDashboardAuth(req, res) {
-  const secret = process.env.DASHBOARD_SECRET;
+  const secret = getDashboardSecret();
   if (!secret) {
     if (isProduction()) {
       res.status(503).json({
@@ -32,7 +35,7 @@ export function checkDashboardAuth(req, res) {
 }
 
 export function isDashboardKeyValid(provided) {
-  const secret = process.env.DASHBOARD_SECRET;
+  const secret = getDashboardSecret();
   if (!secret) return !isProduction();
   return (provided || '') === secret;
 }
@@ -42,7 +45,7 @@ export async function authorizeDashboardAccess(req, res) {
   const dashKey = req.headers['x-dashboard-key'] || '';
   if (isDashboardKeyValid(dashKey)) return true;
 
-  const secret = process.env.DASHBOARD_SECRET;
+  const secret = getDashboardSecret();
   if (!secret && !isProduction()) return true;
 
   const actor = await resolveModerationActor(req, res, { requireAdmin: true });

@@ -5,6 +5,13 @@
 import { isStoryPost, normalizeForumBodyContent } from './forum-story.js';
 
 export const STORY_CHAPTER_TITLE_MAX = 80;
+export const GUEST_FREE_CHAPTER_COUNT = 3;
+
+export function isGuestReadableChapter(chapterNumber, loggedIn = false) {
+  if (loggedIn) return true;
+  const n = Math.max(1, Number(chapterNumber) || 1);
+  return n <= GUEST_FREE_CHAPTER_COUNT;
+}
 
 export function chapterDisplayTitle(chapter) {
   const custom = String(chapter?.title || '').trim();
@@ -59,6 +66,28 @@ export function serializeStoryChapters(chapters, { includeContent = true } = {})
 /** Chapter list metadata only (no body) — for locked previews if needed. */
 export function serializeStoryChapterMeta(chapters) {
   return serializeStoryChapters(chapters, { includeContent: false });
+}
+
+/** Guest preview: full content for the first N chapters, metadata only for the rest. */
+export function serializeGuestStoryChapters(
+  chapters,
+  freeCount = GUEST_FREE_CHAPTER_COUNT,
+) {
+  return (chapters || []).map((ch) => {
+    const n = ch.chapter_number || 1;
+    const base = {
+      id: ch.id,
+      chapter_number: n,
+      title: ch.title || null,
+      display_title: chapterDisplayTitle(ch),
+      created_at: ch.created_at,
+      locked: n > freeCount,
+    };
+    if (n <= freeCount) {
+      return { ...base, content: ch.content };
+    }
+    return base;
+  });
 }
 
 export function getChapterByNumber(chapters, chapterNumber) {

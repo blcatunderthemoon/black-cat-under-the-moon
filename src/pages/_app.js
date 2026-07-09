@@ -67,12 +67,16 @@ function LocalDashboardKeyGate({ children }) {
       const res = await fetch('/api/dashboard/ping', {
         headers: { 'x-dashboard-key': key },
       });
+      if (!res.ok) {
+        setError(`無法驗證金鑰（HTTP ${res.status}），請確認 dev server 已啟動。`);
+        return;
+      }
       const data = await res.json();
       if (!data.secured || data.valid) {
         sessionStorage.setItem('dashKey', key);
         setAuthed(true);
       } else {
-        setError('金鑰錯誤，請確認與 .env 內 DASHBOARD_SECRET 一致。');
+        setError('金鑰錯誤，請確認與 .env.local 內 DASHBOARD_SECRET（或 DASHBOARD_PASSWORD）一致。');
       }
     } catch {
       setError('無法驗證金鑰，請重試。');
@@ -87,7 +91,7 @@ function LocalDashboardKeyGate({ children }) {
           type="password"
           value={keyInput}
           onChange={e => setKeyInput(e.target.value)}
-          placeholder="輸入 DASHBOARD_SECRET"
+          placeholder="DASHBOARD_SECRET / DASHBOARD_PASSWORD"
           autoFocus
           style={{ padding:'10px 14px', borderRadius:8, border:'1px solid #1d2055', background:'#050914', color:'#f0ebd8', fontSize:14, outline:'none' }}
         />
@@ -191,6 +195,7 @@ export default function App({ Component, pageProps }) {
       {!isDashboard && (
         <Script src="/js/mobile-document-scroll.js?v=20260710a" strategy="afterInteractive" />
       )}
+      <Script src="/js/site-presence-heartbeat.js?v=20260709a" strategy="afterInteractive" />
       <AppErrorBoundary>
       {isDashboard ? (
         <DashboardAuthGate>

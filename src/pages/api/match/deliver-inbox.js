@@ -10,12 +10,13 @@
  */
 
 import { deliverMatchCard } from '../../../lib/inbox.js';
+import { getDashboardSecret } from '../../../lib/dashboard-secret.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const dashKey = req.headers['x-dashboard-key'] || '';
-  const secret = process.env.DASHBOARD_SECRET || '';
+  const secret = getDashboardSecret();
   if (!secret || dashKey !== secret) {
     return res.status(403).json({ error: 'Forbidden' });
   }

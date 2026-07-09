@@ -746,7 +746,7 @@ export default function ForumPostPage() {
                   post={post}
                   chapters={storyChapters}
                   chapterCount={data?.chapter_count}
-                  chaptersLoading={storyDetailLoading && !!accessToken}
+                  chaptersLoading={storyDetailLoading}
                   pollsById={pollsById}
                   loggedIn={!!accessToken}
                   loginHref={`/login?redirect=${encodeURIComponent(router.asPath)}`}

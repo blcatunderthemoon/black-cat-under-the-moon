@@ -3,12 +3,13 @@
  */
 
 import { isDashboardKeyValid } from '../../../lib/dashboard-auth.js';
+import { getDashboardSecret } from '../../../lib/dashboard-secret.js';
 import { isProduction } from '../../../lib/production-guard.js';
 
 export default function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-  const secret = process.env.DASHBOARD_SECRET;
+  const secret = getDashboardSecret();
   const secured = isProduction() ? Boolean(secret) : Boolean(secret);
 
   if (!secret) {

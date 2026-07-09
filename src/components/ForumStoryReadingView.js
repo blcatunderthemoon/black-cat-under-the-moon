@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
+import Link from 'next/link';
 import ForumMarkdownBody from './ForumMarkdownBody.js';
-import { getChapterByNumber, chapterDisplayTitle } from '../lib/forum-story-chapters.js';
+import { getChapterByNumber, chapterDisplayTitle, isGuestReadableChapter } from '../lib/forum-story-chapters.js';
 import { saveStoryReadingChapter } from '../lib/forum-story-reading-progress.js';
 const READ_MODE = 'night';
 
@@ -10,6 +11,7 @@ export default function ForumStoryReadingView({
   chapterNumber,
   pollsById,
   loggedIn,
+  loginHref = '/login',
   accessToken,
   onPollVote,
   onExitRead,
@@ -20,13 +22,14 @@ export default function ForumStoryReadingView({
   const prevChapter = chapters.find((ch) => ch.chapter_number === currentNum - 1);
   const nextChapter = chapters.find((ch) => ch.chapter_number === currentNum + 1);
   const isLast = !nextChapter;
+  const isLocked = !isGuestReadableChapter(currentNum, loggedIn);
 
   useEffect(() => {
-    if (post?.id && currentNum) {
+    if (post?.id && currentNum && !isLocked) {
       saveStoryReadingChapter(post.id, currentNum);
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [post?.id, currentNum]);
+  }, [post?.id, currentNum, isLocked]);
 
   const totalChapters = chapters.length;
   const progressLabel = totalChapters > 0 ? `第 ${currentNum} / ${totalChapters} 章` : '';
@@ -125,15 +128,25 @@ export default function ForumStoryReadingView({
         </header>
 
         <div className={`forum-story-reader__page forum-story-reader__page--${READ_MODE} forum-story-reading__page`}>
-          <ForumMarkdownBody
-            content={chapter.content}
-            className="forum-story-reader__body forum-md-body"
-            storyMode
-            pollsById={pollsById}
-            loggedIn={loggedIn}
-            accessToken={accessToken}
-            onPollVote={onPollVote}
-          />
+          {isLocked ? (
+            <div className="forum-story-chapters__login-gate forum-story-reading__login-gate">
+              <span className="forum-story-chapters__login-icon" aria-hidden="true">🔒</span>
+              <p className="forum-story-chapters__login-text">登入會員即可閱讀章節內容</p>
+              <Link href={loginHref} className="forum-story-chapters__login-btn">
+                登入閱讀
+              </Link>
+            </div>
+          ) : (
+            <ForumMarkdownBody
+              content={chapter.content}
+              className="forum-story-reader__body forum-md-body"
+              storyMode
+              pollsById={pollsById}
+              loggedIn={loggedIn}
+              accessToken={accessToken}
+              onPollVote={onPollVote}
+            />
+          )}
         </div>
       </div>
 

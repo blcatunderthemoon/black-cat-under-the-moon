@@ -7,6 +7,7 @@
  */
 
 import { adminResolveClaim } from '../../../../../lib/legacy-match-claim.js';
+import { getDashboardSecret } from '../../../../../lib/dashboard-secret.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -15,7 +16,7 @@ export default async function handler(req, res) {
 
   // Re-use existing dashboard auth pattern
   const dashKey = req.headers['x-dashboard-key'] || '';
-  const secret = process.env.DASHBOARD_SECRET || '';
+  const secret = getDashboardSecret();
   if (!secret || dashKey !== secret) {
     return res.status(403).json({ error: 'Forbidden' });
   }

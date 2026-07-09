@@ -3,7 +3,7 @@
  *
  * Body: {
  *   pairs: [{ userAId, userBId, match_score }],
- *   deliver_inbox?: boolean,   // also push Inbox match cards (Moonlight Passport instant)
+ *   deliver_inbox?: boolean,   // when true, also push Inbox for registered users
  *   skip_quota_check?: boolean // admin override (use sparingly)
  * }
  */

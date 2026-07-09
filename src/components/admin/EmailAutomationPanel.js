@@ -1,6 +1,12 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import styles from '../../styles/dashboard/EmailAutomation.module.css';
 import { useAdminApi } from '../../lib/admin-api-context.js';
+import {
+  automationPairKey,
+  countAutomationPairsBySent,
+  filterVisibleAutomationPairs,
+  isAutomationPairSent,
+} from '../../lib/email-automation-pair-filters.js';
 
 const DIM_KEYS = ['attraction', 'emotional', 'lifestyle', 'communication', 'relationship', 'conflictSafety'];
 const DIM_LABELS = ['🔥 火花', '💞 情感', '📅 步調', '💬 溝通', '💑 期望', '🛡️ 安全感'];
@@ -14,7 +20,7 @@ function scoreColor(s) {
 
 /** Derive the stable pair key used as checkbox map key */
 function pairKey(p) {
-  return `${p.user_a_id}:${p.user_b_id}`;
+  return automationPairKey(p);
 }
 
 function MatchQuotaBadge({ quota }) {
@@ -26,6 +32,24 @@ function MatchQuotaBadge({ quota }) {
   return (
     <span className={`${styles.quotaBadge} ${full ? styles.quotaBadgeFull : ''}`}>
       本月 {quota.used}/{quota.limit}
+    </span>
+  );
+}
+
+function AutomationUserLabel({ user, userId }) {
+  const id = user?.id ?? userId;
+  const name = user?.name || (id != null ? `用戶 ${id}` : '—');
+  const identity = user?.identity;
+  return (
+    <span>
+      {id != null && <span className={styles.userIdTag}>#{id}</span>}
+      {' '}
+      {name}
+      {identity && (
+        <span className={styles.userIdentityTag}>
+          {' '}({identity})
+        </span>
+      )}
     </span>
   );
 }
@@ -132,14 +156,14 @@ export function EmailAutomationPanel() {
 
   const deselectAll = () => setChecked({});
 
-  const visiblePairs = (pairs || []).filter((p) => {
-    if (sentFilter === 'unsent' && p.already_sent) return false;
-    if (sentFilter === 'sent' && !p.already_sent) return false;
-    if (hideQuotaFull && p.quota_blocked) return false;
-    return true;
-  });
-  const unsentCount = (pairs || []).filter((p) => !p.already_sent).length;
-  const sentCount = (pairs || []).filter((p) => p.already_sent).length;
+  const visiblePairs = useMemo(
+    () => filterVisibleAutomationPairs(pairs, { sentFilter, hideQuotaFull }),
+    [pairs, sentFilter, hideQuotaFull],
+  );
+  const { unsent: unsentCount, sent: sentCount, all: visibleTotalCount } = useMemo(
+    () => countAutomationPairsBySent(pairs, { hideQuotaFull }),
+    [pairs, hideQuotaFull],
+  );
   const selectedPairs = visiblePairs.filter((p) => isPairSelectable(p) && checked[pairKey(p)]);
   const selectedCount = selectedPairs.length;
 
@@ -197,17 +221,36 @@ export function EmailAutomationPanel() {
         return;
       }
 
-      const failures = (data.results || []).filter((r) => !r.recorded);
-      if (failures.length) {
-        const lines = failures.map((r) => {
+      const hardFailures = (data.results || []).filter((r) => !r.recorded);
+      const emailFailures = (data.results || []).filter(
+        (r) => r.recorded && (r.deliveries || []).some((d) => d.delivered === false),
+      );
+
+      if (hardFailures.length) {
+        const lines = hardFailures.map((r) => {
           const emailErrors = (r.deliveries || [])
             .filter((d) => d.delivered === false)
             .map((d) => d.error || d.reason)
             .filter(Boolean);
           const inboxReason = r.inbox?.reason;
-          return `#${r.userAId}×#${r.userBId}: ${emailErrors.join('; ') || inboxReason || r.error || '未知錯誤'}`;
+          const inboxHint = r.inbox?.skipped ? '雙方均未註冊，略過 Inbox' : null;
+          return `#${r.userAId}×#${r.userBId}: ${emailErrors.join('; ') || inboxReason || inboxHint || r.error || '未知錯誤'}`;
         });
-        alert(`部分配對未成功投送（可重新發送）：\n${lines.join('\n')}`);
+        alert(
+          `部分配對未成功投送（可重新發送）：\n${lines.join('\n')}\n\n`
+          + '若顯示 connect ETIMEDOUT，請檢查本機網路能否連線 smtp.gmail.com:587，'
+          + '或稍後改用「存入 Gmail 草稿」手動發送。',
+        );
+      } else if (emailFailures.length) {
+        const lines = emailFailures.map((r) => {
+          const emailErrors = (r.deliveries || [])
+            .filter((d) => d.delivered === false)
+            .map((d) => d.error || d.reason)
+            .filter(Boolean);
+          const inboxNote = r.inbox_delivered ? '（Inbox 已投送予已註冊用戶）' : '';
+          return `#${r.userAId}×#${r.userBId}: 郵件失敗 ${emailErrors.join('; ')}${inboxNote}`;
+        });
+        alert(`部分配對郵件未送出，但 Inbox 可能已投送：\n${lines.join('\n')}`);
       }
 
       // Build a result map keyed by normalised pair key for inline display
@@ -228,14 +271,14 @@ export function EmailAutomationPanel() {
 
   const handleSendSelected = () => {
     if (!selectedCount) return;
-    const deliverInbox = selectedPairs.some((p) => p.has_premium);
-    const label = deliverInbox ? 'Email + Inbox（Passport 即時）' : 'Email';
+    const hasRegistered = selectedPairs.some((p) => p.inbox_ready || p.user_a?.claimed || p.user_b?.claimed);
+    const label = hasRegistered ? 'Email（雙方）+ Inbox（已註冊用戶）' : 'Email（雙方）';
     if (!confirm(`確認發送 ${selectedCount} 對連線通知（${label}）？此操作不可撤回。`)) return;
-    doSend(selectedPairs, { deliverInbox });
+    doSend(selectedPairs, { deliverInbox: true });
   };
 
   const handleSendPremiumInstant = () => {
-    const ready = (pairs || []).filter((p) => p.premium_instant_ready && !p.already_sent);
+    const ready = (pairs || []).filter((p) => p.premium_instant_ready && !isAutomationPairSent(p));
     if (!ready.length) {
       alert('暫無可即時發送的 Moonlight Passport 連線（需雙方已認領問卷且配額未滿）');
       return;
@@ -260,12 +303,12 @@ export function EmailAutomationPanel() {
   };
 
   const handleSendDraft = async (draft) => {
-    if (!confirm(`確認發送此草稿連線通知郵件？`)) return;
+    if (!confirm('確認發送此連線通知？已註冊用戶會收到 Inbox 連線卡，雙方（如有信箱）均會收到 Email。')) return;
     setDraftActionId(draft.id);
     try {
       await doSend(
         [{ user_a_id: draft.user_a_id, user_b_id: draft.user_b_id, match_score: draft.match_score }],
-        { deliverInbox: false },
+        { deliverInbox: true },
       );
     } finally {
       setDraftActionId(null);
@@ -289,7 +332,10 @@ export function EmailAutomationPanel() {
         : <span className={`${styles.badge} ${styles.badgeError}`}>⚠ 部分失敗</span>;
     }
     // Send result
-    const allOk = r.deliveries?.every((d) => d.delivered || d.skipped) && (r.inbox_delivered || !r.has_premium || r.inbox?.delivered !== false);
+    const emailOk = (r.deliveries || []).every((d) => d.delivered || d.skipped);
+    const inboxExpected = r.user_a_registered || r.user_b_registered;
+    const inboxOk = !inboxExpected || r.inbox_delivered || r.inbox?.skipped;
+    const allOk = emailOk && inboxOk;
     const recorded = r.recorded;
     if (!recorded) {
       return <span className={`${styles.badge} ${styles.badgeError}`}>❌ 未投送</span>;
@@ -414,7 +460,7 @@ export function EmailAutomationPanel() {
                   onClick={() => setSentFilter('all')}
                 >
                   全部
-                  <span className={styles.pairFilterCount}>{pairs.length}</span>
+                  <span className={styles.pairFilterCount}>{visibleTotalCount}</span>
                 </button>
               </div>
             </div>
@@ -466,7 +512,7 @@ export function EmailAutomationPanel() {
                     ? '此篩選下暫無未發送配對 — 可切換至「已發送」或「全部」'
                     : sentFilter === 'sent'
                       ? '此篩選下暫無已發送配對'
-                      : '篩選條件下暫無可顯示配對 — 可取消「隱藏配額已滿」')
+                      : '篩選條件下暫無可顯示配對 — 可取消「隱藏配額已滿」查看配額已滿的未發送項目')
                   : '此分數門檻下暫無配對結果'}
               </div>
             ) : (
@@ -506,23 +552,13 @@ export function EmailAutomationPanel() {
                         </td>
                         <td style={{ fontWeight: 600, color: 'var(--text)' }}>
                           <div className={styles.userCell}>
-                            <span>
-                              {p.user_a?.name}{' '}
-                              <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
-                                ({p.user_a?.identity})
-                              </span>
-                            </span>
+                            <AutomationUserLabel user={p.user_a} userId={p.user_a_id} />
                             <MatchQuotaBadge quota={p.user_a_quota} />
                           </div>
                         </td>
                         <td style={{ fontWeight: 600, color: 'var(--text)' }}>
                           <div className={styles.userCell}>
-                            <span>
-                              {p.user_b?.name}{' '}
-                              <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
-                                ({p.user_b?.identity})
-                              </span>
-                            </span>
+                            <AutomationUserLabel user={p.user_b} userId={p.user_b_id} />
                             <MatchQuotaBadge quota={p.user_b_quota} />
                           </div>
                         </td>
@@ -538,16 +574,16 @@ export function EmailAutomationPanel() {
                           {p.has_premium && (
                             <span className={`${styles.badge} ${styles.badgePremium}`}>🌙 Passport</span>
                           )}
-                          {p.inbox_ready && !p.already_sent && (
+                          {p.inbox_ready && !isAutomationPairSent(p) && (
                             <span className={`${styles.badge} ${styles.badgeInbox}`}>📬 Inbox 就緒</span>
                           )}
-                          {p.quota_blocked && !p.already_sent && (
+                          {p.quota_blocked && !isAutomationPairSent(p) && (
                             <span className={`${styles.badge} ${styles.badgeQuota}`}>⚠ 配額已滿</span>
                           )}
-                          {p.already_sent && (
+                          {isAutomationPairSent(p) && (
                             <span className={`${styles.badge} ${styles.badgeSent}`}>✉ 已發送</span>
                           )}
-                          {!p.already_sent && p.in_draft && (
+                          {!isAutomationPairSent(p) && p.in_draft && (
                             <span className={`${styles.badge} ${styles.badgeDraft}`}>📝 草稿</span>
                           )}
                         </td>
@@ -599,16 +635,10 @@ export function EmailAutomationPanel() {
                     return (
                       <tr key={d.id} className={styles.tableRow}>
                         <td style={{ fontWeight: 600, color: 'var(--text)' }}>
-                          {d.user_a?.name ?? `ID ${d.user_a_id}`}
-                          <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
-                            {d.user_a?.identity ? ` (${d.user_a.identity})` : ''}
-                          </span>
+                          <AutomationUserLabel user={d.user_a} userId={d.user_a_id} />
                         </td>
                         <td style={{ fontWeight: 600, color: 'var(--text)' }}>
-                          {d.user_b?.name ?? `ID ${d.user_b_id}`}
-                          <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
-                            {d.user_b?.identity ? ` (${d.user_b.identity})` : ''}
-                          </span>
+                          <AutomationUserLabel user={d.user_b} userId={d.user_b_id} />
                         </td>
                         <td>
                           <span className={styles.scoreBadge} style={{ color: scoreColor(d.match_score) }}>
@@ -665,7 +695,7 @@ export function EmailAutomationPanel() {
             onClick={handleSendSelected}
             disabled={sending || savingDraft}
           >
-            {sending ? '發送中…' : viewMode === 'premium' ? '⚡ 即時發送（Email + Inbox）' : '✉ 立即發送'}
+            {sending ? '發送中…' : '✉ 立即發送（Email + Inbox）'}
           </button>
         </div>
       )}

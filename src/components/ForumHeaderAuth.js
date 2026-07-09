@@ -39,11 +39,11 @@ export default function ForumHeaderAuth({ extra = null, moonJourney = null, redi
 
   if (!session) {
     return (
-      <>
+      <span className="forum-header-guest-group">
         <NavLink href={`/login?redirect=${encodeURIComponent(redirectPath)}`}>登入</NavLink>
         <NavLink href={`/signup?redirect=${encodeURIComponent(redirectPath)}`}>註冊</NavLink>
         {extra}
-      </>
+      </span>
     );
   }
 

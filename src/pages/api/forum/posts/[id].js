@@ -25,6 +25,8 @@ import { isStoryPost, validateStoryCoverUrl, STORY_SYNOPSIS_MAX } from '../../..
 import {
   fetchStoryChapters,
   serializeStoryChapters,
+  serializeGuestStoryChapters,
+  GUEST_FREE_CHAPTER_COUNT,
 } from '../../../../lib/forum-story-chapters.js';
 
 const POST_DETAIL_CORE = `
@@ -263,8 +265,13 @@ async function handleGet(req, res, postId) {
     tag_labels: tagLabels,
     comments: enrichedComments,
     polls,
-    chapters: viewer && isStoryPost(post) ? serializeStoryChapters(storyChapters) : undefined,
+    chapters: isStoryPost(post)
+      ? (viewer
+        ? serializeStoryChapters(storyChapters)
+        : serializeGuestStoryChapters(storyChapters))
+      : undefined,
     chapters_locked: isStoryPost(post) && !viewer,
+    guest_free_chapters: isStoryPost(post) ? GUEST_FREE_CHAPTER_COUNT : undefined,
     chapter_count: isStoryPost(post) ? storyChapters.length : undefined,
     viewer_logged_in: !!viewer,
   });

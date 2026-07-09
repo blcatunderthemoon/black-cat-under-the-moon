@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import Link from 'next/link';
 import { optimizeForumDisplayUrl } from '../lib/cloudinary-forum-upload.js';
 import { resolveStorySynopsis } from '../lib/forum-story.js';
 import { formatStoryViewCount } from '../lib/forum-story-views.js';
+import { isGuestReadableChapter } from '../lib/forum-story-chapters.js';
 import ForumAuthorName from './ForumAuthorName.js';
 import ForumComposeOverlay from './ForumComposeOverlay.js';
 import ForumStoryAddChapter from './ForumStoryAddChapter.js';
@@ -222,8 +222,10 @@ export default function ForumStoryBookHub({
         {showSynopsisBlock && (
         <figure className="forum-story-reader__synopsis-block">
           <figcaption className="forum-story-reader__synopsis-head">
-            <span className="forum-story-reader__synopsis-sigil" aria-hidden="true">📜</span>
-            <span className="forum-story-reader__synopsis-label">簡介</span>
+            <div className="forum-story-reader__synopsis-head-main">
+              <span className="forum-story-reader__synopsis-sigil" aria-hidden="true">📜</span>
+              <span className="forum-story-reader__synopsis-label">簡介</span>
+            </div>
             {canEdit && (
               <button
                 type="button"
@@ -255,32 +257,31 @@ export default function ForumStoryBookHub({
                 </span>
               </div>
               <p className="forum-story-chapters__sub">
-                {loggedIn ? '點選章節，或從頭開始閱讀' : '登入後即可閱讀章節'}
+                {loggedIn ? '點選章節，或從頭開始閱讀' : '訪客可免費閱讀前三章，登入後閱讀全部'}
               </p>
             </div>
           </div>
 
-          {!loggedIn ? (
-            <div className="forum-story-chapters__login-gate">
-              <span className="forum-story-chapters__login-icon" aria-hidden="true">🔒</span>
-              <p className="forum-story-chapters__login-text">登入會員即可閱讀章節內容</p>
-              <Link href={loginHref} className="forum-story-chapters__login-btn">
-                登入閱讀
-              </Link>
-            </div>
-          ) : chaptersLoading ? (
+          {chaptersLoading ? (
             <div className="forum-story-chapters__loading" aria-live="polite">
               <span className="forum-story-chapters__loading-text">載入章節…</span>
             </div>
           ) : chapters.length > 0 ? (
             <ol className="forum-story-chapters__list">
-              {chapters.map((ch, index) => (
+              {chapters.map((ch, index) => {
+                const locked = !isGuestReadableChapter(ch.chapter_number, loggedIn);
+                return (
                 <li key={ch.id || ch.chapter_number} className="forum-story-chapters__item">
                   <div className="forum-story-chapters__row">
                     <button
                       type="button"
-                      className="forum-story-chapters__link"
+                      className={`forum-story-chapters__link${locked ? ' forum-story-chapters__link--locked' : ''}`}
                       onClick={() => onReadChapter(ch.chapter_number)}
+                      aria-label={
+                        locked
+                          ? `${ch.display_title}（登入後可閱讀）`
+                          : ch.display_title
+                      }
                     >
                       <span className="forum-story-chapters__spine" aria-hidden="true" />
                       <span className="forum-story-chapters__num">{String(ch.chapter_number).padStart(2, '0')}</span>
@@ -293,7 +294,11 @@ export default function ForumStoryBookHub({
                           <span className="forum-story-chapters__hint">最新</span>
                         )}
                       </span>
-                      <span className="forum-story-chapters__arrow" aria-hidden="true">›</span>
+                      {locked ? (
+                        <span className="forum-story-chapters__lock" aria-hidden="true">🔒</span>
+                      ) : (
+                        <span className="forum-story-chapters__arrow" aria-hidden="true">›</span>
+                      )}
                     </button>
                     {canEdit && (
                       <button
@@ -307,7 +312,8 @@ export default function ForumStoryBookHub({
                     )}
                   </div>
                 </li>
-              ))}
+                );
+              })}
             </ol>
           ) : (
             <div className="forum-story-chapters__empty">
@@ -316,7 +322,7 @@ export default function ForumStoryBookHub({
             </div>
           )}
 
-          {loggedIn && !chaptersLoading && chapters.length > 0 && (
+          {!chaptersLoading && chapters.length > 0 && (
             <div className="forum-story-chapters__cta-row">
               <button
                 type="button"

@@ -431,6 +431,17 @@
   white-space: normal;
 }
 
+.userIdTag {
+  color: var(--accent);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.userIdentityTag {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
 .quotaBadge {
   display: inline-flex;
   align-items: center;

@@ -17,7 +17,7 @@ import {
   getResponseMatchQuota,
 } from '../../../lib/match-delivery-quota.js';
 import { buildMatchResponsePremiumContext } from '../../../lib/match-response-premium.js';
-import { filterSuccessfulSentRows, isSuccessfulSentMatchNote } from '../../../lib/match-sent-record.js';
+import { filterSuccessfulSentRows } from '../../../lib/match-sent-record.js';
 import { isMatchTestEmailMode } from '../../../lib/match-test-email.js';
 import { authorizeStationOrForumAdmin } from '../../../lib/station-or-forum-admin-auth.js';
 
@@ -85,7 +85,7 @@ async function handleGet(req, res) {
 
   // Fetch sent_matches and email_drafts in parallel for annotation
   const [sentResult, draftResult] = await Promise.all([
-    supabase.from('sent_matches').select('user_a_id, user_b_id, sent_at, notes'),
+    supabase.from('sent_matches').select('id, user_a_id, user_b_id, sent_at, notes'),
     supabase.from('email_drafts').select('id, user_a_id, user_b_id'),
   ]);
   // Gracefully handle missing tables (code 42P01 = undefined_table)
@@ -93,25 +93,12 @@ async function handleGet(req, res) {
   const draftRows = (!draftResult.error || draftResult.error.code === '42P01') ? (draftResult.data || []) : [];
   const successfulSentRows = filterSuccessfulSentRows(sentRows);
 
-  const phantomRows = sentRows.filter((row) => !isSuccessfulSentMatchNote(row.notes));
-  if (phantomRows.length) {
-    await Promise.all(
-      phantomRows.map((row) =>
-        supabase
-          .from('sent_matches')
-          .delete()
-          .eq('user_a_id', row.user_a_id)
-          .eq('user_b_id', row.user_b_id),
-      ),
-    );
-  }
-
-  // Build lookup sets with normalised pair keys "smallId:largeId"
-  const sentSet = new Set(
+  // Build lookup map with normalised pair keys "smallId:largeId" → sent_matches.id
+  const sentMap = new Map(
     successfulSentRows.map((r) => {
       const [a, b] = normalisePair(Number(r.user_a_id), Number(r.user_b_id));
-      return `${a}:${b}`;
-    })
+      return [`${a}:${b}`, Number(r.id)];
+    }),
   );
   const draftMap = new Map(
     (draftRows || []).map((r) => {
@@ -179,14 +166,15 @@ async function handleGet(req, res) {
         user_b_id: normB,
         match_score: finalScore,
         score_breakdown: dimensionScores,
-        already_sent: sentSet.has(pairKey),
+        sent_match_id: sentMap.get(pairKey) ?? null,
+        already_sent: sentMap.has(pairKey),
         in_draft: draftMap.has(pairKey),
         draft_id: draftMap.get(pairKey) ?? null,
         user_a_quota: quotaA,
         user_b_quota: quotaB,
         has_premium: hasPremium,
         inbox_ready: inboxReady,
-        premium_instant_ready: hasPremium && inboxReady && !sentSet.has(pairKey) && quotaA.can_receive && quotaB.can_receive,
+        premium_instant_ready: hasPremium && inboxReady && !sentMap.has(pairKey) && quotaA.can_receive && quotaB.can_receive,
         quota_blocked: !quotaA.can_receive || !quotaB.can_receive,
       });
     }
@@ -209,6 +197,8 @@ async function handleGet(req, res) {
     premium_pairs: filteredPairs.filter((p) => p.has_premium).length,
     premium_instant_ready: filteredPairs.filter((p) => p.premium_instant_ready).length,
     quota_blocked: filteredPairs.filter((p) => p.quota_blocked && !p.already_sent).length,
+    sent_in_list: filteredPairs.filter((p) => p.sent_match_id != null).length,
+    sent_in_db: successfulSentRows.length,
   };
 
   return res.status(200).json({

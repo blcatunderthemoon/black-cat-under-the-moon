@@ -63,13 +63,33 @@ export default function ForumComposeField({
 
   useEffect(() => {
     let cancelled = false;
-    import('./ForumTiptapEditor.js')
-      .then((mod) => {
-        if (!cancelled) setTiptapEditor(() => mod.default);
-      })
-      .catch(() => {
-        if (!cancelled) setLoadError('編輯器載入失敗，請重新整理頁面。');
-      });
+
+    async function loadEditor() {
+      const maxAttempts = 3;
+      for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+        if (cancelled) return;
+        try {
+          const mod = await import('./ForumTiptapEditor.js');
+          if (cancelled) return;
+          setLoadError('');
+          setTiptapEditor(() => mod.default);
+          return;
+        } catch (err) {
+          if (attempt >= maxAttempts) {
+            console.error('[ForumComposeField] TipTap editor failed to load', err);
+            if (!cancelled) {
+              setLoadError('編輯器載入失敗，請重新整理頁面。');
+            }
+            return;
+          }
+          await new Promise((resolve) => {
+            setTimeout(resolve, 400 * attempt);
+          });
+        }
+      }
+    }
+
+    loadEditor();
     return () => {
       cancelled = true;
     };
@@ -115,10 +135,21 @@ export default function ForumComposeField({
         className={`forum-compose-field__editor-pane${tab !== 'edit' ? ' forum-compose-field__editor-pane--hidden' : ''}`}
         aria-hidden={tab !== 'edit'}
       >
-        {loadError ? (
-          <p className="pixel-error forum-compose-field__preview-empty">{loadError}</p>
-        ) : !TiptapEditor ? (
-          <p className="forum-compose-field__preview-empty">載入編輯器…</p>
+        {!TiptapEditor ? (
+          loadError ? (
+            <div className="forum-compose-field__load-error">
+              <p className="pixel-error forum-compose-field__preview-empty">{loadError}</p>
+              <button
+                type="button"
+                className="pixel-btn forum-compose-field__reload-btn"
+                onClick={() => window.location.reload()}
+              >
+                重新整理
+              </button>
+            </div>
+          ) : (
+            <p className="forum-compose-field__preview-empty">載入編輯器…</p>
+          )
         ) : (
           <TiptapEditor
             value={value}

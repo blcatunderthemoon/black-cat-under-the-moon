@@ -4,6 +4,7 @@ import {
   getStoryReadingChapter,
   readStoryReadingResume,
 } from '../lib/forum-story-reading-progress.js';
+import { GUEST_FREE_CHAPTER_COUNT } from '../lib/forum-story-chapters.js';
 import { recordStoryView } from '../lib/forum-story-views.js';
 import ForumStoryBookHub from './ForumStoryBookHub.js';
 import ForumStoryReadingView from './ForumStoryReadingView.js';
@@ -38,46 +39,42 @@ export default function ForumStoryReader({
     return null;
   }, [chaptersProp]);
 
-  const chaptersLoading = chaptersLoadingProp ?? (loggedIn && chapters === null);
+  const chaptersLoading = chaptersLoadingProp ?? (chapters === null && loggedIn);
 
   const { resumeChapterNumber, hasReadingProgress } = useMemo(() => {
     if (!clientMounted || !post?.id || chaptersLoading || !chapters?.length) {
       return { resumeChapterNumber: 1, hasReadingProgress: false };
     }
     const resume = readStoryReadingResume(post.id, chapters);
+    const chapterNumber = loggedIn
+      ? resume.chapterNumber
+      : Math.min(resume.chapterNumber, GUEST_FREE_CHAPTER_COUNT);
     return {
-      resumeChapterNumber: resume.chapterNumber,
-      hasReadingProgress: resume.hasProgress,
+      resumeChapterNumber: chapterNumber,
+      hasReadingProgress: loggedIn ? resume.hasProgress : resume.hasProgress && resume.chapterNumber <= GUEST_FREE_CHAPTER_COUNT,
     };
-  }, [clientMounted, post?.id, chapters, chaptersLoading, reading]);
+  }, [clientMounted, post?.id, chapters, chaptersLoading, reading, loggedIn]);
 
   const goRead = useCallback((chNum) => {
-    if (!loggedIn) {
-      router.push(loginHref);
-      return;
-    }
     if (!chapters?.length) return;
-    const target = chNum ?? getStoryReadingChapter(post.id, chapters);
+    const fallback = getStoryReadingChapter(post.id, chapters);
+    const requested = chNum ?? (
+      loggedIn ? fallback : Math.min(fallback, GUEST_FREE_CHAPTER_COUNT)
+    );
     router.push(
       {
         pathname: router.pathname,
-        query: { ...router.query, read: '1', ch: String(target) },
+        query: { ...router.query, read: '1', ch: String(requested) },
       },
       undefined,
       { shallow: true },
     );
-  }, [router, post.id, chapters, loggedIn, loginHref]);
+  }, [router, post.id, chapters, loggedIn]);
 
   const exitRead = useCallback(() => {
     const { read: _r, ch: _c, ...rest } = router.query;
     router.push({ pathname: router.pathname, query: rest }, undefined, { shallow: true });
   }, [router]);
-
-  useEffect(() => {
-    if (reading && !loggedIn) {
-      router.replace(loginHref);
-    }
-  }, [reading, loggedIn, loginHref, router]);
 
   useEffect(() => {
     if (!post?.id) return undefined;
@@ -91,13 +88,6 @@ export default function ForumStoryReader({
   }, [post?.id, accessToken, onPostUpdate]);
 
   if (reading) {
-    if (!loggedIn) {
-      return (
-        <div className="forum-story-reading forum-story-reading--loading">
-          <p className="forum-story-reading__loading">請先登入…</p>
-        </div>
-      );
-    }
     if (chaptersLoading) {
       return (
         <div className="forum-story-reading forum-story-reading--loading">
@@ -112,6 +102,7 @@ export default function ForumStoryReader({
         chapterNumber={chapterNumber}
         pollsById={pollsById}
         loggedIn={loggedIn}
+        loginHref={loginHref}
         accessToken={accessToken}
         onPollVote={onPollVote}
         onExitRead={exitRead}
