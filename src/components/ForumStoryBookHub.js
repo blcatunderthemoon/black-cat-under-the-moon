@@ -226,8 +226,8 @@ export default function ForumStoryBookHub({
         <figure className="forum-story-reader__synopsis-block">
           <figcaption className="forum-story-reader__synopsis-head">
             <div className="forum-story-reader__synopsis-head-main">
-              <span className="forum-story-reader__synopsis-label">簡介</span>
               <span className="forum-story-reader__synopsis-sigil" aria-hidden="true">📜</span>
+              <span className="forum-story-reader__synopsis-label">簡介</span>
             </div>
             {canEdit && (
               <button
