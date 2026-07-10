@@ -72,6 +72,7 @@ scripts/*
 !scripts/clean-next-cache.mjs
 
 # Internal planning docs
+docs/
 ritual-overhaul.md
 
 # DB schema (internal reference only)
