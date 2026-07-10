@@ -332,6 +332,13 @@ export default function ForumPage() {
     });
   }, []);
 
+  const markForumReady = useCallback(() => {
+    initialLoadDoneRef.current = true;
+    setForumReady(true);
+    setPageBootstrapping(false);
+    setFeedRefreshing(false);
+  }, []);
+
   useEffect(() => {
     sessionRef.current = session;
     const userId = session?.user?.id;
@@ -586,16 +593,13 @@ export default function ForumPage() {
         if (searchOnly) {
           setStorySearchLoading(false);
         }
-        if (bootstrap) {
-          setPageBootstrapping(false);
-          setFeedRefreshing(false);
-          initialLoadDoneRef.current = true;
-          setForumReady(true);
+        if (bootstrap || reset) {
+          markForumReady();
         }
         loadedWithTokenRef.current = sessionRef.current?.access_token ?? null;
       }
     }
-  }, [topic, sort, activeTag, storySearchDebounced, fetchMeta, applyMetaPayload]);
+  }, [topic, sort, activeTag, storySearchDebounced, fetchMeta, applyMetaPayload, markForumReady]);
 
   const handleMatureAcknowledged = useCallback(() => {
     setMatureAcked(true);
@@ -647,9 +651,8 @@ export default function ForumPage() {
       setMatureAcked(acked);
       if (!sessionRef.current || !acked) {
         setPosts([]);
-        setPageBootstrapping(false);
-        setFeedRefreshing(false);
         setHasMore(false);
+        markForumReady();
         return;
       }
     }
@@ -672,8 +675,7 @@ export default function ForumPage() {
         offsetRef,
         setOffset,
       });
-      setPageBootstrapping(false);
-      setFeedRefreshing(false);
+      markForumReady();
       load(true, { bootstrap: false, silent: true, postsOnly });
     } else {
       load(true, {
@@ -682,7 +684,7 @@ export default function ForumPage() {
         postsOnly,
       });
     }
-  }, [topic, sort, activeTag, storySearchDebounced, load, profile?.profile?.forum_mature_acknowledged]);
+  }, [topic, sort, activeTag, storySearchDebounced, load, profile?.profile?.forum_mature_acknowledged, markForumReady]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -926,7 +928,7 @@ export default function ForumPage() {
           jsonLd={[organizationJsonLd(), webSiteJsonLd()]}
         />
         <PageLoadingShell
-          label="正在載入樹洞…"
+          label="載入中..."
           pageClassName="app-page--forum"
           loadingSmooth
           warmBackground
