@@ -1663,8 +1663,7 @@
   }
 
   .forum-comment-form {
-    margin-bottom: var(--mobile-keyboard-inset, 0px);
-    scroll-margin-bottom: calc(80px + var(--mobile-keyboard-inset, 0px));
+    scroll-margin-bottom: 80px;
   }
 
   .forum-comment-form__footer--actions {
@@ -1695,7 +1694,7 @@
 
   .thread-reply-bar {
     padding-bottom: calc(16px + var(--mobile-keyboard-inset, 0px) + env(safe-area-inset-bottom, 0px));
-    scroll-margin-bottom: var(--mobile-keyboard-inset, 0px);
+    scroll-margin-bottom: 80px;
   }
 
   .mirror-letter-overlay,
@@ -1736,7 +1735,8 @@
   .forum-story-synopsis-modal__input:focus,
   .forum-story-add-chapter__input:focus,
   .forum-tiptap__editor-wrap .ProseMirror:focus {
-    scroll-margin-bottom: calc(96px + var(--mobile-keyboard-inset, 0px));
+    scroll-margin-top: 12px;
+    scroll-margin-bottom: 96px;
   }
 }
 

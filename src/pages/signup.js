@@ -8,7 +8,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '../lib/auth-context.js';
 import { resolvePostAuthDestination, navigateAfterAuth } from '../lib/post-auth-redirect.js';
-import { validateDisplayName, DISPLAY_NAME_MAX_LENGTH } from '../lib/display-name-policy.js';
+import { validateDisplayName, sanitizeDisplayNameInput, DISPLAY_NAME_MAX_LENGTH } from '../lib/display-name-policy.js';
 import { validateEmail, validatePassword, PASSWORD_MIN_LENGTH, PASSWORD_PLACEHOLDER } from '../lib/auth-credentials-policy.js';
 import { isDuplicateSignupError, DUPLICATE_EMAIL_ERROR } from '../lib/auth-signup-errors.js';
 import AppShell from '../components/AppShell.js';
@@ -152,8 +152,8 @@ export default function SignupPage() {
               id="signup-display-name"
               type="text"
               value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="最多 20 字"
+              onChange={(e) => setDisplayName(sanitizeDisplayNameInput(e.target.value))}
+              placeholder="中英文、數字，最多 10 字"
               maxLength={DISPLAY_NAME_MAX_LENGTH}
               className="pixel-input"
               disabled={submitting}

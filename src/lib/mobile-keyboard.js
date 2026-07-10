@@ -10,22 +10,37 @@ function isInComposeOverlay(el) {
   return !!el?.closest?.('.forum-compose-overlay');
 }
 
+/** Innermost ancestor that actually scrolls (avoid treating overlay shell as scroller). */
 function findScrollParent(el) {
   let node = el?.parentElement;
   while (node && node !== document.documentElement) {
     const { overflowY } = getComputedStyle(node);
     const scrollable = overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay';
-    const isModalShell = node.classList?.contains('forum-compose-overlay')
-      || node.classList?.contains('forum-compose-modal')
-      || node.classList?.contains('forum-story-synopsis-modal')
-      || node.classList?.contains('forum-story-add-chapter')
-      || node.classList?.contains('forum-tiptap__editor-wrap');
-    if (scrollable && (node.scrollHeight > node.clientHeight + 1 || isModalShell)) {
+    if (scrollable && node.scrollHeight > node.clientHeight + 1) {
       return node;
     }
     node = node.parentElement;
   }
   return null;
+}
+
+function getFocusTarget(target) {
+  return target?.closest?.('.ProseMirror')
+    || target?.closest?.('.forum-tiptap__editor-wrap')
+    || target;
+}
+
+function resolveScrollParent(focusTarget) {
+  const inner = findScrollParent(focusTarget);
+  if (inner) return inner;
+
+  if (!focusTarget) return null;
+
+  return focusTarget.closest?.('.pixel-form')
+    || focusTarget.closest?.('.forum-story-add-chapter')
+    || focusTarget.closest?.('.forum-story-synopsis-modal')
+    || focusTarget.closest?.('.forum-compose-modal')
+    || (isInComposeOverlay(focusTarget) ? focusTarget.closest('.forum-compose-overlay') : null);
 }
 
 function isContentEditableTarget(target) {
@@ -78,15 +93,20 @@ function getFocusVisibleRect(target) {
     if (caretRect) return caretRect;
   }
 
-  const focusTarget = target.closest?.('.ProseMirror')
-    || target.closest?.('.forum-tiptap__editor-wrap')
-    || target;
-  return focusTarget.getBoundingClientRect();
+  const focusTarget = getFocusTarget(target);
+  return focusTarget?.getBoundingClientRect?.() || null;
+}
+
+function desiredCaretViewportTop(vv) {
+  if (!vv) return 100;
+  return vv.offsetTop + Math.min(108, Math.max(72, Math.round(vv.height * 0.24)));
 }
 
 let focusTimer = null;
 let keyboardCloseTimer = null;
+let anchorCaptureTimer = null;
 let lastKeyboardInset = 0;
+let scrollAnchor = null;
 
 function updateViewportVars() {
   const root = document.documentElement;
@@ -109,6 +129,43 @@ function updateViewportVars() {
   lastKeyboardInset = keyboardInset;
 }
 
+function captureScrollAnchor(target) {
+  if (!target) return null;
+
+  const focusTarget = getFocusTarget(target);
+  const scrollParent = resolveScrollParent(focusTarget);
+  if (!scrollParent) return null;
+
+  const rect = getFocusVisibleRect(target);
+  if (!rect) return null;
+
+  const parentRect = scrollParent.getBoundingClientRect();
+  const vv = window.visualViewport;
+
+  return {
+    scrollParent,
+    scrollTop: scrollParent.scrollTop,
+    caretTopInParent: rect.top - parentRect.top + scrollParent.scrollTop,
+    desiredTop: desiredCaretViewportTop(vv),
+  };
+}
+
+function restoreScrollAnchor(target, anchor) {
+  if (!anchor?.scrollParent?.isConnected) return false;
+
+  const rect = getFocusVisibleRect(target);
+  if (!rect) return false;
+
+  const vv = window.visualViewport;
+  const desiredTop = desiredCaretViewportTop(vv);
+  const delta = rect.top - desiredTop;
+
+  if (Math.abs(delta) < 2) return true;
+
+  anchor.scrollParent.scrollTop += delta;
+  return true;
+}
+
 function ensureVisible(target, options = {}) {
   if (!isMobile() || !target?.getBoundingClientRect) return;
 
@@ -116,9 +173,7 @@ function ensureVisible(target, options = {}) {
     const vv = window.visualViewport;
     if (!vv) return;
 
-    const focusTarget = target.closest?.('.ProseMirror')
-      || target.closest?.('.forum-tiptap__editor-wrap')
-      || target;
+    const focusTarget = getFocusTarget(target);
     const rect = getFocusVisibleRect(target);
     if (!rect) return;
 
@@ -133,11 +188,10 @@ function ensureVisible(target, options = {}) {
     const defaultPad = inOverlay ? 12 : 80;
     const bottomLimit = visibleBottom - (actionsRect ? Math.max(0, actionsRect.height + actionPad) : defaultPad);
 
+    const scrollParent = resolveScrollParent(focusTarget);
+
     if (rect.bottom > bottomLimit) {
       const delta = rect.bottom - bottomLimit;
-      const scrollParent = findScrollParent(focusTarget)
-        || findScrollParent(actions)
-        || focusTarget.closest?.('.forum-compose-overlay');
       if (scrollParent) {
         scrollParent.scrollTop += delta;
       } else {
@@ -145,8 +199,6 @@ function ensureVisible(target, options = {}) {
       }
     } else if (rect.top < visibleTop) {
       const delta = visibleTop - rect.top;
-      const scrollParent = findScrollParent(focusTarget)
-        || focusTarget.closest?.('.forum-compose-overlay');
       if (scrollParent) {
         scrollParent.scrollTop -= delta;
       } else {
@@ -167,11 +219,48 @@ function ensureVisible(target, options = {}) {
   });
 }
 
+function scheduleAnchorCapture(target) {
+  clearTimeout(anchorCaptureTimer);
+  anchorCaptureTimer = setTimeout(() => {
+    if (lastKeyboardInset > 50) {
+      scrollAnchor = captureScrollAnchor(target);
+    }
+  }, 280);
+}
+
+function onKeyboardClose(active) {
+  const anchor = scrollAnchor || captureScrollAnchor(active);
+  scrollAnchor = null;
+
+  const restore = () => {
+    if (anchor) restoreScrollAnchor(active, anchor);
+    ensureVisible(active, { singlePass: true });
+  };
+
+  clearTimeout(keyboardCloseTimer);
+  requestAnimationFrame(() => {
+    restore();
+    keyboardCloseTimer = setTimeout(restore, 180);
+    setTimeout(restore, 380);
+    setTimeout(restore, 620);
+  });
+}
+
 function onFocusIn(e) {
   const target = e.target;
   if (!target?.matches?.(FOCUSABLE)) return;
   clearTimeout(focusTimer);
-  focusTimer = setTimeout(() => ensureVisible(target), 80);
+  focusTimer = setTimeout(() => {
+    ensureVisible(target);
+    if (lastKeyboardInset > 50) scheduleAnchorCapture(target);
+  }, 80);
+}
+
+function onSelectionChange() {
+  if (lastKeyboardInset <= 50) return;
+  const active = document.activeElement;
+  if (!active?.matches?.(FOCUSABLE)) return;
+  scheduleAnchorCapture(active);
 }
 
 function onViewportChange() {
@@ -181,15 +270,20 @@ function onViewportChange() {
   const keyboardClosing = prevInset > 50 && keyboardInset <= 50;
 
   const active = document.activeElement;
-  if (!active?.matches?.(FOCUSABLE)) return;
+  if (!active?.matches?.(FOCUSABLE)) {
+    if (keyboardClosing) scrollAnchor = null;
+    return;
+  }
 
   if (keyboardClosing) {
-    clearTimeout(keyboardCloseTimer);
-    keyboardCloseTimer = setTimeout(() => ensureVisible(active, { singlePass: true }), 160);
+    onKeyboardClose(active);
     return;
   }
 
   clearTimeout(keyboardCloseTimer);
+  if (keyboardInset > 50) {
+    scheduleAnchorCapture(active);
+  }
   ensureVisible(active);
 }
 
@@ -206,14 +300,18 @@ export function initMobileKeyboard() {
   vv?.addEventListener('scroll', onViewportChange);
   window.addEventListener('resize', updateViewportVars);
   document.addEventListener('focusin', onFocusIn, true);
+  document.addEventListener('selectionchange', onSelectionChange);
 
   return () => {
     vv?.removeEventListener('resize', onViewportChange);
     vv?.removeEventListener('scroll', onViewportChange);
     window.removeEventListener('resize', updateViewportVars);
     document.removeEventListener('focusin', onFocusIn, true);
+    document.removeEventListener('selectionchange', onSelectionChange);
     clearTimeout(focusTimer);
     clearTimeout(keyboardCloseTimer);
+    clearTimeout(anchorCaptureTimer);
+    scrollAnchor = null;
     window.__mobileKeyboardInit = false;
   };
 }

@@ -7,7 +7,17 @@
 
 import { filterContent } from './content-filter.js';
 
-export const DISPLAY_NAME_MAX_LENGTH = 20;
+export const DISPLAY_NAME_MAX_LENGTH = 10;
+
+/** Latin letters, digits, and CJK — no spaces or symbols. */
+const DISPLAY_NAME_ALLOWED_RE = /^[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaffa-zA-Z0-9]+$/;
+
+/** Strip disallowed characters while typing (client-side). */
+export function sanitizeDisplayNameInput(raw) {
+  return String(raw || '')
+    .replace(/[^\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaffa-zA-Z0-9]/g, '')
+    .slice(0, DISPLAY_NAME_MAX_LENGTH);
+}
 
 /** Platform / product names users must not pose as */
 const RESERVED_BRAND_TERMS = [
@@ -138,6 +148,9 @@ export function validateDisplayName(name, options = {}) {
   }
   if (trimmed.length > DISPLAY_NAME_MAX_LENGTH) {
     return { ok: false, error: `暱稱最多 ${DISPLAY_NAME_MAX_LENGTH} 字。` };
+  }
+  if (!DISPLAY_NAME_ALLOWED_RE.test(trimmed)) {
+    return { ok: false, error: '暱稱只能使用中英文、數字，不能使用符號或空格。' };
   }
   if (containsReservedTerm(normalizeForReservedCheck(trimmed))) {
     return { ok: false, error: '此暱稱無法使用，請換一個名字。' };

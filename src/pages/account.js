@@ -17,7 +17,7 @@ import PixelMoonIcon from '../components/PixelMoonIcon.js';
 import PremiumMoonBadge from '../components/PremiumMoonBadge.js';
 import { MOONLIGHT_PASSPORT_BRAND } from '../lib/premium.js';
 import AccountSubscriptionPanel from '../components/AccountSubscriptionPanel.js';
-import { validateDisplayName, DISPLAY_NAME_MAX_LENGTH } from '../lib/display-name-policy.js';
+import { validateDisplayName, sanitizeDisplayNameInput, DISPLAY_NAME_MAX_LENGTH } from '../lib/display-name-policy.js';
 import { validatePassword, PASSWORD_MIN_LENGTH, PASSWORD_REQUIREMENTS_LABEL } from '../lib/auth-credentials-policy.js';
 import PasswordRequirementsChecklist from '../components/PasswordRequirementsChecklist.js';
 import PageLoadingShell from '../components/PageLoadingShell.js';
@@ -358,10 +358,13 @@ export default function AccountPage() {
               顯示名稱
               <input
                 value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
+                onChange={(e) => setDisplayName(sanitizeDisplayNameInput(e.target.value))}
                 maxLength={DISPLAY_NAME_MAX_LENGTH}
                 required
                 className="pixel-input"
+                placeholder="中英文、數字，最多 10 字"
+                inputMode="text"
+                autoComplete="nickname"
               />
               <span className="pixel-char-count" style={{ textAlign: 'right' }}>{displayName.length}/{DISPLAY_NAME_MAX_LENGTH}</span>
             </label>
