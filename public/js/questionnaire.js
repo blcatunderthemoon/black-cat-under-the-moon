@@ -1513,7 +1513,7 @@ function closeMatchCardDrawer() {
     frame.style.display = 'none';
   }
   if (loading) {
-    loading.textContent = '載入共鳴分析卡…';
+    loading.innerHTML = '載入中<span class="loading-dots" aria-hidden="true"></span>';
     loading.style.display = '';
   }
 }
@@ -1529,7 +1529,7 @@ async function openMatchCardDrawer(partnerResponseId, partnerName, myResponseId)
   drawer.setAttribute('aria-hidden', 'false');
   if (title) title.textContent = partnerName ? partnerName + ' · 共鳴分析卡' : '共鳴分析卡';
   if (loading) {
-    loading.textContent = '載入共鳴分析卡…';
+    loading.innerHTML = '載入中<span class="loading-dots" aria-hidden="true"></span>';
     loading.style.display = '';
   }
   frame.style.display = 'none';

@@ -9,6 +9,7 @@ import ForumStoryAddChapter from './ForumStoryAddChapter.js';
 import ForumStoryCoverEdit from './ForumStoryCoverEdit.js';
 import ForumStoryEditChapter from './ForumStoryEditChapter.js';
 import ForumStorySynopsisEdit from './ForumStorySynopsisEdit.js';
+import LoadingText from './LoadingText.js';
 
 function formatDate(iso) {
   if (!iso) return '';
@@ -206,7 +207,9 @@ export default function ForumStoryBookHub({
             <span className="forum-story-reader__stat">
               <span className="forum-story-reader__stat-icon" aria-hidden="true">📖</span>
               <span className="forum-story-reader__stat-text">
-                {chaptersLoading ? '載入章節…' : `共 ${visibleChapterCount ?? 0} 章`}
+                {chaptersLoading ? (
+                  <LoadingText as="span" className="forum-story-reader__stat-text" />
+                ) : `共 ${visibleChapterCount ?? 0} 章`}
               </span>
             </span>
             <span className="forum-story-reader__stat">
@@ -267,7 +270,7 @@ export default function ForumStoryBookHub({
 
           {chaptersLoading ? (
             <div className="forum-story-chapters__loading" aria-live="polite">
-              <span className="forum-story-chapters__loading-text">載入章節…</span>
+              <LoadingText as="span" className="forum-story-chapters__loading-text" />
             </div>
           ) : chapters.length > 0 ? (
             <ol className="forum-story-chapters__list">

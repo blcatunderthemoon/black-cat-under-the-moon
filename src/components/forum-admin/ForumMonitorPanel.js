@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import LoadingText from '../LoadingText.js';
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -103,7 +104,10 @@ export default function ForumMonitorPanel({ apiFetch }) {
           </div>
         )}
 
-        <div className="forum-admin-monitor__summary">共 {total} 筆 {loading && '載入中…'}</div>
+        <div className="forum-admin-monitor__summary">
+          共 {total} 筆
+          {loading ? <LoadingText as="span" className="forum-admin-monitor__loading-label" /> : null}
+        </div>
 
         {/* Posts */}
         {(typeFilter === 'all' || typeFilter === 'post') && posts.length > 0 && (

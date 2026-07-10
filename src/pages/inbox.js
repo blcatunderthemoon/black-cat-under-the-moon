@@ -168,7 +168,7 @@ export default function InboxPage() {
           pageClassName="app-page--inbox app-page--inbox-loading"
           maxWidth="680px"
         >
-          <MoonLoading label="載入收件箱…" variant="hero" className="inbox-page-loading" />
+          <MoonLoading variant="hero" className="inbox-page-loading" />
         </AppShell>
       </>
     );
@@ -184,7 +184,7 @@ export default function InboxPage() {
           pageClassName="app-page--inbox app-page--inbox-loading"
           maxWidth="680px"
         >
-          <MoonLoading label="載入收件箱…" variant="hero" className="inbox-page-loading" />
+          <MoonLoading variant="hero" className="inbox-page-loading" />
         </AppShell>
       </>
     );

@@ -588,7 +588,6 @@ export default function MirrorCardSlugPage() {
       <>
         <Head><link rel="stylesheet" href="/css/questionnaire.css" /></Head>
         <PageLoadingShell
-          label="載入中…"
           headerVariant="account"
           pageClassName="app-page--mirror-card"
           backHref="/index.html"

@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
+import LoadingText from '../LoadingText.js';
 import styles from '../../styles/dashboard/EmailAutomation.module.css';
 import { useAdminApi } from '../../lib/admin-api-context.js';
 import {
@@ -64,8 +65,6 @@ export function EmailAutomationPanel() {
   const [pairs, setPairs] = useState(null);       // null = not loaded yet
   const [pairsTotal, setPairsTotal] = useState(0);
   const [pairsSummary, setPairsSummary] = useState(null);
-  const [testEmailMode, setTestEmailMode] = useState(false);
-  const [testEmail, setTestEmail] = useState('');
   const [sentFilter, setSentFilter] = useState('unsent'); // 'unsent' | 'sent' | 'all'
   const [hideQuotaFull, setHideQuotaFull] = useState(true);
   const [viewMode, setViewMode] = useState('all'); // 'all' | 'premium'
@@ -101,8 +100,6 @@ export function EmailAutomationPanel() {
       setPairs(data.pairs || []);
       setPairsTotal(data.total || 0);
       setPairsSummary(data.summary || null);
-      setTestEmailMode(!!data.test_email_mode);
-      setTestEmail(data.test_email || '');
     } catch {
       setPairs([]);
       setPairsSummary(null);
@@ -351,12 +348,6 @@ export function EmailAutomationPanel() {
 
   return (
     <div className={styles.page}>
-
-        {testEmailMode && (
-          <div className={styles.testBanner}>
-            🧪 測試模式：所有配對 email 會轉去 <strong>{testEmail}</strong>（Inbox 仍投送給實際帳號）
-          </div>
-        )}
 
         {/* ── Filter bar ─────────────────────────────────────────────────── */}
         <div className={styles.filterBar}>
@@ -610,7 +601,7 @@ export function EmailAutomationPanel() {
             {drafts === null ? (
               <div className={styles.emptyState}>
                 <span className={styles.emptyIcon}>📝</span>
-                {loadingDrafts ? '載入中…' : '點擊「載入配對」以同步草稿'}
+                {loadingDrafts ? <LoadingText as="span" /> : '點擊「載入配對」以同步草稿'}
               </div>
             ) : drafts.length === 0 ? (
               <div className={styles.emptyState}>

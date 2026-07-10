@@ -928,7 +928,6 @@ export default function ForumPage() {
           jsonLd={[organizationJsonLd(), webSiteJsonLd()]}
         />
         <PageLoadingShell
-          label="載入中..."
           pageClassName="app-page--forum"
           loadingSmooth
           warmBackground
@@ -983,11 +982,7 @@ export default function ForumPage() {
                 <button type="button" className="forum-compose-btn" onClick={openCompose}>
                   + 發文
                 </button>
-              ) : (
-                <Link href="/login?redirect=/forum" className="forum-compose-btn" style={{ textDecoration: 'none' }}>
-                  + 發文
-                </Link>
-              )
+              ) : null
             }
           />
         }
@@ -1137,7 +1132,6 @@ export default function ForumPage() {
                 {feedRefreshing && (
                   <div className="forum-feed-loading forum-feed-loading--overlay" aria-busy="true" aria-live="polite">
                     <MoonLoading
-                      label="正在載入貼文…"
                       variant="hero"
                       centered
                       smooth
@@ -1149,7 +1143,6 @@ export default function ForumPage() {
                 {feedInitialLoading && (
                   <div className="forum-feed-loading" aria-busy="true" aria-live="polite">
                     <MoonLoading
-                      label="正在載入貼文…"
                       variant="hero"
                       centered
                       smooth
@@ -1188,7 +1181,7 @@ export default function ForumPage() {
                   <div className="forum-story-bookshelf-zone" aria-busy={storySearchLoading}>
                     {storySearchLoading ? (
                       <div className="forum-story-bookshelf-loading" aria-live="polite">
-                        <MoonLoading label="搜尋中…" variant="inline" centered smooth size={40} />
+                        <MoonLoading variant="inline" centered smooth size={40} />
                       </div>
                     ) : (
                       <>

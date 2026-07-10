@@ -18,7 +18,6 @@ import {
   resolveResponseAuthUserId,
   resolveResponseDeliveryEmail,
 } from './match-response-auth.js';
-import { applyMatchTestEmailRedirection, isMatchTestEmailMode } from './match-test-email.js';
 import { isSuccessfulSentMatchNote, shouldDeliverInboxForPair } from './match-sent-record.js';
 import { buildMatchCardHtml } from '../pages/api/match_card/template.js';
 
@@ -148,7 +147,7 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
         continue;
       }
 
-      const { to: toEmail, redirected, original } = applyMatchTestEmailRedirection(intendedEmail);
+      const toEmail = intendedEmail;
 
       try {
         const cardHtml = buildMatchCardHtml({
@@ -160,11 +159,10 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
         });
         const safeA = String(receiver.name).replace(/[^\w\u4e00-\u9fff]/g, '_');
         const safeB = String(partner.name).replace(/[^\w\u4e00-\u9fff]/g, '_');
-        const subjectPrefix = redirected ? `[TEST → ${original}] ` : '';
         await transporter.sendMail({
           from: `"Black Cat Under The Moon" <${process.env.GMAIL_USER}>`,
           to: toEmail,
-          subject: `${subjectPrefix}你與 ${partner.name} 配對成功 ✨ | Black Cat Under The Moon`,
+          subject: `你與 ${partner.name} 配對成功 ✨ | Black Cat Under The Moon`,
           html: buildEmailHtml({ receiver, partner, score }),
           text: buildTextEmail({ receiver, partner, score }),
           attachments: [{
@@ -176,8 +174,6 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
         deliveries.push({
           to: receiver.id,
           delivered: true,
-          redirected_to: redirected ? toEmail : undefined,
-          intended_email: redirected ? original : undefined,
         });
       } catch (err) {
         deliveries.push({ to: receiver.id, delivered: false, error: err.message });
@@ -202,8 +198,8 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
     const noteParts = [];
     if (anyDelivered) noteParts.push('郵件已送出');
     if (inbox?.delivered) noteParts.push('Inbox 已投送');
+    else if (shouldDeliverInbox && inbox?.reason) noteParts.push(`Inbox 略過（${inbox.reason}）`);
     if (hasPremium) noteParts.push('Moonlight Passport');
-    if (isMatchTestEmailMode()) noteParts.push('測試信箱');
 
     if (anyDelivered || inbox?.delivered) {
       await supabase.from('sent_matches').upsert(
@@ -252,7 +248,6 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
       deliveries,
       inbox,
       recorded: anyDelivered || !!inbox?.delivered,
-      test_email_mode: isMatchTestEmailMode(),
     });
   }
 

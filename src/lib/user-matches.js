@@ -3,7 +3,7 @@
  * Premium list also includes computed pairs ≥ PREMIUM_MATCH_MIN_SCORE.
  */
 
-import { computeCompatibility } from './intelligence.js';
+import { isLegacySoloMatchThread, isSoloMatchPayload, soloPartnerResponseId } from './inbox-solo-anchor.js';
 import { passesHardFilter } from './matching.js';
 
 export const PREMIUM_MATCH_MIN_SCORE = 60;
@@ -121,12 +121,10 @@ async function loadInboxMatches(admin, userId, myResponseIds) {
 
   const soloPartnerIds = [];
   for (const t of qualifying) {
-    if (t.participant_a !== t.participant_b) continue;
-    if (!String(t.source_id || '').startsWith('solo:')) continue;
     const card = cardByThread[t.id];
-    const rA = Number(card.payload?.response_a_id);
-    const rB = Number(card.payload?.response_b_id);
-    soloPartnerIds.push(myIdSet.has(rA) ? rB : myIdSet.has(rB) ? rA : rB);
+    if (!isSoloMatchPayload(card?.payload) && !isLegacySoloMatchThread(t)) continue;
+    const partnerId = soloPartnerResponseId(card.payload, myResponseIds);
+    if (partnerId) soloPartnerIds.push(partnerId);
   }
   const soloNameById = {};
   if (soloPartnerIds.length) {
@@ -140,11 +138,9 @@ async function loadInboxMatches(admin, userId, myResponseIds) {
   return qualifying.map((t) => {
     const card = cardByThread[t.id];
     const otherId = t.participant_a === userId ? t.participant_b : t.participant_a;
-    const isSolo = t.participant_a === t.participant_b && String(t.source_id || '').startsWith('solo:');
-    const rA = Number(card.payload?.response_a_id);
-    const rB = Number(card.payload?.response_b_id);
+    const isSolo = isSoloMatchPayload(card.payload) || isLegacySoloMatchThread(t);
     const partnerResponseId = isSolo
-      ? (myIdSet.has(rA) ? rB : myIdSet.has(rB) ? rA : rB)
+      ? soloPartnerResponseId(card.payload, myResponseIds)
       : (responseByUserId[otherId] || null);
     const profile = isSolo ? {} : (profileById[otherId] || {});
     const rawScore = card.payload?.match_score;

@@ -11,6 +11,7 @@ import ForumHeaderLogo from '../../components/ForumHeaderLogo.js';
 import ForumModQueuePanel from '../../components/ForumModQueuePanel.js';
 import ForumAdminNav from '../../components/ForumAdminNav.js';
 import ForumAdminSiteStats from '../../components/forum-admin/ForumAdminSiteStats.js';
+import MoonLoading from '../../components/MoonLoading.js';
 import { useAuth } from '../../lib/auth-context.js';
 import { canModerateForum, canAdminForum } from '../../lib/forum-roles.js';
 import { formatActorScopeLabel } from '../../lib/forum-moderator-assignments.js';
@@ -64,7 +65,7 @@ export default function ForumGuardianPage() {
         headerNav={<ForumHeaderAuth redirectPath="/forum/guardian" />}
         maxWidth="100%"
       >
-        <p className="forum-guardian-page__loading">載入中…</p>
+        <MoonLoading variant="hero" className="forum-guardian-page__loading" />
       </AppShell>
     );
   }

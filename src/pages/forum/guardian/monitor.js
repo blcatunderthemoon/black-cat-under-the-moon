@@ -10,6 +10,7 @@ import ForumHeaderAuth from '../../../components/ForumHeaderAuth.js';
 import ForumHeaderLogo from '../../../components/ForumHeaderLogo.js';
 import ForumAdminNav from '../../../components/ForumAdminNav.js';
 import ForumMonitorPanel from '../../../components/forum-admin/ForumMonitorPanel.js';
+import MoonLoading from '../../../components/MoonLoading.js';
 import { useAuth } from '../../../lib/auth-context.js';
 import { canAdminForum } from '../../../lib/forum-roles.js';
 import { forumAdminFetch } from '../../../lib/forum-admin-fetch.js';
@@ -51,7 +52,7 @@ export default function ForumGuardianMonitorPage() {
         headerNav={<ForumHeaderAuth redirectPath="/forum/guardian/monitor" />}
         maxWidth="100%"
       >
-        <p className="forum-guardian-page__loading">載入中…</p>
+        <MoonLoading variant="hero" className="forum-guardian-page__loading" />
       </AppShell>
     );
   }

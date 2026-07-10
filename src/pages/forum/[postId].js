@@ -725,7 +725,7 @@ export default function ForumPostPage() {
       />
       <AppShell {...shellProps}>
         {!post ? (
-          <MoonLoading label="載入中…" variant="hero" smooth />
+          <MoonLoading variant="hero" smooth />
         ) : (
           <ForumSectionErrorBoundary fallbackLabel="貼文">
           <>
@@ -891,7 +891,7 @@ export default function ForumPostPage() {
               </div>
               {commentsBootstrapping || storyDetailLoading ? (
                 <div className="forum-comments-empty forum-comments-empty--loading">
-                  <MoonLoading label="正在載入留言…" variant="inline" centered smooth size={48} />
+                  <MoonLoading variant="inline" centered smooth size={48} />
                 </div>
               ) : comments.length === 0 ? (
                 <div className="forum-comments-empty">
@@ -952,7 +952,7 @@ export default function ForumPostPage() {
 
             {!isStoryReading && !storyDetailLoading && (authLoading && !session && !readStoredAuthSession()?.access_token ? (
               <div className="forum-comments-empty forum-comments-empty--loading">
-                <MoonLoading label="載入帳戶狀態…" centered={false} size={24} />
+                <MoonLoading centered={false} size={24} />
               </div>
             ) : session ? (
               <form onSubmit={handleComment} className="forum-comment-form">

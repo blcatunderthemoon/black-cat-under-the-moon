@@ -168,7 +168,7 @@ export default function PhotoExchangeInboxPanel({
   if (exchangeLoading) {
     return (
       <div className="photo-exchange-inbox-panel">
-        <MoonLoading label="載入交換相…" size={28} />
+        <MoonLoading size={28} />
       </div>
     );
   }

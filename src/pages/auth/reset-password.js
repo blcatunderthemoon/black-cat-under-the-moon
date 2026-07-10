@@ -115,7 +115,7 @@ export default function ResetPasswordPage() {
       <AppShell centered hideHeader>
         <div className="pixel-card pixel-card--auth">
           {status === 'loading' && (
-            <MoonLoading label="正在驗證重設連結，請稍候…" />
+            <MoonLoading />
           )}
 
           {status === 'error' && (

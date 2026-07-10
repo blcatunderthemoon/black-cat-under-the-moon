@@ -306,7 +306,7 @@ export default function MoonJourneyPanel({
       <div className="moon-journey-panel__body">
         {journeyLoading ? (
           <div className="moon-journey-panel__loading-wrap">
-            <MoonLoading label="載入中…" centered={false} size={24} />
+            <MoonLoading centered={false} size={24} />
           </div>
         ) : (
           <>

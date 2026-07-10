@@ -176,7 +176,7 @@ function MatchCardDrawer({ open, onClose, partnerResponseId, myResponseId, partn
         <div className="match-card-drawer__body">
           {loading && (
             <div className="match-card-drawer__loading">
-              <MoonLoading label="載入共鳴分析卡…" centered={false} />
+              <MoonLoading centered={false} />
             </div>
           )}
           {error && !loading && <p className="match-card-drawer__loading match-card-drawer__error">{error}</p>}
@@ -361,7 +361,7 @@ export default function MatchesPage() {
           </>
         }
       >
-        {state === 'loading' && <MoonLoading label="載入中…" variant="hero" />}
+        {state === 'loading' && <MoonLoading variant="hero" />}
 
         {state === 'locked' && <LockedScreen />}
 

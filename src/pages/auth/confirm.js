@@ -73,7 +73,7 @@ export default function AuthConfirmPage() {
       <AppShell centered hideHeader>
         <div className="pixel-card pixel-card--auth">
           {status === 'loading' ? (
-            <MoonLoading label="正在確認你的帳號，請稍候…" />
+            <MoonLoading />
           ) : (
             <>
               <div style={{ fontSize: 40 }}>⚠️</div>

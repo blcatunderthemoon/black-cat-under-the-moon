@@ -39,11 +39,13 @@ export default function ForumHeaderAuth({ extra = null, moonJourney = null, redi
 
   if (!session) {
     return (
-      <span className="forum-header-guest-group">
-        <NavLink href={`/login?redirect=${encodeURIComponent(redirectPath)}`}>登入</NavLink>
-        <NavLink href={`/signup?redirect=${encodeURIComponent(redirectPath)}`}>註冊</NavLink>
+      <>
+        <span className="forum-header-guest-group">
+          <NavLink href={`/login?redirect=${encodeURIComponent(redirectPath)}`}>登入</NavLink>
+          <NavLink href={`/signup?redirect=${encodeURIComponent(redirectPath)}`}>註冊</NavLink>
+        </span>
         {extra}
-      </span>
+      </>
     );
   }
 
@@ -65,46 +67,48 @@ export default function ForumHeaderAuth({ extra = null, moonJourney = null, redi
           <HeaderPremiumMoon profile={meData} className="forum-header-moon" />
         )}
       </span>
-      <span className="forum-header-icon-group">
-        {isForumStaff && (
-          <Link
-            href="/forum/guardian"
-            className="app-header__nav-link app-header__nav-link--icon forum-header-guardian-btn"
-            title="月光守護者"
-            aria-label="月光守護者治理面板"
-          >
-            <span className="app-header__nav-icon" aria-hidden="true">🛡️</span>
-          </Link>
-        )}
-        <button
-          type="button"
-          className="app-header__nav-link app-header__nav-link--icon forum-header-bookmark-btn"
-          title="我的收藏"
-          aria-label="我的收藏"
-          onClick={openBookmarks}
-        >
-          <span className="app-header__nav-icon forum-header-bookmark-btn__icon" aria-hidden="true">🔖</span>
-        </button>
-        <Link
-          href="/inbox"
-          className={`app-header__nav-link app-header__nav-link--icon${unread > 0 ? ' app-header__nav-link--inbox-unread' : ''}`}
-          title="收件箱"
-        >
-          {unread > 0 ? (
-            <span className="forum-nav-unread forum-nav-unread--full">{unread}</span>
-          ) : (
-            <span className="app-header__nav-icon" aria-hidden="true">✉</span>
+      <span className="forum-header-actions">
+        <span className="forum-header-icon-group">
+          {isForumStaff && (
+            <Link
+              href="/forum/guardian"
+              className="app-header__nav-link app-header__nav-link--icon forum-header-guardian-btn"
+              title="月光守護者"
+              aria-label="月光守護者治理面板"
+            >
+              <span className="app-header__nav-icon" aria-hidden="true">🛡️</span>
+            </Link>
           )}
-        </Link>
-        <Link href="/account" className="app-header__nav-link app-header__nav-link--icon" title="設定">
-          <span className="app-header__nav-icon" aria-hidden="true">⚙</span>
-        </Link>
-        {moonJourney}
+          <button
+            type="button"
+            className="app-header__nav-link app-header__nav-link--icon forum-header-bookmark-btn"
+            title="我的收藏"
+            aria-label="我的收藏"
+            onClick={openBookmarks}
+          >
+            <span className="app-header__nav-icon forum-header-bookmark-btn__icon" aria-hidden="true">🔖</span>
+          </button>
+          <Link
+            href="/inbox"
+            className={`app-header__nav-link app-header__nav-link--icon${unread > 0 ? ' app-header__nav-link--inbox-unread' : ''}`}
+            title="收件箱"
+          >
+            {unread > 0 ? (
+              <span className="forum-nav-unread forum-nav-unread--full">{unread}</span>
+            ) : (
+              <span className="app-header__nav-icon" aria-hidden="true">✉</span>
+            )}
+          </Link>
+          <Link href="/account" className="app-header__nav-link app-header__nav-link--icon" title="設定">
+            <span className="app-header__nav-icon" aria-hidden="true">⚙</span>
+          </Link>
+          {moonJourney}
+        </span>
+        {extra}
       </span>
       <button type="button" className="app-header__action forum-header-logout-btn" onClick={handleLogout}>
         登出
       </button>
-      {extra}
       {!useParentBookmarks && bookmarksOpen && (
         <ForumBookmarksPanel
           open={bookmarksOpen}

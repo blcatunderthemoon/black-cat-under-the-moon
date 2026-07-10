@@ -10,6 +10,7 @@ import ForumHeaderAuth from '../../components/ForumHeaderAuth.js';
 import ForumHeaderLogo from '../../components/ForumHeaderLogo.js';
 import ForumAdminNav from '../../components/ForumAdminNav.js';
 import { EmailAutomationPanel } from '../../components/admin/EmailAutomationPanel.js';
+import MoonLoading from '../../components/MoonLoading.js';
 import { AdminApiContext } from '../../lib/admin-api-context.js';
 import { useAuth } from '../../lib/auth-context.js';
 import { canAdminForum } from '../../lib/forum-roles.js';
@@ -52,7 +53,7 @@ export default function AdminEmailAutomationPage() {
         headerNav={<ForumHeaderAuth redirectPath="/admin/email-automation" />}
         maxWidth="100%"
       >
-        <p className="forum-guardian-page__loading">載入中…</p>
+        <MoonLoading variant="hero" className="forum-guardian-page__loading" />
       </AppShell>
     );
   }

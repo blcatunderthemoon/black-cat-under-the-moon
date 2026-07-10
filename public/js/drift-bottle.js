@@ -1228,7 +1228,7 @@ async function toggleReplies() {
     return;
   }
   // Show loading indicator immediately — no blank flash
-  list.innerHTML = '<div class="no-replies" style="opacity:.55">⏳ 載入留言中…</div>';
+  list.innerHTML = '<div class="no-replies" style="opacity:.55">載入中<span class="loading-dots" aria-hidden="true"></span></div>';
   try {
     const res  = await fetch(API.replies + '?id=' + currentBottleId);
     const data = await res.json();
@@ -1677,8 +1677,8 @@ async function findBottle() {
 
     const listEl = document.getElementById('found-list');
     listEl.innerHTML = window.MoonLoadingHtml
-      ? window.MoonLoadingHtml('載入中…', { size: 24 })
-      : '<div class="no-replies" style="opacity:.5">載入中…</div>';
+      ? window.MoonLoadingHtml('載入中...', { size: 24 })
+      : '<div class="no-replies" style="opacity:.5">載入中<span class="loading-dots" aria-hidden="true"></span></div>';
     if (window.initMoonLoadingIn) window.initMoonLoadingIn(listEl);
     document.getElementById('found-heading').textContent = '拾瓶人的回聲';
     const capturedId = foundBottleId;
@@ -1839,8 +1839,8 @@ async function loadBottleById(id) {
     document.getElementById('found-wrap').classList.add('found-visible');
     const listEl = document.getElementById('found-list');
     listEl.innerHTML = window.MoonLoadingHtml
-      ? window.MoonLoadingHtml('載入中…', { size: 24 })
-      : '<div class="no-replies" style="opacity:.5">載入中…</div>';
+      ? window.MoonLoadingHtml('載入中...', { size: 24 })
+      : '<div class="no-replies" style="opacity:.5">載入中<span class="loading-dots" aria-hidden="true"></span></div>';
     if (window.initMoonLoadingIn) window.initMoonLoadingIn(listEl);
     document.getElementById('found-heading').textContent = '拾瓶人的回聲';
     const capturedId = foundBottleId;

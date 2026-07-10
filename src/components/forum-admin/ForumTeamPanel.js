@@ -5,6 +5,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { MODERATOR_ASSIGNABLE_TOPICS, formatModeratorTopicsLabel } from '../../lib/forum-moderator-assignments.js';
 import { TOPIC_STYLES } from '../../lib/forum-categories.js';
+import LoadingText from '../LoadingText.js';
 
 const ROLE_LABELS = {
   member: '一般會員',
@@ -273,7 +274,7 @@ export default function ForumTeamPanel({ apiFetch, onUnauthorized }) {
         <section className="forum-admin-team__section">
           <h2 className="forum-admin-team__section-title">現任團隊 ({staff.length})</h2>
           {loading ? (
-            <p className="forum-admin-team__muted">載入中…</p>
+            <LoadingText className="forum-admin-team__muted" />
           ) : staff.length === 0 ? (
             <p className="forum-admin-team__muted">尚未指派版主。請在下方搜尋用戶並指派角色。</p>
           ) : (

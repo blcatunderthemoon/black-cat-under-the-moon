@@ -170,7 +170,7 @@ export default function ThreadPage() {
           pageClassName="app-page--inbox"
           maxWidth="520px"
         >
-          <MoonLoading label="載入中…" variant="hero" />
+          <MoonLoading variant="hero" />
         </AppShell>
       </>
     );
@@ -301,7 +301,7 @@ export default function ThreadPage() {
 
         <div className={`thread-messages thread-messages--moon${isPhotoExchangeThread ? ' thread-messages--photo-exchange' : ''}`}>
           {!data ? (
-            <MoonLoading label="載入中…" className="letter-thread letter-thread--centered" />
+            <MoonLoading className="letter-thread letter-thread--centered" />
           ) : (
             <div className="letter-thread">
               {isPhotoExchangeThread ? (

@@ -5,21 +5,15 @@ import {
   MOON_LOADING_FRAME_INTERVAL_MS,
   MOON_LOADING_SMOOTH_FRAME_INTERVAL_MS,
 } from '../lib/moon-loading-frames.js';
+import { LOADING_LABEL, splitLoadingLabel } from '../lib/loading-label.js';
 
 function applyMask(el, src) {
   if (!el || !src) return;
   el.style.setProperty('--moon-mask-url', `url('${src}')`);
 }
 
-function splitLoadingLabel(label) {
-  if (!label) return { text: '', dots: false };
-  const match = String(label).match(/^(.*?)(…|\.{3})$/);
-  if (match) return { text: match[1], dots: true };
-  return { text: label, dots: false };
-}
-
 export default function MoonLoading({
-  label,
+  label = LOADING_LABEL,
   className = '',
   size = 48,
   centered = true,

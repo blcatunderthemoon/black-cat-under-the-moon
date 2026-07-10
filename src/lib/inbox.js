@@ -18,6 +18,13 @@ import {
   indexMatchCardsByThread,
 } from './inbox-match-thread.js';
 import {
+  ensureSoloMatchAnchorUserId,
+  findSoloMatchThread,
+  isLegacySoloMatchThread,
+  isSoloMatchPayload,
+  orderedParticipants,
+} from './inbox-solo-anchor.js';
+import {
   linkResponseToAuthUser,
   parseSoloMatchSourceId,
   resolveResponseAuthUserId,
@@ -122,11 +129,19 @@ async function loadSoloMatchPartnerNames(admin, viewerId, threads, matchCardByTh
 
   for (const thread of threads || []) {
     if (thread.source_type !== 'match') continue;
-    if (thread.participant_a !== thread.participant_b) continue;
-    const solo = parseSoloMatchSourceId(thread.source_id);
-    if (!solo) continue;
-    responseIds.add(solo.responseAId);
-    responseIds.add(solo.responseBId);
+    const card = matchCardByThread[thread.id];
+    if (isSoloMatchPayload(card?.payload) || isLegacySoloMatchThread(thread)) {
+      const solo = parseSoloMatchSourceId(card?.payload?.solo_match_key || thread.source_id);
+      if (!solo) {
+        const rA = Number(card?.payload?.response_a_id);
+        const rB = Number(card?.payload?.response_b_id);
+        if (rA) responseIds.add(rA);
+        if (rB) responseIds.add(rB);
+        continue;
+      }
+      responseIds.add(solo.responseAId);
+      responseIds.add(solo.responseBId);
+    }
   }
 
   if (!responseIds.size) return names;
@@ -141,13 +156,12 @@ async function loadSoloMatchPartnerNames(admin, viewerId, threads, matchCardByTh
 
   for (const thread of threads || []) {
     if (thread.source_type !== 'match') continue;
-    if (thread.participant_a !== thread.participant_b) continue;
-    const solo = parseSoloMatchSourceId(thread.source_id);
-    if (!solo) continue;
-
     const card = matchCardByThread[thread.id];
-    const rA = Number(card?.payload?.response_a_id ?? solo.responseAId);
-    const rB = Number(card?.payload?.response_b_id ?? solo.responseBId);
+    if (!isSoloMatchPayload(card?.payload) && !isLegacySoloMatchThread(thread)) continue;
+
+    const solo = parseSoloMatchSourceId(card?.payload?.solo_match_key || thread.source_id);
+    const rA = Number(card?.payload?.response_a_id ?? solo?.responseAId);
+    const rB = Number(card?.payload?.response_b_id ?? solo?.responseBId);
     const partnerId = myIds.has(rA) ? rB : myIds.has(rB) ? rA : (rA === rB ? rB : rA);
     const partner = responseById[partnerId];
     if (partner?.name) {
@@ -159,12 +173,12 @@ async function loadSoloMatchPartnerNames(admin, viewerId, threads, matchCardByTh
 }
 
 async function loadSoloMatchPartnerForThread(admin, viewerId, thread, messages) {
-  const solo = parseSoloMatchSourceId(thread.source_id);
-  if (!solo) return null;
-
   const card = (messages || []).find((m) => m.message_type === 'match_card');
-  const rA = Number(card?.payload?.response_a_id ?? solo.responseAId);
-  const rB = Number(card?.payload?.response_b_id ?? solo.responseBId);
+  const solo = parseSoloMatchSourceId(card?.payload?.solo_match_key || thread.source_id);
+  if (!isSoloMatchPayload(card?.payload) && !isLegacySoloMatchThread(thread)) return null;
+
+  const rA = Number(card?.payload?.response_a_id ?? solo?.responseAId);
+  const rB = Number(card?.payload?.response_b_id ?? solo?.responseBId);
 
   const [{ data: myResponses }, { data: pairResponses }] = await Promise.all([
     admin.from('responses').select('id').eq('user_id', viewerId),
@@ -351,9 +365,10 @@ export async function getThread(threadId, userId) {
 
   const otherId = thread.participant_a === userId ? thread.participant_b : thread.participant_a;
   const isPhotoExchangeThread = thread.source_type === 'photo_exchange';
-  const isSoloMatchThread = thread.source_type === 'match'
-    && thread.participant_a === thread.participant_b
-    && String(thread.source_id || '').startsWith('solo:');
+  const isSoloMatchThread = thread.source_type === 'match' && (
+    isLegacySoloMatchThread(thread)
+    || (messages || []).some((m) => m.message_type === 'match_card' && isSoloMatchPayload(m.payload))
+  );
 
   if (isPhotoExchangeThread) {
     const exchangeIds = [...new Set(
@@ -719,32 +734,30 @@ export async function deliverMatchCard({
   let threadId;
   if (isSolo) {
     const registeredId = authA || authB;
-    const { data: existingSolo } = await admin
-      .from('inbox_threads')
-      .select('id')
-      .eq('source_type', 'match')
-      .eq('source_id', soloKey)
-      .eq('participant_a', registeredId)
-      .eq('participant_b', registeredId)
-      .limit(1)
-      .maybeSingle();
+    const anchorId = await ensureSoloMatchAnchorUserId(admin);
+    threadId = await findSoloMatchThread(admin, registeredId, anchorId, soloKey);
 
-    if (existingSolo) {
-      threadId = existingSolo.id;
-    } else {
+    if (!threadId) {
+      const [participantA, participantB] = orderedParticipants(registeredId, anchorId);
       const { data: newThread, error: threadError } = await admin
         .from('inbox_threads')
         .insert({
-          participant_a: registeredId,
-          participant_b: registeredId,
+          participant_a: participantA,
+          participant_b: participantB,
           source_type: 'match',
-          source_id: soloKey,
+          source_id: null,
           last_message_at: now,
         })
         .select('id')
         .single();
 
-      if (threadError) return { delivered: false, reason: 'thread_create_failed' };
+      if (threadError) {
+        return {
+          delivered: false,
+          reason: 'thread_create_failed',
+          error: threadError.message,
+        };
+      }
       threadId = newThread.id;
     }
   } else {
@@ -773,7 +786,13 @@ export async function deliverMatchCard({
         .select('id')
         .single();
 
-      if (threadError) return { delivered: false, reason: 'thread_create_failed' };
+      if (threadError) {
+        return {
+          delivered: false,
+          reason: 'thread_create_failed',
+          error: threadError.message,
+        };
+      }
       threadId = newThread.id;
     }
   }
@@ -795,6 +814,7 @@ export async function deliverMatchCard({
     response_a_id: responseAId,
     response_b_id: responseBId,
     solo_partner: isSolo,
+    solo_match_key: soloKey,
   };
 
   const recipients = [...new Set([authA, authB].filter(Boolean))];

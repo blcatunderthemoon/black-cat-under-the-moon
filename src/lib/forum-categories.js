@@ -43,7 +43,7 @@ export const TOPIC_STYLES = {
   命理: { emoji: '🔮', accent: '#bd93f9', glow: 'rgba(189, 147, 249, 0.25)' },
   興趣: { emoji: '🎮', accent: '#4ade80', glow: 'rgba(74, 222, 128, 0.2)' },
   徵友: { emoji: '🌸', accent: '#fb7185', glow: 'rgba(251, 113, 133, 0.22)' },
-  親密話題: { emoji: '🌙', accent: '#c084fc', glow: 'rgba(192, 132, 252, 0.22)' },
+  親密話題: { emoji: '🌙', accent: '#e8b4a8', glow: 'rgba(200, 140, 130, 0.2)' },
   寫故事: { emoji: '📖', accent: '#d4a574', glow: 'rgba(212, 165, 116, 0.24)' },
   官方公告: { emoji: '📢', accent: '#94a3b8', glow: 'rgba(148, 163, 184, 0.2)' },
 };

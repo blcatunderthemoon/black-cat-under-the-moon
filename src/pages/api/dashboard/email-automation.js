@@ -18,7 +18,6 @@ import {
 } from '../../../lib/match-delivery-quota.js';
 import { buildMatchResponsePremiumContext } from '../../../lib/match-response-premium.js';
 import { filterSuccessfulSentRows } from '../../../lib/match-sent-record.js';
-import { isMatchTestEmailMode } from '../../../lib/match-test-email.js';
 import { authorizeStationOrForumAdmin } from '../../../lib/station-or-forum-admin-auth.js';
 
 const supabase = createClient(
@@ -205,8 +204,6 @@ async function handleGet(req, res) {
     pairs: filteredPairs,
     total: filteredPairs.length,
     summary,
-    test_email_mode: isMatchTestEmailMode(),
-    test_email: isMatchTestEmailMode() ? process.env.MATCH_TEST_EMAIL : null,
   });
 }
 

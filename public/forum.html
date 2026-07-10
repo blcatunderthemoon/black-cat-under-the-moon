@@ -16,11 +16,21 @@
   p { color: #a09c8c; font-size: 0.95rem; margin: 0 0 12px; }
   code { color: #bd93f9; background: rgba(189,147,249,0.1); padding: 2px 6px; }
   a { color: #bd93f9; }
+  .loading-dots::after {
+    content: '';
+    animation: loading-dots 1.4s steps(4, end) infinite;
+  }
+  @keyframes loading-dots {
+    0% { content: ''; }
+    25% { content: '.'; }
+    50% { content: '..'; }
+    75% { content: '...'; }
+  }
 </style>
 </head>
 <body>
   <div class="box" id="content">
-    <h1>🌙 載入黑貓樹洞…</h1>
+    <h1>🌙 載入中<span class="loading-dots" aria-hidden="true"></span></h1>
     <p>正在連接黑貓樹洞</p>
   </div>
 <script>

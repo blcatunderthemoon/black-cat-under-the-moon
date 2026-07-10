@@ -8,6 +8,7 @@ import { GUEST_FREE_CHAPTER_COUNT, isGuestReadableChapter } from '../lib/forum-s
 import { recordStoryView } from '../lib/forum-story-views.js';
 import ForumStoryBookHub from './ForumStoryBookHub.js';
 import ForumStoryReadingView from './ForumStoryReadingView.js';
+import LoadingText from './LoadingText.js';
 
 export default function ForumStoryReader({
   post,
@@ -95,7 +96,7 @@ export default function ForumStoryReader({
     if (chaptersLoading) {
       return (
         <div className="forum-story-reading forum-story-reading--loading">
-          <p className="forum-story-reading__loading">載入章節…</p>
+          <LoadingText className="forum-story-reading__loading" />
         </div>
       );
     }

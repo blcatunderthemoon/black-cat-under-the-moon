@@ -271,7 +271,7 @@ export default function ForumModQueuePanel({
       )}
 
       {!queue && !localError && (
-        <MoonLoading label="載入檢舉佇列…" variant="hero" className="page-loading" />
+        <MoonLoading variant="hero" className="page-loading" />
       )}
 
       {queue && totalPending === 0 && filter === 'all' && (

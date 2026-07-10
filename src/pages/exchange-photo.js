@@ -369,7 +369,7 @@ export default function ExchangePhotoPage() {
 
       <AppShell title={pageTitle} headerVariant="account" nav={<AppHeaderAuth redirectPath="/exchange-photo" />}>
 
-        <MoonLoading label="載入中…" variant="hero" />
+        <MoonLoading variant="hero" />
 
       </AppShell>
 
@@ -621,7 +621,7 @@ export default function ExchangePhotoPage() {
 
                 {dataLoading ? (
 
-                  <MoonLoading label="讀取相片…" size={28} />
+                  <MoonLoading size={28} />
 
                 ) : (
 
@@ -655,7 +655,7 @@ export default function ExchangePhotoPage() {
 
                 {dataLoading ? (
 
-                  <MoonLoading label="讀取相片…" size={28} />
+                  <MoonLoading size={28} />
 
                 ) : (
 

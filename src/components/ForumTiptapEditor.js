@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import LoadingText from './LoadingText.js';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
@@ -561,7 +562,7 @@ export default function ForumTiptapEditor({
   if (!editor) {
     return (
       <div className="forum-tiptap">
-        <p className="forum-compose-field__preview-empty">載入編輯器…</p>
+        <LoadingText className="forum-compose-field__preview-empty" />
       </div>
     );
   }

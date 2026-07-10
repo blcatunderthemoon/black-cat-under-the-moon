@@ -289,7 +289,6 @@ export default function AccountPage() {
     return (
       <PageLoadingShell
         title="帳號設定 — Black Cat Under The Moon"
-        label="載入中…"
         headerVariant="account"
         pageClassName="app-page--account"
         maxWidth="520px"

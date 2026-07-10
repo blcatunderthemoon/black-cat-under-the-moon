@@ -5,9 +5,10 @@
 import Head from 'next/head';
 import AppShell from './AppShell.js';
 import MoonLoading from './MoonLoading.js';
+import { LOADING_LABEL } from '../lib/loading-label.js';
 
 export default function PageLoadingShell({
-  label = '載入中…',
+  label = LOADING_LABEL,
   title,
   pageClassName = '',
   maxWidth,

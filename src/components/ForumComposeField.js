@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ForumMarkdownBody from './ForumMarkdownBody.js';
+import LoadingText from './LoadingText.js';
 
 export default function ForumComposeField({
   value,
@@ -148,7 +149,7 @@ export default function ForumComposeField({
               </button>
             </div>
           ) : (
-            <p className="forum-compose-field__preview-empty">載入編輯器…</p>
+            <LoadingText className="forum-compose-field__preview-empty" />
           )
         ) : (
           <TiptapEditor

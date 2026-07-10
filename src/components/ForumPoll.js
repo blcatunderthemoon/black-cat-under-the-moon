@@ -36,7 +36,7 @@ export default function ForumPoll({
     return (
       <div className="forum-poll forum-poll--missing">
         <p className="forum-poll__title">📊 投票</p>
-        <MoonLoading label="投票資料載入中…" centered={false} size={24} />
+        <MoonLoading centered={false} size={24} />
       </div>
     );
   }

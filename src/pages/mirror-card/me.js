@@ -38,5 +38,5 @@ export default function MirrorCardMePage() {
     };
   }, [session, loading, router]);
 
-  return <PageLoadingShell label="載入中…" pageClassName="moon-page-loading" />;
+  return <PageLoadingShell pageClassName="moon-page-loading" />;
 }

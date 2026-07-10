@@ -14,6 +14,8 @@ import { canAdminForum } from '../lib/forum-roles.js';
 import MobileKeyboardGuard from '../components/MobileKeyboardGuard.js';
 import PostHogAnalytics from '../components/PostHogAnalytics.js';
 import AppErrorBoundary from '../components/AppErrorBoundary.js';
+import MoonLoading from '../components/MoonLoading.js';
+import { LOADING_LABEL } from '../lib/loading-label.js';
 
 const AUTH_PATHS = new Set(['/login', '/signup', '/forgot-password', '/auth/confirm', '/auth/reset-password']);
 
@@ -22,10 +24,10 @@ function isAuthPath(pathname) {
   return pathname.startsWith('/auth/');
 }
 
-function DashboardLoadingScreen({ label = '載入 Dashboard…' }) {
+function DashboardLoadingScreen({ label = LOADING_LABEL }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#050914', color: '#9490b0', fontFamily: 'Noto Sans TC, sans-serif', fontSize: 14 }}>
-      {label}
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#050914' }}>
+      <MoonLoading label={label} variant="hero" centered />
     </div>
   );
 }
@@ -63,7 +65,7 @@ function LocalDashboardKeyGate({ children }) {
       });
   }, []);
 
-  if (secured === null) return <DashboardLoadingScreen label="驗證 Dashboard 金鑰…" />;
+  if (secured === null) return <DashboardLoadingScreen />;
   if (authed) return children;
 
   async function handleSubmit(e) {
@@ -137,7 +139,7 @@ function ProductionDashboardAdminGate({ children }) {
     }
   }, [profileHydrated, authLoading, session, router]);
 
-  if (!profileHydrated || authLoading) return <DashboardLoadingScreen label="驗證管理員權限…" />;
+  if (!profileHydrated || authLoading) return <DashboardLoadingScreen />;
   if (!session) return null;
 
   if (!isAdmin) {
