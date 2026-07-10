@@ -289,6 +289,7 @@ export default function ForumPage() {
   const [tagLabels, setTagLabels] = useState({});
   const [loadError, setLoadError] = useState(false);
   const [pageBootstrapping, setPageBootstrapping] = useState(true);
+  const [forumReady, setForumReady] = useState(false);
   const [feedRefreshing, setFeedRefreshing] = useState(false);
   const [storySearchLoading, setStorySearchLoading] = useState(false);
   const [matureAcked, setMatureAcked] = useState(false);
@@ -504,12 +505,13 @@ export default function ForumPage() {
     } else if (bootstrap) {
       if (!silent) {
         if (feedOnly || initialLoadDoneRef.current) {
+          setPageBootstrapping(false);
           setFeedRefreshing(true);
         } else {
           setPageBootstrapping(true);
         }
       }
-      if (reset && !silent) setPosts(null);
+      if (reset && !silent && !feedOnly) setPosts(null);
     }
 
     const applyPostsPayload = (r, data) => {
@@ -588,6 +590,7 @@ export default function ForumPage() {
           setPageBootstrapping(false);
           setFeedRefreshing(false);
           initialLoadDoneRef.current = true;
+          setForumReady(true);
         }
         loadedWithTokenRef.current = sessionRef.current?.access_token ?? null;
       }
@@ -608,6 +611,9 @@ export default function ForumPage() {
 
   const selectTopic = useCallback((nextTopic) => {
     if (nextTopic === topicRef.current) return;
+    if (initialLoadDoneRef.current) {
+      setPageBootstrapping(false);
+    }
     setActiveTag(null);
     setTopic(nextTopic);
   }, []);
@@ -901,8 +907,9 @@ export default function ForumPage() {
   }, [posts, topic, sort, activeTag, hasMore, meta]);
 
   const isPremium = isPremiumUser(profile);
-  const shellLoading = pageBootstrapping && posts === null;
-  const feedLoading = feedRefreshing || (posts === null && !shellLoading);
+  const shellLoading = !forumReady;
+  const feedInitialLoading = forumReady && posts === null && !feedRefreshing;
+  const feedLoading = feedRefreshing || feedInitialLoading;
   const isEmpty = !feedLoading && Array.isArray(posts) && posts.length === 0;
   const feedPosts = posts || [];
   const showEmptyState = isEmpty && !loadError;
@@ -1011,10 +1018,15 @@ export default function ForumPage() {
                     aria-label={t === MATURE_FORUM_TOPIC ? '親密話題 18+' : undefined}
                   >
                     {t === MATURE_FORUM_TOPIC ? (
-                      <>
-                        {TOPIC_STYLES[t]?.emoji ? `${TOPIC_STYLES[t].emoji} ` : ''}親密
+                      <span className="forum-topic-badge__mature-inner">
+                        <span className="forum-topic-badge__mature-label">
+                          {TOPIC_STYLES[t]?.emoji ? (
+                            <span className="forum-topic-badge__mature-moon" aria-hidden="true">{TOPIC_STYLES[t].emoji}</span>
+                          ) : null}
+                          親密
+                        </span>
                         <span className="forum-topic-badge__age" aria-hidden="true">18+</span>
-                      </>
+                      </span>
                     ) : (
                       <>
                         {TOPIC_STYLES[t]?.emoji ? `${TOPIC_STYLES[t].emoji} ` : ''}{t}
@@ -1119,10 +1131,28 @@ export default function ForumPage() {
               </div>
             )}
 
-            <div className="forum-feed">
-                {feedLoading && (
+            <div className={`forum-feed${feedRefreshing ? ' forum-feed--refreshing' : ''}`}>
+                {feedRefreshing && (
+                  <div className="forum-feed-loading forum-feed-loading--overlay" aria-busy="true" aria-live="polite">
+                    <MoonLoading
+                      label="正在載入貼文…"
+                      variant="hero"
+                      centered
+                      smooth
+                      className="forum-feed-loading__moon page-loading"
+                    />
+                  </div>
+                )}
+
+                {feedInitialLoading && (
                   <div className="forum-feed-loading" aria-busy="true" aria-live="polite">
-                    <MoonLoading label="正在載入貼文…" variant="inline" centered smooth size={58} />
+                    <MoonLoading
+                      label="正在載入貼文…"
+                      variant="hero"
+                      centered
+                      smooth
+                      className="forum-feed-loading__moon page-loading"
+                    />
                   </div>
                 )}
 

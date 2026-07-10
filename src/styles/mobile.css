@@ -207,14 +207,23 @@
   }
 
   .forum-filters-panel .pixel-filter-row--topics .forum-topic-badge--mature {
-    padding: 5px 8px;
+    padding: 6px 8px 6px 9px;
     font-size: 11px;
-    gap: 3px;
+  }
+
+  .forum-filters-panel .forum-topic-badge--mature .forum-topic-badge__mature-inner {
+    gap: 5px;
+  }
+
+  .forum-filters-panel .forum-topic-badge--mature .forum-topic-badge__mature-moon {
+    font-size: 11px;
   }
 
   .forum-filters-panel .forum-topic-badge--mature .forum-topic-badge__age {
-    padding: 0 4px;
-    font-size: 8px;
+    min-width: 1.75em;
+    padding: 2px 5px;
+    font-size: 7px;
+    border-radius: 4px;
   }
 
   .forum-filters-panel .forum-topic-badge--active {
