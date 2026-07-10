@@ -155,7 +155,7 @@ export default function MoonJourneyPanel({
                   ? '…'
                   : viewJourney?.is_max_level
                     ? `${viewJourney.exp} EXP · 滿級`
-                    : `${viewJourney?.exp ?? 0} EXP · 差 ${compactProgress?.expToNext ?? '—'} 升級`}
+                    : `${viewJourney?.exp ?? 0} EXP · 差 ${compactProgress?.expToNext ?? '—'} EXP`}
               </span>
             </span>
           </Link>
@@ -234,7 +234,7 @@ export default function MoonJourneyPanel({
                 ? '…'
                 : viewJourney?.is_max_level
                   ? `${viewJourney.exp} EXP · 滿級`
-                  : `${viewJourney?.exp ?? 0} EXP · 差 ${compactProgress?.expToNext ?? '—'} 升級`}
+                  : `${viewJourney?.exp ?? 0} EXP · 差 ${compactProgress?.expToNext ?? '—'} EXP`}
             </span>
           </span>
           {!viewJourney?.is_max_level && (
