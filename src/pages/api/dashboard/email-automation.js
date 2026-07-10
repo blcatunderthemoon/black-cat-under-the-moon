@@ -18,6 +18,7 @@ import {
 } from '../../../lib/match-delivery-quota.js';
 import { buildMatchResponsePremiumContext } from '../../../lib/match-response-premium.js';
 import { filterSuccessfulSentRows } from '../../../lib/match-sent-record.js';
+import { pairHasSameResponseEmail } from '../../../lib/match-response-auth.js';
 import { authorizeStationOrForumAdmin } from '../../../lib/station-or-forum-admin-auth.js';
 
 const supabase = createClient(
@@ -141,6 +142,7 @@ async function handleGet(req, res) {
       const claimedA = !!uA.user_id;
       const claimedB = !!uB.user_id;
       const inboxReady = claimedA && claimedB;
+      const sameEmailBlocked = pairHasSameResponseEmail(uA, uB);
 
       pairs.push({
         user_a: {
@@ -173,7 +175,8 @@ async function handleGet(req, res) {
         user_b_quota: quotaB,
         has_premium: hasPremium,
         inbox_ready: inboxReady,
-        premium_instant_ready: hasPremium && inboxReady && !sentMap.has(pairKey) && quotaA.can_receive && quotaB.can_receive,
+        same_email_blocked: sameEmailBlocked,
+        premium_instant_ready: hasPremium && inboxReady && !sentMap.has(pairKey) && quotaA.can_receive && quotaB.can_receive && !sameEmailBlocked,
         quota_blocked: !quotaA.can_receive || !quotaB.can_receive,
       });
     }

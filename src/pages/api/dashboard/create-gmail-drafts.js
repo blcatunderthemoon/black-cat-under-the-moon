@@ -19,6 +19,7 @@ import { createClient } from '@supabase/supabase-js';
 import { buildEmailHtml, buildTextEmail } from '../../../lib/email-template.js';
 import { computeCompatibility } from '../../../lib/intelligence.js';
 import { buildMatchCardHtml } from '../match_card/template.js';
+import { pairHasSameResponseEmail } from '../../../lib/match-response-auth.js';
 import { authorizeStationOrForumAdmin } from '../../../lib/station-or-forum-admin-auth.js';
 
 const supabase = createClient(
@@ -116,6 +117,11 @@ export default async function handler(req, res) {
 
       if (!userA || !userB) {
         results.push({ userAId: aId, userBId: bId, error: 'User not found' });
+        continue;
+      }
+
+      if (pairHasSameResponseEmail(userA, userB)) {
+        results.push({ userAId: aId, userBId: bId, error: 'same_email' });
         continue;
       }
 

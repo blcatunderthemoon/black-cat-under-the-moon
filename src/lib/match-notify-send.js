@@ -15,6 +15,8 @@ import {
 import { buildMatchResponsePremiumContext } from './match-response-premium.js';
 import {
   linkResponseToAuthUser,
+  normalizeResponseEmail,
+  pairHasSameResponseEmail,
   resolveResponseAuthUserId,
   resolveResponseDeliveryEmail,
 } from './match-response-auth.js';
@@ -110,6 +112,17 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
       continue;
     }
 
+    if (pairHasSameResponseEmail(userA, userB)) {
+      results.push({
+        userAId: aId,
+        userBId: bId,
+        error: 'same_email',
+        shared_email: normalizeResponseEmail(userA.email),
+        recorded: false,
+      });
+      continue;
+    }
+
     const quotaA = quotaFor(userA);
     const quotaB = quotaFor(userB);
     const hasPremium = quotaA.is_premium || quotaB.is_premium;
@@ -139,11 +152,18 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
     );
 
     const deliveries = [];
+    const sentEmails = new Set();
 
     for (const [receiver, partner] of [[userA, userB], [userB, userA]]) {
       const intendedEmail = await resolveResponseDeliveryEmail(supabase, receiver);
       if (!intendedEmail) {
         deliveries.push({ to: receiver.id, skipped: true, reason: 'No email address' });
+        continue;
+      }
+
+      const emailKey = intendedEmail.trim().toLowerCase();
+      if (sentEmails.has(emailKey)) {
+        deliveries.push({ to: receiver.id, delivered: true, deduped: true });
         continue;
       }
 
@@ -175,6 +195,7 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
           to: receiver.id,
           delivered: true,
         });
+        sentEmails.add(emailKey);
       } catch (err) {
         deliveries.push({ to: receiver.id, delivered: false, error: err.message });
       }
@@ -194,6 +215,7 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
     }
 
     const [normA, normB] = normalisePair(aId, bId);
+    const sameAuthUser = !!(authA && authB && authA === authB);
     const anyDelivered = deliveries.some((d) => d.delivered);
     const inboxRequired = !!(authA || authB);
     const inboxOk = !inboxRequired || !!inbox?.delivered;
@@ -205,7 +227,7 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
     if (hasPremium) noteParts.push('Moonlight Passport');
 
     if (recorded) {
-      await supabase.from('sent_matches').upsert(
+      const { error: upsertError } = await supabase.from('sent_matches').upsert(
         {
           user_a_id: normA,
           user_b_id: normB,
@@ -214,6 +236,25 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
         },
         { onConflict: 'user_a_id,user_b_id', ignoreDuplicates: false },
       );
+
+      if (upsertError) {
+        results.push({
+          userAId: aId,
+          userBId: bId,
+          score,
+          has_premium: hasPremium,
+          inbox_delivered: !!inbox?.delivered,
+          user_a_registered: !!authA,
+          user_b_registered: !!authB,
+          user_a_quota: quotaA,
+          user_b_quota: quotaB,
+          deliveries,
+          inbox,
+          recorded: false,
+          error: `sent_matches_upsert: ${upsertError.message}`,
+        });
+        continue;
+      }
 
       await supabase
         .from('email_drafts')
@@ -226,6 +267,7 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
         userBId: bId,
         score,
         has_premium: hasPremium,
+        same_auth_user: sameAuthUser,
         inbox_delivered: false,
         user_a_registered: !!authA,
         user_b_registered: !!authB,
@@ -260,6 +302,7 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
       userBId: bId,
       score,
       has_premium: hasPremium,
+      same_auth_user: sameAuthUser,
       inbox_delivered: !!inbox?.delivered,
       user_a_registered: !!authA,
       user_b_registered: !!authB,

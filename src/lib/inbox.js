@@ -5,7 +5,7 @@
  */
 
 import { databaseNowIso } from './hong-kong-time.js';
-import { getAdminClient, getSubscriptionTier, getSubscriptionTiers } from './server-auth.js';
+import { getAdminClient, getSubscriptionTier, getSubscriptionTiers, ensureProfile } from './server-auth.js';
 import { filterContent } from './content-filter.js';
 import { isBlocked, canSendActiveLetter, assertAndConsumeQuota, getQuotaUsage } from './permissions.js';
 import { notifyMatchCard, notifyNewLetter, notifyPhotoExchangeRequest } from './notify.js';
@@ -30,6 +30,21 @@ import {
   resolveResponseAuthUserId,
   soloMatchSourceId,
 } from './match-response-auth.js';
+
+async function ensureAuthProfileForInbox(admin, authUserId) {
+  if (!authUserId) return null;
+  const { data: existing } = await admin.from('profiles').select('id').eq('id', authUserId).maybeSingle();
+  if (existing?.id) return authUserId;
+
+  try {
+    const { data: { user } } = await admin.auth.admin.getUserById(authUserId);
+    if (!user?.id) return null;
+    await ensureProfile(user);
+    return authUserId;
+  } catch {
+    return null;
+  }
+}
 
 async function loadMirrorSlugsByUserIds(admin, userIds) {
   if (!userIds.length) return {};
@@ -720,6 +735,8 @@ export async function deliverMatchCard({
   let authB = await resolveResponseAuthUserId(admin, rowB);
   if (authA && !rowA.user_id) authA = await linkResponseToAuthUser(admin, rowA, authA);
   if (authB && !rowB.user_id) authB = await linkResponseToAuthUser(admin, rowB, authB);
+  if (authA) authA = await ensureAuthProfileForInbox(admin, authA);
+  if (authB) authB = await ensureAuthProfileForInbox(admin, authB);
 
   if (!authA && !authB) {
     return {
@@ -730,7 +747,8 @@ export async function deliverMatchCard({
   }
 
   const now = databaseNowIso();
-  const isSolo = !authA || !authB;
+  const sameAuthUser = !!(authA && authB && authA === authB);
+  const isSolo = !authA || !authB || sameAuthUser;
   const userAId = authA || authB;
   const userBId = authB || authA;
   const soloKey = isSolo ? soloMatchSourceId(responseAId, responseBId) : null;

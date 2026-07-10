@@ -8,6 +8,24 @@ function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
 }
 
+export function normalizeResponseEmail(email) {
+  return normalizeEmail(email);
+}
+
+/** True when both questionnaire rows list the same non-empty email. */
+export function pairHasSameResponseEmail(rowA, rowB) {
+  const a = normalizeEmail(rowA?.email);
+  const b = normalizeEmail(rowB?.email);
+  return !!(a && b && a === b);
+}
+
+export function formatSameEmailPairLabel(rowA, rowB, aId, bId) {
+  const email = normalizeEmail(rowA?.email);
+  const nameA = rowA?.name || '';
+  const nameB = rowB?.name || '';
+  return `#${aId} ${nameA} × #${bId} ${nameB}（${email}）`;
+}
+
 /**
  * Find auth.users.id for a response row (claimed user_id or verified email match).
  * @param {import('@supabase/supabase-js').SupabaseClient} admin

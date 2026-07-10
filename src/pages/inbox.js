@@ -293,23 +293,28 @@ export default function InboxPage() {
                         <PixelSealedLetterIcon variant={iconVariant} size={56} />
                       )}
                       <div className="inbox-letter-row__stack">
-                        <div className="inbox-letter-row__line">
-                          <div className="inbox-letter-row__body">
-                            <span className="inbox-letter-row__name">
-                              <PixelMixedLabel
-                                text={thread.other_participant.display_name}
-                                zhClass="inbox-letter-row__zh"
-                                enClass="inbox-letter-row__en inbox-letter-row__en--name"
-                              />
-                            </span>
-                            <span className={`inbox-letter-row__title${isMatch ? ' inbox-letter-row__title--match' : ''}`}>
-                              {isMatch
-                                ? (isMatchUnread ? '靈魂共鳴連線通知' : matchPreview)
-                                : (thread.mysterious_title || '來自夜色的低語…')}
-                            </span>
-                          </div>
+                        <div className="inbox-letter-row__top">
+                          <span className="inbox-letter-row__name">
+                            <PixelMixedLabel
+                              text={thread.other_participant.display_name}
+                              zhClass="inbox-letter-row__zh"
+                              enClass="inbox-letter-row__en inbox-letter-row__en--name"
+                            />
+                          </span>
                           {!isMirrorClosed && (
-                            <div className={`inbox-letter-row__meta${isMatch ? ' inbox-letter-row__meta--match' : ''}`}>
+                            <span className="inbox-letter-row__time">
+                              {timeAgo(thread.last_message_at)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="inbox-letter-row__bottom">
+                          <span className={`inbox-letter-row__title${isMatch ? ' inbox-letter-row__title--match' : ''}`}>
+                            {isMatch
+                              ? (isMatchUnread ? '靈魂共鳴連線通知' : matchPreview)
+                              : (thread.mysterious_title || '來自夜色的低語…')}
+                          </span>
+                          {!isMirrorClosed && (
+                            <div className={`inbox-letter-row__trail${isMatch ? ' inbox-letter-row__trail--match' : ''}`}>
                               {isMatch && thread.match_score != null ? (
                                 <span
                                   className={`inbox-match-score-pill${isMatchUnread ? ' inbox-match-score-pill--unread' : ''}`}
@@ -322,9 +327,6 @@ export default function InboxPage() {
                               ) : metaText ? (
                                 <InboxListMetaText text={metaText} badge={isOpportunityMeta} />
                               ) : null}
-                              <span className="inbox-letter-row__time">
-                                {timeAgo(thread.last_message_at)}
-                              </span>
                             </div>
                           )}
                         </div>

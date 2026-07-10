@@ -4,9 +4,11 @@ import styles from '../../styles/dashboard/EmailAutomation.module.css';
 import { useAdminApi } from '../../lib/admin-api-context.js';
 import {
   automationPairKey,
+  buildSameEmailPairsAlert,
   countAutomationPairsBySent,
   filterVisibleAutomationPairs,
   isAutomationPairSent,
+  pairHasSameEmail,
 } from '../../lib/email-automation-pair-filters.js';
 
 const DIM_KEYS = ['attraction', 'emotional', 'lifestyle', 'communication', 'relationship', 'conflictSafety'];
@@ -135,7 +137,7 @@ export function EmailAutomationPanel() {
   // Checkbox helpers
   // ─────────────────────────────────────────────────────────────────────────
 
-  const isPairSelectable = (p) => !p.quota_blocked;
+  const isPairSelectable = (p) => !p.quota_blocked && !p.same_email_blocked && !pairHasSameEmail(p);
 
   const toggleRow = (p) => {
     if (!isPairSelectable(p)) return;
@@ -168,8 +170,28 @@ export function EmailAutomationPanel() {
   // Save draft
   // ─────────────────────────────────────────────────────────────────────────
 
+  const resolvePairUsers = useCallback((pair) => {
+    if (pair?.user_a?.email && pair?.user_b?.email) return pair;
+    const key = automationPairKey(pair);
+    if (!key) return pair;
+    const fromPairs = pairs.find((p) => automationPairKey(p) === key);
+    if (fromPairs) {
+      return { ...pair, user_a: fromPairs.user_a, user_b: fromPairs.user_b };
+    }
+    const fromDraft = drafts.find((d) => automationPairKey(d) === key);
+    if (fromDraft) {
+      return { ...pair, user_a: fromDraft.user_a, user_b: fromDraft.user_b };
+    }
+    return pair;
+  }, [pairs, drafts]);
+
   const handleSaveDraft = async () => {
     if (!selectedCount) return;
+    const sameEmailAlert = buildSameEmailPairsAlert(selectedPairs);
+    if (sameEmailAlert) {
+      alert(sameEmailAlert);
+      return;
+    }
     setSavingDraft(true);
     try {
       const payload = selectedPairs.map((p) => ({
@@ -197,10 +219,17 @@ export function EmailAutomationPanel() {
   // ─────────────────────────────────────────────────────────────────────────
 
   const doSend = async (pairsToSend, { deliverInbox = false } = {}) => {
+    const enrichedPairs = pairsToSend.map(resolvePairUsers);
+    const sameEmailAlert = buildSameEmailPairsAlert(enrichedPairs);
+    if (sameEmailAlert) {
+      alert(sameEmailAlert);
+      return;
+    }
+
     setSending(true);
     setSendResults(null);
     try {
-      const payload = pairsToSend.map((p) => ({
+      const payload = enrichedPairs.map((p) => ({
         userAId:         p.user_a_id ?? p.userAId,
         userBId:         p.user_b_id ?? p.userBId,
         match_score:     p.match_score,
@@ -225,6 +254,9 @@ export function EmailAutomationPanel() {
 
       if (hardFailures.length) {
         const lines = hardFailures.map((r) => {
+          if (r.error === 'same_email') {
+            return `#${r.userAId}×#${r.userBId}: 雙方 Email 相同（${r.shared_email || '—'}）`;
+          }
           const emailErrors = (r.deliveries || [])
             .filter((d) => d.delivered === false)
             .map((d) => d.error || d.reason)
@@ -306,10 +338,7 @@ export function EmailAutomationPanel() {
     if (!confirm('確認發送此連線通知？已註冊用戶會收到 Inbox 連線卡，雙方（如有信箱）均會收到 Email。')) return;
     setDraftActionId(draft.id);
     try {
-      await doSend(
-        [{ user_a_id: draft.user_a_id, user_b_id: draft.user_b_id, match_score: draft.match_score }],
-        { deliverInbox: true },
-      );
+      await doSend(draft, { deliverInbox: true });
     } finally {
       setDraftActionId(null);
     }
@@ -536,7 +565,7 @@ export function EmailAutomationPanel() {
                     return (
                       <tr
                         key={key}
-                        className={`${styles.tableRow} ${isChk ? styles.checked : ''} ${p.quota_blocked ? styles.quotaBlockedRow : ''} ${!selectable ? styles.rowNotSelectable : ''}`}
+                        className={`${styles.tableRow} ${isChk ? styles.checked : ''} ${p.quota_blocked ? styles.quotaBlockedRow : ''} ${p.same_email_blocked ? styles.quotaBlockedRow : ''} ${!selectable ? styles.rowNotSelectable : ''}`}
                         onClick={() => toggleRow(p)}
                       >
                         <td onClick={(e) => e.stopPropagation()}>
@@ -545,7 +574,11 @@ export function EmailAutomationPanel() {
                             className={styles.checkbox}
                             checked={isChk}
                             disabled={!selectable}
-                            title={selectable ? undefined : '配額已滿，無法選取'}
+                            title={
+                              p.same_email_blocked || pairHasSameEmail(p)
+                                ? '雙方 Email 相同，無法發送'
+                                : (selectable ? undefined : '配額已滿，無法選取')
+                            }
                             onChange={() => toggleRow(p)}
                           />
                         </td>
@@ -578,6 +611,9 @@ export function EmailAutomationPanel() {
                           )}
                           {p.quota_blocked && !isAutomationPairSent(p) && (
                             <span className={`${styles.badge} ${styles.badgeQuota}`}>⚠ 配額已滿</span>
+                          )}
+                          {(p.same_email_blocked || pairHasSameEmail(p)) && !isAutomationPairSent(p) && (
+                            <span className={`${styles.badge} ${styles.badgeError}`}>⚠ 相同 Email</span>
                           )}
                           {isAutomationPairSent(p) && (
                             <span className={`${styles.badge} ${styles.badgeSent}`}>✉ 已發送</span>
@@ -631,6 +667,7 @@ export function EmailAutomationPanel() {
                   {drafts.map((d) => {
                     const dKey = `${Math.min(d.user_a_id, d.user_b_id)}:${Math.max(d.user_a_id, d.user_b_id)}`;
                     const busy = draftActionId === d.id || sending;
+                    const draftSameEmail = pairHasSameEmail(d);
                     return (
                       <tr key={d.id} className={styles.tableRow}>
                         <td style={{ fontWeight: 600, color: 'var(--text)' }}>
@@ -656,7 +693,8 @@ export function EmailAutomationPanel() {
                           <button
                             className={styles.draftSendBtn}
                             onClick={() => handleSendDraft(d)}
-                            disabled={busy}
+                            disabled={busy || draftSameEmail}
+                            title={draftSameEmail ? '雙方 Email 相同，無法發送' : undefined}
                           >
                             {draftActionId === d.id && sending ? '發送中…' : '✉ 立即發送'}
                           </button>
