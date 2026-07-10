@@ -37,6 +37,20 @@ function formatTime(dateStr) {
   return d.toLocaleString('zh-HK', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
+function clampMatchScore(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(100, Math.round(n)));
+}
+
+function getMatchRarity(score) {
+  const s = clampMatchScore(score);
+  if (s >= 91) return { label: 'SSR', tier: 'ssr' };
+  if (s >= 81) return { label: 'SR', tier: 'sr' };
+  if (s >= 75) return { label: 'R', tier: 'r' };
+  return null;
+}
+
 export default function ThreadPage() {
   const { session, loading } = useAuth();
   const router = useRouter();
@@ -316,9 +330,12 @@ export default function ThreadPage() {
         )}
 
         {data?.thread?.source_type === 'match' && (
-          <p className="inbox-thread-source-tag">
-            🎯 連線
-            {other?.display_name ? ` · ${other.display_name}` : ''}
+          <p className="inbox-thread-source-tag inbox-thread-source-tag--match">
+            <span className="inbox-thread-source-tag__icon" aria-hidden="true">🎯</span>
+            <span className="inbox-thread-source-tag__label">連線任務</span>
+            {other?.display_name ? (
+              <span className="inbox-thread-source-tag__partner">{other.display_name}</span>
+            ) : null}
           </p>
         )}
 
@@ -434,6 +451,8 @@ function MessageItem({ msg, isMine, otherName, mirrorCardHref, stackIndex = 0 })
   const senderIsPremium = !isMine && Boolean(msg.sender?.is_premium);
   const rowSide = isMatchCard ? 'center' : (isMine ? 'mine' : 'theirs');
   const matchScore = msg.payload?.match_score;
+  const scoreNum = matchScore != null ? clampMatchScore(matchScore) : null;
+  const rarity = scoreNum != null ? getMatchRarity(scoreNum) : null;
 
   if (isMatchCard) {
     return (
@@ -441,35 +460,81 @@ function MessageItem({ msg, isMine, otherName, mirrorCardHref, stackIndex = 0 })
         className="letter-row letter-row--center inbox-match-card-row"
         style={{ '--letter-z': stackIndex + 1, '--letter-tilt': '0deg' }}
       >
-        <article className="inbox-match-card msg-match-card">
+        <article
+          className={`inbox-match-card inbox-match-card--game msg-match-card${rarity ? ` inbox-match-card--${rarity.tier}` : ''}`}
+        >
+          <div className="inbox-match-card__grid" aria-hidden="true" />
           <div className="inbox-match-card__glow" aria-hidden="true" />
-          <p className="inbox-match-card__eyebrow">🎯 靈魂共鳴連線</p>
-          <h2 className="inbox-match-card__title">連線成功</h2>
+          {rarity?.tier === 'ssr' && <div className="inbox-match-card__shine" aria-hidden="true" />}
+          <span className="inbox-match-card__corner inbox-match-card__corner--tl" aria-hidden="true" />
+          <span className="inbox-match-card__corner inbox-match-card__corner--tr" aria-hidden="true" />
+          <span className="inbox-match-card__corner inbox-match-card__corner--bl" aria-hidden="true" />
+          <span className="inbox-match-card__corner inbox-match-card__corner--br" aria-hidden="true" />
+
+          <header className="inbox-match-card__quest-bar">
+            <span className="inbox-match-card__quest-tag">QUEST</span>
+            <span className="inbox-match-card__quest-name">靈魂共鳴連線</span>
+            {rarity && (
+              <span className={`inbox-match-card__rarity inbox-match-card__rarity--${rarity.tier}`}>
+                {rarity.label}
+              </span>
+            )}
+          </header>
+
+          <div className="inbox-match-card__clear">
+            <p className="inbox-match-card__clear-en" aria-hidden="true">◆ CONNECTION CLEAR ◆</p>
+            <h2 className="inbox-match-card__title">連線成功</h2>
+          </div>
+
           {otherName && (
-            <p className="inbox-match-card__partner">
-              <PixelMixedLabel
-                text={otherName}
-                zhClass="inbox-match-card__partner-zh"
-                enClass="inbox-match-card__partner-en"
-              />
-            </p>
+            <div className="inbox-match-card__target">
+              <span className="inbox-match-card__target-label">TARGET</span>
+              <p className="inbox-match-card__partner">
+                <PixelMixedLabel
+                  text={otherName}
+                  zhClass="inbox-match-card__partner-zh"
+                  enClass="inbox-match-card__partner-en"
+                />
+              </p>
+            </div>
           )}
-          {matchScore != null && (
-            <p className="inbox-match-card__score" aria-label={`同步率 ${matchScore} 分`}>
-              <span className="inbox-match-card__score-label">同步率</span>
-              <span className="inbox-match-card__score-value">{matchScore}</span>
-              <span className="inbox-match-card__score-max">/100</span>
-            </p>
+
+          {scoreNum != null && (
+            <div
+              className="inbox-match-card__stats"
+              style={{ '--sync-pct': scoreNum }}
+              aria-label={`同步率 ${scoreNum} 分`}
+            >
+              <div className="inbox-match-card__stat-hdr">
+                <span className="inbox-match-card__stat-label">SYNC RATE</span>
+                <span className="inbox-match-card__stat-zh">同步率</span>
+              </div>
+              <div
+                className="inbox-match-card__sync-bar"
+                role="meter"
+                aria-valuenow={scoreNum}
+                aria-valuemin={0}
+                aria-valuemax={100}
+              >
+                <div className="inbox-match-card__sync-fill" />
+                <span className="inbox-match-card__sync-score">{scoreNum}</span>
+              </div>
+              <span className="inbox-match-card__score-max">/ 100</span>
+            </div>
           )}
+
           <p className="inbox-match-card__hint">黑貓為你分析心靈契合度，尋找靈魂同頻者</p>
           {mirrorCardHref ? (
             <Link href={mirrorCardHref} className="inbox-match-card__cta pixel-btn pixel-btn--primary">
-              查看 Mirror Card
+              ▶ 查看 Mirror Card
             </Link>
           ) : (
             <p className="inbox-match-card__footnote">對方尚未註冊網站帳號，可先透過 Email 配對卡聯繫</p>
           )}
-          <p className="inbox-match-card__time">{timestamp}</p>
+          <footer className="inbox-match-card__footer">
+            <span className="inbox-match-card__time-pip" aria-hidden="true">▸</span>
+            <time className="inbox-match-card__time" dateTime={msg.created_at || undefined}>{timestamp}</time>
+          </footer>
         </article>
       </div>
     );
