@@ -2,11 +2,13 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import styles from '../../styles/dashboard/ForumDashboardNav.module.css';
 
-const ITEMS = [
+export const FORUM_DASHBOARD_NAV_ITEMS = [
   { href: '/dashboard/forum', label: '檢舉佇列', icon: '📋' },
   { href: '/dashboard/forum/team', label: '版主團隊', icon: '🛡️' },
   { href: '/dashboard/forum-monitor', label: '內容監控', icon: '🔍' },
 ];
+
+const ITEMS = FORUM_DASHBOARD_NAV_ITEMS;
 
 export default function ForumDashboardNav() {
   const router = useRouter();

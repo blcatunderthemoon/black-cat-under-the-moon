@@ -1,8 +1,9 @@
 ﻿import Link from 'next/link';
 import { useRouter } from 'next/router';
 import styles from '../../styles/dashboard/Sidebar.module.css';
+import { FORUM_DASHBOARD_NAV_ITEMS } from './ForumDashboardNav.js';
 
-const NAV_ITEMS = [
+const MAIN_NAV_ITEMS = [
   { href: '/dashboard', icon: '◉', label: '總覽' },
   { href: '/dashboard/questionnaire-stats', icon: '◫', label: '問卷統計' },
   { href: '/dashboard/matching-analytics', icon: '◈', label: '配對分析' },
@@ -12,11 +13,15 @@ const NAV_ITEMS = [
   { href: '/dashboard/email-automation', icon: '📧', label: '郵件自動化' },
   { href: '/dashboard/export', icon: '⬡', label: '匯出下載' },
   { href: '/dashboard/experiment-lab', icon: '◇', label: '實驗室' },
-  null,
-  { href: '/dashboard/forum', icon: '🌙', label: '月光圍爐' },
-  { href: '/dashboard/test-data', icon: '⚙', label: '資料管理' },
-  { href: '/dashboard/moderation', icon: '🛡', label: '內容審核' },
 ];
+
+function isNavActive(pathname, href) {
+  if (href === '/dashboard') return pathname === '/dashboard';
+  if (href === '/dashboard/forum') {
+    return pathname === '/dashboard/forum';
+  }
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
 
 export default function Sidebar() {
   const router = useRouter();
@@ -32,12 +37,9 @@ export default function Sidebar() {
       </div>
 
       <nav className={styles.nav}>
-        {NAV_ITEMS.map((item, i) => {
-          if (item === null) return <div key={`divider-${i}`} className={styles.navDivider} />;
+        {MAIN_NAV_ITEMS.map((item) => {
           const { href, icon, label } = item;
-          const isActive = href === '/dashboard'
-            ? router.pathname === '/dashboard'
-            : router.pathname.startsWith(href);
+          const isActive = isNavActive(router.pathname, href);
           return (
             <Link
               key={href}
@@ -49,6 +51,41 @@ export default function Sidebar() {
             </Link>
           );
         })}
+
+        <div className={styles.navDivider} />
+
+        <p className={styles.navSectionLabel}>論壇管理</p>
+        {FORUM_DASHBOARD_NAV_ITEMS.map((item) => {
+          const { href, icon, label } = item;
+          const isActive = isNavActive(router.pathname, href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={`${styles.navItem} ${styles.navItemSub} ${isActive ? styles.active : ''}`}
+            >
+              <span className={styles.navIcon}>{icon}</span>
+              {label}
+            </Link>
+          );
+        })}
+
+        <div className={styles.navDivider} />
+
+        <Link
+          href="/dashboard/test-data"
+          className={`${styles.navItem} ${isNavActive(router.pathname, '/dashboard/test-data') ? styles.active : ''}`}
+        >
+          <span className={styles.navIcon}>⚙</span>
+          資料管理
+        </Link>
+        <Link
+          href="/dashboard/moderation"
+          className={`${styles.navItem} ${isNavActive(router.pathname, '/dashboard/moderation') ? styles.active : ''}`}
+        >
+          <span className={styles.navIcon}>🛡</span>
+          內容審核
+        </Link>
       </nav>
 
       <div className={styles.footer}>

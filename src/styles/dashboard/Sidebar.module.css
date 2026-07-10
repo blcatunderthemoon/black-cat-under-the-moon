@@ -90,6 +90,19 @@
   margin: 6px 10px;
 }
 
+.navSectionLabel {
+  margin: 4px 10px 2px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(167, 139, 250, 0.55);
+}
+
+.navItemSub {
+  padding-left: 14px;
+}
+
 /* Footer */
 .footer {
   padding: 14px 18px;
