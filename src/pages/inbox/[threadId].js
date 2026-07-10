@@ -2,7 +2,7 @@
  * /inbox/[threadId] — Mystic thread detail + async reply
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -23,6 +23,8 @@ import { DEFAULT_LETTER_PREFS } from '../../lib/letter-gameplay.js';
 import MoonLoading from '../../components/MoonLoading.js';
 import PhotoExchangeInboxPanel from '../../components/PhotoExchangeInboxPanel.js';
 import ChannelStatusLine from '../../components/ChannelStatusLine.js';
+import PixelMixedLabel from '../../components/PixelMixedLabel.js';
+import { markInboxThreadReadLocally } from '../../lib/inbox-read-sync.js';
 
 function isLetterMessage(msg) {
   const type = msg?.message_type;
@@ -64,6 +66,7 @@ export default function ThreadPage() {
   const loadThread = useCallback(async () => {
     const token = authTokenRef.current;
     if (!token || !threadId || typeof threadId !== 'string') return;
+    const userId = session?.user?.id;
     try {
       const r = await fetch(`/api/inbox/threads/${encodeURIComponent(threadId)}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -72,10 +75,20 @@ export default function ThreadPage() {
       const d = await r.json();
       setData(d);
       setFetchError(null);
+      if (userId) {
+        markInboxThreadReadLocally(userId, threadId, {
+          fallbackUnread: Number(d.marked_read_count) || 0,
+        });
+      }
     } catch (e) {
       setFetchError(e.message);
     }
-  }, [threadId]);
+  }, [threadId, session?.user?.id]);
+
+  useLayoutEffect(() => {
+    if (!session?.user?.id || !threadId || typeof threadId !== 'string') return;
+    markInboxThreadReadLocally(session.user.id, threadId);
+  }, [session?.user?.id, threadId]);
 
   useEffect(() => {
     if (!session?.user?.id || !threadId) return;
@@ -165,7 +178,8 @@ export default function ThreadPage() {
         <Head><title>對話 — Black Cat Under The Moon</title></Head>
         <AppShell
           title="對話"
-          backHref="/index.html"
+          backHref="/inbox"
+          backLabel="返回"
           headerVariant="account"
           pageClassName="app-page--inbox"
           maxWidth="520px"
@@ -182,7 +196,8 @@ export default function ThreadPage() {
         <Head><title>對話 — Black Cat Under The Moon</title></Head>
         <AppShell
           title="對話"
-          backHref="/index.html"
+          backHref="/inbox"
+          backLabel="返回"
           headerVariant="account"
           pageClassName="app-page--inbox"
           maxWidth="520px"
@@ -253,6 +268,10 @@ export default function ThreadPage() {
     );
   }
 
+  const isMatchOnlyThread = data?.thread?.source_type === 'match'
+    && letterMessages.length === 0
+    && exchangeRequests.length === 0;
+
   return (
     <>
       <Head>
@@ -283,9 +302,10 @@ export default function ThreadPage() {
             </>
           )
         }
-        backHref="/index.html"
+        backHref="/inbox"
+        backLabel="返回"
         headerVariant="account"
-        pageClassName={`app-page--inbox app-page--thread${isPhotoExchangeThread ? ' app-page--photo-exchange-thread' : ''}`}
+        pageClassName={`app-page--inbox app-page--thread${isPhotoExchangeThread ? ' app-page--photo-exchange-thread' : ''}${isMatchOnlyThread ? ' app-page--match-thread' : ''}`}
         nav={<AppHeaderAuth redirectPath={router.asPath || '/inbox'} />}
       >
         {data?.status_banner && (
@@ -296,10 +316,13 @@ export default function ThreadPage() {
         )}
 
         {data?.thread?.source_type === 'match' && (
-          <p className="inbox-thread-source-tag">🎯 連線</p>
+          <p className="inbox-thread-source-tag">
+            🎯 連線
+            {other?.display_name ? ` · ${other.display_name}` : ''}
+          </p>
         )}
 
-        <div className={`thread-messages thread-messages--moon${isPhotoExchangeThread ? ' thread-messages--photo-exchange' : ''}`}>
+        <div className={`thread-messages thread-messages--moon${isPhotoExchangeThread ? ' thread-messages--photo-exchange' : ''}${isMatchOnlyThread ? ' thread-messages--match-only' : ''}`}>
           {!data ? (
             <MoonLoading className="letter-thread letter-thread--centered" />
           ) : (
@@ -346,6 +369,7 @@ export default function ThreadPage() {
                     msg={msg}
                     isMine={msg.is_mine}
                     otherName={other?.display_name}
+                    mirrorCardHref={mirrorCardHref}
                     stackIndex={index}
                   />
                 ))}
@@ -401,7 +425,7 @@ function stickyNoteTilt(seed) {
   return ((Math.abs(h) % 41) - 20) / 10;
 }
 
-function MessageItem({ msg, isMine, otherName, stackIndex = 0 }) {
+function MessageItem({ msg, isMine, otherName, mirrorCardHref, stackIndex = 0 }) {
   const isMatchCard = msg.message_type === 'match_card';
   const timestamp = formatTime(msg.created_at);
   const senderName = isMine
@@ -409,32 +433,44 @@ function MessageItem({ msg, isMine, otherName, stackIndex = 0 }) {
     : (msg.sender?.display_name || otherName || '對方');
   const senderIsPremium = !isMine && Boolean(msg.sender?.is_premium);
   const rowSide = isMatchCard ? 'center' : (isMine ? 'mine' : 'theirs');
+  const matchScore = msg.payload?.match_score;
 
   if (isMatchCard) {
     return (
       <div
-        className={`letter-row letter-row--${rowSide}`}
+        className="letter-row letter-row--center inbox-match-card-row"
         style={{ '--letter-z': stackIndex + 1, '--letter-tilt': '0deg' }}
       >
-        <div className="msg-match-card letter-row__match-card">
-          <p style={{ fontSize: 14, fontWeight: 700, margin: 0 }}>🎯 連線成功</p>
-          {msg.payload?.match_score != null && (
-            <p style={{ fontSize: 13, margin: 0 }}>
-              同步率：<strong>{msg.payload.match_score}/100</strong>
+        <article className="inbox-match-card msg-match-card">
+          <div className="inbox-match-card__glow" aria-hidden="true" />
+          <p className="inbox-match-card__eyebrow">🎯 靈魂共鳴連線</p>
+          <h2 className="inbox-match-card__title">連線成功</h2>
+          {otherName && (
+            <p className="inbox-match-card__partner">
+              <PixelMixedLabel
+                text={otherName}
+                zhClass="inbox-match-card__partner-zh"
+                enClass="inbox-match-card__partner-en"
+              />
             </p>
           )}
-          {msg.payload?.match_summary && Object.keys(msg.payload.match_summary).length > 0 && (
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {Object.entries(msg.payload.match_summary).slice(0, 4).map(([k, v]) => (
-                <li key={k} style={{ display: 'flex', gap: 8, fontSize: 12 }}>
-                  <span style={{ color: 'var(--text-muted)', minWidth: 60 }}>{k}</span>
-                  <span>{String(v)}</span>
-                </li>
-              ))}
-            </ul>
+          {matchScore != null && (
+            <p className="inbox-match-card__score" aria-label={`同步率 ${matchScore} 分`}>
+              <span className="inbox-match-card__score-label">同步率</span>
+              <span className="inbox-match-card__score-value">{matchScore}</span>
+              <span className="inbox-match-card__score-max">/100</span>
+            </p>
           )}
-          <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>查看對方 Mirror Card 了解更多</p>
-        </div>
+          <p className="inbox-match-card__hint">黑貓為你分析心靈契合度，尋找靈魂同頻者</p>
+          {mirrorCardHref ? (
+            <Link href={mirrorCardHref} className="inbox-match-card__cta pixel-btn pixel-btn--primary">
+              查看 Mirror Card
+            </Link>
+          ) : (
+            <p className="inbox-match-card__footnote">對方尚未註冊網站帳號，可先透過 Email 配對卡聯繫</p>
+          )}
+          <p className="inbox-match-card__time">{timestamp}</p>
+        </article>
       </div>
     );
   }

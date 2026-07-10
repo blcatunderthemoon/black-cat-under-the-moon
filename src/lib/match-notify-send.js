@@ -119,7 +119,7 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
     if (authA && !userA.user_id) authA = await linkResponseToAuthUser(supabase, userA, authA);
     if (authB && !userB.user_id) authB = await linkResponseToAuthUser(supabase, userB, authB);
 
-    const shouldDeliverInbox = deliverInbox || shouldDeliverInboxForPair(authA, authB);
+    const shouldDeliverInbox = shouldDeliverInboxForPair(authA, authB) || deliverInbox;
 
     if (!skipQuotaCheck && !pairCanDeliverMatch(quotaA, quotaB)) {
       results.push({
@@ -195,13 +195,16 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
 
     const [normA, normB] = normalisePair(aId, bId);
     const anyDelivered = deliveries.some((d) => d.delivered);
+    const inboxRequired = !!(authA || authB);
+    const inboxOk = !inboxRequired || !!inbox?.delivered;
+    const recorded = (anyDelivered || !!inbox?.delivered) && inboxOk;
     const noteParts = [];
     if (anyDelivered) noteParts.push('郵件已送出');
     if (inbox?.delivered) noteParts.push('Inbox 已投送');
     else if (shouldDeliverInbox && inbox?.reason) noteParts.push(`Inbox 略過（${inbox.reason}）`);
     if (hasPremium) noteParts.push('Moonlight Passport');
 
-    if (anyDelivered || inbox?.delivered) {
+    if (recorded) {
       await supabase.from('sent_matches').upsert(
         {
           user_a_id: normA,
@@ -217,6 +220,23 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
         .delete()
         .eq('user_a_id', normA)
         .eq('user_b_id', normB);
+    } else if (inboxRequired && !inbox?.delivered) {
+      results.push({
+        userAId: aId,
+        userBId: bId,
+        score,
+        has_premium: hasPremium,
+        inbox_delivered: false,
+        user_a_registered: !!authA,
+        user_b_registered: !!authB,
+        user_a_quota: quotaA,
+        user_b_quota: quotaB,
+        deliveries,
+        inbox,
+        recorded: false,
+        error: `inbox_${inbox.reason || 'failed'}`,
+      });
+      continue;
     } else if (hasPremium) {
       // Only remove failed placeholder rows — never erase a prior successful send on retry.
       const { data: existing } = await supabase
@@ -247,7 +267,7 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
       user_b_quota: quotaB,
       deliveries,
       inbox,
-      recorded: anyDelivered || !!inbox?.delivered,
+      recorded,
     });
   }
 

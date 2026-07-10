@@ -11,6 +11,7 @@ import { useClientReady } from '../lib/use-client-ready.js';
 import { isPremiumUser } from '../lib/premium.js';
 import { readStoredAuthSession } from '../lib/browser-session.js';
 import { readInboxThreadsCache, writeInboxThreadsCache, clearInboxThreadsCache } from '../lib/inbox-threads-cache.js';
+import { INBOX_THREADS_UPDATED_EVENT } from '../lib/inbox-read-sync.js';
 import { readMeCache } from '../lib/me-cache.js';
 import AppShell from '../components/AppShell.js';
 import AppHeaderAuth from '../components/AppHeaderAuth.js';
@@ -125,19 +126,43 @@ export default function InboxPage() {
   useEffect(() => {
     if (!session?.user?.id || !session?.access_token) return;
 
+    const userId = session.user.id;
+    const applyCachedThreads = () => {
+      const cached = readInboxThreadsCache(userId);
+      if (cached) setThreads(cached);
+    };
+
     const refreshThreads = () => {
       if (document.visibilityState && document.visibilityState !== 'visible') return;
       lastFetchedTokenRef.current = null;
-      loadThreads(session.access_token, session.user.id, { silent: true });
+      loadThreads(session.access_token, userId, { silent: true });
+    };
+
+    const onThreadsUpdated = (e) => {
+      if (e.detail?.userId !== userId) return;
+      if (Array.isArray(e.detail?.threads)) {
+        setThreads(e.detail.threads);
+      } else {
+        applyCachedThreads();
+      }
+    };
+
+    const onRoute = (url) => {
+      if (typeof url !== 'string' || !url.startsWith('/inbox') || url !== '/inbox') return;
+      applyCachedThreads();
     };
 
     window.addEventListener('focus', refreshThreads);
     window.addEventListener('pageshow', refreshThreads);
+    window.addEventListener(INBOX_THREADS_UPDATED_EVENT, onThreadsUpdated);
+    router.events.on('routeChangeComplete', onRoute);
     return () => {
       window.removeEventListener('focus', refreshThreads);
       window.removeEventListener('pageshow', refreshThreads);
+      window.removeEventListener(INBOX_THREADS_UPDATED_EVENT, onThreadsUpdated);
+      router.events.off('routeChangeComplete', onRoute);
     };
-  }, [session?.user?.id, session?.access_token, loadThreads]);
+  }, [session?.user?.id, session?.access_token, loadThreads, router.events]);
 
   const storedAuth = clientReady ? readStoredAuthSession() : null;
   const hasStoredAuth = Boolean(storedAuth?.access_token);
@@ -235,6 +260,9 @@ export default function InboxPage() {
                 const isPhotoExchange = thread.source_type === 'photo_exchange';
                 const isOpportunityMeta = metaText && /回信機會|尚餘.*次來回/.test(metaText);
                 const isMatchHighlight = isMatch && (thread.match_highlight || hasUnread);
+                const matchScoreLabel = isMatch && thread.match_score != null
+                  ? `同步率 ${thread.match_score}/100`
+                  : null;
 
                 return (
                   <li key={thread.id} className="inbox-letter-list__item">
@@ -251,9 +279,9 @@ export default function InboxPage() {
                         </span>
                       )}
                       {isPhotoExchange ? (
-                        <PixelPhotoExchangeIcon variant={iconVariant} size={66} />
+                        <PixelPhotoExchangeIcon variant={iconVariant} size={isMatch ? 56 : 66} />
                       ) : (
-                        <PixelSealedLetterIcon variant={iconVariant} size={66} />
+                        <PixelSealedLetterIcon variant={iconVariant} size={isMatch ? 56 : 66} />
                       )}
                       <div className="inbox-letter-row__stack">
                         <div className="inbox-letter-row__line">
@@ -266,12 +294,18 @@ export default function InboxPage() {
                               />
                             </span>
                             <span className="inbox-letter-row__title">
-                              {thread.mysterious_title || (isMatch ? '靈魂共鳴連線通知' : '來自夜色的低語…')}
+                              {isMatch
+                                ? (matchScoreLabel || thread.mysterious_title || '靈魂共鳴連線通知')
+                                : (thread.mysterious_title || '來自夜色的低語…')}
                             </span>
                           </div>
                           {!isMirrorClosed && (
                             <div className="inbox-letter-row__meta">
-                              {metaText ? (
+                              {(isMatch && hasUnread) ? (
+                                <span className="inbox-letter-row__time">
+                                  {timeAgo(thread.last_message_at)}
+                                </span>
+                              ) : metaText ? (
                                 <InboxListMetaText text={metaText} badge={isOpportunityMeta} />
                               ) : (
                                 <span className="inbox-letter-row__time">

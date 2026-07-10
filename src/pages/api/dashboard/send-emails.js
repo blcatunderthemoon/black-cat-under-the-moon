@@ -23,7 +23,7 @@ export default async function handler(req, res) {
   }
 
   const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
-  const { pairs, deliver_inbox: deliverInbox = false, skip_quota_check: skipQuotaCheck = false } = body;
+  const { pairs, deliver_inbox: deliverInbox = true, skip_quota_check: skipQuotaCheck = false } = body;
 
   if (!Array.isArray(pairs) || pairs.length === 0) {
     return res.status(400).json({ error: 'pairs must be a non-empty array' });

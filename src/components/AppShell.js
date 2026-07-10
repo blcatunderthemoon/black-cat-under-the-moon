@@ -35,6 +35,7 @@ export default function AppShell({
   title,
   headerSubtitle,
   backHref = '/index.html',
+  backLabel = '主頁',
   nav,
   children,
   maxWidth = '640px',
@@ -112,8 +113,8 @@ export default function AppShell({
         href={backHref}
         className="app-header__back home-back-btn mode-header-chip"
       >
-        <span className="home-back-btn__icon" aria-hidden="true">⌂</span>
-        <span className="home-back-btn__label app-header__back-label">主頁</span>
+        <span className="home-back-btn__icon" aria-hidden="true">{backLabel === '主頁' ? '⌂' : '←'}</span>
+        <span className="home-back-btn__label app-header__back-label">{backLabel}</span>
       </a>
       {title ? (
         <h1 className="app-header__title mode-top-bar__center mode-top-bar__mode-tag">
@@ -130,7 +131,7 @@ export default function AppShell({
         href={backHref}
         className="app-header__back"
       >
-        ⌂ 主頁
+        {backLabel === '主頁' ? '⌂ 主頁' : `← ${backLabel}`}
       </a>
       {headerBrand ? (
         <div className="app-header__brand">{headerBrand}</div>

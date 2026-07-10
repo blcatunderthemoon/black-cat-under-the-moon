@@ -231,7 +231,10 @@ export function EmailAutomationPanel() {
             .filter(Boolean);
           const inboxReason = r.inbox?.reason;
           const inboxHint = r.inbox?.skipped ? '雙方均未註冊，略過 Inbox' : null;
-          return `#${r.userAId}×#${r.userBId}: ${emailErrors.join('; ') || inboxReason || inboxHint || r.error || '未知錯誤'}`;
+          const inboxFail = r.inbox_delivered === false && (r.user_a_registered || r.user_b_registered)
+            ? `Inbox 投送失敗（${inboxReason || r.error || '未知'}）`
+            : null;
+          return `#${r.userAId}×#${r.userBId}: ${emailErrors.join('; ') || inboxFail || inboxReason || inboxHint || r.error || '未知錯誤'}`;
         });
         alert(
           `部分配對未成功投送（可重新發送）：\n${lines.join('\n')}\n\n`
@@ -335,7 +338,12 @@ export function EmailAutomationPanel() {
     const allOk = emailOk && inboxOk;
     const recorded = r.recorded;
     if (!recorded) {
-      return <span className={`${styles.badge} ${styles.badgeError}`}>❌ 未投送</span>;
+      const inboxFail = r.inbox_delivered === false && inboxExpected;
+      return (
+        <span className={`${styles.badge} ${styles.badgeError}`} title={r.inbox?.reason || r.error || ''}>
+          {inboxFail ? '❌ Inbox 失敗' : '❌ 未投送'}
+        </span>
+      );
     }
     return allOk
       ? <span className={`${styles.badge} ${styles.badgeSuccess}`}>✅ 已送出</span>

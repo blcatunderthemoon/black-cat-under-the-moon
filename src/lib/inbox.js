@@ -354,13 +354,16 @@ export async function getThread(threadId, userId) {
     .filter((m) => m.recipient_id === userId && !m.read_at)
     .map((m) => m.id);
 
-  if (unreadIds.length > 0) {
-    admin
+  const markedReadCount = unreadIds.length;
+  if (markedReadCount > 0) {
+    const readAt = databaseNowIso();
+    await admin
       .from('inbox_messages')
-      .update({ read_at: databaseNowIso() })
-      .in('id', unreadIds)
-      .then(() => {})
-      .catch(() => {});
+      .update({ read_at: readAt })
+      .in('id', unreadIds);
+    for (const msg of messages || []) {
+      if (unreadIds.includes(msg.id)) msg.read_at = readAt;
+    }
   }
 
   const otherId = thread.participant_a === userId ? thread.participant_b : thread.participant_a;
@@ -549,6 +552,7 @@ export async function getThread(threadId, userId) {
   return {
     thread,
     messages: messagesWithSenders,
+    marked_read_count: markedReadCount,
     other_participant: {
       id: soloPartner ? null : otherId,
       display_name: soloPartner?.name || otherProfile?.display_name || '神秘貓咪',
