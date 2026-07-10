@@ -19763,7 +19763,7 @@ button.forum-tag-chip:hover {
 .forum-story-reader--hub .forum-story-reader__synopsis-head {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 8px;
   width: 100%;
   min-width: 0;
@@ -19778,7 +19778,6 @@ button.forum-tag-chip:hover {
   min-width: 0;
   flex-wrap: nowrap;
   flex-shrink: 0;
-  margin-left: auto;
 }
 
 .forum-story-reader--hub .forum-story-reader__synopsis-sigil {
@@ -19879,24 +19878,23 @@ button.forum-tag-chip:hover {
   }
 }
 
-/* Story book hub — synopsis header: 簡介📜 stays right on phones */
+/* Story book hub — synopsis header: 簡介📜 stays left on all viewports */
 @media (max-width: 768px) {
   .forum-story-reader--hub .forum-story-reader__synopsis-head {
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-start;
     gap: 8px;
   }
 
   .forum-story-reader--hub .forum-story-reader__synopsis-head-main {
     flex: 0 0 auto;
-    margin-left: auto;
   }
 
   .forum-story-reader--hub .forum-story-synopsis-read__edit-btn {
-    margin-right: auto;
-    margin-left: 0;
+    margin-left: auto;
+    margin-right: 0;
     width: auto;
     align-self: auto;
     text-align: center;
@@ -20299,7 +20297,7 @@ button.forum-tag-chip:hover {
 
 .forum-story-synopsis-read__edit-btn {
   flex-shrink: 0;
-  margin-right: auto;
+  margin-left: auto;
   padding: 6px 12px;
   border: 1px solid rgba(212, 165, 116, 0.45);
   border-radius: 8px;
