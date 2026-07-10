@@ -1,7 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Keep build output under node_modules (less likely to be corrupted than .next at repo root).
-  distDir: 'node_modules/.cache/next',
+  // Local dev only: keep cache under node_modules (less OneDrive corruption than repo-root .next).
+  // Production / Vercel must use the default `.next` so routes-manifest.json is found at deploy.
+  ...(process.env.NODE_ENV === 'development'
+    ? { distDir: 'node_modules/.cache/next' }
+    : {}),
   async redirects() {
     return [
       { source: '/', destination: '/index.html', permanent: false },
