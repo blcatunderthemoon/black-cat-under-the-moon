@@ -101,6 +101,7 @@ async function fetchPostDetailBundle(postId, token) {
       if (!r.ok) {
         const err = new Error(payload.error || 'Load failed');
         err.code = payload.code || '';
+        err.status = r.status;
         throw err;
       }
       return payload;
@@ -114,6 +115,16 @@ async function fetchPostDetailBundle(postId, token) {
 
   const [payload, chaptersPayload] = await Promise.all([postPromise, chaptersPromise]);
   return { payload, chaptersPayload };
+}
+
+/**
+ * A transient failure (network drop, cold start, 5xx/timeout) is worth retrying —
+ * unlike a real 404 or an auth/members gate (which carry a `code` or a 4xx status).
+ */
+function isTransientLoadError(err) {
+  if (!err || err.code) return false;
+  const status = err.status;
+  return status == null || status === 408 || status === 429 || status >= 500;
 }
 
 function AuthorLinks({ author, isMine }) {
@@ -178,6 +189,7 @@ export default function ForumPostPage() {
   const [likingPost, setLikingPost] = useState(false);
   const [opOnly, setOpOnly] = useState(false);
   const [matureAcked, setMatureAcked] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const loadedTokenRef = useRef(undefined);
   const loadSeqRef = useRef(0);
 
@@ -204,6 +216,13 @@ export default function ForumPostPage() {
     }
   }, [postId, session?.access_token]);
 
+  const retryLoad = useCallback(() => {
+    loadedTokenRef.current = undefined;
+    setLoadError(null);
+    setLoadErrorCode('');
+    setReloadKey((k) => k + 1);
+  }, []);
+
   useEffect(() => {
     if (!postId) return;
     loadedTokenRef.current = undefined;
@@ -224,28 +243,46 @@ export default function ForumPostPage() {
 
     const seq = ++loadSeqRef.current;
     let cancelled = false;
+    let retryTimer = null;
 
-    fetchPostDetailBundle(postId, token)
-      .then(({ payload, chaptersPayload }) => {
-        if (cancelled || seq !== loadSeqRef.current) return;
-        setLoadError(null);
-        setLoadErrorCode('');
-        setData((prev) => {
-          const next = mergePostDetailPayload(prev, payload, chaptersPayload);
-          writeForumPostCache(postId, next);
-          return next;
+    const runAttempt = (triesLeft) => {
+      fetchPostDetailBundle(postId, token)
+        .then(({ payload, chaptersPayload }) => {
+          if (cancelled || seq !== loadSeqRef.current) return;
+          setLoadError(null);
+          setLoadErrorCode('');
+          setData((prev) => {
+            const next = mergePostDetailPayload(prev, payload, chaptersPayload);
+            writeForumPostCache(postId, next);
+            return next;
+          });
+          loadedTokenRef.current = token;
+        })
+        .catch((e) => {
+          if (cancelled || seq !== loadSeqRef.current) return;
+          // Retry transient failures (cold start, network blip, 5xx) before giving up.
+          if (isTransientLoadError(e) && triesLeft > 0) {
+            const delay = 500 * (3 - triesLeft);
+            retryTimer = setTimeout(() => {
+              if (!cancelled && seq === loadSeqRef.current) runAttempt(triesLeft - 1);
+            }, delay);
+            return;
+          }
+          // Something is already on screen (feed/session cache) — keep it rather than
+          // replacing a readable post with a full-page error.
+          if (readForumPostBootstrap(postId)) return;
+          setLoadError(e.message);
+          setLoadErrorCode(e.code || (isTransientLoadError(e) ? 'network' : ''));
         });
-        loadedTokenRef.current = token;
-      })
-      .catch((e) => {
-        if (cancelled || seq !== loadSeqRef.current) return;
-        if (readForumPostBootstrap(postId)) return;
-        setLoadError(e.message);
-        setLoadErrorCode(e.code || '');
-      });
+    };
 
-    return () => { cancelled = true; };
-  }, [postId, router.isReady, session?.access_token]);
+    runAttempt(2);
+
+    return () => {
+      cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
+    };
+  }, [postId, router.isReady, session?.access_token, reloadKey]);
 
   useEffect(() => {
     const userId = session?.user?.id;
@@ -660,6 +697,18 @@ export default function ForumPostPage() {
                 >
                   登入查看
                 </Link>
+              </>
+            ) : loadErrorCode === 'network' ? (
+              <>
+                <p className="pixel-subtitle">貼文載入失敗，請檢查網絡後再試。</p>
+                <button
+                  type="button"
+                  className="pixel-btn pixel-btn--primary forum-members-gate__cta"
+                  onClick={retryLoad}
+                >
+                  重新載入
+                </button>
+                <Link href="/forum" className="pixel-link">← 返回{FORUM_DISPLAY_NAME}</Link>
               </>
             ) : (
               <>

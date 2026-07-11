@@ -31,7 +31,7 @@ export default function StarfieldBackground() {
         size: Math.random() < 0.15 ? 2 : 1,
         speed: Math.random() * 0.06 + 0.02,
         phase: Math.random() * Math.PI * 2,
-        twinkle: Math.random() * 0.002 + 0.0008,
+        twinkle: Math.random() * 0.001 + 0.0004,
       });
     }
 
