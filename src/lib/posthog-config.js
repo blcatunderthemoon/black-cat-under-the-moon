@@ -6,7 +6,10 @@
 export const DEFAULT_POSTHOG_HOST = 'https://us.i.posthog.com';
 
 export function getPostHogKey() {
-  return (process.env.NEXT_PUBLIC_POSTHOG_KEY || '').trim();
+  const raw = (process.env.NEXT_PUBLIC_POSTHOG_KEY || '').trim();
+  if (!raw) return '';
+  // Env paste mistakes often duplicate the key across newlines — use the first token only.
+  return raw.split(/\s+/)[0];
 }
 
 export function getPostHogHost() {
