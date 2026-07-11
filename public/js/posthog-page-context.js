@@ -1,0 +1,122 @@
+/**
+ * Browser helper for static HTML pages — keep in sync with src/lib/posthog-page-context.js
+ */
+(function initPostHogPageContext(global) {
+  var STATIC_PAGE_KEYS = {
+    '/': 'home',
+    '/index.html': 'home',
+    '/echo.html': 'echo',
+    '/mirror.html': 'mirror',
+    '/drift-bottle.html': 'drift_bottle',
+    '/forum.html': 'forum',
+    '/about.html': 'about',
+    '/contact.html': 'contact',
+    '/privacy.html': 'privacy',
+    '/tos.html': 'tos',
+    '/refund.html': 'refund',
+    '/match.html': 'match',
+    '/inbox.html': 'inbox',
+  };
+
+  var PAGE_META = {
+    home: { page_name: 'Home', page_group: 'marketing' },
+    echo: { page_name: 'Echo Questionnaire', page_group: 'echo' },
+    mirror: { page_name: 'Mirror Questionnaire', page_group: 'mirror' },
+    drift_bottle: { page_name: 'Drift Bottle', page_group: 'drift_bottle' },
+    forum: { page_name: 'Forum', page_group: 'forum' },
+    forum_post: { page_name: 'Forum Post', page_group: 'forum' },
+    forum_guardian: { page_name: 'Forum Guardian', page_group: 'forum_admin' },
+    about: { page_name: 'About', page_group: 'marketing' },
+    contact: { page_name: 'Contact', page_group: 'marketing' },
+    privacy: { page_name: 'Privacy Policy', page_group: 'legal' },
+    tos: { page_name: 'Terms of Service', page_group: 'legal' },
+    refund: { page_name: 'Refund Policy', page_group: 'legal' },
+    match: { page_name: 'Match (legacy)', page_group: 'echo' },
+    inbox: { page_name: 'Inbox', page_group: 'inbox' },
+    inbox_thread: { page_name: 'Inbox Thread', page_group: 'inbox' },
+    matches: { page_name: 'Matches', page_group: 'matches' },
+    mirror_card: { page_name: 'Mirror Card', page_group: 'mirror' },
+    mirror_card_me: { page_name: 'My Mirror Card', page_group: 'mirror' },
+    moon_journey: { page_name: 'Moon Journey', page_group: 'forum' },
+    cat_families: { page_name: 'Cat Families', page_group: 'marketing' },
+    premium: { page_name: 'Premium', page_group: 'billing' },
+    account: { page_name: 'Account', page_group: 'account' },
+    exchange_photo: { page_name: 'Photo Exchange', page_group: 'inbox' },
+    billing_success: { page_name: 'Billing Success', page_group: 'billing' },
+    login: { page_name: 'Login', page_group: 'auth' },
+    signup: { page_name: 'Sign Up', page_group: 'auth' },
+    forgot_password: { page_name: 'Forgot Password', page_group: 'auth' },
+    auth_confirm: { page_name: 'Email Confirm', page_group: 'auth' },
+    auth_reset: { page_name: 'Reset Password', page_group: 'auth' },
+    dashboard: { page_name: 'Dashboard', page_group: 'admin' },
+    admin: { page_name: 'Admin', page_group: 'admin' },
+    other: { page_name: 'Other', page_group: 'other' },
+  };
+
+  var ROUTE_RULES = [
+    { test: /^\/forum\/guardian/, key: 'forum_guardian' },
+    { test: /^\/forum\/[^/]+/, key: 'forum_post' },
+    { test: /^\/forum\/?$/, key: 'forum' },
+    { test: /^\/inbox\/[^/]+/, key: 'inbox_thread' },
+    { test: /^\/inbox\/?$/, key: 'inbox' },
+    { test: /^\/mirror-card\/me\/?$/, key: 'mirror_card_me' },
+    { test: /^\/mirror-card\/[^/]+/, key: 'mirror_card' },
+    { test: /^\/matches\/?$/, key: 'matches' },
+    { test: /^\/moon-journey\/?$/, key: 'moon_journey' },
+    { test: /^\/cat-families\/?$/, key: 'cat_families' },
+    { test: /^\/premium\/?$/, key: 'premium' },
+    { test: /^\/account\/?$/, key: 'account' },
+    { test: /^\/exchange-photo\/?$/, key: 'exchange_photo' },
+    { test: /^\/billing\/success\/?$/, key: 'billing_success' },
+    { test: /^\/login\/?$/, key: 'login' },
+    { test: /^\/signup\/?$/, key: 'signup' },
+    { test: /^\/forgot-password\/?$/, key: 'forgot_password' },
+    { test: /^\/auth\/confirm\/?$/, key: 'auth_confirm' },
+    { test: /^\/auth\/reset-password\/?$/, key: 'auth_reset' },
+    { test: /^\/dashboard/, key: 'dashboard' },
+    { test: /^\/admin/, key: 'admin' },
+  ];
+
+  function normalizePath(pathname) {
+    var raw = String(pathname || '/').split('?')[0].split('#')[0] || '/';
+    if (raw.length > 1 && raw.charAt(raw.length - 1) === '/') return raw.slice(0, -1);
+    return raw || '/';
+  }
+
+  function resolvePageKey(pathname, explicitPageKey) {
+    if (explicitPageKey) return explicitPageKey;
+    var path = normalizePath(pathname);
+    if (STATIC_PAGE_KEYS[path]) return STATIC_PAGE_KEYS[path];
+    for (var i = 0; i < ROUTE_RULES.length; i++) {
+      if (ROUTE_RULES[i].test.test(path)) return ROUTE_RULES[i].key;
+    }
+    return 'other';
+  }
+
+  global.__BCUTM_resolvePageContext = function resolvePageContext(pathname, opts) {
+    opts = opts || {};
+    var path = normalizePath(pathname);
+    var surface = opts.surface || 'unknown';
+    var pageKey = resolvePageKey(path, opts.pageKey);
+    var meta = PAGE_META[pageKey] || PAGE_META.other;
+    return {
+      path: path,
+      surface: surface,
+      page_key: pageKey,
+      page_name: meta.page_name,
+      page_group: meta.page_group,
+    };
+  };
+
+  global.__BCUTM_pageviewEventProperties = function pageviewEventProperties(pathname, opts) {
+    var ctx = global.__BCUTM_resolvePageContext(pathname, opts);
+    return {
+      $current_url: global.location && global.location.href,
+      path: ctx.path,
+      surface: ctx.surface,
+      page_key: ctx.page_key,
+      page_name: ctx.page_name,
+      page_group: ctx.page_group,
+    };
+  };
+})(typeof window !== 'undefined' ? window : globalThis);

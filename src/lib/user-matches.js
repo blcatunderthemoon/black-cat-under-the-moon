@@ -5,6 +5,8 @@
 
 import { isLegacySoloMatchThread, isSoloMatchPayload, soloPartnerResponseId } from './inbox-solo-anchor.js';
 import { passesHardFilter } from './matching.js';
+import { computeCompatibility } from './intelligence.js';
+import { personKeyForResponse } from './response-dedupe.js';
 
 export const PREMIUM_MATCH_MIN_SCORE = 60;
 /** Batch size when scanning responses for premium discovery. */
@@ -48,8 +50,10 @@ export async function loadUserResponseIds(admin, userId, userEmail) {
     .from('responses')
     .select('id')
     .or(orParts.join(','))
-    .or('claim_status.neq.duplicate,claim_status.is.null');
+    .or('claim_status.neq.duplicate,claim_status.is.null')
+    .order('created_at', { ascending: false });
 
+  // Newest first: callers treat ids[0] as this person's latest submission.
   return (data || []).map((r) => r.id);
 }
 
@@ -144,6 +148,8 @@ async function loadInboxMatches(admin, userId, myResponseIds) {
       : (responseByUserId[otherId] || null);
     const profile = isSolo ? {} : (profileById[otherId] || {});
     const rawScore = card.payload?.match_score;
+    const rA = Number(card.payload?.response_a_id);
+    const rB = Number(card.payload?.response_b_id);
     return {
       thread_id: t.id,
       my_response_id: myIdSet.has(rA) ? rA : myIdSet.has(rB) ? rB : defaultMyId,
@@ -392,12 +398,17 @@ async function discoverPremiumMatches(admin, userId, userEmail, existingMatches,
 
   const excludeIds = [...ids, ...knownPartners];
 
-  const { data: myRows } = await admin.from('responses').select('*').in('id', ids);
+  // Match using only the viewer's latest submission (ids are newest-first).
+  const latestMyId = ids[0];
+  const { data: myRows } = await admin.from('responses').select('*').eq('id', latestMyId);
   if (!myRows?.length) return [];
 
   const discovered = [];
   const seenPartners = new Set(knownPartners);
   const seenPartnerUsers = new Set(knownPartnerUsers);
+  // Skip older duplicate submissions of a person we've already considered
+  // (candidates are scanned newest-first, so the latest wins).
+  const seenPartnerKeys = new Set();
 
   let offset = 0;
   while (offset < DISCOVER_MAX_SCAN) {
@@ -425,6 +436,12 @@ async function discoverPremiumMatches(admin, userId, userEmail, existingMatches,
         if (candidate.user_id && candidate.user_id === userId) continue;
         if (seenPartners.has(candidate.id)) continue;
         if (candidate.user_id && seenPartnerUsers.has(candidate.user_id)) continue;
+        // Candidates are newest-first: the first row per person is their latest.
+        // Mark the person seen immediately so any older submission is ignored,
+        // even if this latest row is filtered out or scores too low.
+        const candidateKey = personKeyForResponse(candidate);
+        if (seenPartnerKeys.has(candidateKey)) continue;
+        seenPartnerKeys.add(candidateKey);
         if (!passesHardFilter(myRow, candidate)) continue;
 
         const intel = computeCompatibility(myRow, candidate);

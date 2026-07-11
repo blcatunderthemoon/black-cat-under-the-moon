@@ -2,7 +2,8 @@ import { createClient } from '@supabase/supabase-js';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 import { checkIp } from '../../lib/ip-guard.js';
-import { getOptionalUser } from '../../lib/server-auth.js';
+import { getOptionalUser, getAdminClient } from '../../lib/server-auth.js';
+import { databaseNowIso } from '../../lib/hong-kong-time.js';
 
 const ratelimit = process.env.UPSTASH_REDIS_REST_URL
   ? new Ratelimit({
@@ -168,17 +169,24 @@ export default async function handler(req, res) {
       payload.normalized_email = normalizedEmail;
     }
 
-    // Check for duplicate email submission before inserting.
-    // Match on normalized_email (new rows) OR the raw email column (legacy rows
-    // that were inserted before normalized_email was populated).
-    // claim_status IS NULL means unclaimed — treat same as 'active'; only skip
-    // rows that have been explicitly marked as duplicate.
-    if (normalizedEmail) {
+    if (authUser) {
+      payload.user_id = authUser.id;
+      payload.source = 'logged_in_match_form';
+    } else {
+      payload.source = 'legacy_match_form';
+    }
+
+    // Anonymous (not logged in) resubmission is still blocked: a guest must not
+    // be able to overwrite an email's existing questionnaire data. Match on
+    // normalized_email (new rows) OR the raw email column (legacy rows), and only
+    // skip rows explicitly marked as duplicate (NULL means unclaimed/active).
+    if (!authUser && normalizedEmail) {
       const { data: existing } = await supabase
         .from('responses')
         .select('id, created_at')
         .or(`normalized_email.eq.${normalizedEmail},email.ilike.${rawEmail}`)
         .or('claim_status.neq.duplicate,claim_status.is.null')
+        .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
@@ -190,13 +198,6 @@ export default async function handler(req, res) {
       }
     }
 
-    if (authUser) {
-      payload.user_id = authUser.id;
-      payload.source = 'logged_in_match_form';
-    } else {
-      payload.source = 'legacy_match_form';
-    }
-
     // Insert mapped object directly; do not wrap in { data: ... }.
     const { data, error } = await supabase.from('responses').insert(payload).select();
     if (error) {
@@ -204,7 +205,40 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: error.message || 'Supabase insert failed' });
     }
 
-    return res.status(200).json({ success: true, id: data?.[0]?.id || null });
+    const newId = data?.[0]?.id || null;
+
+    // Registered resubmission: retire this account's earlier submissions so only
+    // the latest questionnaire counts everywhere (matches, email automation,
+    // dashboard). Best-effort + server-side (service role); never fatal.
+    if (authUser && newId) {
+      try {
+        const admin = getAdminClient();
+        const retire = { claim_status: 'duplicate', archived_at: databaseNowIso() };
+
+        // Rows already owned by this account.
+        await admin
+          .from('responses')
+          .update(retire)
+          .eq('user_id', authUser.id)
+          .neq('id', newId)
+          .or('claim_status.neq.duplicate,claim_status.is.null');
+
+        // Unclaimed legacy rows for the same email (not linked to any account).
+        if (normalizedEmail) {
+          await admin
+            .from('responses')
+            .update(retire)
+            .is('user_id', null)
+            .neq('id', newId)
+            .or(`normalized_email.eq.${normalizedEmail},email.ilike.${rawEmail}`)
+            .or('claim_status.neq.duplicate,claim_status.is.null');
+        }
+      } catch (retireErr) {
+        console.error('Supersede older responses failed (non-fatal):', retireErr);
+      }
+    }
+
+    return res.status(200).json({ success: true, id: newId });
   } catch (err) {
     console.error('Server error:', err);
     return res.status(500).json({ error: 'Internal server error' });

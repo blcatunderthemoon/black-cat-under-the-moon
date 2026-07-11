@@ -19,6 +19,7 @@ import {
 import { buildMatchResponsePremiumContext } from '../../../lib/match-response-premium.js';
 import { filterSuccessfulSentRows } from '../../../lib/match-sent-record.js';
 import { pairHasSameResponseEmail } from '../../../lib/match-response-auth.js';
+import { pickLatestResponsesPerPerson } from '../../../lib/response-dedupe.js';
 import { authorizeStationOrForumAdmin } from '../../../lib/station-or-forum-admin-auth.js';
 
 const supabase = createClient(
@@ -76,11 +77,14 @@ async function handleGet(req, res) {
 
   const { data: allUsers, error: usersError } = await supabase
     .from('responses')
-    .select('*');
+    .select('*')
+    .or('claim_status.neq.duplicate,claim_status.is.null');
 
   if (usersError) return res.status(500).json({ error: usersError.message });
 
-  const users = allUsers || [];
+  // Count only each person's latest submission — ignore older/superseded rows
+  // (including historical duplicates not yet marked) so matching uses fresh data.
+  const users = pickLatestResponsesPerPerson(allUsers || []);
   if (users.length < 2) return res.status(200).json({ pairs: [], total: 0 });
 
   // Fetch sent_matches and email_drafts in parallel for annotation

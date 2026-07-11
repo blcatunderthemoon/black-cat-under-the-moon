@@ -25,6 +25,7 @@ async function findResponseByUserId(admin, userId) {
     .select('id')
     .eq('user_id', userId)
     .or(ACTIVE_CLAIM_OR)
+    .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
   return data;
@@ -37,6 +38,7 @@ async function findResponseByEmail(admin, normalized) {
     .select('id')
     .or(`normalized_email.eq.${normalized},email.ilike.${normalized}`)
     .or(ACTIVE_CLAIM_OR)
+    .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
   return data;
