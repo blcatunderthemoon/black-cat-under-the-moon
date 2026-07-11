@@ -261,8 +261,11 @@ export default function InboxPage() {
                 const isOpportunityMeta = metaText && /回信機會|尚餘.*次來回/.test(metaText);
                 const isMatchUnread = isMatch && hasUnread;
                 const isMatchRead = isMatch && !hasUnread;
-                const matchPreview = isMatchRead
-                  ? (thread.latest_message?.content?.slice(0, 36) || '連線紀錄')
+                const matchTitle = isMatchUnread
+                  ? '靈魂共鳴連線通知'
+                  : (isMatchRead ? (thread.mysterious_title || '連線紀錄') : null);
+                const matchSubtitle = isMatch
+                  ? (thread.match_subtitle || thread.list_meta || null)
                   : null;
 
                 return (
@@ -292,7 +295,7 @@ export default function InboxPage() {
                       ) : (
                         <PixelSealedLetterIcon variant={iconVariant} size={56} />
                       )}
-                      <div className="inbox-letter-row__stack">
+                      <div className={`inbox-letter-row__stack${isMatch ? ' inbox-letter-row__stack--match' : ''}`}>
                         <div className="inbox-letter-row__top">
                           <span className="inbox-letter-row__name">
                             <PixelMixedLabel
@@ -301,29 +304,33 @@ export default function InboxPage() {
                               enClass="inbox-letter-row__en inbox-letter-row__en--name"
                             />
                           </span>
+                          {isMatch && thread.match_score != null && (
+                            <span
+                              className={`inbox-match-score-pill inbox-match-score-pill--compact${isMatchUnread ? ' inbox-match-score-pill--unread' : ''}`}
+                              aria-label={`同步率 ${thread.match_score} 分`}
+                            >
+                              <span className="inbox-match-score-pill__label">同步率</span>
+                              <span className="inbox-match-score-pill__value">{thread.match_score}</span>
+                              <span className="inbox-match-score-pill__max">/100</span>
+                            </span>
+                          )}
                         </div>
                         <div className="inbox-letter-row__bottom">
-                          <span className={`inbox-letter-row__title${isMatch ? ' inbox-letter-row__title--match' : ''}`}>
-                            {isMatch
-                              ? (isMatchUnread ? '靈魂共鳴連線通知' : matchPreview)
-                              : (thread.mysterious_title || '來自夜色的低語…')}
-                          </span>
+                          <div className="inbox-letter-row__main">
+                            <span className={`inbox-letter-row__title${isMatch ? ' inbox-letter-row__title--match' : ''}`}>
+                              {isMatch
+                                ? matchTitle
+                                : (thread.mysterious_title || '來自夜色的低語…')}
+                            </span>
+                            {isMatch && matchSubtitle && (
+                              <span className="inbox-letter-row__match-subtitle">{matchSubtitle}</span>
+                            )}
+                          </div>
                           {!isMirrorClosed && (
                             <div className="inbox-letter-row__aside">
-                              {(isMatch && thread.match_score != null) || metaText ? (
-                                <div className={`inbox-letter-row__trail${isMatch ? ' inbox-letter-row__trail--match' : ''}`}>
-                                  {isMatch && thread.match_score != null ? (
-                                    <span
-                                      className={`inbox-match-score-pill${isMatchUnread ? ' inbox-match-score-pill--unread' : ''}`}
-                                      aria-label={`同步率 ${thread.match_score} 分`}
-                                    >
-                                      <span className="inbox-match-score-pill__label">同步率</span>
-                                      <span className="inbox-match-score-pill__value">{thread.match_score}</span>
-                                      <span className="inbox-match-score-pill__max">/100</span>
-                                    </span>
-                                  ) : metaText ? (
-                                    <InboxListMetaText text={metaText} badge={isOpportunityMeta} />
-                                  ) : null}
+                              {!isMatch && metaText ? (
+                                <div className="inbox-letter-row__trail">
+                                  <InboxListMetaText text={metaText} badge={isOpportunityMeta} />
                                 </div>
                               ) : null}
                               <span className="inbox-letter-row__time">

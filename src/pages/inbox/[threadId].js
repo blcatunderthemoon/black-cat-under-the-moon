@@ -471,20 +471,20 @@ function MessageItem({ msg, isMine, otherName, mirrorCardHref, stackIndex = 0 })
           <span className="inbox-match-card__corner inbox-match-card__corner--bl" aria-hidden="true" />
           <span className="inbox-match-card__corner inbox-match-card__corner--br" aria-hidden="true" />
 
-          <header className="inbox-match-card__quest-bar">
-            <span className="inbox-match-card__quest-tag">QUEST</span>
-            <span className="inbox-match-card__quest-name">靈魂共鳴連線</span>
-            {rarity && (
-              <span className={`inbox-match-card__rarity inbox-match-card__rarity--${rarity.tier}`}>
-                {rarity.label}
-              </span>
-            )}
+          <header className="inbox-match-card__header">
+            <div className="inbox-match-card__quest-bar">
+              <span className="inbox-match-card__quest-tag">連線</span>
+              <div className="inbox-match-card__header-copy">
+                <p className="inbox-match-card__header-eyebrow">靈魂共鳴連線通知</p>
+                <h2 className="inbox-match-card__title">連線成功</h2>
+              </div>
+              {rarity && (
+                <span className={`inbox-match-card__rarity inbox-match-card__rarity--${rarity.tier}`}>
+                  {rarity.label}
+                </span>
+              )}
+            </div>
           </header>
-
-          <div className="inbox-match-card__clear">
-            <p className="inbox-match-card__clear-en" aria-hidden="true">◆ CONNECTION CLEAR ◆</p>
-            <h2 className="inbox-match-card__title">連線成功</h2>
-          </div>
 
           {otherName && (
             <div className="inbox-match-card__target">
@@ -523,16 +523,26 @@ function MessageItem({ msg, isMine, otherName, mirrorCardHref, stackIndex = 0 })
             </div>
           )}
 
-          <p className="inbox-match-card__hint">黑貓為你分析心靈契合度，尋找靈魂同頻者</p>
+          <div className="inbox-match-card__hint">
+            <span className="inbox-match-card__hint-icon" aria-hidden="true">🌙</span>
+            <p className="inbox-match-card__hint-text">
+              {mirrorCardHref
+                ? '黑貓已為你們算出心靈同步率，點擊下方查看對方鏡像卡。'
+                : '黑貓已為你們算出心靈同步率；對方註冊後可在此查看鏡像卡。'}
+            </p>
+          </div>
           {mirrorCardHref ? (
             <Link href={mirrorCardHref} className="inbox-match-card__cta pixel-btn pixel-btn--primary">
               ▶ 查看 Mirror Card
             </Link>
           ) : (
-            <p className="inbox-match-card__footnote">對方尚未註冊網站帳號，可先透過 Email 配對卡聯繫</p>
+            <p className="inbox-match-card__footnote">
+              <span className="inbox-match-card__footnote-icon" aria-hidden="true">✉</span>
+              對方尚未註冊網站帳號，可先透過 Email 配對卡聯繫
+            </p>
           )}
           <footer className="inbox-match-card__footer">
-            <span className="inbox-match-card__time-pip" aria-hidden="true">▸</span>
+            <span className="inbox-match-card__footer-label">收到時間</span>
             <time className="inbox-match-card__time" dateTime={msg.created_at || undefined}>{timestamp}</time>
           </footer>
         </article>

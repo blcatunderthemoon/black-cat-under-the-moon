@@ -240,7 +240,7 @@ const QUESTIONS = [
   {
     id:'preferred_attribute', part:6, partTitle:'理想對象與彩蛋 The Ideal Match',
     text:'希望對方的屬性（可多選）：', type:'multi',
-    options:['TB','TBG','Pure','Bi','No Label','冇所謂'],
+    options:['TB','TBG','Pure','Bi','No Label'],
     field:'preferred_attribute'
   },
   {

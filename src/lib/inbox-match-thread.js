@@ -37,7 +37,8 @@ export function indexMatchCardsByThread(userId, messages) {
 export function enrichMatchThreadListItem({ unreadCount = 0, matchMessage = null }) {
   const score = matchMessage?.payload?.match_score;
   const hasUnread = unreadCount > 0;
-  const scoreLabel = Number.isFinite(Number(score)) ? `${Number(score)}/100` : null;
+  const scoreNum = Number.isFinite(Number(score)) ? Number(score) : null;
+  const scoreLabel = scoreNum != null ? `${scoreNum}/100` : null;
 
   return {
     reply_opportunity: hasUnread,
@@ -47,11 +48,12 @@ export function enrichMatchThreadListItem({ unreadCount = 0, matchMessage = null
     list_meta: hasUnread
       ? (scoreLabel ? `${MATCH_LIST_META_UNREAD} · ${scoreLabel}` : MATCH_LIST_META_UNREAD)
       : (scoreLabel ? `同步率 ${scoreLabel}` : '連線紀錄'),
-    mysterious_title: hasUnread
-      ? MATCH_LIST_TITLE
-      : (matchMessage?.content?.slice(0, 48) || '連線紀錄'),
+    match_subtitle: hasUnread
+      ? (scoreLabel ? `心靈契合度 ${scoreLabel}` : '點擊查看連線詳情')
+      : (scoreLabel ? `同步率 ${scoreLabel} · 已查看` : '已查看連線紀錄'),
+    mysterious_title: hasUnread ? MATCH_LIST_TITLE : '連線紀錄',
     is_match_connection: true,
-    match_score: score != null ? Number(score) : null,
+    match_score: scoreNum,
     match_highlight: hasUnread,
   };
 }
