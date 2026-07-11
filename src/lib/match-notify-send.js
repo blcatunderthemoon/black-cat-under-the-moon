@@ -2,11 +2,11 @@
  * Shared match notification delivery for dashboard send flows.
  */
 
-import nodemailer from 'nodemailer';
 import { createClient } from '@supabase/supabase-js';
 import { buildEmailHtml, buildTextEmail } from './email-template.js';
 import { computeCompatibility } from './intelligence.js';
 import { deliverMatchCard } from './inbox.js';
+import { getGmailTransporter } from './gmail-smtp.js';
 import {
   buildMonthlyMatchCounts,
   getResponseMatchQuota,
@@ -38,21 +38,7 @@ function normalisePair(a, b) {
 }
 
 function getTransporter() {
-  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return null;
-  return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    // Prefer IPv4 — avoids ENETUNREACH on IPv6-only routes in some local networks.
-    family: 4,
-    connectionTimeout: 20_000,
-    greetingTimeout: 20_000,
-    socketTimeout: 30_000,
-    auth: {
-      user: process.env.GMAIL_USER,
-      pass: process.env.GMAIL_APP_PASSWORD,
-    },
-  });
+  return getGmailTransporter();
 }
 
 /**
@@ -69,7 +55,7 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
       ok: false,
       status: 503,
       error: 'Email sending is not configured yet.',
-      hint: 'Add GMAIL_USER and GMAIL_APP_PASSWORD to your .env.local, then restart the dev server.',
+      hint: 'Add GMAIL_USER and GMAIL_APP_PASSWORD to your .env.local, then restart the dev server. If you see ENETUNREACH or ETIMEDOUT on port 587, set GMAIL_SMTP_PORT=465.',
     };
   }
 
@@ -167,7 +153,8 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
         continue;
       }
 
-      const toEmail = intendedEmail;
+      const testEmail = String(process.env.MATCH_TEST_EMAIL || '').trim();
+      const toEmail = testEmail || intendedEmail;
 
       try {
         const cardHtml = buildMatchCardHtml({

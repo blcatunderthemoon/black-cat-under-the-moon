@@ -270,8 +270,9 @@ export function EmailAutomationPanel() {
         });
         alert(
           `部分配對未成功投送（可重新發送）：\n${lines.join('\n')}\n\n`
-          + '若顯示 connect ETIMEDOUT，請檢查本機網路能否連線 smtp.gmail.com:587，'
-          + '或稍後改用「存入 Gmail 草稿」手動發送。',
+          + '若顯示 connect ETIMEDOUT 或 ENETUNREACH，代表本機無法連線 Gmail SMTP（常見：587 被封）。'
+          + '請在 .env.local 設 GMAIL_SMTP_PORT=465 後重啟 dev server，'
+          + '或改用「存入 Gmail 草稿」手動發送。',
         );
       } else if (emailFailures.length) {
         const lines = emailFailures.map((r) => {

@@ -301,11 +301,6 @@ export default function InboxPage() {
                               enClass="inbox-letter-row__en inbox-letter-row__en--name"
                             />
                           </span>
-                          {!isMirrorClosed && (
-                            <span className="inbox-letter-row__time">
-                              {timeAgo(thread.last_message_at)}
-                            </span>
-                          )}
                         </div>
                         <div className="inbox-letter-row__bottom">
                           <span className={`inbox-letter-row__title${isMatch ? ' inbox-letter-row__title--match' : ''}`}>
@@ -314,19 +309,26 @@ export default function InboxPage() {
                               : (thread.mysterious_title || '來自夜色的低語…')}
                           </span>
                           {!isMirrorClosed && (
-                            <div className={`inbox-letter-row__trail${isMatch ? ' inbox-letter-row__trail--match' : ''}`}>
-                              {isMatch && thread.match_score != null ? (
-                                <span
-                                  className={`inbox-match-score-pill${isMatchUnread ? ' inbox-match-score-pill--unread' : ''}`}
-                                  aria-label={`同步率 ${thread.match_score} 分`}
-                                >
-                                  <span className="inbox-match-score-pill__label">同步率</span>
-                                  <span className="inbox-match-score-pill__value">{thread.match_score}</span>
-                                  <span className="inbox-match-score-pill__max">/100</span>
-                                </span>
-                              ) : metaText ? (
-                                <InboxListMetaText text={metaText} badge={isOpportunityMeta} />
+                            <div className="inbox-letter-row__aside">
+                              {(isMatch && thread.match_score != null) || metaText ? (
+                                <div className={`inbox-letter-row__trail${isMatch ? ' inbox-letter-row__trail--match' : ''}`}>
+                                  {isMatch && thread.match_score != null ? (
+                                    <span
+                                      className={`inbox-match-score-pill${isMatchUnread ? ' inbox-match-score-pill--unread' : ''}`}
+                                      aria-label={`同步率 ${thread.match_score} 分`}
+                                    >
+                                      <span className="inbox-match-score-pill__label">同步率</span>
+                                      <span className="inbox-match-score-pill__value">{thread.match_score}</span>
+                                      <span className="inbox-match-score-pill__max">/100</span>
+                                    </span>
+                                  ) : metaText ? (
+                                    <InboxListMetaText text={metaText} badge={isOpportunityMeta} />
+                                  ) : null}
+                                </div>
                               ) : null}
+                              <span className="inbox-letter-row__time">
+                                {timeAgo(thread.last_message_at)}
+                              </span>
                             </div>
                           )}
                         </div>
