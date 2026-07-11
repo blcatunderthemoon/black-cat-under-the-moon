@@ -43,8 +43,14 @@ export function buildSameEmailPairsAlert(pairs) {
   );
 }
 
-export function filterVisibleAutomationPairs(pairs, { sentFilter = 'unsent', hideQuotaFull = true } = {}) {
+export function filterVisibleAutomationPairs(
+  pairs,
+  { sentFilter = 'unsent', hideQuotaFull = true, premiumOnly = false } = {},
+) {
   return (pairs || []).filter((pair) => {
+    // Guard the Moonlight Passport view client-side so it never leaks non-premium
+    // pairs even if the server response wasn't premium-filtered (stale/racey refetch).
+    if (premiumOnly && !pair.has_premium) return false;
     const sent = isAutomationPairSent(pair);
     if (sentFilter === 'unsent' && sent) return false;
     if (sentFilter === 'sent' && !sent) return false;
@@ -96,8 +102,9 @@ export function pairProjectedQuotaExceed(pair, usageExcludingPair) {
   return null;
 }
 
-export function countAutomationPairsBySent(pairs, { hideQuotaFull = false } = {}) {
+export function countAutomationPairsBySent(pairs, { hideQuotaFull = false, premiumOnly = false } = {}) {
   const list = (pairs || []).filter((pair) => {
+    if (premiumOnly && !pair.has_premium) return false;
     if (!hideQuotaFull) return true;
     return !(pair.quota_blocked && !isAutomationPairSent(pair));
   });
@@ -107,4 +114,4 @@ export function countAutomationPairsBySent(pairs, { hideQuotaFull = false } = {}
     all: list.length,
   };
 }
-
+

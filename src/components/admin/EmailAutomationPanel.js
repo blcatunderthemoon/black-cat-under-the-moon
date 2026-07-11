@@ -85,6 +85,11 @@ export function EmailAutomationPanel() {
   const [hideQuotaFull, setHideQuotaFull] = useState(true);
   const [viewMode, setViewMode] = useState('all'); // 'all' | 'premium'
 
+  // ── Manual override ───────────────────────────────────────────────────────
+  // When on, the monthly free-user quota is ignored: quota-full pairs become
+  // selectable and sends are forced through with skip_quota_check.
+  const [quotaOverride, setQuotaOverride] = useState(false);
+
   // ── Drafts data ───────────────────────────────────────────────────────────
   const [drafts, setDrafts] = useState(null);
   const [loadingDrafts, setLoadingDrafts] = useState(false);
@@ -151,11 +156,16 @@ export function EmailAutomationPanel() {
   // Checkbox helpers
   // ─────────────────────────────────────────────────────────────────────────
 
-  const isPairSelectable = (p) => !p.quota_blocked && !p.same_email_blocked && !pairHasSameEmail(p);
+  const isPairSelectable = (p) =>
+    (quotaOverride || !p.quota_blocked) && !p.same_email_blocked && !pairHasSameEmail(p);
+
+  // In override mode always reveal quota-full pairs so they can be picked.
+  const effectiveHideQuotaFull = quotaOverride ? false : hideQuotaFull;
+  const premiumOnly = viewMode === 'premium';
 
   const visiblePairs = useMemo(
-    () => filterVisibleAutomationPairs(pairs, { sentFilter, hideQuotaFull }),
-    [pairs, sentFilter, hideQuotaFull],
+    () => filterVisibleAutomationPairs(pairs, { sentFilter, hideQuotaFull: effectiveHideQuotaFull, premiumOnly }),
+    [pairs, sentFilter, effectiveHideQuotaFull, premiumOnly],
   );
 
   // All currently-checked pairs (across every filter view) — used for quota
@@ -193,17 +203,28 @@ export function EmailAutomationPanel() {
       return;
     }
 
-    // Selecting: block if it would push a free user past their monthly limit.
-    // Usage map is built from checked pairs (this one is not checked yet).
-    const offending = pairProjectedQuotaExceed(p, selectedQuotaUsage);
-    if (offending) {
-      alert(describeQuotaExceed(offending));
-      return;
+    // Selecting: block if it would push a free user past their monthly limit —
+    // unless manual override is on, in which case the quota is ignored.
+    if (!quotaOverride) {
+      const offending = pairProjectedQuotaExceed(p, selectedQuotaUsage);
+      if (offending) {
+        alert(describeQuotaExceed(offending));
+        return;
+      }
     }
     setChecked((prev) => ({ ...prev, [key]: true }));
   };
 
   const selectAll = () => {
+    // Override mode: select every selectable pair, ignoring monthly quota.
+    if (quotaOverride) {
+      const next = {};
+      visiblePairs.forEach((p) => {
+        if (isPairSelectable(p)) next[pairKey(p)] = true;
+      });
+      setChecked(next);
+      return;
+    }
     // Greedily add pairs while respecting each free user's remaining quota.
     const runningUsage = new Map();
     const next = {};
@@ -221,12 +242,13 @@ export function EmailAutomationPanel() {
   const deselectAll = () => setChecked({});
 
   const { unsent: unsentCount, sent: sentCount, all: visibleTotalCount } = useMemo(
-    () => countAutomationPairsBySent(pairs, { hideQuotaFull }),
-    [pairs, hideQuotaFull],
+    () => countAutomationPairsBySent(pairs, { hideQuotaFull: effectiveHideQuotaFull, premiumOnly }),
+    [pairs, effectiveHideQuotaFull, premiumOnly],
   );
   const selectedPairs = visiblePairs.filter((p) => isPairSelectable(p) && checked[pairKey(p)]);
   const selectedCount = selectedPairs.length;
   const skippedByQuota = useMemo(() => {
+    if (quotaOverride) return 0;
     const runningUsage = new Map();
     let skipped = 0;
     visiblePairs.forEach((p) => {
@@ -240,7 +262,7 @@ export function EmailAutomationPanel() {
       }
     });
     return skipped;
-  }, [visiblePairs]);
+  }, [visiblePairs, quotaOverride]);
 
   // ─────────────────────────────────────────────────────────────────────────
   // Save draft
@@ -314,7 +336,7 @@ export function EmailAutomationPanel() {
       const res  = await apiFetch('/api/dashboard/send-emails', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ pairs: payload, deliver_inbox: deliverInbox }),
+        body:    JSON.stringify({ pairs: payload, deliver_inbox: deliverInbox, skip_quota_check: quotaOverride }),
       });
       const data = await res.json();
 
@@ -382,7 +404,8 @@ export function EmailAutomationPanel() {
     if (!selectedCount) return;
     const hasRegistered = selectedPairs.some((p) => p.inbox_ready || p.user_a?.claimed || p.user_b?.claimed);
     const label = hasRegistered ? 'Email（雙方）+ Inbox（已註冊用戶）' : 'Email（雙方）';
-    if (!confirm(`確認發送 ${selectedCount} 對連線通知（${label}）？此操作不可撤回。`)) return;
+    const overrideNote = quotaOverride ? '\n\n⚠ 手動發送模式已啟用：將忽略免費會員每月配額上限。' : '';
+    if (!confirm(`確認發送 ${selectedCount} 對連線通知（${label}）？此操作不可撤回。${overrideNote}`)) return;
     doSend(selectedPairs, { deliverInbox: true });
   };
 
@@ -513,6 +536,24 @@ export function EmailAutomationPanel() {
             </div>
           </div>
         )}
+
+        {/* ── Manual override (ignore monthly quota) ─────────────────────── */}
+        <div className={`${styles.overridePanel} ${quotaOverride ? styles.overridePanelActive : ''}`}>
+          <label className={styles.overrideToggle}>
+            <input
+              type="checkbox"
+              checked={quotaOverride}
+              onChange={(e) => setQuotaOverride(e.target.checked)}
+            />
+            <span className={styles.overrideToggleLabel}>
+              🛠 手動發送模式：忽略每月配額上限
+            </span>
+          </label>
+          <p className={styles.overridePanelCopy}>
+            啟用後可選取「配額已滿」的免費會員配對並強制發送連線通知，不受每月上限限制。
+            此模式會顯示所有配額已滿的配對，請謹慎使用。
+          </p>
+        </div>
 
         {/* ── View mode tabs ─────────────────────────────────────────────── */}
         <div className={styles.viewTabs}>
@@ -651,7 +692,7 @@ export function EmailAutomationPanel() {
                     const isChk = selectable && !!checked[key];
                     // Projected-quota block: selecting this pair would exceed a
                     // free user's monthly limit given current batch selection.
-                    const quotaProjection = !isChk && selectable
+                    const quotaProjection = !quotaOverride && !isChk && selectable
                       ? pairProjectedQuotaExceed(p, selectedQuotaUsage)
                       : null;
                     const batchBlocked = !!quotaProjection;
@@ -822,7 +863,10 @@ export function EmailAutomationPanel() {
       {/* ── Floating action bar ───────────────────────────────────────────── */}
       {selectedCount > 0 && (
         <div className={styles.floatingBar}>
-          <span className={styles.floatingBarLabel}>已選 {selectedCount} 對</span>
+          <span className={styles.floatingBarLabel}>
+            已選 {selectedCount} 對
+            {quotaOverride && <span className={styles.floatingBarOverride}> · 忽略配額</span>}
+          </span>
           <button
             className={styles.draftBtn}
             onClick={handleSaveDraft}
@@ -835,7 +879,7 @@ export function EmailAutomationPanel() {
             onClick={handleSendSelected}
             disabled={sending || savingDraft}
           >
-            {sending ? '發送中…' : '✉ 立即發送（Email + Inbox）'}
+            {sending ? '發送中…' : quotaOverride ? '✉ 強制發送（忽略配額）' : '✉ 立即發送（Email + Inbox）'}
           </button>
         </div>
       )}

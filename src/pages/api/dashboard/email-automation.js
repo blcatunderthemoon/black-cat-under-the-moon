@@ -140,32 +140,40 @@ async function handleGet(req, res) {
 
       const [normA, normB] = normalisePair(Number(uA.id), Number(uB.id));
       const pairKey = `${normA}:${normB}`;
-      const quotaA = quotaForResponse(uA);
-      const quotaB = quotaForResponse(uB);
-      const hasPremium = quotaA.is_premium || quotaB.is_premium;
-      const claimedA = !!uA.user_id;
-      const claimedB = !!uB.user_id;
-      const inboxReady = claimedA && claimedB;
-      const sameEmailBlocked = pairHasSameResponseEmail(uA, uB);
+
+      // `normalisePair` may swap so the smaller id is user_a. Align every side-keyed
+      // field (user, quota) with the SAME normalised order so the client can safely
+      // pair user_a_id ↔ user_a_quota. Misalignment here breaks the per-user monthly
+      // quota badge + selection guard (a free user's quota gets keyed to the partner).
+      const firstIsA = Number(uA.id) <= Number(uB.id);
+      const first = firstIsA ? uA : uB;
+      const second = firstIsA ? uB : uA;
+      const quotaFirst = quotaForResponse(first);
+      const quotaSecond = quotaForResponse(second);
+      const hasPremium = quotaFirst.is_premium || quotaSecond.is_premium;
+      const claimedFirst = !!first.user_id;
+      const claimedSecond = !!second.user_id;
+      const inboxReady = claimedFirst && claimedSecond;
+      const sameEmailBlocked = pairHasSameResponseEmail(first, second);
 
       pairs.push({
         user_a: {
-          id: uA.id,
-          name: uA.name,
-          identity: uA.identity,
-          ig_username: uA.ig_username,
-          email: uA.email,
-          user_id: uA.user_id || null,
-          claimed: claimedA,
+          id: first.id,
+          name: first.name,
+          identity: first.identity,
+          ig_username: first.ig_username,
+          email: first.email,
+          user_id: first.user_id || null,
+          claimed: claimedFirst,
         },
         user_b: {
-          id: uB.id,
-          name: uB.name,
-          identity: uB.identity,
-          ig_username: uB.ig_username,
-          email: uB.email,
-          user_id: uB.user_id || null,
-          claimed: claimedB,
+          id: second.id,
+          name: second.name,
+          identity: second.identity,
+          ig_username: second.ig_username,
+          email: second.email,
+          user_id: second.user_id || null,
+          claimed: claimedSecond,
         },
         user_a_id: normA,
         user_b_id: normB,
@@ -175,13 +183,13 @@ async function handleGet(req, res) {
         already_sent: sentMap.has(pairKey),
         in_draft: draftMap.has(pairKey),
         draft_id: draftMap.get(pairKey) ?? null,
-        user_a_quota: quotaA,
-        user_b_quota: quotaB,
+        user_a_quota: quotaFirst,
+        user_b_quota: quotaSecond,
         has_premium: hasPremium,
         inbox_ready: inboxReady,
         same_email_blocked: sameEmailBlocked,
-        premium_instant_ready: hasPremium && inboxReady && !sentMap.has(pairKey) && quotaA.can_receive && quotaB.can_receive && !sameEmailBlocked,
-        quota_blocked: !quotaA.can_receive || !quotaB.can_receive,
+        premium_instant_ready: hasPremium && inboxReady && !sentMap.has(pairKey) && quotaFirst.can_receive && quotaSecond.can_receive && !sameEmailBlocked,
+        quota_blocked: !quotaFirst.can_receive || !quotaSecond.can_receive,
       });
     }
   }

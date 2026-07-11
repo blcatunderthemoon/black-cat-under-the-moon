@@ -15,6 +15,11 @@ const MAIN_NAV_ITEMS = [
   { href: '/dashboard/experiment-lab', icon: '◇', label: '實驗室' },
 ];
 
+const MEMBER_NAV_ITEMS = [
+  { href: '/dashboard/premium', icon: '💎', label: 'Moonlight Passport' },
+  { href: '/dashboard/users', icon: '👤', label: '用戶管理' },
+];
+
 function isNavActive(pathname, href) {
   if (href === '/dashboard') return pathname === '/dashboard';
   if (href === '/dashboard/forum') {
@@ -45,6 +50,24 @@ export default function Sidebar() {
               key={href}
               href={href}
               className={`${styles.navItem} ${isActive ? styles.active : ''}`}
+            >
+              <span className={styles.navIcon}>{icon}</span>
+              {label}
+            </Link>
+          );
+        })}
+
+        <div className={styles.navDivider} />
+
+        <p className={styles.navSectionLabel}>會員管理</p>
+        {MEMBER_NAV_ITEMS.map((item) => {
+          const { href, icon, label } = item;
+          const isActive = isNavActive(router.pathname, href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={`${styles.navItem} ${styles.navItemSub} ${isActive ? styles.active : ''}`}
             >
               <span className={styles.navIcon}>{icon}</span>
               {label}

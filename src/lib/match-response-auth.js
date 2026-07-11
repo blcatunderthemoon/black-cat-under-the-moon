@@ -12,6 +12,17 @@ export function normalizeResponseEmail(email) {
   return normalizeEmail(email);
 }
 
+/**
+ * Minimal deliverable-address check: a single local@domain with a dotted TLD.
+ * Guards against junk questionnaire entries (e.g. ".", "無", "n/a") that are
+ * non-empty but would make nodemailer throw "No recipients defined".
+ */
+export function isValidEmailAddress(email) {
+  const value = String(email || '').trim();
+  if (!value) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
 /** True when both questionnaire rows list the same non-empty email. */
 export function pairHasSameResponseEmail(rowA, rowB) {
   const a = normalizeEmail(rowA?.email);
@@ -93,14 +104,17 @@ export async function linkResponseToAuthUser(admin, responseRow, authUserId) {
  */
 export async function resolveResponseDeliveryEmail(admin, row) {
   const direct = String(row?.email || '').trim();
-  if (direct) return direct;
+  // Only use the questionnaire email if it's actually a deliverable address.
+  // Invalid junk (".", "無", etc.) falls through to the linked auth email.
+  if (isValidEmailAddress(direct)) return direct;
 
   if (!row?.user_id) return null;
 
   try {
     const client = admin || getAdminClient();
     const { data: { user } } = await client.auth.admin.getUserById(row.user_id);
-    return user?.email?.trim() || null;
+    const authEmail = user?.email?.trim() || '';
+    return isValidEmailAddress(authEmail) ? authEmail : null;
   } catch {
     return null;
   }

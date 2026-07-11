@@ -256,6 +256,56 @@
   padding: 16px 20px;
 }
 
+/* Manual override (ignore monthly quota) */
+.overridePanel {
+  border: 1px dashed rgba(248,113,113,0.35);
+  border-radius: var(--r-lg);
+  padding: 12px 16px;
+  background: rgba(248,113,113,0.04);
+  transition: border-color var(--transition), background var(--transition);
+}
+
+.overridePanelActive {
+  border-style: solid;
+  border-color: rgba(248,113,113,0.6);
+  background: rgba(248,113,113,0.09);
+  box-shadow: 0 0 0 1px rgba(248,113,113,0.2), 0 6px 18px rgba(248,113,113,0.12);
+}
+
+.overrideToggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.overrideToggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: #f87171;
+  cursor: pointer;
+}
+
+.overrideToggleLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fca5a5;
+}
+
+.overridePanelCopy {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-dim);
+  max-width: 620px;
+}
+
+.floatingBarOverride {
+  color: #fca5a5;
+  font-weight: 700;
+}
+
 .premiumPanelHead {
   display: flex;
   align-items: flex-start;
