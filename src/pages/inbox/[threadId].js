@@ -111,6 +111,16 @@ export default function ThreadPage() {
 
   useEffect(() => {
     if (!data) return;
+    // A match-card-only thread has no conversation to follow — anchor to the top
+    // so the card header is visible, instead of scrolling to the latest message.
+    const isMatchOnly = data?.thread?.source_type === 'match'
+      && !(data.messages || []).some(
+        (m) => isLetterMessage(m) || m.message_type === 'photo_exchange_request',
+      );
+    if (isMatchOnly) {
+      window.scrollTo({ top: 0, behavior: 'auto' });
+      return;
+    }
     if (!data.messages?.length && !data.compose_mode) return;
     bottomRef.current?.scrollIntoView({ behavior: 'auto' });
   }, [data?.messages?.length, data?.compose_mode, data]);
@@ -329,15 +339,12 @@ export default function ThreadPage() {
           </div>
         )}
 
-        {data?.thread?.source_type === 'match' && (
+        {data?.thread?.source_type === 'match' && other?.display_name ? (
           <p className="inbox-thread-source-tag inbox-thread-source-tag--match">
             <span className="inbox-thread-source-tag__icon" aria-hidden="true">🎯</span>
-            <span className="inbox-thread-source-tag__label">連線任務</span>
-            {other?.display_name ? (
-              <span className="inbox-thread-source-tag__partner">{other.display_name}</span>
-            ) : null}
+            <span className="inbox-thread-source-tag__partner">{other.display_name}</span>
           </p>
-        )}
+        ) : null}
 
         <div className={`thread-messages thread-messages--moon${isPhotoExchangeThread ? ' thread-messages--photo-exchange' : ''}${isMatchOnlyThread ? ' thread-messages--match-only' : ''}`}>
           {!data ? (
@@ -473,9 +480,8 @@ function MessageItem({ msg, isMine, otherName, mirrorCardHref, stackIndex = 0 })
 
           <header className="inbox-match-card__header">
             <div className="inbox-match-card__quest-bar">
-              <span className="inbox-match-card__quest-tag">連線</span>
               <div className="inbox-match-card__header-copy">
-                <p className="inbox-match-card__header-eyebrow">靈魂共鳴連線通知</p>
+                <p className="inbox-match-card__header-eyebrow">靈魂共鳴</p>
                 <h2 className="inbox-match-card__title">連線成功</h2>
               </div>
               {rarity && (
@@ -527,8 +533,8 @@ function MessageItem({ msg, isMine, otherName, mirrorCardHref, stackIndex = 0 })
             <span className="inbox-match-card__hint-icon" aria-hidden="true">🌙</span>
             <p className="inbox-match-card__hint-text">
               {mirrorCardHref
-                ? '黑貓已為你們算出心靈同步率，點擊下方查看對方鏡像卡。'
-                : '黑貓已為你們算出心靈同步率；對方註冊後可在此查看鏡像卡。'}
+                ? '連線通知已寄至你的電郵信箱；亦可點擊下方查看對方鏡像卡。'
+                : '連線通知已寄至你的電郵信箱，請前往查收。'}
             </p>
           </div>
           {mirrorCardHref ? (

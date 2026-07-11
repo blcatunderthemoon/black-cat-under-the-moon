@@ -264,9 +264,6 @@ export default function InboxPage() {
                 const matchTitle = isMatchUnread
                   ? '靈魂共鳴連線通知'
                   : (isMatchRead ? (thread.mysterious_title || '連線紀錄') : null);
-                const matchSubtitle = isMatch
-                  ? (thread.match_subtitle || thread.list_meta || null)
-                  : null;
 
                 return (
                   <li key={thread.id} className="inbox-letter-list__item">
@@ -304,15 +301,8 @@ export default function InboxPage() {
                               enClass="inbox-letter-row__en inbox-letter-row__en--name"
                             />
                           </span>
-                          {isMatch && thread.match_score != null && (
-                            <span
-                              className={`inbox-match-score-pill inbox-match-score-pill--compact${isMatchUnread ? ' inbox-match-score-pill--unread' : ''}`}
-                              aria-label={`同步率 ${thread.match_score} 分`}
-                            >
-                              <span className="inbox-match-score-pill__label">同步率</span>
-                              <span className="inbox-match-score-pill__value">{thread.match_score}</span>
-                              <span className="inbox-match-score-pill__max">/100</span>
-                            </span>
+                          {isMatchRead && (
+                            <span className="inbox-letter-row__match-flag">已查看</span>
                           )}
                         </div>
                         <div className="inbox-letter-row__bottom">
@@ -322,8 +312,15 @@ export default function InboxPage() {
                                 ? matchTitle
                                 : (thread.mysterious_title || '來自夜色的低語…')}
                             </span>
-                            {isMatch && matchSubtitle && (
-                              <span className="inbox-letter-row__match-subtitle">{matchSubtitle}</span>
+                            {isMatch && thread.match_score != null && (
+                              <span
+                                className={`inbox-match-score-pill inbox-match-score-pill--compact${isMatchUnread ? ' inbox-match-score-pill--unread' : ''}`}
+                                aria-label={`同步率 ${thread.match_score} 分`}
+                              >
+                                <span className="inbox-match-score-pill__label">同步率</span>
+                                <span className="inbox-match-score-pill__value">{thread.match_score}</span>
+                                <span className="inbox-match-score-pill__max">/100</span>
+                              </span>
                             )}
                           </div>
                           {!isMirrorClosed && (
