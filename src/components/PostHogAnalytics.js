@@ -3,14 +3,11 @@ import { useRouter } from 'next/router';
 import Script from 'next/script';
 import { useAuth } from '../lib/auth-context.js';
 import { isPostHogEnabled } from '../lib/posthog-config.js';
+import { pageviewEventProperties } from '../lib/posthog-page-context.js';
 
 function capturePageview(path, surface) {
   if (typeof window === 'undefined' || !window.posthog?.capture) return;
-  window.posthog.capture('$pageview', {
-    $current_url: window.location.href,
-    path: path || window.location.pathname,
-    surface: surface || 'next',
-  });
+  window.posthog.capture('$pageview', pageviewEventProperties(path || window.location.pathname, { surface: surface || 'next' }));
 }
 
 export function PostHogPageviews() {
@@ -70,6 +67,7 @@ export default function PostHogAnalytics() {
 
   return (
     <>
+      <Script src="/js/posthog-page-context.js" strategy="beforeInteractive" />
       <Script src="/js/posthog-init.js" strategy="afterInteractive" />
       <PostHogPageviews />
       <PostHogIdentify />

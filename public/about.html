@@ -161,9 +161,10 @@
     .legal-footer a { color: var(--purple-l); text-decoration: none; }
     .legal-footer a:hover { text-decoration: underline; }
   </style>
+  <script src="/js/posthog-page-context.js" defer></script>
   <script src="/js/posthog-init.js" defer></script>
 </head>
-<body class="about-page">
+<body class="about-page" data-analytics-surface="static" data-analytics-page="about">
   <div class="stars" id="stars"></div>
   <div class="mode-top-bar mode-top-bar--legal">
     <div class="mode-top-bar__row">

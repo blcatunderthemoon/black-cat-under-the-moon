@@ -23,9 +23,10 @@
   <link rel="stylesheet" href="css/mobile-webview-scroll.css?v=20260706safari">
   <!-- Cloudflare Turnstile — site key from /api/turnstile/site-key (see src/lib/turnstile.js) -->
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <script src="/js/posthog-page-context.js" defer></script>
   <script src="/js/posthog-init.js" defer></script>
 </head>
-<body data-tab="throw" data-auth-nav-logged-in-only>
+<body data-tab="throw" data-auth-nav-logged-in-only data-analytics-surface="static" data-analytics-page="drift_bottle">
 
 <div id="bottle-turnstile-slot" class="bottle-turnstile-slot" aria-hidden="true">
   <div id="bottle-turnstile"></div>

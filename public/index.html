@@ -32,6 +32,7 @@
 <link rel="stylesheet" href="css/auth-nav.css?v=20260706ios">
 <link rel="stylesheet" href="css/mobile-webview-scroll.css?v=20260706safari">
 <link rel="stylesheet" href="css/welcome-atmosphere.css?v=20260708presence2">
+<script src="/js/posthog-page-context.js" defer></script>
 <script src="/js/posthog-init.js" defer></script>
 <style>
 @keyframes logoHover {
@@ -92,7 +93,7 @@
 }
 </style>
 </head>
-<body>
+<body data-analytics-surface="static" data-analytics-page="home">
 
 <!-- Unified mode top bar -->
 <div class="mode-top-bar mode-top-bar--index">
