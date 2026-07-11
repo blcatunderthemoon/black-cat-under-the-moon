@@ -1,27 +1,41 @@
 /**
  * Monthly match-delivery quota for email automation / admin tools.
  * Free users: 3 matches per calendar month. Premium: unlimited.
+ *
+ * Reset rule: Hong Kong calendar month — quota used resets at 00:00 HKT on the 1st.
+ * Only successful sent_matches rows with sent_at in the current HK month are counted.
  */
 
-import { getHongKongMonthStart } from './hong-kong-time.js';
+import {
+  getHongKongMonthEnd,
+  getHongKongMonthStart,
+  isInCurrentHongKongMonth,
+} from './hong-kong-time.js';
 
 export const FREE_MONTHLY_MATCH_LIMIT = 3;
+
+/** Human-readable reset rule (for admin UI tooltips). */
+export const MATCH_QUOTA_RESET_LABEL = '每月 1 日 00:00（香港時間）重置';
 
 export function getCurrentMonthStart() {
   return getHongKongMonthStart();
 }
 
+export function getCurrentMonthEnd() {
+  return getHongKongMonthEnd();
+}
+
 /**
- * Count how many sent_matches each response id participated in this month.
+ * Count how many sent_matches each response id participated in this HK month.
  * @param {Array<{ user_a_id: number, user_b_id: number, sent_at?: string }>} sentRows
+ * @param {Date} [referenceDate]
  * @returns {Map<number, number>}
  */
-export function buildMonthlyMatchCounts(sentRows) {
-  const monthStart = getCurrentMonthStart();
+export function buildMonthlyMatchCounts(sentRows, referenceDate = new Date()) {
   const counts = new Map();
 
   for (const row of sentRows || []) {
-    if (row.sent_at && new Date(row.sent_at) < monthStart) continue;
+    if (!isInCurrentHongKongMonth(row.sent_at, referenceDate)) continue;
     const a = Number(row.user_a_id);
     const b = Number(row.user_b_id);
     if (Number.isFinite(a)) counts.set(a, (counts.get(a) || 0) + 1);

@@ -45,6 +45,8 @@ export default function ForumStoryReadingView({
   const isGenericChapterTitle = /^第\s*\d+\s*章$/.test(String(chapterTitle).trim());
   const showChapterNav = totalChapters > 1;
   const showChapterHeading = showChapterNav || !isGenericChapterTitle;
+  const isFirstChapter = currentNum === 1;
+  const isEdgeChapter = isFirstChapter || isLast;
 
   if (!chapter) {
     return (
@@ -58,7 +60,16 @@ export default function ForumStoryReadingView({
   }
 
   return (
-    <article className={`forum-story-reading forum-story-reading--${READ_MODE}${showChapterNav ? '' : ' forum-story-reading--solo'}`}>
+    <article
+      className={[
+        'forum-story-reading',
+        `forum-story-reading--${READ_MODE}`,
+        showChapterNav ? '' : 'forum-story-reading--solo',
+        isFirstChapter ? 'forum-story-reading--chapter-first' : '',
+        isLast ? 'forum-story-reading--chapter-last' : '',
+        isEdgeChapter ? 'forum-story-reading--chapter-edge' : '',
+      ].filter(Boolean).join(' ')}
+    >
       <div className="forum-story-reading__sheet">
         <header className="forum-story-reading__header">
           <div className="forum-story-reading__topbar">
@@ -88,45 +99,64 @@ export default function ForumStoryReadingView({
           )}
 
           <div className="forum-story-reading__meta">
-            <p className="forum-story-reading__book-title">{post.title || '無題'}</p>
+            {!(isEdgeChapter && showChapterNav && showChapterHeading) && (
+              <p className="forum-story-reading__book-title">{post.title || '無題'}</p>
+            )}
             {showChapterHeading && (
               showChapterNav ? (
-                <div className="forum-story-reading__chapter-row">
-                  <button
-                    type="button"
-                    className="forum-story-reading__chapter-step forum-story-reading__chapter-step--prev"
-                    disabled={!prevChapter}
-                    onClick={() => prevChapter && goChapterIfAllowed(prevChapter.chapter_number)}
-                    aria-label={
-                      prevChapter
-                        ? `上一章：${prevChapter.display_title || chapterDisplayTitle(prevChapter)}`
-                        : '已是第一章'
-                    }
-                  >
-                    <span className="forum-story-reading__chapter-step-icon" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="15 18 9 12 15 6" />
-                      </svg>
-                    </span>
-                  </button>
-                  <h1 className="forum-story-reading__chapter-title">{chapterTitle}</h1>
-                  <button
-                    type="button"
-                    className="forum-story-reading__chapter-step forum-story-reading__chapter-step--next"
-                    disabled={!nextChapter}
-                    onClick={() => nextChapter && goChapterIfAllowed(nextChapter.chapter_number)}
-                    aria-label={
-                      nextChapter
-                        ? `下一章：${nextChapter.display_title || chapterDisplayTitle(nextChapter)}`
-                        : '已是最後一章'
-                    }
-                  >
-                    <span className="forum-story-reading__chapter-step-icon" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="9 18 15 12 9 6" />
-                      </svg>
-                    </span>
-                  </button>
+                <div
+                  className={[
+                    'forum-story-reading__chapter-row',
+                    !prevChapter ? 'forum-story-reading__chapter-row--no-prev' : '',
+                    !nextChapter ? 'forum-story-reading__chapter-row--no-next' : '',
+                  ].filter(Boolean).join(' ')}
+                >
+                  {prevChapter ? (
+                    <button
+                      type="button"
+                      className="forum-story-reading__chapter-step forum-story-reading__chapter-step--prev"
+                      onClick={() => goChapterIfAllowed(prevChapter.chapter_number)}
+                      aria-label={`上一章：${prevChapter.display_title || chapterDisplayTitle(prevChapter)}`}
+                    >
+                      <span className="forum-story-reading__chapter-step-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="15 18 9 12 15 6" />
+                        </svg>
+                      </span>
+                    </button>
+                  ) : (
+                    <span
+                      className="forum-story-reading__chapter-step forum-story-reading__chapter-step--placeholder"
+                      aria-hidden="true"
+                    />
+                  )}
+                  <div className="forum-story-reading__chapter-heading">
+                    {isEdgeChapter && (
+                      <p className="forum-story-reading__book-title forum-story-reading__book-title--in-row">
+                        {post.title || '無題'}
+                      </p>
+                    )}
+                    <h1 className="forum-story-reading__chapter-title">{chapterTitle}</h1>
+                  </div>
+                  {nextChapter ? (
+                    <button
+                      type="button"
+                      className="forum-story-reading__chapter-step forum-story-reading__chapter-step--next"
+                      onClick={() => goChapterIfAllowed(nextChapter.chapter_number)}
+                      aria-label={`下一章：${nextChapter.display_title || chapterDisplayTitle(nextChapter)}`}
+                    >
+                      <span className="forum-story-reading__chapter-step-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                      </span>
+                    </button>
+                  ) : (
+                    <span
+                      className="forum-story-reading__chapter-step forum-story-reading__chapter-step--placeholder"
+                      aria-hidden="true"
+                    />
+                  )}
                 </div>
               ) : (
                 <h1 className="forum-story-reading__chapter-title forum-story-reading__chapter-title--solo">{chapterTitle}</h1>
@@ -177,9 +207,11 @@ export default function ForumStoryReadingView({
               </button>
             )}
             <div className="forum-story-reading__end">
-              <span className="forum-story-reading__end-sigil" aria-hidden="true">🌙</span>
-              <span className="forum-story-reading__end-text">暫無新章節</span>
-              <span className="forum-story-reading__end-sub">感謝閱讀，靜候作者更新</span>
+              <span className="forum-story-reading__end-sigil" aria-hidden="true">{post.story_completed ? '🌕' : '🌙'}</span>
+              <span className="forum-story-reading__end-text">{post.story_completed ? '已完結' : '暫無新章節'}</span>
+              <span className="forum-story-reading__end-sub">
+                {post.story_completed ? '感謝閱讀，故事到此圓滿' : '感謝閱讀，靜候作者更新'}
+              </span>
             </div>
             <button type="button" className="forum-story-reading__finish-btn" onClick={onExitRead}>
               回到書頁

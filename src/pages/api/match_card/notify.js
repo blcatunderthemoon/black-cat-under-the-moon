@@ -1,5 +1,6 @@
 import { checkDashboardAuth } from '../../../lib/dashboard-auth.js';
 import { getAdminClient } from '../../../lib/server-auth.js';
+import { databaseNowIso } from '../../../lib/hong-kong-time.js';
 
 const deliveryWebhook = process.env.MATCH_NOTIFICATION_WEBHOOK || '';
 
@@ -142,6 +143,7 @@ export default async function handler(req, res) {
           user_a_id: normA,
           user_b_id: normB,
           match_score: score,
+          sent_at: anyDelivered ? databaseNowIso() : undefined,
           notes: anyDelivered ? '自動記錄（通知已發送）' : '自動記錄（通知發送失敗）',
         },
         { onConflict: 'user_a_id,user_b_id', ignoreDuplicates: false },

@@ -60,6 +60,25 @@ export function getHongKongMonthEnd(date = new Date()) {
   return hongKongMidnightUtc(year, month + 1, 1);
 }
 
+/** YYYY-MM calendar month key in Hong Kong (for quota windows / grouping). */
+export function getHongKongMonthKey(date = new Date()) {
+  const { year, month } = getHongKongDateParts(date);
+  return `${year}-${String(month).padStart(2, '0')}`;
+}
+
+/**
+ * True when `sentAt` falls in the Hong Kong calendar month containing `referenceDate`.
+ * Monthly quotas reset at HK midnight on the 1st — only rows in the current window count.
+ */
+export function isInCurrentHongKongMonth(sentAt, referenceDate = new Date()) {
+  if (!sentAt) return false;
+  const t = new Date(sentAt).getTime();
+  if (Number.isNaN(t)) return false;
+  const start = getHongKongMonthStart(referenceDate).getTime();
+  const end = getHongKongMonthEnd(referenceDate).getTime();
+  return t >= start && t < end;
+}
+
 export function getYesterdayHongKongDateString(date = new Date()) {
   const yesterday = new Date(getHongKongDayStart(date).getTime() - MS_PER_DAY);
   return getHongKongDateString(yesterday);

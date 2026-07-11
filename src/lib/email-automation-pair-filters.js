@@ -53,6 +53,49 @@ export function filterVisibleAutomationPairs(pairs, { sentFilter = 'unsent', hid
   });
 }
 
+/**
+ * Free (monthly-limited) users in a pair, with their response id + quota.
+ * Premium users (no limit) are excluded.
+ */
+export function pairLimitedUsers(pair) {
+  const out = [];
+  for (const side of ['a', 'b']) {
+    const id = Number(pair?.[`user_${side}_id`]);
+    const quota = pair?.[`user_${side}_quota`];
+    if (Number.isFinite(id) && quota && !quota.is_premium && quota.limit != null) {
+      out.push({ id, quota });
+    }
+  }
+  return out;
+}
+
+/** Map<responseId, number> — how many of these pairs include each free user. */
+export function buildSelectedQuotaUsage(selectedPairs) {
+  const counts = new Map();
+  for (const pair of selectedPairs || []) {
+    for (const { id } of pairLimitedUsers(pair)) {
+      counts.set(id, (counts.get(id) || 0) + 1);
+    }
+  }
+  return counts;
+}
+
+/**
+ * Whether selecting `pair` would push a free user past their monthly limit,
+ * given the batch usage already accumulated (NOT counting this pair).
+ * @returns {{ id: number, quota: object, projected: number } | null} offending user, or null when OK.
+ */
+export function pairProjectedQuotaExceed(pair, usageExcludingPair) {
+  for (const { id, quota } of pairLimitedUsers(pair)) {
+    const alreadySelected = usageExcludingPair?.get(id) || 0;
+    const projected = (quota.used || 0) + alreadySelected + 1;
+    if (projected > quota.limit) {
+      return { id, quota, projected };
+    }
+  }
+  return null;
+}
+
 export function countAutomationPairsBySent(pairs, { hideQuotaFull = false } = {}) {
   const list = (pairs || []).filter((pair) => {
     if (!hideQuotaFull) return true;

@@ -12,6 +12,7 @@ import {
   getResponseMatchQuota,
   pairCanDeliverMatch,
 } from './match-delivery-quota.js';
+import { databaseNowIso } from './hong-kong-time.js';
 import { buildMatchResponsePremiumContext } from './match-response-premium.js';
 import {
   linkResponseToAuthUser,
@@ -219,6 +220,7 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
           user_a_id: normA,
           user_b_id: normB,
           match_score: score,
+          sent_at: databaseNowIso(),
           notes: `自動記錄（${noteParts.join('、')}）`,
         },
         { onConflict: 'user_a_id,user_b_id', ignoreDuplicates: false },
@@ -282,6 +284,13 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
           .eq('user_a_id', normA)
           .eq('user_b_id', normB);
       }
+    }
+
+    // Advance running monthly usage so later pairs in THIS batch respect a free
+    // user's remaining quota (prevents a single request exceeding the limit).
+    if (recorded && !skipQuotaCheck) {
+      if (!quotaA.is_premium) monthlyCounts.set(aId, (monthlyCounts.get(aId) || 0) + 1);
+      if (!quotaB.is_premium) monthlyCounts.set(bId, (monthlyCounts.get(bId) || 0) + 1);
     }
 
     results.push({

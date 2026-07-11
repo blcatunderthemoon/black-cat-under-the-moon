@@ -5,11 +5,15 @@ import { useAdminApi } from '../../lib/admin-api-context.js';
 import {
   automationPairKey,
   buildSameEmailPairsAlert,
+  buildSelectedQuotaUsage,
   countAutomationPairsBySent,
   filterVisibleAutomationPairs,
   isAutomationPairSent,
   pairHasSameEmail,
+  pairLimitedUsers,
+  pairProjectedQuotaExceed,
 } from '../../lib/email-automation-pair-filters.js';
+import { MATCH_QUOTA_RESET_LABEL } from '../../lib/match-delivery-quota.js';
 
 const DIM_KEYS = ['attraction', 'emotional', 'lifestyle', 'communication', 'relationship', 'conflictSafety'];
 const DIM_LABELS = ['🔥 火花', '💞 情感', '📅 步調', '💬 溝通', '💑 期望', '🛡️ 安全感'];
@@ -26,15 +30,25 @@ function pairKey(p) {
   return automationPairKey(p);
 }
 
-function MatchQuotaBadge({ quota }) {
+function MatchQuotaBadge({ quota, pendingInBatch = 0 }) {
   if (!quota) return null;
   if (quota.is_premium) {
     return <span className={styles.quotaBadgePremium}>🌙 無限制</span>;
   }
-  const full = quota.at_limit;
+  const projected = quota.used + pendingInBatch;
+  const full = quota.at_limit || projected >= quota.limit;
+  const title = pendingInBatch > 0
+    ? `本月已用 ${quota.used}，本次已選 ${pendingInBatch}。${MATCH_QUOTA_RESET_LABEL}`
+    : MATCH_QUOTA_RESET_LABEL;
   return (
-    <span className={`${styles.quotaBadge} ${full ? styles.quotaBadgeFull : ''}`}>
+    <span
+      className={`${styles.quotaBadge} ${full ? styles.quotaBadgeFull : ''}`}
+      title={title}
+    >
       本月 {quota.used}/{quota.limit}
+      {pendingInBatch > 0 && (
+        <span className={styles.quotaBadgePending}> +{pendingInBatch}</span>
+      )}
     </span>
   );
 }
@@ -139,32 +153,94 @@ export function EmailAutomationPanel() {
 
   const isPairSelectable = (p) => !p.quota_blocked && !p.same_email_blocked && !pairHasSameEmail(p);
 
+  const visiblePairs = useMemo(
+    () => filterVisibleAutomationPairs(pairs, { sentFilter, hideQuotaFull }),
+    [pairs, sentFilter, hideQuotaFull],
+  );
+
+  // All currently-checked pairs (across every filter view) — used for quota
+  // projection so hidden-but-selected pairs still count toward a user's limit.
+  const checkedPairsAll = useMemo(
+    () => (pairs || []).filter((p) => isPairSelectable(p) && checked[pairKey(p)]),
+    [pairs, checked],
+  );
+
+  // Map<responseId, count> of free-user appearances in the current selection.
+  const selectedQuotaUsage = useMemo(
+    () => buildSelectedQuotaUsage(checkedPairsAll),
+    [checkedPairsAll],
+  );
+
+  const describeQuotaExceed = (offending) => {
+    const remaining = Math.max(0, offending.quota.limit - offending.quota.used);
+    return (
+      `此用戶（#${offending.id}）為免費會員，每月最多 ${offending.quota.limit} 次連線通知。\n`
+      + `本月已使用 ${offending.quota.used} 次，剩餘 ${remaining} 次，`
+      + '本次選取已達上限，無法再加入更多配對。\n\n'
+      + `${MATCH_QUOTA_RESET_LABEL}。\n`
+      + '如需超額發送，請升級對方為 Moonlight Passport，或改於下個月發送。'
+    );
+  };
+
   const toggleRow = (p) => {
     if (!isPairSelectable(p)) return;
     const key = pairKey(p);
-    setChecked((prev) => ({ ...prev, [key]: !prev[key] }));
+    const isCurrentlyChecked = !!checked[key];
+
+    // Unchecking is always allowed.
+    if (isCurrentlyChecked) {
+      setChecked((prev) => ({ ...prev, [key]: false }));
+      return;
+    }
+
+    // Selecting: block if it would push a free user past their monthly limit.
+    // Usage map is built from checked pairs (this one is not checked yet).
+    const offending = pairProjectedQuotaExceed(p, selectedQuotaUsage);
+    if (offending) {
+      alert(describeQuotaExceed(offending));
+      return;
+    }
+    setChecked((prev) => ({ ...prev, [key]: true }));
   };
 
   const selectAll = () => {
+    // Greedily add pairs while respecting each free user's remaining quota.
+    const runningUsage = new Map();
     const next = {};
     visiblePairs.forEach((p) => {
-      if (isPairSelectable(p)) next[pairKey(p)] = true;
+      if (!isPairSelectable(p)) return;
+      if (pairProjectedQuotaExceed(p, runningUsage)) return;
+      next[pairKey(p)] = true;
+      for (const { id } of pairLimitedUsers(p)) {
+        runningUsage.set(id, (runningUsage.get(id) || 0) + 1);
+      }
     });
     setChecked(next);
   };
 
   const deselectAll = () => setChecked({});
 
-  const visiblePairs = useMemo(
-    () => filterVisibleAutomationPairs(pairs, { sentFilter, hideQuotaFull }),
-    [pairs, sentFilter, hideQuotaFull],
-  );
   const { unsent: unsentCount, sent: sentCount, all: visibleTotalCount } = useMemo(
     () => countAutomationPairsBySent(pairs, { hideQuotaFull }),
     [pairs, hideQuotaFull],
   );
   const selectedPairs = visiblePairs.filter((p) => isPairSelectable(p) && checked[pairKey(p)]);
   const selectedCount = selectedPairs.length;
+  const skippedByQuota = useMemo(() => {
+    const runningUsage = new Map();
+    let skipped = 0;
+    visiblePairs.forEach((p) => {
+      if (!isPairSelectable(p)) return;
+      if (pairProjectedQuotaExceed(p, runningUsage)) {
+        skipped += 1;
+        return;
+      }
+      for (const { id } of pairLimitedUsers(p)) {
+        runningUsage.set(id, (runningUsage.get(id) || 0) + 1);
+      }
+    });
+    return skipped;
+  }, [visiblePairs]);
 
   // ─────────────────────────────────────────────────────────────────────────
   // Save draft
@@ -501,6 +577,9 @@ export function EmailAutomationPanel() {
               />
               隱藏配額已滿
             </label>
+            <span className={styles.quotaResetHint} title={MATCH_QUOTA_RESET_LABEL}>
+              免費會員配額：{MATCH_QUOTA_RESET_LABEL}
+            </span>
           </div>
         )}
 
@@ -522,6 +601,14 @@ export function EmailAutomationPanel() {
                   {visiblePairs.length}
                   {visiblePairs.length !== pairs.length ? ` / ${pairs.length}` : ''}
                   {' '}對
+                </span>
+              )}
+              {skippedByQuota > 0 && (
+                <span
+                  className={`${styles.badge} ${styles.badgeQuota}`}
+                  title="「全選」會自動略過會超出免費會員每月上限的配對"
+                >
+                  全選略過 {skippedByQuota} 對（配額上限）
                 </span>
               )}
             </div>
@@ -562,11 +649,19 @@ export function EmailAutomationPanel() {
                     const key   = pairKey(p);
                     const selectable = isPairSelectable(p);
                     const isChk = selectable && !!checked[key];
+                    // Projected-quota block: selecting this pair would exceed a
+                    // free user's monthly limit given current batch selection.
+                    const quotaProjection = !isChk && selectable
+                      ? pairProjectedQuotaExceed(p, selectedQuotaUsage)
+                      : null;
+                    const batchBlocked = !!quotaProjection;
+                    const pendingA = selectedQuotaUsage.get(Number(p.user_a_id)) || 0;
+                    const pendingB = selectedQuotaUsage.get(Number(p.user_b_id)) || 0;
                     const b     = p.score_breakdown || {};
                     return (
                       <tr
                         key={key}
-                        className={`${styles.tableRow} ${isChk ? styles.checked : ''} ${p.quota_blocked ? styles.quotaBlockedRow : ''} ${p.same_email_blocked ? styles.quotaBlockedRow : ''} ${!selectable ? styles.rowNotSelectable : ''}`}
+                        className={`${styles.tableRow} ${isChk ? styles.checked : ''} ${p.quota_blocked ? styles.quotaBlockedRow : ''} ${p.same_email_blocked ? styles.quotaBlockedRow : ''} ${(!selectable || batchBlocked) ? styles.rowNotSelectable : ''}`}
                         onClick={() => toggleRow(p)}
                       >
                         <td onClick={(e) => e.stopPropagation()}>
@@ -574,11 +669,15 @@ export function EmailAutomationPanel() {
                             type="checkbox"
                             className={styles.checkbox}
                             checked={isChk}
-                            disabled={!selectable}
+                            disabled={!selectable || batchBlocked}
                             title={
                               p.same_email_blocked || pairHasSameEmail(p)
                                 ? '雙方 Email 相同，無法發送'
-                                : (selectable ? undefined : '配額已滿，無法選取')
+                                : !selectable
+                                  ? '配額已滿，無法選取'
+                                  : batchBlocked
+                                    ? `已達免費會員本月上限（${quotaProjection.quota.limit} 次），無法再選取此用戶的配對`
+                                    : undefined
                             }
                             onChange={() => toggleRow(p)}
                           />
@@ -586,13 +685,13 @@ export function EmailAutomationPanel() {
                         <td style={{ fontWeight: 600, color: 'var(--text)' }}>
                           <div className={styles.userCell}>
                             <AutomationUserLabel user={p.user_a} userId={p.user_a_id} />
-                            <MatchQuotaBadge quota={p.user_a_quota} />
+                            <MatchQuotaBadge quota={p.user_a_quota} pendingInBatch={pendingA} />
                           </div>
                         </td>
                         <td style={{ fontWeight: 600, color: 'var(--text)' }}>
                           <div className={styles.userCell}>
                             <AutomationUserLabel user={p.user_b} userId={p.user_b_id} />
-                            <MatchQuotaBadge quota={p.user_b_quota} />
+                            <MatchQuotaBadge quota={p.user_b_quota} pendingInBatch={pendingB} />
                           </div>
                         </td>
                         <td>
@@ -612,6 +711,9 @@ export function EmailAutomationPanel() {
                           )}
                           {p.quota_blocked && !isAutomationPairSent(p) && (
                             <span className={`${styles.badge} ${styles.badgeQuota}`}>⚠ 配額已滿</span>
+                          )}
+                          {batchBlocked && !p.quota_blocked && !isAutomationPairSent(p) && (
+                            <span className={`${styles.badge} ${styles.badgeQuota}`}>⚠ 本次已達上限</span>
                           )}
                           {(p.same_email_blocked || pairHasSameEmail(p)) && !isAutomationPairSent(p) && (
                             <span className={`${styles.badge} ${styles.badgeError}`}>⚠ 相同 Email</span>
