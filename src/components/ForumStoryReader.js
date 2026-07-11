@@ -8,7 +8,7 @@ import { GUEST_FREE_CHAPTER_COUNT, isGuestReadableChapter } from '../lib/forum-s
 import { recordStoryView } from '../lib/forum-story-views.js';
 import ForumStoryBookHub from './ForumStoryBookHub.js';
 import ForumStoryReadingView from './ForumStoryReadingView.js';
-import LoadingText from './LoadingText.js';
+import MoonLoading from './MoonLoading.js';
 
 export default function ForumStoryReader({
   post,
@@ -96,7 +96,7 @@ export default function ForumStoryReader({
     if (chaptersLoading) {
       return (
         <div className="forum-story-reading forum-story-reading--loading">
-          <LoadingText className="forum-story-reading__loading" />
+          <MoonLoading variant="inline" centered size={48} />
         </div>
       );
     }

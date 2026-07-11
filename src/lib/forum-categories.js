@@ -6,7 +6,7 @@
 import { canonicalForumTagKey } from './forum-tags.js';
 
 /** Filter row on /forum (includes 全部). */
-export const FORUM_TOPICS = ['全部', '感情', '社群', '娛樂', '命理', '興趣', '徵友', '親密話題', '寫故事'];
+export const FORUM_TOPICS = ['全部', '感情', '徵友', '寫故事', '社群', '娛樂', '命理', '興趣', '親密話題'];
 
 /** Topics assignable when creating a post (excludes 全部). */
 export const FORUM_POST_TOPICS = FORUM_TOPICS.filter((t) => t !== '全部');

@@ -725,7 +725,7 @@ export default function ForumPostPage() {
       />
       <AppShell {...shellProps}>
         {!post ? (
-          <MoonLoading variant="hero" smooth />
+          <MoonLoading variant="hero" />
         ) : (
           <ForumSectionErrorBoundary fallbackLabel="貼文">
           <>
@@ -891,7 +891,7 @@ export default function ForumPostPage() {
               </div>
               {commentsBootstrapping || storyDetailLoading ? (
                 <div className="forum-comments-empty forum-comments-empty--loading">
-                  <MoonLoading variant="inline" centered smooth size={48} />
+                  <MoonLoading variant="inline" centered size={48} />
                 </div>
               ) : comments.length === 0 ? (
                 <div className="forum-comments-empty">

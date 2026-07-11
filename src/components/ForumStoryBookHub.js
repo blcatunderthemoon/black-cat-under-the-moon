@@ -10,6 +10,7 @@ import ForumStoryCoverEdit from './ForumStoryCoverEdit.js';
 import ForumStoryEditChapter from './ForumStoryEditChapter.js';
 import ForumStorySynopsisEdit from './ForumStorySynopsisEdit.js';
 import LoadingText from './LoadingText.js';
+import MoonLoading from './MoonLoading.js';
 
 function formatDate(iso) {
   if (!iso) return '';
@@ -120,8 +121,9 @@ export default function ForumStoryBookHub({
   const enterReadSub = !readingResumeReady
     ? null
     : hasReadingProgress && resumeChapter
-      ? `繼續閱讀：${resumeChapter.display_title || `第${resumeChapter.chapter_number}章`}`
+      ? (resumeChapter.display_title || `第 ${resumeChapter.chapter_number} 章`)
       : `由 ${chapters[0]?.display_title || '第一章'} 開始`;
+  const enterReadResume = readingResumeReady && hasReadingProgress;
 
   const canEditCover = canEdit;
   const showCoverColumn = post.cover_image_url || canEditCover;
@@ -270,7 +272,7 @@ export default function ForumStoryBookHub({
 
           {chaptersLoading ? (
             <div className="forum-story-chapters__loading" aria-live="polite">
-              <LoadingText as="span" className="forum-story-chapters__loading-text" />
+              <MoonLoading variant="inline" centered size={48} />
             </div>
           ) : chapters.length > 0 ? (
             <ol className="forum-story-chapters__list">
@@ -338,16 +340,22 @@ export default function ForumStoryBookHub({
             <div className="forum-story-chapters__cta-row">
               <button
                 type="button"
-                className="forum-story-reader__enter-read"
+                className={[
+                  'forum-story-reader__enter-read',
+                  enterReadResume ? 'forum-story-reader__enter-read--resume' : '',
+                ].filter(Boolean).join(' ')}
                 onClick={() => onEnterRead()}
               >
-                <span className="forum-story-reader__enter-read-icon" aria-hidden="true">📖</span>
+                <span className="forum-story-reader__enter-read-leading" aria-hidden="true">
+                  <span className="forum-story-reader__enter-read-icon">📖</span>
+                </span>
                 <span className="forum-story-reader__enter-read-text">
                   <span className="forum-story-reader__enter-read-label">{enterReadLabel}</span>
                   {enterReadSub && (
                     <span className="forum-story-reader__enter-read-sub">{enterReadSub}</span>
                   )}
                 </span>
+                <span className="forum-story-reader__enter-read-arrow" aria-hidden="true">›</span>
               </button>
             </div>
           )}

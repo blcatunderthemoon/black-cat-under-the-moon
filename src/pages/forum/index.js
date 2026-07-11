@@ -1134,7 +1134,6 @@ export default function ForumPage() {
                     <MoonLoading
                       variant="hero"
                       centered
-                      smooth
                       className="forum-feed-loading__moon page-loading"
                     />
                   </div>
@@ -1145,7 +1144,6 @@ export default function ForumPage() {
                     <MoonLoading
                       variant="hero"
                       centered
-                      smooth
                       className="forum-feed-loading__moon page-loading"
                     />
                   </div>
@@ -1181,7 +1179,7 @@ export default function ForumPage() {
                   <div className="forum-story-bookshelf-zone" aria-busy={storySearchLoading}>
                     {storySearchLoading ? (
                       <div className="forum-story-bookshelf-loading" aria-live="polite">
-                        <MoonLoading variant="inline" centered smooth size={40} />
+                        <MoonLoading variant="inline" centered size={40} />
                       </div>
                     ) : (
                       <>
