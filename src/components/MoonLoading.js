@@ -61,12 +61,18 @@ export default function MoonLoading({
       ? MOON_LOADING_SMOOTH_FRAME_INTERVAL_MS
       : MOON_LOADING_FRAME_INTERVAL_MS;
 
-    let frameIndex = 0;
+    // Derive the frame from a shared wall clock (not a per-instance counter) so every
+    // MoonLoading mounted anywhere shows the exact same phase at the same moment,
+    // regardless of when each one mounted. Same images + same change timing.
+    let lastFrameIndex = -1;
 
-    const id = window.setInterval(() => {
+    const tick = () => {
       if (!framesReadyRef.current) return;
 
-      frameIndex = (frameIndex + 1) % MOON_LOADING_FRAMES.length;
+      const frameIndex = Math.floor(Date.now() / intervalMs) % MOON_LOADING_FRAMES.length;
+      if (frameIndex === lastFrameIndex) return;
+      lastFrameIndex = frameIndex;
+
       const src = MOON_LOADING_FRAMES[frameIndex];
       const nextActive = activeLayerRef.current === 'a' ? 'b' : 'a';
       const nextLayer = nextActive === 'a' ? layerARef.current : layerBRef.current;
@@ -77,7 +83,12 @@ export default function MoonLoading({
       nextLayer.style.opacity = '1';
       prevLayer.style.opacity = '0';
       activeLayerRef.current = nextActive;
-    }, intervalMs);
+    };
+
+    // Poll faster than the frame interval so the shared-clock boundary is hit
+    // promptly even for a late-mounting instance.
+    const id = window.setInterval(tick, Math.max(60, Math.floor(intervalMs / 4)));
+    tick();
 
     return () => window.clearInterval(id);
   }, [smooth]);
