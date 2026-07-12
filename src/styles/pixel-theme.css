@@ -22762,14 +22762,14 @@ button.forum-tag-chip:hover {
     padding-right: 10px;
   }
 
-  /* 手機：主頁（Noto）13px 為基準；像素字（標題／登出）加大到 14px 視覺對齊 */
+  /* 手機：主頁（Noto）加大到 15px；像素字（標題／登出）加大到 16px 視覺對齊 */
   .app-page--my-cat > .app-header > .app-header__back {
-    font-size: 13px;
-    padding: 7px 10px;
+    font-size: 15px;
+    padding: 8px 12px;
   }
 
   .app-page--my-cat > .app-header > .app-header__title {
-    font-size: 14px;
+    font-size: 16px;
     letter-spacing: 0.04em;
     white-space: nowrap;
     overflow: hidden;
@@ -22778,7 +22778,7 @@ button.forum-tag-chip:hover {
   }
 
   .app-page--my-cat > .app-header .app-header-logout-btn {
-    font-size: 14px;
+    font-size: 16px;
   }
 
   /* 收窄右側：手機隱藏問候名同分隔線，淨低圖示按鈕 */
@@ -23840,6 +23840,127 @@ button.forum-tag-chip:hover {
   font-size: 0.72rem;
   color: #ff9f6b;
   text-shadow: none;
+}
+
+/* 貓咪商店（Phase 2） */
+.my-cat-shop {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 2px solid rgba(189, 147, 249, 0.45);
+  background: linear-gradient(180deg, #1a1533 0%, #131028 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.my-cat-shop--locked {
+  border-color: rgba(120, 110, 150, 0.35);
+  opacity: 0.92;
+}
+
+.my-cat-shop__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.my-cat-shop--open .my-cat-shop__head {
+  margin-bottom: 10px;
+}
+
+.my-cat-shop__chevron {
+  font-size: 0.6rem;
+  color: rgba(189, 147, 249, 0.7);
+  margin-left: 2px;
+}
+
+.my-cat-shop__title {
+  margin: 0;
+  font-size: 13px;
+  color: #f0ebd8;
+  letter-spacing: 0.06em;
+}
+
+.my-cat-shop__hint {
+  margin: 0 0 10px;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: rgba(240, 235, 216, 0.55);
+}
+
+.my-cat-shop__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.my-cat-shop__item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid rgba(189, 147, 249, 0.25);
+  background: rgba(15, 12, 34, 0.65);
+}
+
+.my-cat-shop__item--equipped {
+  border-color: rgba(255, 224, 138, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(255, 224, 138, 0.2);
+}
+
+.my-cat-shop__name {
+  font-size: 0.82rem;
+  color: #f0ebd8;
+}
+
+.my-cat-shop__tag {
+  font-size: 0.62rem;
+  color: #bd93f9;
+  margin-left: 6px;
+}
+
+.my-cat-shop__price {
+  font-size: 0.72rem;
+  color: #ffe08a;
+  grid-column: 1;
+}
+
+.my-cat-shop__btn {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  padding: 6px 10px;
+  font-size: 0.68rem;
+  border: 2px solid #2a2650;
+  background: #1d1836;
+  color: #f0ebd8;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #07060e;
+}
+
+.my-cat-shop__btn:hover:not(:disabled) {
+  background: #2a2650;
+}
+
+.my-cat-shop__btn:active:not(:disabled) {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 #07060e;
+}
+
+.my-cat-shop__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.my-cat-shop__btn--equip {
+  border-color: rgba(189, 147, 249, 0.5);
 }
 
 @media (max-width: 480px) {

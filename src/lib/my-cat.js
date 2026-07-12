@@ -28,6 +28,24 @@ export const CAT_SHOP_UNLOCK_COST = 50;
 export const CAT_PRICE_FAMILY = 80;
 export const CAT_PRICE_OTHER = 150;
 
+/**
+ * 靈魂值上限與成長門檻（2026-07-12 v3：約每月一階，體型越大需時越長）。
+ * 純每日餵食 +1 靈魂估算：幼崽→少年 ~32 日、少年→成貓 ~53 日、成貓→混血 ~50 日。
+ */
+export const SOUL_MAX = 150;
+export const GROWTH_SOUL_JUVENILE = 42;
+export const GROWTH_SOUL_ADULT = 95;
+export const GROWTH_SOUL_HYBRID = 145;
+/** 每日餵食（打卡）靈魂獎勵 — 成長主力來源 */
+export const FEED_SOUL_GAIN = 1;
+/** 體型愈大，每日靈魂愈難攞 */
+export const FEED_SOUL_GAIN_BY_STAGE = {
+  kitten: 1,
+  juvenile: 1,
+  adult: 1,
+  hybrid: 0,
+};
+
 export function getCatPrice(mirrorType, targetSkinId) {
   if (targetSkinId === DEFAULT_SKIN_ID) return 0;
   const target = CAT_SKIN_CONFIG[targetSkinId]?.mirrorType;
@@ -165,13 +183,23 @@ export function getCatMeowUrl(skinId) {
 
 /**
  * Growth stage (§3.3).
+ * 僅靈魂值決定體型（已移除 Moon Journey Lv 捷徑）。
  * @returns {'kitten'|'juvenile'|'adult'|'hybrid'}
  */
-export function getGrowthStage({ soul = 0, moonLevel = 1, hasMirror = false, hasShadow = false }) {
-  if (soul >= 92 && hasShadow) return 'hybrid';
-  if (soul >= 75 && hasMirror) return 'adult';
-  if (soul >= 45 || moonLevel >= 4) return 'juvenile';
+export function getGrowthStage({ soul = 0, hasMirror = false, hasShadow = false }) {
+  if (soul >= GROWTH_SOUL_HYBRID && hasShadow) return 'hybrid';
+  if (soul >= GROWTH_SOUL_ADULT && hasMirror) return 'adult';
+  if (soul >= GROWTH_SOUL_JUVENILE) return 'juvenile';
   return 'kitten';
+}
+
+/** 依當前成長階段計算今次餵食應得靈魂（體型愈大愈慢）。 */
+export function getFeedSoulGain(growthStage) {
+  return FEED_SOUL_GAIN_BY_STAGE[growthStage] ?? FEED_SOUL_GAIN;
+}
+
+export function clampSoul(value) {
+  return Math.max(0, Math.min(SOUL_MAX, Math.round(Number(value) || 0)));
 }
 
 export const GROWTH_STAGE_LABELS = {

@@ -10,6 +10,7 @@ import { requireUser, ensureProfile, getAdminClient, sendAuthError } from '../..
 import { isAllowedProfilePhotoUrl } from '../../../lib/cloudinary-profile-upload.js';
 import { databaseNowIso } from '../../../lib/hong-kong-time.js';
 import { normalizeMirrorMbti } from '../../../lib/mirror-personality.js';
+import { awardMirrorFirstSave } from '../../../lib/my-cat-awards.js';
 
 export default async function handler(req, res) {
   let user;
@@ -135,9 +136,15 @@ export default async function handler(req, res) {
         .select()
         .single();
       if (createError2) return res.status(500).json({ error: 'Failed to create mirror card' });
+      awardMirrorFirstSave(admin, user.id, created2.id).catch((err) => {
+        console.error('[mirror-card/me] cat award failed:', err?.message || err);
+      });
       return res.status(201).json({ card: created2 });
     }
 
+    awardMirrorFirstSave(admin, user.id, created.id).catch((err) => {
+      console.error('[mirror-card/me] cat award failed:', err?.message || err);
+    });
     return res.status(201).json({ card: created });
   }
 

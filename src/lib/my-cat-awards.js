@@ -1,0 +1,189 @@
+/**
+ * awardCatCare — 共用發獎 helper（docs/MY-CAT-SOUL-AND-SHARDS.md §5.2）。
+ * SERVER ONLY. 冪等：ledger UNIQUE(user_id, action_type, source_id) 防重複發放。
+ * 靈魂寫 cat_care_events；碎屑寫 cat_economy_events；成功先更新 user_cats。
+ */
+
+import { clampStat, clampSoul } from './my-cat.js';
+import { getHongKongDateString } from './moon-journey.js';
+
+/** Mirror 首次儲存（§7.1）— 一次性，唔可以单靠佢跳過每日養成 */
+export const MIRROR_FIRST_SOUL_GAIN = 8;
+export const MIRROR_FIRST_SHARDS_GAIN = 20;
+/** 論壇發帖碎屑（§3.2-C） */
+export const FORUM_POST_SHARDS_GAIN = 2;
+export const FORUM_POST_SHARDS_DAILY_LIMIT = 3;
+
+/** 確保 user_cats row 存在（獨立實作，避免同 my-cat-server 循環 import）。 */
+async function ensureCatRow(admin, userId) {
+  const { data: existing } = await admin
+    .from('user_cats')
+    .select('soul, moon_shards')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (existing) return existing;
+
+  const { data: created, error } = await admin
+    .from('user_cats')
+    .insert({ user_id: userId })
+    .select('soul, moon_shards')
+    .single();
+  if (error) {
+    if (error.code === '23505') {
+      const { data: raced } = await admin
+        .from('user_cats')
+        .select('soul, moon_shards')
+        .eq('user_id', userId)
+        .single();
+      if (raced) return raced;
+    }
+    throw error;
+  }
+  return created;
+}
+
+/**
+ * @returns {{ awarded: boolean, soul_gained: number, shards_gained: number }}
+ */
+export async function awardCatCare(admin, userId, {
+  actionType,
+  sourceId,
+  deltaSoul = 0,
+  shardsDelta = 0,
+}) {
+  let soulGained = 0;
+  let shardsGained = 0;
+
+  if (deltaSoul) {
+    const { error } = await admin
+      .from('cat_care_events')
+      .insert({
+        user_id: userId,
+        action_type: actionType,
+        source_id: sourceId,
+        delta_soul: deltaSoul,
+      });
+    if (!error) soulGained = deltaSoul;
+    else if (error.code !== '23505') throw error;
+  }
+
+  if (shardsDelta) {
+    const { error } = await admin
+      .from('cat_economy_events')
+      .insert({
+        user_id: userId,
+        action_type: actionType,
+        source_id: sourceId,
+        shards_delta: shardsDelta,
+      });
+    if (!error) shardsGained = shardsDelta;
+    else if (error.code !== '23505') throw error;
+  }
+
+  if (!soulGained && !shardsGained) {
+    return { awarded: false, soul_gained: 0, shards_gained: 0 };
+  }
+
+  const row = await ensureCatRow(admin, userId);
+  const updates = {};
+  if (soulGained) updates.soul = clampSoul((row.soul ?? 0) + soulGained);
+  if (shardsGained) updates.moon_shards = Math.max(0, (row.moon_shards ?? 0) + shardsGained);
+  const { error: updateError } = await admin
+    .from('user_cats')
+    .update(updates)
+    .eq('user_id', userId);
+  if (updateError) throw updateError;
+
+  return { awarded: true, soul_gained: soulGained, shards_gained: shardsGained };
+}
+
+/** 連續打卡碎屑里程碑（每個里程碑一次過，唔會因斷 streak 重發） */
+export const STREAK_SHARD_MILESTONES = { 3: 2, 7: 5, 14: 10 };
+/** 連續打卡靈魂小里程碑（餵食時結算） */
+export const STREAK_SOUL_MILESTONES = { 7: 1, 14: 2 };
+/** 連續打卡 30 日 → 靈魂 +3（一次性） */
+export const STREAK_SOUL_MILESTONE = { days: 30, soul: 3 };
+/** Moon Journey 每升一級 → 靈魂 +2 */
+export const LEVEL_UP_SOUL_GAIN = 2;
+
+/**
+ * 餵食（打卡）後結算 streak／升級獎勵。
+ * @returns {{ shards: number, soul: number }} 今次實發嘅額外獎勵
+ */
+export async function applyFeedMilestones(admin, userId, { streak = 0, leveledUp = false, level = 1 } = {}) {
+  let bonusShards = 0;
+  let bonusSoul = 0;
+
+  const shardReward = STREAK_SHARD_MILESTONES[streak];
+  if (shardReward) {
+    const r = await awardCatCare(admin, userId, {
+      actionType: 'streak_milestone',
+      sourceId: `streak:${streak}`,
+      shardsDelta: shardReward,
+    });
+    bonusShards += r.shards_gained;
+  }
+
+  const streakSoulReward = STREAK_SOUL_MILESTONES[streak];
+  if (streakSoulReward) {
+    const r = await awardCatCare(admin, userId, {
+      actionType: 'streak_soul',
+      sourceId: `streak:${streak}`,
+      deltaSoul: streakSoulReward,
+    });
+    bonusSoul += r.soul_gained;
+  }
+
+  if (streak === STREAK_SOUL_MILESTONE.days) {
+    const r = await awardCatCare(admin, userId, {
+      actionType: 'streak_milestone',
+      sourceId: `streak:${streak}`,
+      deltaSoul: STREAK_SOUL_MILESTONE.soul,
+    });
+    bonusSoul += r.soul_gained;
+  }
+
+  if (leveledUp && level > 1) {
+    const r = await awardCatCare(admin, userId, {
+      actionType: 'level_up',
+      sourceId: `level:${level}`,
+      deltaSoul: LEVEL_UP_SOUL_GAIN,
+    });
+    bonusSoul += r.soul_gained;
+  }
+
+  return { shards: bonusShards, soul: bonusSoul };
+}
+
+/** Mirror Card 首次建立 → 靈魂 +30、碎屑 +20（各寫入對應 ledger）。 */
+export async function awardMirrorFirstSave(admin, userId, cardId) {
+  return awardCatCare(admin, userId, {
+    actionType: 'mirror_card_saved',
+    sourceId: String(cardId),
+    deltaSoul: MIRROR_FIRST_SOUL_GAIN,
+    shardsDelta: MIRROR_FIRST_SHARDS_GAIN,
+  });
+}
+
+/** 論壇發帖碎屑 +2，每日最多 3 帖；`source_id` = post.id 防重複。 */
+export async function awardForumPostShards(admin, userId, postId) {
+  const todayHk = getHongKongDateString();
+  const dayStart = `${todayHk}T00:00:00+08:00`;
+
+  const { count } = await admin
+    .from('cat_economy_events')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('action_type', 'forum_post')
+    .gte('created_at', dayStart);
+
+  if ((count ?? 0) >= FORUM_POST_SHARDS_DAILY_LIMIT) {
+    return { awarded: false, soul_gained: 0, shards_gained: 0 };
+  }
+
+  return awardCatCare(admin, userId, {
+    actionType: 'forum_post',
+    sourceId: String(postId),
+    shardsDelta: FORUM_POST_SHARDS_GAIN,
+  });
+}

@@ -7,6 +7,8 @@
 import {
   DEFAULT_SKIN_ID,
   CAT_SKIN_CONFIG,
+  CAT_SHOP_UNLOCK_COST,
+  getCatPrice,
   FEED_SHARDS_GAIN,
   HUNGER_FULL,
   CAT_SUMMON_WAIT_MS,
@@ -18,10 +20,14 @@ import {
   nextPetAvailableIso,
   applyStatDecay,
   clampStat,
+  clampSoul,
   getGrowthStage,
+  getFeedSoulGain,
   getCatMeowUrl,
+  SOUL_MAX,
 } from './my-cat.js';
 import { pickCatLine } from './my-cat-lines.js';
+import { applyFeedMilestones } from './my-cat-awards.js';
 import { filterContent } from './content-filter.js';
 import {
   performDailyCheckIn,
@@ -168,7 +174,6 @@ function buildCatView(catRow, { moonJourney, mirror, petsToday }) {
 
   const growthStage = getGrowthStage({
     soul: catRow.soul,
-    moonLevel: moonJourney?.level ?? 1,
     hasMirror: !!mirror?.mirror_type,
     hasShadow: !!mirror?.shadow_type,
   });
@@ -182,7 +187,8 @@ function buildCatView(catRow, { moonJourney, mirror, petsToday }) {
     meow_url: getCatMeowUrl(skinId),
     hunger,
     affection,
-    soul: clampStat(catRow.soul),
+    soul: clampSoul(catRow.soul),
+    soul_max: SOUL_MAX,
     growth_stage: growthStage,
     moon_shards: catRow.moon_shards ?? 0,
     owned_skins: catRow.owned_skins || [DEFAULT_SKIN_ID],
@@ -198,19 +204,60 @@ function buildCatView(catRow, { moonJourney, mirror, petsToday }) {
   };
 }
 
+/**
+ * 商店解鎖 flag（sticky）：完成 Mirror 且碎屑 ≥ CAT_SHOP_UNLOCK_COST 即永久解鎖
+ * （買貓後餘額跌返落去都唔會重新鎖返）。
+ */
+async function ensureShopUnlockFlag(admin, userId, catRow, mirror) {
+  if (catRow.cat_shop_unlocked) return catRow;
+  if (!mirror?.mirror_type) return catRow;
+  if ((catRow.moon_shards ?? 0) < CAT_SHOP_UNLOCK_COST) return catRow;
+  const { data } = await admin
+    .from('user_cats')
+    .update({ cat_shop_unlocked: true })
+    .eq('user_id', userId)
+    .select('*')
+    .single();
+  return data || { ...catRow, cat_shop_unlocked: true };
+}
+
+/** 商店 payload（§7.1）：五隻貓嘅價格／擁有／裝備狀態。 */
+function buildShopView(catRow, mirror) {
+  const owned = catRow.owned_skins || [DEFAULT_SKIN_ID];
+  const equipped = catRow.skin_id || DEFAULT_SKIN_ID;
+  const mirrorType = mirror?.mirror_type || null;
+  return {
+    unlocked: !!catRow.cat_shop_unlocked,
+    unlock_cost: CAT_SHOP_UNLOCK_COST,
+    has_mirror: !!mirrorType,
+    mirror_type: mirrorType,
+    moon_shards: catRow.moon_shards ?? 0,
+    skins: Object.keys(CAT_SKIN_CONFIG).map((skinId) => ({
+      skin_id: skinId,
+      family_zh: CAT_SKIN_CONFIG[skinId].familyZh,
+      price: getCatPrice(mirrorType, skinId),
+      owned: owned.includes(skinId),
+      equipped: equipped === skinId,
+      is_family: !!mirrorType && CAT_SKIN_CONFIG[skinId].mirrorType === mirrorType,
+    })),
+  };
+}
+
 /** Full state for GET /api/my-cat. */
 export async function getMyCatState(admin, userId) {
-  const [catRow, moonProfile, mirror] = await Promise.all([
+  const [rawCatRow, moonProfile, mirror] = await Promise.all([
     ensureUserCat(admin, userId),
     fetchMoonProfileRow(admin, userId),
     fetchMirrorTypes(admin, userId),
   ]);
+  const catRow = await ensureShopUnlockFlag(admin, userId, rawCatRow, mirror);
   const petsToday = await countPetsToday(admin, userId);
   const moonJourney = buildMoonJourneySummary(moonProfile);
 
   return {
     cat: buildCatView(catRow, { moonJourney, mirror, petsToday }),
     moon_journey: moonJourney,
+    shop: buildShopView(catRow, mirror),
   };
 }
 
@@ -263,6 +310,13 @@ export async function performCatFeed(admin, userId) {
   }
 
   // Care ledger — the 23505 path means a concurrent feed won.
+  const mirrorPre = await fetchMirrorTypes(admin, userId);
+  const feedSoulForInsert = getFeedSoulGain(getGrowthStage({
+    soul: catRow.soul,
+    hasMirror: !!mirrorPre?.mirror_type,
+    hasShadow: !!mirrorPre?.shadow_type,
+  }));
+
   const { error: careError } = await admin
     .from('cat_care_events')
     .insert({
@@ -270,14 +324,18 @@ export async function performCatFeed(admin, userId) {
       action_type: 'daily_feed',
       source_id: todayHk,
       delta_hunger: HUNGER_FULL,
+      delta_soul: feedSoulForInsert,
     });
   if (careError && careError.code !== '23505') throw careError;
   const firstFeed = !careError;
 
   let shardsGained = 0;
+  let feedSoulGained = 0;
   let nextRow = catRow;
 
   if (firstFeed) {
+    feedSoulGained = feedSoulForInsert;
+
     const { error: shardError } = await admin
       .from('cat_economy_events')
       .insert({
@@ -297,6 +355,7 @@ export async function performCatFeed(admin, userId) {
         last_fed_at: new Date().toISOString(),
         summoned_at: null,
         moon_shards: (catRow.moon_shards ?? 0) + shardsGained,
+        soul: clampSoul((catRow.soul ?? 0) + feedSoulGained),
       })
       .eq('user_id', userId)
       .select('*')
@@ -305,8 +364,26 @@ export async function performCatFeed(admin, userId) {
     nextRow = updated;
   }
 
-  const mirror = await fetchMirrorTypes(admin, userId);
+  const mirror = mirrorPre;
   const petsToday = await countPetsToday(admin, userId);
+
+  let bonusShards = 0;
+  let bonusSoul = 0;
+  if (firstFeed) {
+    const mj = checkin.moon_journey || checkin;
+    const milestones = await applyFeedMilestones(admin, userId, {
+      streak: mj.checkin_streak ?? 0,
+      leveledUp: !!checkin.leveled_up,
+      level: mj.level ?? 1,
+    });
+    bonusShards = milestones.shards;
+    bonusSoul = milestones.soul;
+    if (bonusShards || bonusSoul) {
+      nextRow = await ensureUserCat(admin, userId);
+    }
+  }
+
+  const updatedCatRow = await ensureShopUnlockFlag(admin, userId, nextRow, mirror);
 
   return {
     already_fed_today: !firstFeed,
@@ -314,8 +391,11 @@ export async function performCatFeed(admin, userId) {
     exp_gained: checkin.awarded ? checkin.exp_gained : 0,
     leveled_up: !!checkin.leveled_up,
     shards_gained: shardsGained,
+    soul_gained: feedSoulGained,
+    bonus_shards: bonusShards,
+    bonus_soul: bonusSoul,
     moon_journey: checkin.moon_journey,
-    cat: buildCatView(nextRow, { moonJourney: checkin.moon_journey, mirror, petsToday }),
+    cat: buildCatView(updatedCatRow, { moonJourney: checkin.moon_journey, mirror, petsToday }),
   };
 }
 
@@ -486,4 +566,121 @@ export async function performCatPet(admin, userId, { lastLine = null } = {}) {
   if (updateError) throw updateError;
 
   return buildResult(updated, { counted: true });
+}
+
+/**
+ * 購買家族貓（§7.1）：扣碎屑、追加 owned_skins、即時裝備。
+ */
+export async function performCatBuySkin(admin, userId, skinId) {
+  if (!CAT_SKIN_CONFIG[skinId]) {
+    return { ok: false, error: '唔認得呢隻貓。' };
+  }
+  if (skinId === DEFAULT_SKIN_ID) {
+    return { ok: false, error: '小黑貓本來就免費擁有。' };
+  }
+
+  const [catRow, mirror] = await Promise.all([
+    ensureUserCat(admin, userId),
+    fetchMirrorTypes(admin, userId),
+  ]);
+
+  if (!mirror?.mirror_type) {
+    return { ok: false, error: '先完成 Mirror 測驗，先可以迎家族貓回家。' };
+  }
+
+  const unlockedRow = await ensureShopUnlockFlag(admin, userId, catRow, mirror);
+  if (!unlockedRow.cat_shop_unlocked) {
+    return {
+      ok: false,
+      error: `月光碎屑要儲夠 ${CAT_SHOP_UNLOCK_COST} 先解鎖商店。`,
+      needs_unlock: true,
+    };
+  }
+
+  const owned = unlockedRow.owned_skins || [DEFAULT_SKIN_ID];
+  if (owned.includes(skinId)) {
+    return { ok: false, error: '已經擁有呢隻貓。', already_owned: true };
+  }
+
+  const price = getCatPrice(mirror.mirror_type, skinId);
+  if ((unlockedRow.moon_shards ?? 0) < price) {
+    return { ok: false, error: '月光碎屑唔夠。', insufficient_shards: true };
+  }
+
+  const { error: economyError } = await admin
+    .from('cat_economy_events')
+    .insert({
+      user_id: userId,
+      action_type: 'shop_buy_cat',
+      source_id: skinId,
+      shards_delta: -price,
+    });
+  if (economyError) {
+    if (economyError.code === '23505') {
+      return { ok: false, error: '已經擁有呢隻貓。', already_owned: true };
+    }
+    throw economyError;
+  }
+
+  const cfg = CAT_SKIN_CONFIG[skinId];
+  const { data: updated, error: updateError } = await admin
+    .from('user_cats')
+    .update({
+      owned_skins: [...owned, skinId],
+      moon_shards: (unlockedRow.moon_shards ?? 0) - price,
+      skin_id: skinId,
+      meow_sound_id: cfg.meowId,
+    })
+    .eq('user_id', userId)
+    .select('*')
+    .single();
+  if (updateError) throw updateError;
+
+  const petsToday = await countPetsToday(admin, userId);
+  const moonProfile = await fetchMoonProfileRow(admin, userId);
+  const moonJourney = buildMoonJourneySummary(moonProfile);
+
+  return {
+    ok: true,
+    shards_spent: price,
+    cat: buildCatView(updated, { moonJourney, mirror, petsToday }),
+    shop: buildShopView(updated, mirror),
+  };
+}
+
+/**
+ * 切換已擁有皮膚（§7.1）。
+ */
+export async function performCatEquip(admin, userId, skinId) {
+  if (!CAT_SKIN_CONFIG[skinId]) {
+    return { ok: false, error: '唔認得呢隻貓。' };
+  }
+
+  const catRow = await ensureUserCat(admin, userId);
+  const owned = catRow.owned_skins || [DEFAULT_SKIN_ID];
+  if (!owned.includes(skinId)) {
+    return { ok: false, error: '未擁有呢隻貓，要去商店買先。' };
+  }
+
+  const cfg = CAT_SKIN_CONFIG[skinId];
+  const { data: updated, error } = await admin
+    .from('user_cats')
+    .update({ skin_id: skinId, meow_sound_id: cfg.meowId })
+    .eq('user_id', userId)
+    .select('*')
+    .single();
+  if (error) throw error;
+
+  const [moonProfile, mirror, petsToday] = await Promise.all([
+    fetchMoonProfileRow(admin, userId),
+    fetchMirrorTypes(admin, userId),
+    countPetsToday(admin, userId),
+  ]);
+  const moonJourney = buildMoonJourneySummary(moonProfile);
+
+  return {
+    ok: true,
+    cat: buildCatView(updated, { moonJourney, mirror, petsToday }),
+    shop: buildShopView(updated, mirror),
+  };
 }

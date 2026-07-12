@@ -118,31 +118,38 @@ export default function MyCatGuidePage() {
           </Chapter>
 
           <Chapter no={5} ribbon="#bd93f9" title="成長階段" meow="有一日你會見到我真正嘅樣。">
+            <ul className="my-cat-guide__list">
+              <li>靈魂值<strong>唔會跌</strong>，但升級要時間——大約<strong>每月一個階段</strong>，體型愈大愈難升。</li>
+            </ul>
             <ol className="my-cat-guide__evo">
               <li className="my-cat-guide__evo-step">
                 <span className="my-cat-guide__evo-icon my-cat-guide__evo-icon--s1" aria-hidden="true" />
                 <span className="my-cat-guide__evo-name pixel-font">幼崽</span>
-                <span className="my-cat-guide__evo-req">初次見面</span>
+                <span className="my-cat-guide__evo-req">初次見面 · 靈魂 &lt; 42</span>
               </li>
               <li className="my-cat-guide__evo-arrow" aria-hidden="true">▶</li>
               <li className="my-cat-guide__evo-step">
                 <span className="my-cat-guide__evo-icon my-cat-guide__evo-icon--s2" aria-hidden="true" />
                 <span className="my-cat-guide__evo-name pixel-font">少年貓</span>
-                <span className="my-cat-guide__evo-req">靈魂 ≥ 45 或 Lv4</span>
+                <span className="my-cat-guide__evo-req">靈魂 ≥ 42 · 約 1 個月</span>
               </li>
               <li className="my-cat-guide__evo-arrow" aria-hidden="true">▶</li>
               <li className="my-cat-guide__evo-step">
                 <span className="my-cat-guide__evo-icon my-cat-guide__evo-icon--s3" aria-hidden="true" />
                 <span className="my-cat-guide__evo-name pixel-font">成貓</span>
-                <span className="my-cat-guide__evo-req">靈魂 ≥ 75 + Mirror Card</span>
+                <span className="my-cat-guide__evo-req">靈魂 ≥ 95 + Mirror · 約 7–8 週</span>
               </li>
               <li className="my-cat-guide__evo-arrow" aria-hidden="true">▶</li>
               <li className="my-cat-guide__evo-step my-cat-guide__evo-step--locked">
                 <span className="my-cat-guide__evo-icon my-cat-guide__evo-icon--mystery" aria-hidden="true">?</span>
                 <span className="my-cat-guide__evo-name pixel-font">混血形態</span>
-                <span className="my-cat-guide__evo-req">靈魂 ≥ 92 + ???</span>
+                <span className="my-cat-guide__evo-req">靈魂 ≥ 145 + ??? · 最漫長</span>
               </li>
             </ol>
+            <ul className="my-cat-guide__list">
+              <li>每日餵食固定 <strong>+1 靈魂</strong>（主力來源）；Mirror、連續打卡、升級只得少量加成。</li>
+              <li>靈魂上限 <strong>150</strong>；冇 Moon Journey 等級捷徑，要靠每日返嚟養。</li>
+            </ul>
           </Chapter>
 
           <Chapter no={6} ribbon="#ffe08a" title="月光碎屑" meow="碎屑唔係垃圾，係貨幣！">

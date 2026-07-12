@@ -39,7 +39,8 @@ function formatCooldown(ms) {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-function StatBar({ icon, label, value, barClass }) {
+function StatBar({ icon, label, value, barClass, max = 100 }) {
+  const pct = Math.round((value / max) * 100);
   return (
     <div className="my-cat-stat">
       <span className="my-cat-stat__label">
@@ -50,12 +51,12 @@ function StatBar({ icon, label, value, barClass }) {
         role="progressbar"
         aria-valuenow={value}
         aria-valuemin={0}
-        aria-valuemax={100}
+        aria-valuemax={max}
         aria-label={label}
       >
-        <div className={`my-cat-stat__fill ${barClass}`} style={{ width: `${value}%` }} />
+        <div className={`my-cat-stat__fill ${barClass}`} style={{ width: `${pct}%` }} />
       </div>
-      <span className="my-cat-stat__value">{value}</span>
+      <span className="my-cat-stat__value">{max > 100 ? `${value}/${max}` : value}</span>
     </div>
   );
 }
@@ -63,6 +64,7 @@ function StatBar({ icon, label, value, barClass }) {
 export default function MyCatPanel({ accessToken, userId, soundEnabled = true }) {
   const [cat, setCat] = useState(null);
   const [moonJourney, setMoonJourney] = useState(null);
+  const [shop, setShop] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
 
@@ -90,6 +92,8 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
   const reducedMotionRef = useRef(false);
   const catRef = useRef(null);
   const [summoning, setSummoning] = useState(false);
+  const [shopBusy, setShopBusy] = useState(null);
+  const [shopOpen, setShopOpen] = useState(false);
 
   useEffect(() => { catRef.current = cat; }, [cat]);
 
@@ -101,6 +105,7 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
   const applyState = useCallback((data) => {
     if (data?.cat) setCat(data.cat);
     if (data?.moon_journey) setMoonJourney(data.moon_journey);
+    if (data?.shop) setShop(data.shop);
   }, []);
 
   const loadCat = useCallback(async ({ silent = false } = {}) => {
@@ -383,7 +388,8 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
         playAnim('eat', getCatAnimDurationMs('eat', 2));
         setFeedReward({
           exp: data.awarded ? (data.exp_gained || 2) : 0,
-          shards: data.shards_gained || 0,
+          shards: (data.shards_gained || 0) + (data.bonus_shards || 0),
+          soul: (data.soul_gained || 0) + (data.bonus_soul || 0),
           leveledUp: !!data.leveled_up,
         });
         if (data.leveled_up) setBubble('升級了！月光又亮了一分 ✨');
@@ -392,6 +398,64 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
       setStatusMsg('網路錯誤，請重試');
     } finally {
       setFeeding(false);
+    }
+  }
+
+  async function handleShopBuy(skinId) {
+    if (!accessToken || shopBusy) return;
+    setShopBusy(skinId);
+    setStatusMsg('');
+    try {
+      const r = await fetch('/api/my-cat/shop/buy-cat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ skin_id: skinId }),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        setStatusMsg(data.error || '購買失敗');
+        return;
+      }
+      applyState(data);
+      playMeow();
+      playAnim('buff', getCatAnimDurationMs('buff', 1));
+      setStatusMsg(`✨ 迎咗${data.cat?.family_zh || '新貓'}回家！`);
+    } catch {
+      setStatusMsg('網路錯誤，請重試');
+    } finally {
+      setShopBusy(null);
+    }
+  }
+
+  async function handleShopEquip(skinId) {
+    if (!accessToken || shopBusy) return;
+    setShopBusy(skinId);
+    setStatusMsg('');
+    try {
+      const r = await fetch('/api/my-cat/equip', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ skin_id: skinId }),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        setStatusMsg(data.error || '換裝失敗');
+        return;
+      }
+      applyState(data);
+      playMeow();
+      playAnim('buff', getCatAnimDurationMs('buff', 1));
+      setStatusMsg('換咗裝備貓咪～');
+    } catch {
+      setStatusMsg('網路錯誤，請重試');
+    } finally {
+      setShopBusy(null);
     }
   }
 
@@ -510,6 +574,9 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
               <span className="my-cat-reward__sub">🐟 飽腹回滿 100</span>
               {feedReward.shards > 0 && (
                 <span className="my-cat-reward__sub">✦ 月光碎屑 +{feedReward.shards}</span>
+              )}
+              {feedReward.soul > 0 && (
+                <span className="my-cat-reward__sub">🔮 靈魂 +{feedReward.soul}</span>
               )}
               {feedReward.leveledUp && (
                 <span className="my-cat-reward__sub my-cat-reward__sub--up">⭐ 升級！</span>
@@ -652,7 +719,7 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
         </div>
         <StatBar icon="🐟" label="飽腹" value={cat.hunger} barClass="my-cat-stat__fill--hunger" />
         <StatBar icon="❤️" label="好感" value={cat.affection} barClass="my-cat-stat__fill--affection" />
-        <StatBar icon="🔮" label="靈魂" value={cat.soul} barClass="my-cat-stat__fill--soul" />
+        <StatBar icon="🔮" label="靈魂" value={cat.soul} max={cat.soul_max ?? 150} barClass="my-cat-stat__fill--soul" />
       </div>
 
       <button
@@ -667,6 +734,79 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
 
       {statusMsg && (
         <p className="my-cat-panel__status" role="status">{statusMsg}</p>
+      )}
+
+      {shop?.has_mirror && (
+        <section
+          className={`my-cat-shop${shop.unlocked ? '' : ' my-cat-shop--locked'}${shopOpen ? ' my-cat-shop--open' : ''}`}
+          aria-label="貓咪商店"
+        >
+          <button
+            type="button"
+            className="my-cat-shop__head"
+            aria-expanded={shopOpen}
+            onClick={() => setShopOpen((v) => !v)}
+          >
+            <h2 className="my-cat-shop__title pixel-font">🛒 貓咪商店</h2>
+            <span className="my-cat-shop__price pixel-font">✦ {shop.moon_shards}</span>
+            <span className="my-cat-shop__chevron" aria-hidden="true">{shopOpen ? '▲' : '▼'}</span>
+          </button>
+          {shopOpen && (
+            <>
+              {!shop.unlocked && (
+                <p className="my-cat-shop__hint">
+                  儲夠 <strong>{shop.unlock_cost}</strong> 月光碎屑先可以買家族貓（而家 {shop.moon_shards}）
+                </p>
+              )}
+              <ul className="my-cat-shop__list">
+                {shop.skins.map((skin) => {
+                  const busy = shopBusy === skin.skin_id;
+                  const canBuy = shop.unlocked && !skin.owned && skin.price > 0
+                    && shop.moon_shards >= skin.price;
+                  const canEquip = skin.owned && !skin.equipped;
+                  return (
+                    <li
+                      key={skin.skin_id}
+                      className={`my-cat-shop__item${skin.equipped ? ' my-cat-shop__item--equipped' : ''}`}
+                    >
+                      <span className="my-cat-shop__name">
+                        {skin.family_zh}
+                        {skin.is_family && skin.price > 0 && (
+                          <span className="my-cat-shop__tag">本命</span>
+                        )}
+                        {skin.equipped && (
+                          <span className="my-cat-shop__tag">裝備中</span>
+                        )}
+                      </span>
+                      <span className="my-cat-shop__price">
+                        {skin.price === 0 ? '免費' : `✦ ${skin.price}`}
+                      </span>
+                      {skin.owned ? (
+                        <button
+                          type="button"
+                          className="my-cat-shop__btn my-cat-shop__btn--equip pixel-font"
+                          disabled={!canEquip || busy || isAway}
+                          onClick={() => handleShopEquip(skin.skin_id)}
+                        >
+                          {busy ? '…' : skin.equipped ? '已裝備' : '裝備'}
+                        </button>
+                      ) : skin.price > 0 ? (
+                        <button
+                          type="button"
+                          className="my-cat-shop__btn pixel-font"
+                          disabled={!canBuy || busy}
+                          onClick={() => handleShopBuy(skin.skin_id)}
+                        >
+                          {busy ? '…' : shop.unlocked ? '購買' : '未解鎖'}
+                        </button>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
+        </section>
       )}
 
       <div className="my-cat-panel__footer">

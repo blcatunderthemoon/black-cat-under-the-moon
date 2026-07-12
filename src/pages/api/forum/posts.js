@@ -15,6 +15,7 @@ import { getTagsByPostIds, getPostIdsForTag, insertTagsForPost, getTagLabelMapFo
 import { validateForumTags } from '../../../lib/forum-tags.js';
 import { assertAndConsumeQuota } from '../../../lib/permissions.js';
 import { awardMoonJourneyExp, MOON_JOURNEY_EXP } from '../../../lib/moon-journey.js';
+import { awardForumPostShards } from '../../../lib/my-cat-awards.js';
 import {
   VALID_POST_TOPICS,
   getTopicDbValues,
@@ -556,6 +557,10 @@ async function handlePost(req, res) {
     amount: MOON_JOURNEY_EXP.post_created,
     skipDailyCommentLimit: true,
   }).catch(() => {});
+
+  awardForumPostShards(admin, user.id, post.id).catch((err) => {
+    console.error('[forum/posts] cat shards award failed:', err?.message || err);
+  });
 
   return res.status(201).json({ post });
 }
