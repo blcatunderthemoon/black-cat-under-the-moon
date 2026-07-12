@@ -22733,8 +22733,9 @@ button.forum-tag-chip:hover {
   grid-column: 2;
   justify-self: center;
   flex: unset;
+  /* Zpix 像素字喺同一 px 下比主頁嘅 Noto Sans 睇落細，故加大到視覺對齊 */
   font-family: 'Zpix', 'Press Start 2P', monospace;
-  font-size: 13px;
+  font-size: 15px;
   letter-spacing: 0.08em;
   line-height: 1.2;
   color: var(--purple-light);
@@ -22747,9 +22748,9 @@ button.forum-tag-chip:hover {
   justify-self: end;
 }
 
-/* 登出掣同主頁掣／標題統一字級（桌面 13px） */
+/* 登出掣（像素字）加大到同主頁（Noto Sans 13px）視覺對齊 */
 .app-page--my-cat > .app-header .app-header-logout-btn {
-  font-size: 13px;
+  font-size: 15px;
 }
 
 @media (max-width: 600px) {
@@ -22761,14 +22762,14 @@ button.forum-tag-chip:hover {
     padding-right: 10px;
   }
 
-  /* 主頁掣／標題／登出掣 — 統一 12px，唔好細到睇唔清 */
+  /* 手機：主頁（Noto）13px 為基準；像素字（標題／登出）加大到 14px 視覺對齊 */
   .app-page--my-cat > .app-header > .app-header__back {
-    font-size: 12px;
+    font-size: 13px;
     padding: 7px 10px;
   }
 
   .app-page--my-cat > .app-header > .app-header__title {
-    font-size: 12px;
+    font-size: 14px;
     letter-spacing: 0.04em;
     white-space: nowrap;
     overflow: hidden;
@@ -22777,7 +22778,7 @@ button.forum-tag-chip:hover {
   }
 
   .app-page--my-cat > .app-header .app-header-logout-btn {
-    font-size: 12px;
+    font-size: 14px;
   }
 
   /* 收窄右側：手機隱藏問候名同分隔線，淨低圖示按鈕 */
