@@ -8,7 +8,12 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import CatSprite from './CatSprite.js';
 import MoonLoading from './MoonLoading.js';
-import { GROWTH_STAGE_LABELS, getCatAnimDurationMs } from '../lib/my-cat.js';
+import {
+  GROWTH_STAGE_LABELS,
+  getCatAnimDurationMs,
+  getCatStripUrl,
+  TOO_HUNGRY_THRESHOLD,
+} from '../lib/my-cat.js';
 
 const IDLE_REST_ANIM = 'idle_slowblink';
 // 閒置時偶爾播一段的小動作池（播完再回到靜止）
@@ -20,9 +25,12 @@ const IDLE_VARIETY_ANIMS = [
   'stretch',
   'tailwack',
 ];
-// 靜止 6–14 秒先郁一次
+// 靜止 6–14 秒先考慮郁一次
 const IDLE_REST_MIN_MS = 6000;
 const IDLE_REST_RANGE_MS = 8000;
+// 好感 → 郁動機率：0 好感 25%，100 好感 90%
+const IDLE_MOVE_CHANCE_BASE = 0.25;
+const IDLE_MOVE_CHANCE_SPAN = 0.65;
 
 function formatCooldown(ms) {
   const total = Math.ceil(ms / 1000);
@@ -80,6 +88,10 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
   const busyRef = useRef(false);
   const audioRef = useRef(null);
   const reducedMotionRef = useRef(false);
+  const catRef = useRef(null);
+  const [summoning, setSummoning] = useState(false);
+
+  useEffect(() => { catRef.current = cat; }, [cat]);
 
   useEffect(() => {
     reducedMotionRef.current = typeof window !== 'undefined'
@@ -91,30 +103,44 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
     if (data?.moon_journey) setMoonJourney(data.moon_journey);
   }, []);
 
-  useEffect(() => {
+  const loadCat = useCallback(async ({ silent = false } = {}) => {
     if (!accessToken) return;
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      try {
-        const r = await fetch('/api/my-cat', {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-        const data = await r.json().catch(() => ({}));
-        if (cancelled) return;
-        if (!r.ok) {
-          setLoadError(data.error || '貓咪走失了一下，請重新整理。');
-          return;
-        }
-        applyState(data);
-      } catch {
-        if (!cancelled) setLoadError('網路錯誤，請重新整理。');
-      } finally {
-        if (!cancelled) setLoading(false);
+    if (!silent) setLoading(true);
+    try {
+      const r = await fetch('/api/my-cat', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        if (!silent) setLoadError(data.error || '貓咪走失了一下，請重新整理。');
+        return;
       }
-    })();
-    return () => { cancelled = true; };
+      applyState(data);
+    } catch {
+      if (!silent) setLoadError('網路錯誤，請重新整理。');
+    } finally {
+      if (!silent) setLoading(false);
+    }
   }, [accessToken, applyState]);
+
+  useEffect(() => { loadCat(); }, [loadCat]);
+
+  // 離家出走召喚倒數：每秒 tick；時間到就靜默刷新（貓咪返嚟）。
+  useEffect(() => {
+    const iso = cat?.cat_returns_at;
+    if (!iso) return undefined;
+    const target = new Date(iso).getTime();
+    setNowTs(Date.now());
+    const iv = setInterval(() => {
+      const t = Date.now();
+      setNowTs(t);
+      if (t >= target) {
+        clearInterval(iv);
+        loadCat({ silent: true });
+      }
+    }, 1000);
+    return () => clearInterval(iv);
+  }, [cat?.cat_returns_at, loadCat]);
 
   // Preload the single meow bound to the equipped skin (§8.1).
   useEffect(() => {
@@ -123,6 +149,17 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
     audio.preload = 'auto';
     audioRef.current = audio;
   }, [cat?.meow_url]);
+
+  // 預載所有會用到嘅動畫 strip：唔預載嘅話，第一次摸摸（buff）／餵食（eat）
+  // 要即場載圖，載入期間 background 係空 → 貓咪會「消失」一陣。
+  useEffect(() => {
+    if (!cat?.skin_id || typeof window === 'undefined') return;
+    const anims = new Set([IDLE_REST_ANIM, ...IDLE_VARIETY_ANIMS, 'buff', 'eat']);
+    anims.forEach((a) => {
+      const img = new window.Image();
+      img.src = getCatStripUrl(cat.skin_id, a);
+    });
+  }, [cat?.skin_id]);
 
   useEffect(() => () => {
     clearTimeout(animTimerRef.current);
@@ -185,13 +222,26 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
     return () => clearInterval(iv);
   }, [bubble]);
 
-  // 閒置節奏：大部分時間靜止唔郁，隔 6–14 秒隨機播一段小動作，播完再靜止。
+  // 閒置節奏：大部分時間靜止唔郁，隔 6–14 秒**考慮**播一段小動作。
+  // 好感愈高愈活躍（郁動機率 25%–90%）；太餓（飽腹 < 20）冇心機郁。
   const scheduleIdle = useCallback(() => {
     clearTimeout(idleTimerRef.current);
     if (reducedMotionRef.current) return;
     const restMs = IDLE_REST_MIN_MS + Math.random() * IDLE_REST_RANGE_MS;
     idleTimerRef.current = setTimeout(() => {
       if (busyRef.current) return;
+      const c = catRef.current;
+      // 太餓 → 訓喺度唔郁，等餵食
+      if ((c?.hunger ?? 100) < TOO_HUNGRY_THRESHOLD) {
+        scheduleIdle();
+        return;
+      }
+      const affection = c?.affection ?? 50;
+      const moveChance = IDLE_MOVE_CHANCE_BASE + IDLE_MOVE_CHANCE_SPAN * (affection / 100);
+      if (Math.random() > moveChance) {
+        scheduleIdle();
+        return;
+      }
       const next = IDLE_VARIETY_ANIMS[Math.floor(Math.random() * IDLE_VARIETY_ANIMS.length)];
       setAnim(next);
       setAnimPaused(false);
@@ -243,8 +293,32 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
     }
   }
 
+  async function handleSummon() {
+    if (!accessToken || summoning) return;
+    setSummoning(true);
+    try {
+      const r = await fetch('/api/my-cat/summon', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        setStatusMsg(data.error || '召喚失敗，請重試');
+        return;
+      }
+      if (data.cat) setCat(data.cat);
+      if (data.ok && !data.already_summoned) {
+        setStatusMsg('🔔 召喚咗喇 · 貓咪 1 小時後返嚟');
+      }
+    } catch {
+      setStatusMsg('網路錯誤，請重試');
+    } finally {
+      setSummoning(false);
+    }
+  }
+
   async function handlePet() {
-    if (!accessToken || petting || feeding) return;
+    if (!accessToken || petting || feeding || cat?.away) return;
     // Daily limit reached → next_pet_available_at is null.
     if (cat?.next_pet_available_at == null) return;
     // Escalating cooldown still counting down.
@@ -276,7 +350,7 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
         setBubble(data.line);
       }
       if (data.counted) {
-        setStatusMsg('❤️ 好感度 +2');
+        setStatusMsg('❤️ 好感度 +20');
       }
     } catch {
       setStatusMsg('網路錯誤，請重試');
@@ -286,7 +360,7 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
   }
 
   async function handleFeed() {
-    if (!accessToken || feeding || cat?.fed_today) return;
+    if (!accessToken || feeding || cat?.fed_today || cat?.away) return;
     setFeeding(true);
     setStatusMsg('');
     try {
@@ -300,14 +374,15 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
         return;
       }
       applyState(data);
-      if (data.already_fed_today) {
+      if (data.away) {
+        setStatusMsg(data.error || '貓咪離家出走咗，先召喚佢返嚟。');
+      } else if (data.already_fed_today) {
         setStatusMsg('今日已餵過罐罐 🐟');
       } else {
         playMeow();
         playAnim('eat', getCatAnimDurationMs('eat', 2));
         setFeedReward({
           exp: data.awarded ? (data.exp_gained || 2) : 0,
-          hunger: 25,
           shards: data.shards_gained || 0,
           leveledUp: !!data.leveled_up,
         });
@@ -373,7 +448,11 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
   const petLimitReached = cat.next_pet_available_at == null;
   const nextPetTs = cat.next_pet_available_at ? new Date(cat.next_pet_available_at).getTime() : 0;
   const cooldownMs = petLimitReached ? 0 : Math.max(0, nextPetTs - nowTs);
-  const canPet = !petLimitReached && cooldownMs <= 0;
+  const isAway = !!cat.away;
+  const canPet = !isAway && !petLimitReached && cooldownMs <= 0;
+  const tooHungry = !isAway && cat.hunger < TOO_HUNGRY_THRESHOLD;
+  const returnTs = cat.cat_returns_at ? new Date(cat.cat_returns_at).getTime() : 0;
+  const returnMs = Math.max(0, returnTs - nowTs);
 
   return (
     <div className="my-cat-panel">
@@ -428,7 +507,7 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
               <span className="my-cat-reward__exp pixel-font">
                 {feedReward.exp > 0 ? `+${feedReward.exp} EXP` : '已打卡'}
               </span>
-              <span className="my-cat-reward__sub">🐟 飽腹 +{feedReward.hunger}</span>
+              <span className="my-cat-reward__sub">🐟 飽腹回滿 100</span>
               {feedReward.shards > 0 && (
                 <span className="my-cat-reward__sub">✦ 月光碎屑 +{feedReward.shards}</span>
               )}
@@ -439,29 +518,53 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
           </div>
         )}
 
-        <button
-          type="button"
-          className={`my-cat-panel__cat-btn${canPet ? '' : ' my-cat-panel__cat-btn--resting'}`}
-          onClick={handlePet}
-          disabled={!canPet}
-          aria-label="摸摸貓咪"
-          title={
-            petLimitReached
-              ? '今日摸摸已滿，聽日再嚟'
-              : canPet
-                ? '摸摸貓咪（Tap to Meow）'
-                // 唔好放倒數入 title：每秒改 title 會令 tooltip 不停閃（倒數睇下面提示行）
-                : '貓咪休息中，等佢唞埋先啦'
-          }
-        >
-          <CatSprite
-            skinId={cat.skin_id}
-            anim={anim}
-            size={150}
-            paused={animPaused}
-            className={cat.growth_stage === 'kitten' ? 'cat-sprite--kitten' : ''}
-          />
-        </button>
+        {isAway ? (
+          <div className="my-cat-away" role="status">
+            <span className="my-cat-away__paws" aria-hidden="true">🐾 🐾 🐾</span>
+            <p className="my-cat-away__title pixel-font">貓咪離家出走咗！</p>
+            {cat.summon_pending ? (
+              <p className="my-cat-away__text">
+                🔔 已召喚 · <strong>{formatCooldown(returnMs)}</strong> 後返嚟
+              </p>
+            ) : (
+              <>
+                <p className="my-cat-away__text">肚餓到頂唔順，走咗去搵嘢食……</p>
+                <button
+                  type="button"
+                  className="my-cat-away__btn pixel-font"
+                  onClick={handleSummon}
+                  disabled={summoning}
+                >
+                  {summoning ? '召喚中…' : '🔔 召喚貓咪'}
+                </button>
+              </>
+            )}
+          </div>
+        ) : (
+          <button
+            type="button"
+            className={`my-cat-panel__cat-btn${canPet ? '' : ' my-cat-panel__cat-btn--resting'}`}
+            onClick={handlePet}
+            disabled={!canPet}
+            aria-label="摸摸貓咪"
+            title={
+              petLimitReached
+                ? '今日摸摸已滿，聽日再嚟'
+                : canPet
+                  ? '摸摸貓咪（Tap to Meow）'
+                  // 唔好放倒數入 title：每秒改 title 會令 tooltip 不停閃（倒數睇下面提示行）
+                  : '貓咪休息中，等佢唞埋先啦'
+            }
+          >
+            <CatSprite
+              skinId={cat.skin_id}
+              anim={anim}
+              size={150}
+              paused={animPaused}
+              className={`${cat.growth_stage === 'kitten' ? 'cat-sprite--kitten' : ''}${tooHungry ? ' cat-sprite--starving' : ''}`}
+            />
+          </button>
+        )}
 
         {/* 遊戲式名牌 */}
         <div className="my-cat-room__nameplate" title={cat.custom_name ? cat.family_zh : undefined}>
@@ -521,10 +624,18 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
       </div>
 
       <p className={`my-cat-panel__hint${!canPet ? ' my-cat-panel__hint--resting' : ''}`}>
-        {petLimitReached ? (
+        {isAway ? (
+          cat.summon_pending ? (
+            <>🌃 貓咪喺出面遊蕩緊 · 就快返嚟喇</>
+          ) : (
+            <>🌃 飽腹去到 0，貓咪離家出走咗 · 按「召喚」叫佢返嚟</>
+          )
+        ) : tooHungry ? (
+          <>😿 貓咪好肚餓，冇心機郁 · 記得餵罐罐</>
+        ) : petLimitReached ? (
           <>🌙 今日摸摸已滿 · 聽日再嚟陪我啦</>
         ) : canPet ? (
-          <><span aria-hidden="true">👆</span> 點貓咪摸摸 · 好感 <strong>+2</strong></>
+          <><span aria-hidden="true">👆</span> 點貓咪摸摸 · 好感 <strong>+20</strong></>
         ) : (
           <>💤 貓咪休息緊 · <strong>{formatCooldown(cooldownMs)}</strong> 後先可以再摸</>
         )}
@@ -548,10 +659,10 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
         type="button"
         className={`my-cat-panel__feed-btn pixel-font${cat.fed_today ? ' my-cat-panel__feed-btn--done' : ''}`}
         onClick={handleFeed}
-        disabled={feeding || cat.fed_today}
+        disabled={feeding || cat.fed_today || isAway}
       >
         <span aria-hidden="true">{cat.fed_today ? '✓' : '🥫'}</span>
-        {feeding ? '餵食中…' : cat.fed_today ? '今日已餵食' : '餵食罐罐'}
+        {feeding ? '餵食中…' : cat.fed_today ? '今日已餵食' : isAway ? '貓咪出走中…' : '餵食罐罐'}
       </button>
 
       {statusMsg && (

@@ -7,8 +7,11 @@
 import {
   DEFAULT_SKIN_ID,
   CAT_SKIN_CONFIG,
-  FEED_HUNGER_GAIN,
   FEED_SHARDS_GAIN,
+  HUNGER_FULL,
+  CAT_SUMMON_WAIT_MS,
+  computeHungerFromFedAt,
+  computeAffectionFromPetAt,
   PET_AFFECTION_GAIN,
   PET_DAILY_LIMIT,
   petCooldownMs,
@@ -105,20 +108,63 @@ async function countPetsToday(admin, userId) {
 }
 
 /**
+ * 現時飽腹：優先用 last_fed_at 新制（餵食回滿 100，24 小時線性跌到 0）；
+ * 未有時間戳（舊資料）就用舊制曆日衰減。
+ */
+function currentHunger(catRow, nowMs = Date.now()) {
+  const fedAtMs = catRow.last_fed_at ? new Date(catRow.last_fed_at).getTime() : 0;
+  const linear = computeHungerFromFedAt(fedAtMs, nowMs);
+  if (linear != null) return linear;
+  const decayed = applyStatDecay({
+    hunger: catRow.hunger,
+    affection: catRow.affection,
+    daysSinceFed: hkDaysSince(catRow.last_fed_date || catRow.created_at),
+    daysSincePet: 0,
+  });
+  return clampStat(decayed.hunger);
+}
+
+/**
+ * 現時好感（v2）：由上次摸摸（last_pet_at）起 24 小時按比例減到 0。
+ * 未摸過就以 created_at 做基準。
+ */
+function currentAffection(catRow, nowMs = Date.now()) {
+  const baseMs = catRow.last_pet_at
+    ? new Date(catRow.last_pet_at).getTime()
+    : (catRow.created_at ? new Date(catRow.created_at).getTime() : 0);
+  return computeAffectionFromPetAt(catRow.affection, baseMs, nowMs);
+}
+
+/**
+ * 離家出走狀態：飽腹 0 即出走；按「召喚」後等 CAT_SUMMON_WAIT_MS 先返嚟。
+ * 返咗嚟（就算仲係 0）就可以餵食，餵完 last_fed_at 重置、summoned_at 清空。
+ */
+function awayState(catRow, hunger, nowMs = Date.now()) {
+  const summonedAtMs = catRow.summoned_at ? new Date(catRow.summoned_at).getTime() : 0;
+  const returned = summonedAtMs > 0 && nowMs >= summonedAtMs + CAT_SUMMON_WAIT_MS;
+  const away = hunger <= 0 && !returned;
+  const summonPending = away && summonedAtMs > 0;
+  return {
+    away,
+    summon_pending: summonPending,
+    can_summon: away && !summonPending,
+    cat_returns_at: summonPending ? new Date(summonedAtMs + CAT_SUMMON_WAIT_MS).toISOString() : null,
+  };
+}
+
+/**
  * Build the client-facing cat payload.
- * Decay is computed lazily from stored values + elapsed days; stored stats
+ * Decay is computed lazily from stored values + elapsed time; stored stats
  * only change on feed/pet, so this stays idempotent.
  */
 function buildCatView(catRow, { moonJourney, mirror, petsToday }) {
   const skinId = catRow.skin_id || DEFAULT_SKIN_ID;
   const todayHk = getHongKongDateString();
+  const now = Date.now();
 
-  const decayed = applyStatDecay({
-    hunger: catRow.hunger,
-    affection: catRow.affection,
-    daysSinceFed: hkDaysSince(catRow.last_fed_date || catRow.created_at),
-    daysSincePet: hkDaysSince(catRow.last_pet_at || catRow.created_at),
-  });
+  const hunger = currentHunger(catRow, now);
+  const affection = currentAffection(catRow, now);
+  const awayInfo = awayState(catRow, hunger, now);
 
   const growthStage = getGrowthStage({
     soul: catRow.soul,
@@ -134,8 +180,8 @@ function buildCatView(catRow, { moonJourney, mirror, petsToday }) {
     custom_name: catRow.custom_name || null,
     can_rename: !catRow.renamed_at,
     meow_url: getCatMeowUrl(skinId),
-    hunger: clampStat(decayed.hunger),
-    affection: clampStat(decayed.affection),
+    hunger,
+    affection,
     soul: clampStat(catRow.soul),
     growth_stage: growthStage,
     moon_shards: catRow.moon_shards ?? 0,
@@ -148,6 +194,7 @@ function buildCatView(catRow, { moonJourney, mirror, petsToday }) {
       catRow.last_pet_at ? new Date(catRow.last_pet_at).getTime() : 0,
       petsToday ?? 0,
     ),
+    ...awayInfo,
   };
 }
 
@@ -169,12 +216,36 @@ export async function getMyCatState(admin, userId) {
 
 /**
  * Feed = unified daily ritual (§5.2):
- * one HK calendar day → Moon Journey check-in (+2 EXP) + hunger +25 + shards +3.
+ * one HK calendar day → Moon Journey check-in (+2 EXP) + hunger 回滿 100 + shards +3.
+ * 飽腹 v2：餵完 24 小時線性跌到 0。離家出走期間唔餵得（要先召喚等佢返嚟）。
  * Idempotent per day via last_fed_date + ledgers.
  */
 export async function performCatFeed(admin, userId) {
   const todayHk = getHongKongDateString();
   const catRow = await ensureUserCat(admin, userId);
+
+  // 離家出走中 → 唔餵得，提示先召喚。
+  const hungerNow = currentHunger(catRow);
+  const awayInfo = awayState(catRow, hungerNow);
+  if (awayInfo.away) {
+    const [mirror, petsToday] = await Promise.all([
+      fetchMirrorTypes(admin, userId),
+      countPetsToday(admin, userId),
+    ]);
+    const moonProfile = await fetchMoonProfileRow(admin, userId);
+    const moonJourney = buildMoonJourneySummary(moonProfile);
+    return {
+      away: true,
+      already_fed_today: false,
+      awarded: false,
+      shards_gained: 0,
+      error: awayInfo.summon_pending
+        ? '貓咪仲喺出面未返，等埋佢先。'
+        : '貓咪離家出走咗，先按「召喚」叫佢返嚟。',
+      moon_journey: moonJourney,
+      cat: buildCatView(catRow, { moonJourney, mirror, petsToday }),
+    };
+  }
 
   // Moon Journey check-in is itself idempotent per HK day.
   const checkin = await performDailyCheckIn(admin, userId);
@@ -198,7 +269,7 @@ export async function performCatFeed(admin, userId) {
       user_id: userId,
       action_type: 'daily_feed',
       source_id: todayHk,
-      delta_hunger: FEED_HUNGER_GAIN,
+      delta_hunger: HUNGER_FULL,
     });
   if (careError && careError.code !== '23505') throw careError;
   const firstFeed = !careError;
@@ -207,14 +278,6 @@ export async function performCatFeed(admin, userId) {
   let nextRow = catRow;
 
   if (firstFeed) {
-    const decayed = applyStatDecay({
-      hunger: catRow.hunger,
-      affection: catRow.affection,
-      daysSinceFed: hkDaysSince(catRow.last_fed_date || catRow.created_at),
-      daysSincePet: 0,
-    });
-    const newHunger = clampStat(decayed.hunger + FEED_HUNGER_GAIN);
-
     const { error: shardError } = await admin
       .from('cat_economy_events')
       .insert({
@@ -229,8 +292,10 @@ export async function performCatFeed(admin, userId) {
     const { data: updated, error: updateError } = await admin
       .from('user_cats')
       .update({
-        hunger: newHunger,
+        hunger: HUNGER_FULL,
         last_fed_date: todayHk,
+        last_fed_at: new Date().toISOString(),
+        summoned_at: null,
         moon_shards: (catRow.moon_shards ?? 0) + shardsGained,
       })
       .eq('user_id', userId)
@@ -252,6 +317,42 @@ export async function performCatFeed(admin, userId) {
     moon_journey: checkin.moon_journey,
     cat: buildCatView(nextRow, { moonJourney: checkin.moon_journey, mirror, petsToday }),
   };
+}
+
+/**
+ * 召喚離家出走嘅貓（飽腹 0）：記低 summoned_at，1 小時後貓咪返嚟先可以餵返。
+ */
+export async function performCatSummon(admin, userId) {
+  const catRow = await ensureUserCat(admin, userId);
+  const hungerNow = currentHunger(catRow);
+  const awayInfo = awayState(catRow, hungerNow);
+
+  const buildResult = async (row, extra) => {
+    const [moonProfile, mirror, petsToday] = await Promise.all([
+      fetchMoonProfileRow(admin, userId),
+      fetchMirrorTypes(admin, userId),
+      countPetsToday(admin, userId),
+    ]);
+    const moonJourney = buildMoonJourneySummary(moonProfile);
+    return { cat: buildCatView(row, { moonJourney, mirror, petsToday }), ...extra };
+  };
+
+  if (!awayInfo.away) {
+    return buildResult(catRow, { ok: false, error: '貓咪就喺屋企，唔使召喚。' });
+  }
+  if (awayInfo.summon_pending) {
+    return buildResult(catRow, { ok: true, already_summoned: true });
+  }
+
+  const { data: updated, error } = await admin
+    .from('user_cats')
+    .update({ summoned_at: new Date().toISOString() })
+    .eq('user_id', userId)
+    .select('*')
+    .single();
+  if (error) throw error;
+
+  return buildResult(updated, { ok: true });
 }
 
 export const CAT_NAME_MAX_LENGTH = 12;
@@ -333,6 +434,12 @@ export async function performCatPet(admin, userId, { lastLine = null } = {}) {
     };
   };
 
+  // 離家出走中 — 冇貓可摸。
+  const awayInfo = awayState(catRow, currentHunger(catRow, now), now);
+  if (awayInfo.away) {
+    return buildResult(catRow, { counted: false, away: true });
+  }
+
   // 每日上限已滿 — 不改狀態、不重置。
   if (petsToday >= PET_DAILY_LIMIT) {
     return buildResult(catRow, { counted: false, daily_limit_reached: true });
@@ -362,25 +469,21 @@ export async function performCatPet(admin, userId, { lastLine = null } = {}) {
   if (counted) petsToday += 1;
   else petsToday = await countPetsToday(admin, userId); // 併發：重新計數
 
-  const decayed = applyStatDecay({
-    hunger: catRow.hunger,
-    affection: catRow.affection,
-    daysSinceFed: 0,
-    daysSincePet: hkDaysSince(catRow.last_pet_at || catRow.created_at),
-  });
-  const newAffection = clampStat(decayed.affection + (counted ? PET_AFFECTION_GAIN : 0));
+  if (!counted) {
+    return buildResult(catRow, { counted: false });
+  }
 
-  const updatePayload = counted
-    ? { affection: newAffection, last_pet_at: new Date(now).toISOString() }
-    : { affection: newAffection };
+  // 好感 v2：喺「現時（已衰減）」值上 +20，落盤並重置 24 小時衰減基準。
+  // 每日 5 次 × 20 = 100 → 摸滿必到頂。
+  const newAffection = clampStat(currentAffection(catRow, now) + PET_AFFECTION_GAIN);
 
   const { data: updated, error: updateError } = await admin
     .from('user_cats')
-    .update(updatePayload)
+    .update({ affection: newAffection, last_pet_at: new Date(now).toISOString() })
     .eq('user_id', userId)
     .select('*')
     .single();
   if (updateError) throw updateError;
 
-  return buildResult(updated, { counted });
+  return buildResult(updated, { counted: true });
 }

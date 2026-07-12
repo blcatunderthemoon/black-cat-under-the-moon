@@ -61,15 +61,27 @@ export default function MyCatGuidePage() {
           <Chapter no={1} ribbon="#ffb347" title="每日餵食＝打卡" meow="罐罐！罐罐！唔該每日準時。">
             <ul className="my-cat-guide__list">
               <li>每日（香港時間）可以餵 <strong>一次</strong> 罐罐，同時就係你嘅每日打卡。</li>
+              <li>餵完飽腹即刻<strong>回滿 100</strong>，之後 <strong>24 小時</strong>內慢慢跌返落 0 — 記得每日返嚟續命！</li>
               <li>連續每日餵食可以累積連續打卡日數 🔥。</li>
             </ul>
-            <Loot items={['🐟 飽腹 +25', '⭐ EXP +2', '✦ 碎屑 +3']} />
+            <Loot items={['🐟 飽腹回滿 100', '⭐ EXP +2', '✦ 碎屑 +3']} />
           </Chapter>
 
-          <Chapter no={2} ribbon="#ff7ad9" title="摸摸貓咪（Tap to Meow）" meow="摸兩下就夠喇……先講住。">
+          <Chapter no={2} ribbon="#ff8a5c" title="貓咪離家出走？！" meow="唔係嬲你，我只係去咗搵嘢食。">
+            <ul className="my-cat-guide__list">
+              <li>飽腹低過 <strong>20</strong>：貓咪好肚餓，<strong>冇心機郁</strong>，會灰灰哋坐定定等罐罐。</li>
+              <li>飽腹去到 <strong>0</strong>：貓咪會<strong>離家出走</strong>！房間得返一行腳印 🐾，餵食同摸摸都會做唔到。</li>
+              <li>按「<strong>🔔 召喚貓咪</strong>」之後，要等 <strong>1 小時</strong>佢先肯返嚟（有倒數計時）。</li>
+              <li>返嚟之後即刻餵罐罐，飽腹回滿 100，一切如常。</li>
+            </ul>
+          </Chapter>
+
+          <Chapter no={3} ribbon="#ff7ad9" title="摸摸貓咪（Tap to Meow）" meow="摸兩下就夠喇……先講住。">
             <ul className="my-cat-guide__list">
               <li>點擊貓咪，佢會 <strong>Meow~</strong> 一聲、擺個開心動作，仲會同你講嘢。</li>
-              <li>每次成功摸摸：❤️ 好感 <strong>+2</strong>，每日最多 <strong>5 次</strong>。</li>
+              <li>每次成功摸摸：❤️ 好感 <strong>+20</strong>，每日最多 <strong>5 次</strong> — 摸滿 5 次好感必定爆滿 100！</li>
+              <li>好感同飽腹一樣會喺 <strong>24 小時</strong>內慢慢跌返落 0，想貓咪日日黐身就要日日摸。</li>
+              <li><strong>好感愈高，貓咪愈活躍</strong>：會更頻密咁舔毛、伸懶腰、擺尾；好感低就淨係坐喺度眨眼。</li>
               <li>好感夠高，會解鎖新嘅台詞池 😽。</li>
             </ul>
             <ol className="my-cat-guide__timeline" aria-label="摸摸冷卻時間">
@@ -85,27 +97,27 @@ export default function MyCatGuidePage() {
             </ol>
           </Chapter>
 
-          <Chapter no={3} ribbon="#4fc3f7" title="三大屬性" meow="我嘅靈魂比你想像中深邃。">
+          <Chapter no={4} ribbon="#4fc3f7" title="三大屬性" meow="我嘅靈魂比你想像中深邃。">
             <ul className="my-cat-guide__stats">
               <li className="my-cat-guide__stat" style={{ '--stat': '#4fc3f7', '--fill': '72%' }}>
                 <span className="my-cat-guide__stat-name"><strong>🐟 飽腹</strong></span>
                 <span className="my-cat-guide__statbar" aria-hidden="true"><span className="my-cat-guide__statbar-fill" /></span>
-                <span className="my-cat-guide__stat-desc">靠每日餵食維持；漏咗餵每日跌 8（最低 20，餓極唔會死）。</span>
+                <span className="my-cat-guide__stat-desc">餵食回滿 100，24 小時內線性跌到 0。低過 20 貓咪<strong>冇心機郁</strong>；去到 0 會<strong>離家出走</strong>（召喚後 1 小時返嚟）。</span>
               </li>
               <li className="my-cat-guide__stat" style={{ '--stat': '#ff6b9d', '--fill': '54%' }}>
                 <span className="my-cat-guide__stat-name"><strong>❤️ 好感</strong></span>
                 <span className="my-cat-guide__statbar" aria-hidden="true"><span className="my-cat-guide__statbar-fill" /></span>
-                <span className="my-cat-guide__stat-desc">靠摸摸累積；連續 3 日冇理佢會跌 5（最低 30）。</span>
+                <span className="my-cat-guide__stat-desc">每次摸 +20，摸滿 5 次到頂 100；同飽腹一樣，24 小時內慢慢跌到 0。<strong>好感愈高，貓咪愈活躍</strong>，會更加密咁做唔同小動作。</span>
               </li>
               <li className="my-cat-guide__stat" style={{ '--stat': '#bd93f9', '--fill': '38%' }}>
                 <span className="my-cat-guide__stat-name"><strong>🔮 靈魂</strong></span>
                 <span className="my-cat-guide__statbar" aria-hidden="true"><span className="my-cat-guide__statbar-fill" /></span>
-                <span className="my-cat-guide__stat-desc">做 Mirror 性格測驗、玩月光漂流瓶會提升，係成長嘅關鍵。</span>
+                <span className="my-cat-guide__stat-desc">做 Mirror 性格測驗、玩月光漂流瓶會提升；<strong>唔會衰減</strong>，係成長進化嘅關鍵。</span>
               </li>
             </ul>
           </Chapter>
 
-          <Chapter no={4} ribbon="#bd93f9" title="成長階段" meow="有一日你會見到我真正嘅樣。">
+          <Chapter no={5} ribbon="#bd93f9" title="成長階段" meow="有一日你會見到我真正嘅樣。">
             <ol className="my-cat-guide__evo">
               <li className="my-cat-guide__evo-step">
                 <span className="my-cat-guide__evo-icon my-cat-guide__evo-icon--s1" aria-hidden="true" />
@@ -133,14 +145,14 @@ export default function MyCatGuidePage() {
             </ol>
           </Chapter>
 
-          <Chapter no={5} ribbon="#ffe08a" title="月光碎屑" meow="碎屑唔係垃圾，係貨幣！">
+          <Chapter no={6} ribbon="#ffe08a" title="月光碎屑" meow="碎屑唔係垃圾，係貨幣！">
             <ul className="my-cat-guide__list">
               <li>每日餵食會賺到 ✦ 月光碎屑，喺頁面底部可以睇到餘額。</li>
               <li>將來嘅「貓咪商店」可以用碎屑換新貓咪同房間裝飾，記住儲定先！</li>
             </ul>
           </Chapter>
 
-          <Chapter no={6} ribbon="#8be9a8" title="幫貓咪改名" meow="名改咗就係我嘅一部分，諗清楚。">
+          <Chapter no={7} ribbon="#8be9a8" title="幫貓咪改名" meow="名改咗就係我嘅一部分，諗清楚。">
             <ul className="my-cat-guide__list">
               <li>點名牌旁邊嘅 ✏️ 就可以幫貓咪起名（最多 12 個字）。</li>
               <li>⚠ 只能改 <strong>一次</strong>，改完唔反悔㗎！</li>

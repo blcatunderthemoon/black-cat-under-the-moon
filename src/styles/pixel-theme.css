@@ -22747,6 +22747,11 @@ button.forum-tag-chip:hover {
   justify-self: end;
 }
 
+/* 登出掣同主頁掣／標題統一字級（桌面 13px） */
+.app-page--my-cat > .app-header .app-header-logout-btn {
+  font-size: 13px;
+}
+
 @media (max-width: 600px) {
   /* 手機：兩邊各取自然闊度、標題彈性置中，杜絕右側 nav 溢出蓋住標題 */
   .app-page--my-cat > .app-header {
@@ -22756,13 +22761,23 @@ button.forum-tag-chip:hover {
     padding-right: 10px;
   }
 
+  /* 主頁掣／標題／登出掣 — 統一 12px，唔好細到睇唔清 */
+  .app-page--my-cat > .app-header > .app-header__back {
+    font-size: 12px;
+    padding: 7px 10px;
+  }
+
   .app-page--my-cat > .app-header > .app-header__title {
-    font-size: 11px;
+    font-size: 12px;
     letter-spacing: 0.04em;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
+  }
+
+  .app-page--my-cat > .app-header .app-header-logout-btn {
+    font-size: 12px;
   }
 
   /* 收窄右側：手機隱藏問候名同分隔線，淨低圖示按鈕 */
@@ -22874,6 +22889,89 @@ button.forum-tag-chip:hover {
   .header-my-cat-link--hungry {
     animation: none;
   }
+}
+
+/* ── 離家出走（飽腹 0） ── */
+.my-cat-away {
+  position: absolute;
+  bottom: 26px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  width: min(280px, calc(100% - 32px));
+  padding: 14px 16px;
+  text-align: center;
+  background: rgba(13, 11, 30, 0.94);
+  border: 2px solid rgba(255, 138, 92, 0.7);
+  box-shadow:
+    0 0 0 2px #07060e,
+    0 0 18px rgba(255, 122, 92, 0.35),
+    5px 6px 0 rgba(0, 0, 0, 0.5);
+}
+
+.my-cat-away__paws {
+  font-size: 13px;
+  letter-spacing: 6px;
+  opacity: 0.65;
+}
+
+.my-cat-away__title {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #ff9a6b;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
+}
+
+.my-cat-away__text {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: rgba(240, 235, 216, 0.85);
+}
+
+.my-cat-away__text strong {
+  color: #ffe08a;
+}
+
+.my-cat-away__btn {
+  margin-top: 3px;
+  padding: 9px 18px;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #0d0b1e;
+  background: linear-gradient(180deg, #ffb347 0%, #ff8a5c 100%);
+  border: 2px solid #07060e;
+  box-shadow:
+    0 3px 0 #7a3a22,
+    0 0 14px rgba(255, 138, 92, 0.4);
+  cursor: pointer;
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+
+.my-cat-away__btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.my-cat-away__btn:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow:
+    0 0 0 #7a3a22,
+    0 0 10px rgba(255, 138, 92, 0.35);
+}
+
+.my-cat-away__btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* 太餓（飽腹 < 20）— 冇心機郁，成隻貓灰灰哋 */
+.cat-sprite--starving {
+  filter: saturate(0.55) brightness(0.85);
 }
 
 /* ── Panel（遊戲卡匣外框） ── */

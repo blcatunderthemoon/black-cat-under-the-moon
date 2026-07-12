@@ -37,7 +37,8 @@ export function getCatPrice(mirrorType, targetSkinId) {
 /* Interaction tuning (§4) */
 export const FEED_HUNGER_GAIN = 25;
 export const FEED_SHARDS_GAIN = 3;
-export const PET_AFFECTION_GAIN = 2;
+// 好感 v2：每次摸 +20 → 每日 5 次摸滿必到 100
+export const PET_AFFECTION_GAIN = 20;
 
 /**
  * Tap to Meow 累進冷卻（§4.1）。
@@ -66,6 +67,40 @@ export const HUNGER_DECAY_PER_DAY = 8;
 export const HUNGER_FLOOR = 20;
 export const AFFECTION_DECAY_PER_3_DAYS = 5;
 export const AFFECTION_FLOOR = 30;
+
+/**
+ * 飽腹 v2：餵食回滿 100，之後 24 小時**線性**跌到 0。
+ * 跌到 0 → 貓咪離家出走；按「召喚」等 1 小時先返嚟。
+ * 太餓（< TOO_HUNGRY_THRESHOLD）→ 冇心機郁（閒置動畫停晒）。
+ */
+export const HUNGER_FULL = 100;
+export const HUNGER_EMPTY_MS = 24 * 60 * 60 * 1000;
+export const CAT_SUMMON_WAIT_MS = 60 * 60 * 1000;
+export const TOO_HUNGRY_THRESHOLD = 20;
+
+/** 由上次餵食時間戳計算現時飽腹（0–100 線性）。無記錄回傳 null（用舊制）。 */
+export function computeHungerFromFedAt(lastFedAtMs, nowMs = Date.now()) {
+  if (!lastFedAtMs) return null;
+  const elapsed = nowMs - lastFedAtMs;
+  if (elapsed <= 0) return HUNGER_FULL;
+  if (elapsed >= HUNGER_EMPTY_MS) return 0;
+  return Math.round(HUNGER_FULL * (1 - elapsed / HUNGER_EMPTY_MS));
+}
+
+/**
+ * 好感 v2：同飽腹一樣，由上次摸摸起 24 小時**按比例**慢慢減到 0。
+ * baseAffection = 上次摸摸時落盤嘅好感值。
+ */
+export const AFFECTION_EMPTY_MS = 24 * 60 * 60 * 1000;
+
+export function computeAffectionFromPetAt(baseAffection, lastPetAtMs, nowMs = Date.now()) {
+  const base = clampStat(baseAffection);
+  if (!lastPetAtMs) return base;
+  const elapsed = nowMs - lastPetAtMs;
+  if (elapsed <= 0) return base;
+  if (elapsed >= AFFECTION_EMPTY_MS) return 0;
+  return Math.round(base * (1 - elapsed / AFFECTION_EMPTY_MS));
+}
 
 /* Animations at 12fps; everything else is 8fps (matches asset filenames). */
 const FPS12_ANIMS = new Set(['pounce', 'stretch', 'tailwack']);
