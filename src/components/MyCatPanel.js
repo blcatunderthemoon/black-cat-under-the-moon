@@ -107,7 +107,13 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
   }, []);
 
   const applyState = useCallback((data) => {
-    if (data?.cat) setCat(data.cat);
+    if (data?.cat) {
+      // Trust the server's already_fed_today signal even if the row flag lags,
+      // so the feed button always locks out once the cat has eaten today.
+      setCat(data.already_fed_today && !data.cat.fed_today
+        ? { ...data.cat, fed_today: true }
+        : data.cat);
+    }
     if (data?.moon_journey) setMoonJourney(data.moon_journey);
     if (data?.shop) setShop(data.shop);
   }, []);
@@ -135,29 +141,25 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
   useEffect(() => { loadCat(); }, [loadCat]);
 
   // 統一每秒 tick：摸摸冷卻 + 離家出走召喚倒數共用一個 timer。
-  // 只要有任何一個未來目標就每秒更新 nowTs（令倒數即時遞減）；
-  // 召喚倒數到時就靜默刷新（貓咪返嚟）。
   const petAvailableAt = cat?.next_pet_available_at || null;
   const catReturnsAt = cat?.cat_returns_at || null;
+  const petTargetTs = petAvailableAt ? new Date(petAvailableAt).getTime() : 0;
+  const returnTargetTs = catReturnsAt ? new Date(catReturnsAt).getTime() : 0;
+  // 只要仲有任何一個「未到期」目標就繼續行 timer；每秒更新 nowTs 令倒數即時遞減。
+  // 用 render 時實時計算嘅布林值做 dependency：到期時自動 flip 成 false → 停 timer，
+  // 唔再靠 interval 內部自己 clear（嗰種寫法容易 stale／卡住）。
+  const hasPendingCountdown = petTargetTs > nowTs || returnTargetTs > nowTs;
   useEffect(() => {
-    const petTarget = petAvailableAt ? new Date(petAvailableAt).getTime() : 0;
-    const returnTarget = catReturnsAt ? new Date(catReturnsAt).getTime() : 0;
-    const hasFuture = petTarget > Date.now() || returnTarget > Date.now();
-    if (!hasFuture) return undefined;
-
-    setNowTs(Date.now());
-    const iv = setInterval(() => {
-      const t = Date.now();
-      setNowTs(t);
-      const petPending = petTarget > t;
-      const returnPending = returnTarget > t;
-      if (returnTarget && t >= returnTarget) {
-        loadCat({ silent: true });
-      }
-      if (!petPending && !returnPending) clearInterval(iv);
-    }, 1000);
+    if (!hasPendingCountdown) return undefined;
+    const iv = setInterval(() => setNowTs(Date.now()), 1000);
     return () => clearInterval(iv);
-  }, [petAvailableAt, catReturnsAt, loadCat]);
+  }, [hasPendingCountdown]);
+
+  // 離家出走：召喚倒數一到期就靜默刷新，等貓咪返嚟。
+  useEffect(() => {
+    if (!returnTargetTs || returnTargetTs > nowTs) return;
+    loadCat({ silent: true });
+  }, [returnTargetTs, nowTs, loadCat]);
 
   // Preload the single meow bound to the equipped skin (§8.1).
   useEffect(() => {

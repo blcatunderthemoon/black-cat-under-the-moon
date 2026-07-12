@@ -362,6 +362,23 @@ export async function performCatFeed(admin, userId) {
       .single();
     if (updateError) throw updateError;
     nextRow = updated;
+  } else if (catRow.last_fed_date !== todayHk) {
+    // Ledger already recorded today's feed but the row is stale (e.g. an
+    // earlier update failed before the schema was migrated). Heal the row so
+    // fed_today is reported correctly and the feed button locks out.
+    const { data: healed, error: healError } = await admin
+      .from('user_cats')
+      .update({
+        hunger: HUNGER_FULL,
+        last_fed_date: todayHk,
+        last_fed_at: new Date().toISOString(),
+        summoned_at: null,
+      })
+      .eq('user_id', userId)
+      .select('*')
+      .single();
+    if (healError) throw healError;
+    nextRow = healed;
   }
 
   const mirror = mirrorPre;

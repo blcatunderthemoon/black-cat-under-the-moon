@@ -23856,7 +23856,7 @@ button.forum-tag-chip:hover {
 .my-cat-shop__head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 8px;
   width: 100%;
   margin: 0;
@@ -23875,7 +23875,7 @@ button.forum-tag-chip:hover {
 .my-cat-shop__chevron {
   font-size: 0.6rem;
   color: rgba(189, 147, 249, 0.7);
-  margin-left: 2px;
+  margin-left: auto;
 }
 
 .my-cat-shop__title {
@@ -23996,7 +23996,18 @@ button.forum-tag-chip:hover {
 
 @media (max-width: 480px) {
   .my-cat-panel__footer {
-    flex-direction: column;
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .my-cat-footer-chip {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .my-cat-footer-chip__icon {
+    width: 24px;
+    height: 24px;
   }
 }
 
