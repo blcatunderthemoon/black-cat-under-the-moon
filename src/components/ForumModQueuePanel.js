@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { displayTopic, TOPIC_STYLES } from '../lib/forum-categories.js';
+import { displayTopic, TOPIC_STYLES, forumTopicLabel } from '../lib/forum-categories.js';
 import { formatActorScopeLabel } from '../lib/forum-moderator-assignments.js';
 import { forumModFetch } from '../lib/forum-mod-api.js';
 import { dashboardFetch } from '../lib/dashboard-fetch.js';
@@ -50,14 +50,15 @@ function ActionButton({ label, onClick, disabled, variant = 'default', title }) 
 
 function TopicBadge({ topic }) {
   if (!topic) return null;
-  const label = displayTopic(topic);
-  const accent = TOPIC_STYLES[label]?.accent || '#bd93f9';
+  const canonical = displayTopic(topic);
+  const label = forumTopicLabel(topic);
+  const accent = TOPIC_STYLES[canonical]?.accent || '#bd93f9';
   return (
     <span
       className="forum-mod-queue__topic"
       style={{ borderColor: `${accent}66`, color: accent }}
     >
-      {TOPIC_STYLES[label]?.emoji ? `${TOPIC_STYLES[label].emoji} ` : ''}{label}
+      {TOPIC_STYLES[canonical]?.emoji ? `${TOPIC_STYLES[canonical].emoji} ` : ''}{label}
     </span>
   );
 }

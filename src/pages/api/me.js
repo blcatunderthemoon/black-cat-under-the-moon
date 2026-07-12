@@ -59,6 +59,7 @@ async function handleGet(req, res) {
     ])
     : [null, null];
 
+  const moonJourney = buildMoonJourneySummary(profile);
   const forumRole = getForumRole(profile);
   let moderatorTopics = null;
   if (forumRole === 'moderator') {
@@ -111,7 +112,11 @@ async function handleGet(req, res) {
       : null,
     active_letter_quota: activeLetterQuota,
     photo_exchange_quota: photoExchangeQuota,
-    moon_journey: buildMoonJourneySummary(profile),
+    moon_journey: moonJourney,
+    // Header 🐾 badge — feed shares the check-in day, so no extra query needed.
+    my_cat: {
+      needs_feed_badge: !moonJourney.checked_in_today,
+    },
   });
 }
 

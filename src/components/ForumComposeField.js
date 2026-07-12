@@ -28,7 +28,15 @@ export default function ForumComposeField({
   const [previewContent, setPreviewContent] = useState(value);
 
   const flushEditorContent = useCallback(() => {
-    const flushed = tiptapFlushRef.current?.() ?? latestContentRef.current ?? value;
+    const fromEditor = tiptapFlushRef.current?.();
+    // The editor can momentarily report an empty string mid-hydration (dynamic
+    // import / re-open race). An empty reading must NOT clobber content we already
+    // know about — `??` only guards null/undefined, so guard the empty case too.
+    // User-initiated clears still flow through `handleContentChange`, which keeps
+    // `latestContentRef` in sync, so genuine clears are preserved.
+    const flushed = (typeof fromEditor === 'string' && fromEditor.trim())
+      ? fromEditor
+      : (latestContentRef.current || value || (typeof fromEditor === 'string' ? fromEditor : '') || '');
     latestContentRef.current = flushed;
     if (contentRef) contentRef.current = flushed;
     return flushed;
@@ -177,23 +185,29 @@ export default function ForumComposeField({
         />
       </div>
 
-      {tab === 'preview' && (
-        <div
-          className="forum-compose-field__preview pixel-textarea"
-          style={{ minHeight: `${previewMinHeight}px` }}
-        >
-          {previewContent.trim() ? (
-            <ForumMarkdownBody
-              content={previewContent}
-              preview
-              previewPolls={previewPolls}
-              storyMode={storyMode}
-            />
-          ) : (
-            <p className="forum-compose-field__preview-empty">尚無內容可預覽</p>
-          )}
-        </div>
-      )}
+      {tab === 'preview' && (() => {
+        // Prefer the flushed preview snapshot, but never show "empty" while the
+        // live value still holds content (guards against an empty editor reading
+        // clobbering the preview mid-hydration).
+        const previewSource = previewContent.trim() ? previewContent : (value || '');
+        return (
+          <div
+            className="forum-compose-field__preview pixel-textarea"
+            style={{ minHeight: `${previewMinHeight}px` }}
+          >
+            {previewSource.trim() ? (
+              <ForumMarkdownBody
+                content={previewSource}
+                preview
+                previewPolls={previewPolls}
+                storyMode={storyMode}
+              />
+            ) : (
+              <p className="forum-compose-field__preview-empty">尚無內容可預覽</p>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 }

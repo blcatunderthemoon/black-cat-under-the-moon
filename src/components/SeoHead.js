@@ -9,7 +9,11 @@ import {
   absoluteUrl,
 } from '../lib/site-seo.js';
 
-const DEFAULT_OG_IMAGE = '/favicon.svg';
+// Raster 1408×768 logo — SVG favicons are ignored by most social crawlers
+// and by Google's thumbnail picker.
+const DEFAULT_OG_IMAGE = '/blackcatunderthemoonlogo.png';
+const DEFAULT_OG_IMAGE_WIDTH = 1408;
+const DEFAULT_OG_IMAGE_HEIGHT = 768;
 
 export default function SeoHead({
   title,
@@ -50,7 +54,13 @@ export default function SeoHead({
       <meta property="og:locale" content="zh_Hant" />
       <meta property="og:image" content={image} />
       <meta property="og:image:alt" content={imageAlt} />
-      <meta name="twitter:card" content="summary" />
+      {ogImage === DEFAULT_OG_IMAGE && (
+        <>
+          <meta property="og:image:width" content={String(DEFAULT_OG_IMAGE_WIDTH)} />
+          <meta property="og:image:height" content={String(DEFAULT_OG_IMAGE_HEIGHT)} />
+        </>
+      )}
+      <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={pageTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={image} />

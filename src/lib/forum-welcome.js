@@ -2,9 +2,9 @@
  * Official welcome / pinned intro posts shown per topic when the feed is empty.
  */
 
-import { FORUM_TOPICS, FORUM_POST_TOPICS, TOPIC_STYLES, displayTopic } from './forum-categories.js';
+import { FORUM_TOPICS, FORUM_POST_TOPICS, TOPIC_STYLES, displayTopic, forumTopicLabel } from './forum-categories.js';
 
-export { FORUM_TOPICS, FORUM_POST_TOPICS, TOPIC_STYLES, displayTopic };
+export { FORUM_TOPICS, FORUM_POST_TOPICS, TOPIC_STYLES, displayTopic, forumTopicLabel };
 
 /** User-facing product name for /forum */
 export const FORUM_DISPLAY_NAME = '黑貓樹洞';
@@ -51,7 +51,7 @@ export const WELCOME_POSTS = {
     mood_tag: '版規',
   },
   寫故事: {
-    title: '寫故事 · 黑貓書櫃',
+    title: '故事 · 黑貓書櫃',
     content: '在這裡放上你的原創或同人故事。為作品設封面與簡介，讀者從書櫃挑一本，翻開正文就像夜裡讀書。\n\n標題必填；簡介會顯示在書脊旁。正文支援較長篇幅，留言區供讀者交流感想。',
     mood_tag: '官方',
   },

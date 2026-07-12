@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
-import { displayTopic, TOPIC_STYLES } from '../lib/forum-categories.js';
+import { displayTopic, TOPIC_STYLES, forumTopicLabel } from '../lib/forum-categories.js';
 import { forumModFetch } from '../lib/forum-mod-api.js';
 import ForumModConfirmOverlay from './ForumModConfirmOverlay.js';
 
@@ -21,8 +21,9 @@ export default function ForumModToolbar({
   const [note, setNote] = useState('');
   const [confirmHideOpen, setConfirmHideOpen] = useState(false);
 
-  const topicLabel = displayTopic(post.topic);
-  const topicEmoji = TOPIC_STYLES[topicLabel]?.emoji || '';
+  const topicCanonical = displayTopic(post.topic);
+  const topicLabel = forumTopicLabel(post.topic);
+  const topicEmoji = TOPIC_STYLES[topicCanonical]?.emoji || '';
   const isHidden = post.is_hidden || post.visibility === 'hidden';
 
   async function modAction(method, path, body, successText) {

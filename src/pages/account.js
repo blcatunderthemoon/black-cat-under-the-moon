@@ -21,13 +21,6 @@ import { validateDisplayName, sanitizeDisplayNameInput, DISPLAY_NAME_MAX_LENGTH 
 import { validatePassword, PASSWORD_MIN_LENGTH, PASSWORD_REQUIREMENTS_LABEL } from '../lib/auth-credentials-policy.js';
 import PasswordRequirementsChecklist from '../components/PasswordRequirementsChecklist.js';
 import PageLoadingShell from '../components/PageLoadingShell.js';
-import { MoonJourneyAccountCard } from '../components/MoonJourneyPanel.js';
-import {
-  readMoonJourneyCache,
-  writeMoonJourneyCache,
-  readMoonJourneyCacheEntry,
-  resolveMoonJourneyUpdate,
-} from '../lib/moon-journey-cache.js';
 import { patchMeCacheDisplayName } from '../lib/me-cache.js';
 
 export default function AccountPage() {
@@ -56,30 +49,6 @@ export default function AccountPage() {
   const [notifSaving, setNotifSaving] = useState(false);
   const [notifMsg, setNotifMsg] = useState('');
   const [notifOk, setNotifOk] = useState(true);
-
-  const [moonJourney, setMoonJourneyState] = useState(null);
-
-  const setMoonJourney = (next) => {
-    setMoonJourneyState(next);
-    const userId = session?.user?.id;
-    if (userId && next) writeMoonJourneyCache(userId, next);
-  };
-
-  useEffect(() => {
-    const userId = session?.user?.id;
-    if (!userId) {
-      setMoonJourneyState(null);
-      return;
-    }
-    const cached = readMoonJourneyCache(userId);
-    if (cached) setMoonJourneyState((prev) => prev ?? cached);
-    const entry = readMoonJourneyCacheEntry(userId);
-    const fromProfile = profile?.moon_journey;
-    if (fromProfile) {
-      const next = resolveMoonJourneyUpdate(entry, fromProfile);
-      if (next) setMoonJourneyState((prev) => prev ?? next);
-    }
-  }, [session?.user?.id, profile?.moon_journey]);
 
   const loadMirrorCard = useCallback(async (token, userId, { silent = false } = {}) => {
     if (!token || !userId) {
@@ -343,12 +312,6 @@ export default function AccountPage() {
             </div>
           )}
         </section>
-
-        <MoonJourneyAccountCard
-          moonJourney={moonJourney}
-          accessToken={session?.access_token}
-          onJourneyUpdate={setMoonJourney}
-        />
 
         <section className="pixel-card pixel-card--moon">
           <h2 className="pixel-section-title">// 個人資料</h2>

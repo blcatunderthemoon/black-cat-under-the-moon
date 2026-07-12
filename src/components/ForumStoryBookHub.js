@@ -176,7 +176,7 @@ export default function ForumStoryBookHub({
 
         <header className="forum-story-reader__head">
           <div className="forum-story-reader__head-top">
-            <span className="forum-story-reader__eyebrow">📖 寫故事</span>
+            <span className="forum-story-reader__eyebrow">📖 故事</span>
             {post.story_completed && (
               <span className="forum-story-reader__complete-badge">✓ 完結</span>
             )}

@@ -1,5 +1,7 @@
 /**
- * Forum sidebar — Moon Journey progress + daily check-in.
+ * Forum sidebar — Moon Journey progress.
+ * 每日打卡已合併至 /my-cat 餵食（docs/MY-CAT-GAME-DESIGN.md §5）；
+ * 此面板僅展示進度，打卡入口為 header 🐾。
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -7,6 +9,7 @@ import Link from 'next/link';
 import PixelMoonIcon from './PixelMoonIcon.js';
 import MoonLoading from './MoonLoading.js';
 import { MOON_JOURNEY_GUIDE_PATH } from '../lib/moon-journey.js';
+import { MY_CAT_PATH } from '../lib/my-cat.js';
 
 function MoonJourneyPanelHead({ level }) {
   return (
@@ -39,8 +42,6 @@ export default function MoonJourneyPanel({
 }) {
   const [localJourney, setLocalJourney] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [checkingIn, setCheckingIn] = useState(false);
-  const [statusMsg, setStatusMsg] = useState('');
 
   const journey = journeyProp ?? localJourney;
   const journeyLoading = !!accessToken && !journey && loading;
@@ -92,45 +93,6 @@ export default function MoonJourneyPanel({
     }
   }, [accessToken, journeyProp, localJourney, loadJourney]);
 
-  useEffect(() => {
-    if (!statusMsg) return undefined;
-    const timer = setTimeout(() => setStatusMsg(''), 3200);
-    return () => clearTimeout(timer);
-  }, [statusMsg]);
-
-  async function handleCheckIn() {
-    if (!accessToken || checkingIn || journey?.checked_in_today) return;
-    setCheckingIn(true);
-    setStatusMsg('');
-    try {
-      const r = await fetch('/api/forum/moon-journey/check-in', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      const data = await r.json().catch(() => ({}));
-      if (!r.ok) {
-        setStatusMsg(data.error || '打卡失敗');
-        return;
-      }
-      if (data.moon_journey) {
-        applyJourney(data.moon_journey);
-      } else {
-        await loadJourney();
-      }
-      if (data.leveled_up) {
-        setStatusMsg('升級了！月光又亮了一分 ✨');
-      } else if (data.awarded) {
-        setStatusMsg('+2 月光經驗');
-      } else if (data.already_checked_in) {
-        setStatusMsg('今日已打卡');
-      }
-    } catch {
-      setStatusMsg('網路錯誤，請重試');
-    } finally {
-      setCheckingIn(false);
-    }
-  }
-
   if (compact && compactLayout === 'dropdown') {
     if (!accessToken) return null;
 
@@ -159,19 +121,13 @@ export default function MoonJourneyPanel({
               </span>
             </span>
           </Link>
-          <button
-            type="button"
+          <Link
+            href={MY_CAT_PATH}
             className={`moon-journey-dropdown-card__checkin${viewJourney?.checked_in_today ? ' moon-journey-dropdown-card__checkin--done' : ''}`}
-            onClick={handleCheckIn}
-            disabled={checkingIn || viewJourney?.checked_in_today || journeyLoading}
-            title={viewJourney?.checked_in_today ? '今日已打卡' : '今日打卡 +2 EXP'}
+            title={viewJourney?.checked_in_today ? '今日已餵食打卡' : '去餵貓打卡 +2 EXP'}
           >
-            {checkingIn
-              ? '…'
-              : viewJourney?.checked_in_today
-                ? '已打卡'
-                : '+2 打卡'}
-          </button>
+            {viewJourney?.checked_in_today ? '已打卡' : '🐾 餵食打卡'}
+          </Link>
         </div>
         {!viewJourney?.is_max_level && (
           <div
@@ -191,9 +147,6 @@ export default function MoonJourneyPanel({
         <Link href={MOON_JOURNEY_GUIDE_PATH} className="moon-journey-dropdown-card__guide">
           玩法說明
         </Link>
-        {statusMsg && (
-          <p className="moon-journey-dropdown-card__status" role="status">{statusMsg}</p>
-        )}
       </div>
     );
   }
@@ -253,22 +206,13 @@ export default function MoonJourneyPanel({
             </span>
           )}
         </Link>
-        <button
-          type="button"
+        <Link
+          href={MY_CAT_PATH}
           className={`moon-journey-panel__compact-checkin${viewJourney?.checked_in_today ? ' moon-journey-panel__compact-checkin--done' : ''}`}
-          onClick={handleCheckIn}
-          disabled={checkingIn || viewJourney?.checked_in_today || journeyLoading}
-          title={viewJourney?.checked_in_today ? '今日已打卡' : '今日打卡 +2 EXP'}
+          title={viewJourney?.checked_in_today ? '今日已餵食打卡' : '去餵貓打卡 +2 EXP'}
         >
-          {checkingIn
-            ? '…'
-            : viewJourney?.checked_in_today
-              ? '已打卡'
-              : '+2 打卡'}
-        </button>
-        {statusMsg && (
-          <p className="moon-journey-panel__compact-status" role="status">{statusMsg}</p>
-        )}
+          {viewJourney?.checked_in_today ? '已打卡' : '🐾 餵食打卡'}
+        </Link>
       </aside>
     );
   }
@@ -363,27 +307,16 @@ export default function MoonJourneyPanel({
               </p>
             )}
 
-            <button
-              type="button"
-              className={`moon-journey-panel__checkin${viewJourney?.checked_in_today ? ' moon-journey-panel__checkin--done' : ''}`}
-              onClick={handleCheckIn}
-              disabled={checkingIn || viewJourney?.checked_in_today}
-            >
-              <span className="moon-journey-panel__checkin-icon" aria-hidden="true">
-                {viewJourney?.checked_in_today ? '✓' : '🌙'}
-              </span>
-              <span className="moon-journey-panel__checkin-text">
-                {checkingIn
-                  ? '打卡中…'
-                  : viewJourney?.checked_in_today
-                    ? '今日已打卡'
-                    : '今日打卡 +2 EXP'}
-              </span>
-            </button>
-
-            {statusMsg && (
-              <p className="moon-journey-panel__status" role="status">{statusMsg}</p>
-            )}
+            <p className="moon-journey-panel__feed-hint">
+              {viewJourney?.checked_in_today ? (
+                <>✓ 今日已餵食打卡</>
+              ) : (
+                <>
+                  <span aria-hidden="true">🐾</span>
+                  <Link href={MY_CAT_PATH}>去餵貓打卡 +2 EXP</Link>
+                </>
+              )}
+            </p>
           </>
         )}
       </div>
@@ -391,59 +324,11 @@ export default function MoonJourneyPanel({
   );
 }
 
-export function MoonJourneyAccountCard({ moonJourney, accessToken, onJourneyUpdate }) {
-  const [checkingIn, setCheckingIn] = useState(false);
-  const [statusMsg, setStatusMsg] = useState('');
-
-  useEffect(() => {
-    if (!statusMsg) return undefined;
-    const timer = setTimeout(() => setStatusMsg(''), 3200);
-    return () => clearTimeout(timer);
-  }, [statusMsg]);
-
+export function MoonJourneyAccountCard({ moonJourney }) {
   if (!moonJourney) return null;
 
   const progress = progressCopy(moonJourney);
   const progressPct = moonJourney.progress_pct ?? 0;
-
-  async function handleCheckIn() {
-    if (!accessToken || checkingIn || moonJourney?.checked_in_today) return;
-    setCheckingIn(true);
-    setStatusMsg('');
-    try {
-      const r = await fetch('/api/forum/moon-journey/check-in', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      const data = await r.json().catch(() => ({}));
-      if (!r.ok) {
-        setStatusMsg(data.error || '打卡失敗');
-        return;
-      }
-      if (data.moon_journey) {
-        onJourneyUpdate?.(data.moon_journey);
-      } else {
-        const refresh = await fetch('/api/forum/moon-journey', {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-        if (refresh.ok) {
-          const refreshed = await refresh.json();
-          onJourneyUpdate?.(refreshed.moon_journey || null);
-        }
-      }
-      if (data.leveled_up) {
-        setStatusMsg('升級了！月光又亮了一分 ✨');
-      } else if (data.awarded) {
-        setStatusMsg('+2 月光經驗');
-      } else if (data.already_checked_in) {
-        setStatusMsg('今日已打卡');
-      }
-    } catch {
-      setStatusMsg('網路錯誤，請重試');
-    } finally {
-      setCheckingIn(false);
-    }
-  }
 
   return (
     <section className="pixel-card pixel-card--moon moon-journey-account">
@@ -521,29 +406,17 @@ export function MoonJourneyAccountCard({ moonJourney, accessToken, onJourneyUpda
       )}
 
       <div className="moon-journey-account__actions">
-        <button
-          type="button"
-          className={`moon-journey-account__checkin${moonJourney.checked_in_today ? ' moon-journey-account__checkin--done' : ''}`}
-          onClick={handleCheckIn}
-          disabled={checkingIn || moonJourney.checked_in_today}
-        >
-          <span className="moon-journey-account__checkin-icon" aria-hidden="true">
-            {moonJourney.checked_in_today ? '✓' : '🌙'}
-          </span>
-          {checkingIn
-            ? '打卡中…'
-            : moonJourney.checked_in_today
-              ? '今日已打卡'
-              : '每日打卡 +2 EXP'}
-        </button>
+        <p className="moon-journey-account__feed-hint">
+          {moonJourney.checked_in_today ? (
+            <>✓ 今日已餵食打卡</>
+          ) : (
+            <Link href={MY_CAT_PATH}>🐾 去餵貓打卡 +2 EXP</Link>
+          )}
+        </p>
         <Link href={MOON_JOURNEY_GUIDE_PATH} className="moon-journey-account__guide-link">
           玩法與升級 →
         </Link>
       </div>
-
-      {statusMsg && (
-        <p className="moon-journey-account__status" role="status">{statusMsg}</p>
-      )}
     </section>
   );
 }

@@ -20,7 +20,10 @@ export default function ForumStoryAddChapter({
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const latest = editorFlushRef.current?.() ?? contentRef.current ?? content;
+    const flushed = editorFlushRef.current?.();
+    const latest = (typeof flushed === 'string' && flushed.trim())
+      ? flushed
+      : (contentRef.current || content);
     const normalized = normalizeForumBodyContent(latest);
     if (!normalized.trim()) {
       setError('請填寫章節內容。');
@@ -30,6 +33,7 @@ export default function ForumStoryAddChapter({
     setContent(normalized);
     setSubmitting(true);
     setError('');
+    let addedChapters = null;
     try {
       const res = await fetch(`/api/forum/posts/${encodeURIComponent(postId)}/chapters`, {
         method: 'POST',
@@ -47,14 +51,18 @@ export default function ForumStoryAddChapter({
         setError(forumSubmitErrorMessage(payload, '新增章節失敗。'));
         return;
       }
-      onAdded?.(payload.chapters);
+      addedChapters = Array.isArray(payload.chapters) ? payload.chapters : [];
       setTitle('');
       setContent('');
     } catch {
       setError('網絡錯誤，請稍後再試。');
+      return;
     } finally {
       setSubmitting(false);
     }
+    // Run parent callbacks outside try/catch so a downstream render issue is not
+    // misreported as a save failure (the POST already succeeded here).
+    onAdded?.(addedChapters);
   }
 
   return (

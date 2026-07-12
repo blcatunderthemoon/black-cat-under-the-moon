@@ -32,6 +32,7 @@ import {
   normalizeForumBodyContent,
   validateStoryCoverUrl,
 } from '../../../lib/forum-story.js';
+import { STORY_CHAPTER_TITLE_MAX } from '../../../lib/forum-story-chapters.js';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
@@ -389,6 +390,7 @@ async function handlePost(req, res) {
     polls: pollsPayload,
     cover_image_url: coverPayload,
     synopsis: synopsisPayload,
+    chapter_one_title: chapterOneTitlePayload,
   } = body;
 
   const storyPost = isStoryTopic(topic);
@@ -420,12 +422,16 @@ async function handlePost(req, res) {
 
   let coverImageUrl = null;
   let synopsis = null;
+  let chapterOneTitle = null;
   if (storyPost) {
     const coverCheck = validateStoryCoverUrl(coverPayload);
     if (!coverCheck.ok) return res.status(400).json({ error: coverCheck.error });
     coverImageUrl = coverCheck.value;
     if (synopsisPayload != null && String(synopsisPayload).trim()) {
       synopsis = String(synopsisPayload).trim().slice(0, STORY_SYNOPSIS_MAX);
+    }
+    if (chapterOneTitlePayload != null && String(chapterOneTitlePayload).trim()) {
+      chapterOneTitle = String(chapterOneTitlePayload).trim().slice(0, STORY_CHAPTER_TITLE_MAX);
     }
   }
   if (topic && !isValidPostTopic(topic)) {
@@ -532,7 +538,7 @@ async function handlePost(req, res) {
     await admin.from('forum_story_chapters').insert({
       story_post_id: post.id,
       chapter_number: 1,
-      title: null,
+      title: chapterOneTitle,
       content: normalizedContent,
     }).then(() => {}).catch(() => {});
   }

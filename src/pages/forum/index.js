@@ -21,6 +21,7 @@ import {
   FORUM_DISPLAY_NAME,
   getEmptyStateCopy,
   displayTopic,
+  forumTopicLabel,
 } from '../../lib/forum-welcome.js';
 import ForumWelcomeCard, { canEditWelcomeTopic } from '../../components/ForumWelcomeCard.js';
 import {
@@ -37,6 +38,7 @@ import ForumStoryComposeFields from '../../components/ForumStoryComposeFields.js
 import ForumPostTags from '../../components/ForumPostTags.js';
 import { formatForumTagLabel, canonicalForumTagKey } from '../../lib/forum-tags.js';
 import { isStoryTopic, isStoryPost, storyFeedPreviewText, STORY_CONTENT_MAX } from '../../lib/forum-story.js';
+import { STORY_CHAPTER_TITLE_MAX } from '../../lib/forum-story-chapters.js';
 import {
   clearForumDraft,
   FORUM_POST_DRAFT_KEY,
@@ -53,8 +55,6 @@ import {
 } from '../../lib/forum-feed-cache.js';
 import PageLoadingShell from '../../components/PageLoadingShell.js';
 import MoonLoading from '../../components/MoonLoading.js';
-import MoonJourneyPanel from '../../components/MoonJourneyPanel.js';
-import ForumMoonJourneyMobile from '../../components/ForumMoonJourneyMobile.js';
 import {
   readMoonJourneyCacheEntry,
   writeMoonJourneyCache,
@@ -187,7 +187,7 @@ function FeaturedPostsPanel({ featuredPosts }) {
               <div className="forum-hot-item__body">
                 <p className="forum-hot-item__title">{p.title || p.topic}</p>
                 <span className="forum-hot-item__meta">
-                  <span className="forum-hot-item__topic">{displayTopic(p.topic)}</span>
+                  <span className="forum-hot-item__topic">{forumTopicLabel(p.topic)}</span>
                   <span className="forum-hot-item__stats">
                     <span>💗 {p.like_count}</span>
                     <span>💬 {p.comment_count}</span>
@@ -310,6 +310,7 @@ export default function ForumPage() {
     polls: [],
     cover_image_url: '',
     synopsis: '',
+    chapter_one_title: '',
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -772,6 +773,7 @@ export default function ForumPage() {
       polls: Array.isArray(draft?.polls) ? draft.polls : [],
       cover_image_url: draft?.cover_image_url || '',
       synopsis: draft?.synopsis || '',
+      chapter_one_title: draft?.chapter_one_title || '',
     });
     setDraftNotice(draft?.savedAt ? '已恢復草稿' : '');
     setShowCompose(true);
@@ -797,6 +799,7 @@ export default function ForumPage() {
       polls: [],
       cover_image_url: '',
       synopsis: '',
+      chapter_one_title: '',
     });
   }
 
@@ -841,6 +844,7 @@ export default function ForumPage() {
         polls: [],
         cover_image_url: '',
         synopsis: '',
+        chapter_one_title: '',
       });
       clearForumDraft(FORUM_POST_DRAFT_KEY);
       setDraftNotice('');
@@ -969,14 +973,7 @@ export default function ForumPage() {
         nav={
           <ForumHeaderAuth
             onBookmarksClick={() => setShowBookmarks(true)}
-            moonJourney={(
-              <ForumMoonJourneyMobile
-                accessToken={session?.access_token}
-                userId={session?.user?.id}
-                journey={moonJourney}
-                onJourneyUpdate={setMoonJourney}
-              />
-            )}
+            moonJourney={null}
             extra={
               session ? (
                 <button type="button" className="forum-compose-btn" onClick={openCompose}>
@@ -990,11 +987,6 @@ export default function ForumPage() {
         <div className="forum-layout">
           <div className="forum-sidebar forum-sidebar--left">
             <GatheringPanel count={meta?.gathering_count} />
-            <MoonJourneyPanel
-              accessToken={session?.access_token}
-              journey={moonJourney}
-              onJourneyUpdate={setMoonJourney}
-            />
           </div>
 
           <div className="forum-main">
@@ -1026,7 +1018,7 @@ export default function ForumPage() {
                       </span>
                     ) : (
                       <>
-                        {TOPIC_STYLES[t]?.emoji ? `${TOPIC_STYLES[t].emoji} ` : ''}{t}
+                        {TOPIC_STYLES[t]?.emoji ? `${TOPIC_STYLES[t].emoji} ` : ''}{forumTopicLabel(t)}
                       </>
                     )}
                   </button>
@@ -1256,7 +1248,7 @@ export default function ForumPage() {
                                   borderColor: `${TOPIC_STYLES[displayTopic(post.topic)]?.accent || '#bd93f9'}55`,
                                 }}
                               >
-                                {displayTopic(post.topic)}
+                                {forumTopicLabel(post.topic)}
                               </span>
                               <ForumPostTags
                                 tags={post.tags}
@@ -1399,7 +1391,7 @@ export default function ForumPage() {
                     className="pixel-select"
                   >
                     {FORUM_TOPICS.filter((t) => t !== '全部').map((t) => (
-                      <option key={t} value={t}>{t}</option>
+                      <option key={t} value={t}>{forumTopicLabel(t)}</option>
                     ))}
                   </select>
                 </label>
@@ -1473,6 +1465,19 @@ export default function ForumPage() {
                     <p className="forum-visibility-field__hint">會員限定貼文僅登入用戶可閱讀，未登入者不會在列表看到。</p>
                   )}
                 </fieldset>
+                )}
+                {isStoryTopic(form.topic) && (
+                  <label className="forum-compose-form__field">
+                    <span className="forum-compose-form__label">第一章標題（可選）</span>
+                    <input
+                      placeholder="例：第一章 · 白映初的出走"
+                      value={form.chapter_one_title}
+                      onChange={(e) => setForm((f) => ({ ...f, chapter_one_title: e.target.value }))}
+                      maxLength={STORY_CHAPTER_TITLE_MAX}
+                      className="pixel-input"
+                      disabled={submitting}
+                    />
+                  </label>
                 )}
                 <ForumComposeField
                   value={form.content}

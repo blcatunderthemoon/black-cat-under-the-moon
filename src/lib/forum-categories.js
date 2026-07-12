@@ -111,9 +111,20 @@ for (const tags of Object.values(PRESET_TAGS_BY_TOPIC)) {
   }
 }
 
+/** Map canonical topic → shorter UI label (stored DB value unchanged). */
+export const TOPIC_UI_LABELS = {
+  寫故事: '故事',
+};
+
 export function displayTopic(storedTopic) {
   if (!storedTopic) return storedTopic;
   return LEGACY_TOPIC_DISPLAY[storedTopic] || storedTopic;
+}
+
+/** User-facing topic name for badges, filters, chips (may differ from stored value). */
+export function forumTopicLabel(topic) {
+  const canonical = displayTopic(topic);
+  return TOPIC_UI_LABELS[canonical] || canonical;
 }
 
 export function isValidPostTopic(topic) {

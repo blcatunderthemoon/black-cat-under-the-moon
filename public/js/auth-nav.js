@@ -155,6 +155,16 @@
     }
   }
 
+  /* 我的月光貓 — 唯一打卡入口（同 Next.js HeaderMyCatLink） */
+  function myCatLinkHtml(meData) {
+    var needsFeed = !!(meData && meData.my_cat && meData.my_cat.needs_feed_badge);
+    var title = needsFeed ? '我的月光貓 · 今日未餵食打卡' : '我的月光貓';
+    return '<a href="/my-cat" class="auth-nav-badge__item auth-nav-badge__item--icon header-my-cat-link' + (needsFeed ? ' header-my-cat-link--hungry' : '') + '" title="' + title + '" aria-label="我的月光貓">' +
+      '<span class="header-my-cat-link__sprite" aria-hidden="true"></span>' +
+      (needsFeed ? '<span class="header-my-cat-link__dot" aria-hidden="true"></span>' : '') +
+    '</a>';
+  }
+
   function inboxLinkHtml(unreadCount) {
     if (unreadCount > 0) {
       return '<a href="/inbox" class="auth-nav-badge__item auth-nav-badge__item--icon auth-nav-badge__item--inbox-unread" title="收件箱">' +
@@ -528,6 +538,60 @@
     return path === '/' || /index\.html$/i.test(path);
   }
 
+  // ── 每日餵貓打卡提示（index 首次進入當日一次） ──
+  var FEED_REMINDER_KEY = 'bcutm_feed_reminder_date';
+
+  function hkDateStr() {
+    try {
+      return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Hong_Kong' });
+    } catch (e) {
+      return new Date().toISOString().slice(0, 10);
+    }
+  }
+
+  function dismissFeedReminder(el) {
+    if (!el) return;
+    el.classList.add('bcutm-feed-reminder--out');
+    setTimeout(function () {
+      if (el && el.parentNode) el.parentNode.removeChild(el);
+    }, 320);
+  }
+
+  function showFeedReminder() {
+    if (document.getElementById('bcutm-feed-reminder')) return;
+    var wrap = document.createElement('div');
+    wrap.id = 'bcutm-feed-reminder';
+    wrap.className = 'bcutm-feed-reminder';
+    wrap.setAttribute('role', 'dialog');
+    wrap.setAttribute('aria-label', '每日餵貓提示');
+    wrap.innerHTML =
+      '<div class="bcutm-feed-reminder__card">' +
+        '<button type="button" class="bcutm-feed-reminder__close" aria-label="關閉">\u00d7</button>' +
+        '<div class="bcutm-feed-reminder__cat" aria-hidden="true">\ud83d\udc08\u200d\u2b1b</div>' +
+        '<p class="bcutm-feed-reminder__title">今日仲未餵貓貓！</p>' +
+        '<p class="bcutm-feed-reminder__text">餵食罐罐 = 每日打卡，仲有 <strong>+2 EXP</strong>。</p>' +
+        '<a href="/my-cat" class="bcutm-feed-reminder__btn">\ud83e\udd6b 去餵貓打卡</a>' +
+      '</div>';
+    document.body.appendChild(wrap);
+
+    var closeBtn = wrap.querySelector('.bcutm-feed-reminder__close');
+    if (closeBtn) closeBtn.addEventListener('click', function () { dismissFeedReminder(wrap); });
+
+    requestAnimationFrame(function () { wrap.classList.add('bcutm-feed-reminder--in'); });
+    setTimeout(function () { dismissFeedReminder(wrap); }, 10000);
+  }
+
+  function maybeShowFeedReminder(meData) {
+    if (!isIndexLandingPage()) return;
+    if (!meData || !meData.my_cat || !meData.my_cat.needs_feed_badge) return;
+    var today = hkDateStr();
+    try {
+      if (localStorage.getItem(FEED_REMINDER_KEY) === today) return;
+      localStorage.setItem(FEED_REMINDER_KEY, today);
+    } catch (e) {}
+    showFeedReminder();
+  }
+
   function showLoggedIn(displayName, unreadCount, isPremium, meData, options) {
     options = options || {};
     var profilePending = !!options.profilePending;
@@ -553,6 +617,8 @@
       '<a href="/account" class="auth-nav-badge__item auth-nav-badge__item--icon" title="設定">' +
         '<span class="auth-nav-badge__icon" aria-hidden="true">⚙</span>' +
       '</a>' +
+      sep() +
+      myCatLinkHtml(meData || meCache) +
       shellEnd();
 
     injectNav(html, doLogout);
@@ -641,7 +707,10 @@
     var unread = (cached && cached.unread_inbox_count) || 0;
     showLoggedIn(cachedName || immediateName, unread, isPremium, cached, { profilePending: !cached });
 
-    if (meCacheApi.isFresh && meCacheApi.isFresh(userId)) return;
+    if (meCacheApi.isFresh && meCacheApi.isFresh(userId)) {
+      maybeShowFeedReminder(cached);
+      return;
+    }
 
     fetch('/api/me', {
       headers: { Authorization: 'Bearer ' + token },
@@ -672,6 +741,7 @@
           !!(data.profile && data.profile.subscription_tier === 'premium'),
           data
         );
+        maybeShowFeedReminder(data);
       })
       .catch(function () {
         showLoggedIn(immediateName, unread, isPremium, cached);

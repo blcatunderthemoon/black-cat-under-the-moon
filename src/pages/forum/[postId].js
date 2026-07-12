@@ -10,7 +10,7 @@ import { useAuth } from '../../lib/auth-context.js';
 import AppShell from '../../components/AppShell.js';
 import ForumHeaderAuth from '../../components/ForumHeaderAuth.js';
 import ForumBookmarksPanel from '../../components/ForumBookmarksPanel.js';
-import { FORUM_DISPLAY_NAME } from '../../lib/forum-welcome.js';
+import { FORUM_DISPLAY_NAME, forumTopicLabel } from '../../lib/forum-welcome.js';
 import SeoHead from '../../components/SeoHead.js';
 import ForumPostTags from '../../components/ForumPostTags.js';
 import ForumAuthorName from '../../components/ForumAuthorName.js';
@@ -37,6 +37,7 @@ import {
   readForumPostBootstrap,
   writeForumPostCache,
 } from '../../lib/forum-post-cache.js';
+import { absoluteUrl } from '../../lib/site-seo.js';
 
 function mergeStoryPostFields(prevPost, nextPost) {
   if (!prevPost || !nextPost) return nextPost || prevPost;
@@ -167,7 +168,44 @@ function normalizeRouteId(value) {
   return value || '';
 }
 
-export default function ForumPostPage() {
+function seoExcerpt(text, max = 150) {
+  if (!text) return '';
+  const flat = String(text).replace(/[#*>`\[\]()]/g, '').replace(/\s+/g, ' ').trim();
+  return flat.length > max ? `${flat.slice(0, max)}…` : flat;
+}
+
+function buildPostJsonLd(seo) {
+  if (!seo?.indexable) return null;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'DiscussionForumPosting',
+    headline: seo.title,
+    text: seo.excerpt || seo.title,
+    url: absoluteUrl(`/forum/${seo.id}`),
+    datePublished: seo.created_at || undefined,
+    inLanguage: 'zh-Hant',
+    author: { '@type': 'Person', name: seo.author_name || '月下貓' },
+    interactionStatistic: [
+      {
+        '@type': 'InteractionCounter',
+        interactionType: 'https://schema.org/LikeAction',
+        userInteractionCount: seo.like_count || 0,
+      },
+      {
+        '@type': 'InteractionCounter',
+        interactionType: 'https://schema.org/CommentAction',
+        userInteractionCount: seo.comment_count || 0,
+      },
+    ],
+    isPartOf: {
+      '@type': 'WebSite',
+      name: 'Black Cat Under The Moon',
+      url: absoluteUrl('/forum'),
+    },
+  };
+}
+
+export default function ForumPostPage({ seo = null }) {
   const { session, profile, refreshProfile, loading: authLoading } = useAuth();
   const router = useRouter();
   const postId = normalizeRouteId(router.query.postId);
@@ -636,8 +674,14 @@ export default function ForumPostPage() {
   const storyDetailLoading = isStoryBook && !storyDetailReady;
 
   const handleChaptersChange = useCallback((updatedChapters) => {
-    setData((d) => (d ? { ...d, chapters: updatedChapters } : d));
-  }, []);
+    if (!Array.isArray(updatedChapters)) return;
+    setData((d) => {
+      if (!d) return d;
+      const next = { ...d, chapters: updatedChapters };
+      if (postId) writeForumPostCache(postId, next);
+      return next;
+    });
+  }, [postId]);
 
   const handlePostUpdate = useCallback((patch) => {
     setData((d) => {
@@ -663,10 +707,10 @@ export default function ForumPostPage() {
     return (
       <>
         <SeoHead
-          title="貼文"
-          description={`${FORUM_DISPLAY_NAME} — 貼文`}
+          title={seo?.title || '貼文'}
+          description={seo?.excerpt || `${FORUM_DISPLAY_NAME} — 貼文`}
           path={`/forum/${postId}`}
-          noindex={isMembersOnly || isMatureLoginRequired}
+          noindex={isMembersOnly || isMatureLoginRequired || seo?.indexable === false}
         />
         <AppShell {...shellProps}>
           <div className={`pixel-empty${(isMembersOnly || isMatureLoginRequired) ? ' forum-members-gate' : ''}`}>
@@ -762,15 +806,16 @@ export default function ForumPostPage() {
   return (
     <>
       <SeoHead
-        title={post?.title || '貼文'}
+        title={post?.title || seo?.title || '貼文'}
         description={
           post?.content
             ? `${post.content.slice(0, 120).replace(/\s+/g, ' ').trim()}…`
-            : `${FORUM_DISPLAY_NAME} 貼文 — Black Cat Under The Moon 月光圍爐`
+            : seo?.excerpt || `${FORUM_DISPLAY_NAME} 貼文 — Black Cat Under The Moon 月光圍爐`
         }
         path={postId ? `/forum/${postId}` : '/forum'}
         ogType="article"
-        noindex={post?.visibility === 'members_only'}
+        noindex={post?.visibility === 'members_only' || seo?.indexable === false}
+        jsonLd={buildPostJsonLd(seo)}
       />
       <AppShell {...shellProps}>
         {!post ? (
@@ -826,7 +871,7 @@ export default function ForumPostPage() {
               <>
               <div className="forum-post-card__tag-row">
                 <div className="forum-post-card__tags">
-                  <span className="pixel-tag" style={{ color: 'var(--purple-light)' }}>{post.topic}</span>
+                  <span className="pixel-tag" style={{ color: 'var(--purple-light)' }}>{forumTopicLabel(post.topic)}</span>
                   <ForumPostTags tags={post.tags} tagLabels={data?.tag_labels} variant="detail" />
                   {post.visibility === 'members_only' && (
                     <span className="forum-visibility-badge">🔒 會員限定</span>
@@ -1055,4 +1100,55 @@ export default function ForumPostPage() {
       />
     </>
   );
+}
+
+/**
+ * SSR meta for crawlers: real <title>/<meta> in the initial HTML instead of a
+ * generic「貼文」shell, plus real 404s for missing posts (avoids soft-404s).
+ * Client-side data loading is unchanged — this only feeds the <head>.
+ */
+export async function getServerSideProps({ params, res }) {
+  const postId = normalizeRouteId(params?.postId);
+  if (!postId || !/^[0-9a-f-]{20,40}$/i.test(postId)) {
+    return { notFound: true };
+  }
+
+  try {
+    const { getAdminClient } = await import('../../lib/server-auth.js');
+    const admin = getAdminClient();
+    const { data: post } = await admin
+      .from('forum_posts')
+      .select('id, title, content, topic, visibility, anonymous_name_snapshot, like_count, comment_count, created_at')
+      .eq('id', postId)
+      .maybeSingle();
+
+    if (!post || post.visibility === 'hidden') {
+      return { notFound: true };
+    }
+
+    const indexable = post.visibility !== 'members_only'
+      && !isMatureForumTopicStored(post.topic);
+
+    res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=600');
+
+    return {
+      props: {
+        seo: {
+          id: post.id,
+          title: post.title || '貼文',
+          // Members-only/mature posts stay noindex and expose no content.
+          excerpt: indexable ? seoExcerpt(post.content) : '',
+          author_name: indexable ? (post.anonymous_name_snapshot || null) : null,
+          like_count: post.like_count || 0,
+          comment_count: post.comment_count || 0,
+          created_at: post.created_at || null,
+          indexable,
+        },
+      },
+    };
+  } catch (err) {
+    console.error('[forum/postId] SSR meta failed:', err?.message || err);
+    // Never block the page on SEO metadata — fall back to client rendering.
+    return { props: { seo: null } };
+  }
 }

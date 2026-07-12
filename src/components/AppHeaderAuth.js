@@ -8,6 +8,7 @@ import { useAuth } from '../lib/auth-context.js';
 import { NavLink } from './AppShell.js';
 import PixelMixedLabel from './PixelMixedLabel.js';
 import HeaderPremiumMoon from './HeaderPremiumMoon.js';
+import HeaderMyCatLink from './HeaderMyCatLink.js';
 import { readMeCache } from '../lib/me-cache.js';
 import { isPremiumUser } from '../lib/premium.js';
 
@@ -81,6 +82,7 @@ export default function AppHeaderAuth({ redirectPath, hideInbox: hideInboxProp, 
             <Link href="/account" className="auth-nav-badge__item auth-nav-badge__item--icon" title="設定">
               <span className="auth-nav-badge__icon" aria-hidden="true">⚙</span>
             </Link>
+            <HeaderMyCatLink needsFeedBadge={meData?.my_cat?.needs_feed_badge === true} />
           </span>
         </div>
       </div>

@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { storyFeedPreviewText, isStoryPost } from '../lib/forum-story.js';
-import { TOPIC_STYLES } from '../lib/forum-welcome.js';
+import { TOPIC_STYLES, displayTopic, forumTopicLabel } from '../lib/forum-welcome.js';
 import ForumPostTags from './ForumPostTags.js';
 import ForumAuthorName from './ForumAuthorName.js';
 import { forumListPreviewText } from '../lib/forum-list-preview.js';
@@ -167,11 +167,11 @@ export default function ForumBookmarksPanel({ open, onClose, accessToken, onBook
                       <span
                         className="pixel-tag"
                         style={{
-                          color: TOPIC_STYLES[post.topic]?.accent || 'var(--purple-light)',
-                          borderColor: `${TOPIC_STYLES[post.topic]?.accent || '#bd93f9'}55`,
+                          color: TOPIC_STYLES[displayTopic(post.topic)]?.accent || 'var(--purple-light)',
+                          borderColor: `${TOPIC_STYLES[displayTopic(post.topic)]?.accent || '#bd93f9'}55`,
                         }}
                       >
-                        {post.topic}
+                        {forumTopicLabel(post.topic)}
                       </span>
                       <ForumPostTags tags={post.tags} variant="compact" />
                     </div>

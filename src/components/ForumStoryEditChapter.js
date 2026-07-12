@@ -53,7 +53,10 @@ export default function ForumStoryEditChapter({
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const latest = editorFlushRef.current?.() ?? contentRef.current ?? content;
+    const flushed = editorFlushRef.current?.();
+    const latest = (typeof flushed === 'string' && flushed.trim())
+      ? flushed
+      : (contentRef.current || content);
     const normalized = normalizeForumBodyContent(latest);
     if (!normalized.trim()) {
       setError('請填寫章節內容。');
@@ -63,6 +66,7 @@ export default function ForumStoryEditChapter({
     setContent(normalized);
     setSubmitting(true);
     setError('');
+    let savedChapters = null;
     try {
       const chapterKey = chapter?.id || `legacy-${chapter?.chapter_number || 1}`;
       const res = await fetch(
@@ -84,12 +88,16 @@ export default function ForumStoryEditChapter({
         setError(forumSubmitErrorMessage(payload, '更新章節失敗。'));
         return;
       }
-      onSaved?.(payload.chapters);
+      savedChapters = Array.isArray(payload.chapters) ? payload.chapters : [];
     } catch {
       setError('網絡錯誤，請稍後再試。');
+      return;
     } finally {
       setSubmitting(false);
     }
+    // Run parent callbacks outside try/catch so a downstream render issue is not
+    // misreported as a save failure (the PATCH already succeeded here).
+    onSaved?.(savedChapters);
   }
 
   return (

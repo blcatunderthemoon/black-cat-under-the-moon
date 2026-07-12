@@ -10,6 +10,7 @@ import { useAuth } from '../lib/auth-context.js';
 import { NavLink } from './AppShell.js';
 import ForumBookmarksPanel from './ForumBookmarksPanel.js';
 import HeaderPremiumMoon from './HeaderPremiumMoon.js';
+import HeaderMyCatLink from './HeaderMyCatLink.js';
 import { isPremiumUser } from '../lib/premium.js';
 import { canModerateForum } from '../lib/forum-roles.js';
 import { readMeCache } from '../lib/me-cache.js';
@@ -103,6 +104,7 @@ export default function ForumHeaderAuth({ extra = null, moonJourney = null, redi
             <span className="app-header__nav-icon" aria-hidden="true">⚙</span>
           </Link>
           {moonJourney}
+          <HeaderMyCatLink variant="forum" needsFeedBadge={meData?.my_cat?.needs_feed_badge === true} />
         </span>
         {extra}
       </span>

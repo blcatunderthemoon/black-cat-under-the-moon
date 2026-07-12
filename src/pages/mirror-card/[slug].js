@@ -20,7 +20,7 @@ import {
   COMPOSE_PLACEHOLDER_OPEN,
   COMPOSE_TITLE_OPEN,
 } from '../../lib/inbox-channel.js';
-import { getMirrorCardPageTitle } from '../../lib/mirror-personality.js';
+import { getMirrorCardPageTitle, PERSONALITY_TYPES, CAT_IMG_MAP } from '../../lib/mirror-personality.js';
 import { DEFAULT_LETTER_PREFS } from '../../lib/letter-gameplay.js';
 import PageLoadingShell from '../../components/PageLoadingShell.js';
 import { readMirrorCardSlugCache, writeMirrorCardSlugCache } from '../../lib/mirror-card-cache.js';
@@ -177,7 +177,7 @@ function MirrorLetterOverlay({
   );
 }
 
-export default function MirrorCardSlugPage() {
+export default function MirrorCardSlugPage({ seo = null }) {
   const router = useRouter();
   const { slug } = router.query;
   const { session } = useAuth();
@@ -586,6 +586,20 @@ export default function MirrorCardSlugPage() {
   if (loading) {
     return (
       <>
+        {seo && (
+          <SeoHead
+            title={getMirrorCardPageTitle(seo.owner_name)}
+            description={
+              seo.family_zh
+                ? `${seo.owner_name || '用戶'} 屬於${seo.family_zh}——在 Black Cat Under The Moon 探索靈魂鏡像與貓家族人格，測出妳的家族。`
+                : `${seo.owner_name || '用戶'} 的 Mirror Card — 在 Black Cat Under The Moon 探索靈魂鏡像與貓家族人格。`
+            }
+            path={seo.slug ? `/mirror-card/${seo.slug}` : undefined}
+            ogType="profile"
+            ogImage={seo.og_image || undefined}
+            ogImageAlt={seo.family_zh ? `${seo.family_zh} Mirror Card` : undefined}
+          />
+        )}
         <Head><link rel="stylesheet" href="/css/questionnaire.css" /></Head>
         <PageLoadingShell
           headerVariant="account"
@@ -600,6 +614,7 @@ export default function MirrorCardSlugPage() {
   if (loadError) {
     return (
       <>
+        <SeoHead title="Mirror Card" noindex />
         <Head><link rel="stylesheet" href="/css/questionnaire.css" /></Head>
         <AppShell
           title="Mirror Card"
@@ -658,9 +673,15 @@ export default function MirrorCardSlugPage() {
     <>
       <SeoHead
         title={mirrorCardTitle}
-        description={`${ownerLabel || '用戶'} 的 Mirror Card — 在 Black Cat Under The Moon 探索靈魂鏡像與貓家族人格。`}
+        description={
+          seo?.family_zh
+            ? `${ownerLabel || '用戶'} 屬於${seo.family_zh}——在 Black Cat Under The Moon 探索靈魂鏡像與貓家族人格，測出妳的家族。`
+            : `${ownerLabel || '用戶'} 的 Mirror Card — 在 Black Cat Under The Moon 探索靈魂鏡像與貓家族人格。`
+        }
         path={slug ? `/mirror-card/${slug}` : undefined}
         ogType="profile"
+        ogImage={seo?.og_image || undefined}
+        ogImageAlt={seo?.family_zh ? `${seo.family_zh} Mirror Card` : undefined}
       />
       <Head>
         <link rel="stylesheet" href="/css/questionnaire.css" />
@@ -928,4 +949,56 @@ export default function MirrorCardSlugPage() {
       />
     </>
   );
+}
+
+/**
+ * SSR meta for crawlers: unique title/description per card (family + owner)
+ * in the initial HTML, and real 404s for unknown slugs.
+ */
+export async function getServerSideProps({ params, res }) {
+  const slug = String(params?.slug || '').trim();
+  if (!slug || slug.length > 80) return { notFound: true };
+
+  try {
+    const { getAdminClient } = await import('../../lib/server-auth.js');
+    const admin = getAdminClient();
+    const { data: card } = await admin
+      .from('mirror_cards')
+      .select('public_slug, mirror_type, user_id')
+      .eq('public_slug', slug)
+      .maybeSingle();
+
+    if (!card) return { notFound: true };
+
+    let ownerName = null;
+    if (card.user_id) {
+      const { data: ownerProfile } = await admin
+        .from('profiles')
+        .select('display_name, status')
+        .eq('id', card.user_id)
+        .maybeSingle();
+      if (ownerProfile?.status && ownerProfile.status !== 'active') {
+        return { notFound: true };
+      }
+      ownerName = (ownerProfile?.display_name || '').slice(0, 12) || null;
+    }
+
+    const family = PERSONALITY_TYPES[card.mirror_type] || null;
+
+    res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600');
+
+    return {
+      props: {
+        seo: {
+          slug: card.public_slug,
+          owner_name: ownerName,
+          family_zh: family?.nameZh || null,
+          og_image: CAT_IMG_MAP[card.mirror_type] || null,
+        },
+      },
+    };
+  } catch (err) {
+    console.error('[mirror-card/slug] SSR meta failed:', err?.message || err);
+    return { props: { seo: null } };
+  }
 }

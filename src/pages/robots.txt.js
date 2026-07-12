@@ -19,6 +19,7 @@ export async function getServerSideProps({ res }) {
     'Disallow: /auth/',
     'Disallow: /matches',
     'Disallow: /mirror-card/me',
+    'Disallow: /my-cat',
     'Disallow: /exchange-photo',
     'Disallow: /billing/',
     '',

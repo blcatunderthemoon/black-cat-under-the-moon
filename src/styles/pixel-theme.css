@@ -21661,12 +21661,16 @@ button.forum-tag-chip:hover {
   flex-shrink: 0;
 }
 
-.forum-compose-modal--add-chapter .forum-story-add-chapter__editor .forum-compose-field__editor-pane {
+.forum-compose-modal--add-chapter .forum-story-add-chapter__editor .forum-compose-field__editor-pane:not(.forum-compose-field__editor-pane--hidden) {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+.forum-compose-modal--add-chapter .forum-story-add-chapter__editor .forum-compose-field__editor-pane--hidden {
+  display: none;
 }
 
 .forum-compose-modal--add-chapter .forum-story-add-chapter__editor .forum-tiptap {
@@ -22705,6 +22709,1476 @@ button.forum-tag-chip:hover {
 
   .forum-story-reading__nav-btn {
     min-height: 54px;
+  }
+}
+
+/* ============================================================
+   My Cat（月光小貓）— /my-cat + header 🐾 entry
+   Spec: docs/MY-CAT-GAME-DESIGN.md
+   ============================================================ */
+
+/* ── Header 標題置中平衡（真中央：1fr auto 1fr） ── */
+.app-page--my-cat > .app-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+}
+
+.app-page--my-cat > .app-header > .app-header__back {
+  grid-column: 1;
+  justify-self: start;
+}
+
+.app-page--my-cat > .app-header > .app-header__title {
+  grid-column: 2;
+  justify-self: center;
+  flex: unset;
+  font-family: 'Zpix', 'Press Start 2P', monospace;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  color: var(--purple-light);
+  -webkit-font-smoothing: none;
+  text-rendering: geometricPrecision;
+}
+
+.app-page--my-cat > .app-header > .app-header__nav {
+  grid-column: 3;
+  justify-self: end;
+}
+
+@media (max-width: 480px) {
+  .app-page--my-cat > .app-header > .app-header__title {
+    font-size: 11px;
+    letter-spacing: 0.04em;
+  }
+}
+
+/* ── Header entry (§1.3 唯一主入口) — 真·像素貓 sprite 按鈕 ── */
+.header-my-cat-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  /* inset ring (唔會撐大盒子) + 柔和光暈 → 突出但唔破壞排版平衡 */
+  background: linear-gradient(180deg, rgba(124, 92, 252, 0.26) 0%, rgba(52, 38, 100, 0.3) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(189, 147, 249, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 8px rgba(124, 92, 252, 0.28);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+/* 月光照喺貓身上 */
+.header-my-cat-link::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 50% 30%, rgba(255, 224, 138, 0.2), transparent 62%);
+  pointer-events: none;
+}
+
+.header-my-cat-link:hover {
+  background: linear-gradient(180deg, rgba(124, 92, 252, 0.42) 0%, rgba(70, 52, 130, 0.42) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 224, 102, 0.75),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 12px rgba(255, 224, 102, 0.38);
+}
+
+/* 遊戲入面同一隻 cat05（idle 第 0 幀裁出嚟），pixelated 保持像素質感 */
+.header-my-cat-link__sprite {
+  display: block;
+  width: 19px;
+  height: 18px;
+  background: url('/catset_extra_assets/cat05_header_icon.png') no-repeat center / 19px 18px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.55)) drop-shadow(0 0 4px rgba(189, 147, 249, 0.55));
+  transition: transform 0.15s ease-out;
+}
+
+.header-my-cat-link:hover .header-my-cat-link__sprite {
+  transform: translateY(-1px);
+}
+
+.header-my-cat-link--forum {
+  padding: 4px 7px;
+}
+
+.header-my-cat-link__dot {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff6b6b;
+  box-shadow: 0 0 6px rgba(255, 107, 107, 0.9);
+  pointer-events: none;
+}
+
+.header-my-cat-link--hungry {
+  background: linear-gradient(180deg, rgba(255, 122, 92, 0.3) 0%, rgba(120, 52, 46, 0.32) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 138, 92, 0.85),
+    0 0 12px rgba(255, 122, 92, 0.5);
+  animation: my-cat-entry-pulse 2s ease-in-out infinite;
+}
+
+.header-my-cat-link--hungry .header-my-cat-link__sprite {
+  animation: my-cat-paw-nudge 2.4s ease-in-out infinite;
+}
+
+/* 肚餓提醒：小貓跳兩下（保持像素感，唔用旋轉） */
+@keyframes my-cat-paw-nudge {
+  0%, 80%, 100% { transform: none; }
+  84%, 92% { transform: translateY(-2px); }
+  88%, 96% { transform: translateY(0); }
+}
+
+@keyframes my-cat-entry-pulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(255, 122, 92, 0.4); }
+  50% { box-shadow: 0 0 16px rgba(255, 122, 92, 0.7); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header-my-cat-link--hungry {
+    animation: none;
+  }
+}
+
+/* ── Panel（遊戲卡匣外框） ── */
+.my-cat-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px;
+  background: #0d0b1e;
+  border: 2px solid #2a2650;
+  border-radius: 4px;
+  box-shadow:
+    0 0 0 2px #07060e,
+    0 0 0 4px #1d1836,
+    8px 8px 0 rgba(0, 0, 0, 0.45);
+}
+
+.my-cat-panel--loading,
+.my-cat-panel--error {
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  text-align: center;
+  color: var(--text, #f0ebd8);
+}
+
+/* ── 像素房間場景（§12 輕量版：CSS 牆 + 窗 + 月光） ── */
+.my-cat-room {
+  position: relative;
+  height: 320px;
+  border: 2px solid #1d1836;
+  overflow: hidden;
+  image-rendering: pixelated;
+}
+
+.my-cat-room__wall {
+  position: absolute;
+  inset: 0 0 28% 0;
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.02) 0 2px, transparent 2px 10px),
+    linear-gradient(180deg, #1a1540 0%, #141030 100%);
+}
+
+.my-cat-room__floor {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 28%;
+  background:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.22) 0 2px, transparent 2px 44px),
+    linear-gradient(180deg, #241c46 0%, #191233 100%);
+  border-top: 3px solid #0c0a1c;
+}
+
+/* 窗（像素窗框 + 夜空） */
+.my-cat-room__window {
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 118px;
+  height: 92px;
+  background: linear-gradient(180deg, #0a0f2e 0%, #12194a 100%);
+  border: 4px solid #3a3468;
+  box-shadow:
+    0 0 0 2px #14102c,
+    0 0 28px rgba(255, 224, 138, 0.18);
+}
+
+.my-cat-room__window-bars {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent calc(50% - 2px), #3a3468 calc(50% - 2px), #3a3468 calc(50% + 2px), transparent calc(50% + 2px)),
+    linear-gradient(0deg, transparent calc(50% - 2px), #3a3468 calc(50% - 2px), #3a3468 calc(50% + 2px), transparent calc(50% + 2px));
+}
+
+/* 像素月亮（八角近似圓） */
+.my-cat-room__moon {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  width: 26px;
+  height: 26px;
+  background: #ffe08a;
+  clip-path: polygon(25% 0, 75% 0, 100% 25%, 100% 75%, 75% 100%, 25% 100%, 0 75%, 0 25%);
+  box-shadow: 0 0 18px 4px rgba(255, 224, 138, 0.85);
+}
+
+/* 窗外星星（兩幀閃爍） */
+.my-cat-room__star {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #cfd8ff;
+  animation: my-cat-star-blink 2.4s steps(2, jump-none) infinite;
+}
+
+.my-cat-room__star--1 { top: 18px; left: 14px; }
+.my-cat-room__star--2 { top: 48px; left: 32px; animation-delay: 0.8s; }
+.my-cat-room__star--3 { top: 34px; right: 50px; animation-delay: 1.4s; }
+
+@keyframes my-cat-star-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.15; }
+}
+
+/* 霓虹招牌（呼吸） */
+.my-cat-room__neon {
+  position: absolute;
+  top: 36px;
+  right: 16px;
+  padding: 4px 8px;
+  font-family: 'Zpix', 'Press Start 2P', monospace;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: #ff7ad9;
+  border: 2px solid rgba(255, 122, 217, 0.55);
+  text-shadow: 0 0 8px rgba(255, 122, 217, 0.9);
+  box-shadow:
+    0 0 14px rgba(255, 122, 217, 0.35),
+    inset 0 0 10px rgba(255, 122, 217, 0.15);
+  transform: rotate(3deg);
+  animation: my-cat-neon-breathe 3.4s ease-in-out infinite;
+}
+
+/* 像素字型嘅 ~ 偏高 — 推返落嚟同 meow 上下置中 */
+.my-cat-room__neon-tilde {
+  display: inline-block;
+  transform: translateY(3px);
+}
+
+@keyframes my-cat-neon-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+/* 牆上小書架（暗示黑貓在寫故事） */
+/* 牆上小書架（暗示黑貓在寫故事）— 可點擊 → 玩法指南 */
+.my-cat-room__shelf {
+  position: absolute;
+  top: 96px;
+  left: 20px;
+  width: 66px;
+  height: 6px;
+  display: block;
+  z-index: 2;
+  background: #3a3468;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+
+.my-cat-room__shelf::before {
+  content: '';
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  width: 10px;
+  height: 18px;
+  background: #bd93f9;
+  box-shadow:
+    13px 2px 0 #ff7ad9,
+    26px 0 0 #4fc3f7,
+    39px 3px 0 #ffb347;
+  transition: filter 0.2s;
+}
+
+/* 透明加大點擊範圍（覆蓋書本） */
+.my-cat-room__shelf::after {
+  content: '';
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  top: -26px;
+  bottom: -6px;
+}
+
+.my-cat-room__shelf:hover {
+  box-shadow:
+    2px 2px 0 rgba(0, 0, 0, 0.4),
+    0 0 12px rgba(189, 147, 249, 0.5);
+}
+
+.my-cat-room__shelf:hover::before {
+  filter: brightness(1.3) drop-shadow(0 0 4px rgba(189, 147, 249, 0.6));
+}
+
+/* 月光光束（窗 → 地板） */
+.my-cat-room__beam {
+  position: absolute;
+  top: 114px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 168px;
+  height: calc(100% - 114px);
+  background: linear-gradient(180deg, rgba(255, 232, 160, 0.16), rgba(255, 232, 160, 0.05) 72%, transparent);
+  clip-path: polygon(22% 0, 78% 0, 100% 100%, 0 100%);
+  pointer-events: none;
+}
+
+/* 地板月光光斑（貓的座位） */
+.my-cat-room__moonpatch {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 190px;
+  height: 36px;
+  background: radial-gradient(ellipse at center, rgba(255, 232, 160, 0.24), rgba(255, 232, 160, 0.07) 58%, transparent 74%);
+  pointer-events: none;
+}
+
+/* 貓（點擊互動） */
+.my-cat-panel__cat-btn {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.my-cat-panel__cat-btn:active .cat-sprite {
+  transform: scale(0.94);
+}
+
+.my-cat-panel__cat-btn--resting {
+  cursor: default;
+}
+
+.my-cat-panel__cat-btn--resting .cat-sprite {
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55)) grayscale(0.25) brightness(0.82);
+}
+
+.my-cat-panel__cat-btn--resting:active .cat-sprite {
+  transform: none;
+}
+
+.cat-sprite {
+  image-rendering: pixelated;
+  user-select: none;
+  transition: transform 0.1s steps(2);
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55));
+}
+
+/* Spritesheet playback — speed set inline per animation (my-cat.js CAT_ANIM_META) */
+.cat-sprite--strip {
+  display: block;
+  background-repeat: repeat-x;
+  background-position: 0 0;
+  animation-name: cat-strip-play;
+  animation-iteration-count: infinite;
+}
+
+@keyframes cat-strip-play {
+  from { background-position: 0 0; }
+  to   { background-position: var(--cat-strip-end, -2560px) 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cat-sprite--strip {
+    animation: none;
+  }
+}
+
+.cat-sprite--kitten {
+  transform: scale(0.82);
+  transform-origin: bottom center;
+}
+
+.my-cat-panel__cat-btn:active .cat-sprite--kitten {
+  transform: scale(0.78);
+}
+
+/* 遊戲式名牌（左上 HUD） */
+.my-cat-room__nameplate {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 9px;
+  background: rgba(13, 11, 30, 0.88);
+  border: 2px solid #3a3468;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+}
+
+.my-cat-room__name {
+  font-size: 11px;
+  color: #ffe08a;
+  letter-spacing: 1px;
+}
+
+.my-cat-room__rename-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 2px;
+  font-size: 12px;
+  line-height: 1;
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.my-cat-room__rename-btn:hover {
+  opacity: 1;
+}
+
+/* ── 改名對話框（像素窗） ── */
+.my-cat-rename {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(7, 6, 14, 0.72);
+}
+
+.my-cat-rename__box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(300px, 86%);
+  padding: 14px;
+  background: #131028;
+  border: 2px solid #3a3468;
+  box-shadow:
+    0 0 0 2px #07060e,
+    4px 4px 0 rgba(0, 0, 0, 0.5);
+}
+
+.my-cat-rename__title {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: #ffe08a;
+}
+
+.my-cat-rename__input {
+  min-height: 40px;
+  padding: 8px 10px;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--text, #f0ebd8);
+  background: #07060e;
+  border: 2px solid #2a2650;
+  border-radius: 0;
+}
+
+.my-cat-rename__input:focus {
+  outline: none;
+  border-color: var(--purple-light, #bd93f9);
+}
+
+.my-cat-rename__note {
+  margin: 0;
+  font-size: 0.74rem;
+  color: rgba(240, 235, 216, 0.6);
+}
+
+.my-cat-rename__error {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #ff6b6b;
+}
+
+.my-cat-rename__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.my-cat-rename__btn {
+  flex: 1;
+  min-height: 38px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: var(--text, #f0ebd8);
+  background: #1a1533;
+  border: 2px solid #2a2650;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.my-cat-rename__btn--ok {
+  color: #1d1836;
+  background: linear-gradient(180deg, #ffd080 0%, #ffd080 48%, #ffb347 48%, #ffb347 100%);
+  border-color: #1d1836;
+  box-shadow: 0 3px 0 #8a5a1f;
+}
+
+.my-cat-rename__btn--ok:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: none;
+}
+
+.my-cat-rename__btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* 餵食獎勵 popup（+2 EXP） */
+.my-cat-reward {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.my-cat-reward__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 14px 22px;
+  background: rgba(13, 11, 30, 0.92);
+  border: 2px solid #ffe08a;
+  box-shadow:
+    0 0 0 2px #07060e,
+    0 0 22px rgba(255, 224, 138, 0.55),
+    5px 6px 0 rgba(0, 0, 0, 0.5);
+  animation: my-cat-reward-pop 0.32s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.my-cat-reward__exp {
+  font-size: 22px;
+  line-height: 1;
+  color: #ffe08a;
+  text-shadow: 0 0 10px rgba(255, 224, 138, 0.85);
+}
+
+.my-cat-reward__sub {
+  font-size: 0.8rem;
+  color: rgba(240, 235, 216, 0.9);
+}
+
+.my-cat-reward__sub--up {
+  color: #ff7ad9;
+  text-shadow: 0 0 8px rgba(255, 122, 217, 0.7);
+}
+
+@keyframes my-cat-reward-pop {
+  0% { opacity: 0; transform: translateY(14px) scale(0.7); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .my-cat-reward__card {
+    animation: none;
+  }
+}
+
+/* 摸摸飄心 */
+.my-cat-room__heart {
+  position: absolute;
+  bottom: 150px;
+  left: 50%;
+  z-index: 3;
+  font-size: 18px;
+  color: #ff6b9d;
+  text-shadow: 1px 1px 0 #1d1836;
+  pointer-events: none;
+  animation: my-cat-heart-float 1.4s ease-out forwards;
+}
+
+.my-cat-room__heart:nth-child(even) {
+  animation-name: my-cat-heart-float-left;
+}
+
+@keyframes my-cat-heart-float {
+  0% { opacity: 0; transform: translate(-50%, 0) scale(0.6); }
+  18% { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc(-50% + 28px), -74px) scale(1.2); }
+}
+
+@keyframes my-cat-heart-float-left {
+  0% { opacity: 0; transform: translate(-50%, 0) scale(0.6); }
+  18% { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc(-50% - 30px), -68px) scale(1.15); }
+}
+
+/* 台詞泡泡（RPG 對話框：像素切角 + 名牌 + 打字機） */
+.my-cat-panel__bubble {
+  position: absolute;
+  bottom: 172px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  width: max-content;
+  max-width: 82%;
+  animation: my-cat-bubble-pop 0.18s steps(3) both;
+}
+
+.my-cat-panel__bubble-box {
+  position: relative;
+  padding: 10px 14px 9px;
+  background: #f5efd9;
+  color: #1d1836;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  /* 像素邊框（上下左右外推 3px，角位自然缺角）＋ 硬陰影 ＋ 內側壓線 */
+  box-shadow:
+    0 -3px 0 #1d1836,
+    0 3px 0 #1d1836,
+    -3px 0 0 #1d1836,
+    3px 0 0 #1d1836,
+    5px 7px 0 rgba(0, 0, 0, 0.45),
+    inset -2px -2px 0 rgba(29, 24, 54, 0.14),
+    inset 2px 2px 0 rgba(255, 255, 255, 0.65);
+}
+
+.my-cat-panel__bubble-ghost {
+  visibility: hidden;
+}
+
+.my-cat-panel__bubble-text {
+  position: absolute;
+  inset: 10px 14px 9px;
+  overflow: hidden;
+}
+
+.my-cat-panel__bubble-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.my-cat-panel__bubble-cursor {
+  display: inline-block;
+  margin-left: 1px;
+  color: #7c5cfc;
+  animation: my-cat-bubble-cursor 0.7s steps(2, jump-none) infinite;
+}
+
+@keyframes my-cat-bubble-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* 講者名牌（掛喺框頂） */
+.my-cat-panel__bubble-tag {
+  position: absolute;
+  top: -22px;
+  left: -6px;
+  z-index: 1;
+  padding: 3px 8px;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #ffe08a;
+  background: #1d1836;
+  box-shadow:
+    0 -2px 0 #07060e,
+    0 2px 0 #07060e,
+    -2px 0 0 #07060e,
+    2px 0 0 #07060e;
+}
+
+/* 對話尾巴（指向貓，雙層三角做描邊） */
+.my-cat-panel__bubble-tail {
+  position: absolute;
+  bottom: -13px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-top: 10px solid #1d1836;
+}
+
+.my-cat-panel__bubble-tail::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 7px solid #f5efd9;
+}
+
+@keyframes my-cat-bubble-pop {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px) scale(0.9); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+.my-cat-panel__hint {
+  margin: 0;
+  text-align: center;
+  font-size: 0.76rem;
+  color: rgba(240, 235, 216, 0.6);
+}
+
+.my-cat-panel__hint strong {
+  color: #ffe08a;
+}
+
+.my-cat-panel__hint--resting {
+  color: rgba(189, 147, 249, 0.85);
+}
+
+.my-cat-panel__hint--resting strong {
+  font-family: 'Zpix', 'Press Start 2P', monospace;
+  color: #bd93f9;
+}
+
+/* ── HUD 屬性面板 ── */
+.my-cat-panel__stats {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 14px 14px;
+  background: #131028;
+  border: 2px solid #2a2650;
+  box-shadow: inset 0 0 0 2px #07060e;
+}
+
+.my-cat-panel__stats-title {
+  margin: 0 0 2px;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: #7c7aa8;
+}
+
+/* STATUS 頂行：標題＋成長階段徽章 */
+.my-cat-panel__stats-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.my-cat-stage-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px 3px 7px;
+  background: linear-gradient(180deg, rgba(124, 92, 252, 0.28) 0%, rgba(60, 42, 128, 0.35) 100%);
+  border: 1px solid rgba(189, 147, 249, 0.65);
+  box-shadow:
+    0 0 0 1px #07060e,
+    0 0 8px rgba(124, 92, 252, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.my-cat-stage-badge__icon {
+  font-size: 11px;
+  line-height: 1;
+  filter: drop-shadow(0 0 3px rgba(255, 224, 138, 0.7));
+}
+
+.my-cat-stage-badge__label {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #ffe08a;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+}
+
+.my-cat-stat {
+  display: grid;
+  grid-template-columns: 66px 1fr 40px;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: var(--text, #f0ebd8);
+}
+
+.my-cat-stat__label {
+  white-space: nowrap;
+}
+
+.my-cat-stat__track {
+  position: relative;
+  height: 16px;
+  background: #07060e;
+  border: 2px solid #1d1836;
+  overflow: hidden;
+}
+
+.my-cat-stat__fill {
+  position: relative;
+  height: 100%;
+  transition: width 0.6s steps(10);
+}
+
+/* 像素格紋刻度 */
+.my-cat-stat__fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(90deg, transparent 0 8px, rgba(0, 0, 0, 0.3) 8px 10px);
+}
+
+.my-cat-stat__fill--hunger {
+  background: linear-gradient(180deg, #8fdcff 0%, #8fdcff 45%, #4fc3f7 45%, #4fc3f7 100%);
+}
+
+.my-cat-stat__fill--affection {
+  background: linear-gradient(180deg, #ffa3c0 0%, #ffa3c0 45%, #ff6b9d 45%, #ff6b9d 100%);
+}
+
+.my-cat-stat__fill--soul {
+  background: linear-gradient(180deg, #bd93f9 0%, #bd93f9 45%, #7c5cfc 45%, #7c5cfc 100%);
+}
+
+.my-cat-stat__value {
+  text-align: right;
+  font-family: 'Zpix', 'Press Start 2P', monospace;
+  font-size: 12px;
+  color: rgba(240, 235, 216, 0.85);
+}
+
+/* ── 餵食按鈕（像素起司鍵） ── */
+.my-cat-panel__feed-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 10px 16px;
+  font-size: 14px;
+  color: #1d1836;
+  background: linear-gradient(180deg, #ffd080 0%, #ffd080 48%, #ffb347 48%, #ffb347 100%);
+  border: 2px solid #1d1836;
+  border-radius: 0;
+  box-shadow:
+    0 4px 0 #8a5a1f,
+    0 6px 0 rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  transition: transform 0.08s steps(2), box-shadow 0.08s steps(2);
+}
+
+.my-cat-panel__feed-btn:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.my-cat-panel__feed-btn:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 #8a5a1f, 0 2px 0 rgba(0, 0, 0, 0.4);
+}
+
+.my-cat-panel__feed-btn:disabled {
+  cursor: default;
+}
+
+.my-cat-panel__feed-btn--done {
+  background: #1a1533;
+  color: rgba(240, 235, 216, 0.55);
+  border-color: #2a2650;
+  box-shadow: none;
+}
+
+.my-cat-panel__status {
+  margin: 0;
+  text-align: center;
+  font-family: 'Zpix', 'Press Start 2P', monospace;
+  font-size: 12px;
+  color: #ffe08a;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
+}
+
+/* ── Footer ── */
+/* ── Footer 資訊列（像素 HUD chip） ── */
+.my-cat-panel__footer {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 2px dashed #2a2650;
+}
+
+.my-cat-footer-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  background: #131028;
+  border: 2px solid #2a2650;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    2px 3px 0 rgba(0, 0, 0, 0.35);
+}
+
+.my-cat-footer-chip--shards {
+  border-color: rgba(255, 224, 138, 0.35);
+  background: linear-gradient(180deg, #1a1533 0%, #131028 100%);
+}
+
+.my-cat-footer-chip--growth {
+  border-color: rgba(189, 147, 249, 0.4);
+  background: linear-gradient(180deg, #1a1533 0%, #131028 100%);
+}
+
+.my-cat-footer-chip__icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  font-size: 16px;
+  line-height: 1;
+  background: rgba(7, 6, 14, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.4);
+}
+
+.my-cat-footer-chip--shards .my-cat-footer-chip__icon {
+  color: #ffe08a;
+  text-shadow: 0 0 8px rgba(255, 224, 138, 0.75);
+}
+
+.my-cat-footer-chip--growth .my-cat-footer-chip__icon {
+  font-size: 15px;
+}
+
+.my-cat-footer-chip__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.my-cat-footer-chip__label {
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: rgba(240, 235, 216, 0.55);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.my-cat-footer-chip__value {
+  font-size: 14px;
+  line-height: 1.2;
+  color: #ffe08a;
+  text-shadow: 0 0 8px rgba(255, 224, 138, 0.45);
+}
+
+.my-cat-footer-chip__value--streak {
+  font-family: inherit;
+  font-size: 0.72rem;
+  color: #ff9f6b;
+  text-shadow: none;
+}
+
+@media (max-width: 480px) {
+  .my-cat-panel__footer {
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .my-cat-room__star,
+  .my-cat-room__neon,
+  .my-cat-room__heart,
+  .my-cat-panel__bubble,
+  .my-cat-panel__bubble-cursor,
+  .header-my-cat-link--hungry .header-my-cat-link__sprite {
+    animation: none;
+  }
+}
+
+/* 打卡按鈕改為連結（去 /my-cat 餵食）— 沿用原按鈕外觀 */
+a.moon-journey-panel__compact-checkin,
+a.moon-journey-dropdown-card__checkin {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+a.moon-journey-panel__compact-checkin--done,
+a.moon-journey-dropdown-card__checkin--done {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+/* ── /my-cat/guide 月光貓養成秘笈（遊戲書） ── */
+.my-cat-guide {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: #0f0c22;
+  border: 2px solid #2a2650;
+  box-shadow:
+    0 0 0 2px #07060e,
+    8px 10px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* 書脊縫線 */
+.my-cat-guide::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 11px;
+  width: 1px;
+  background: repeating-linear-gradient(180deg, rgba(189, 147, 249, 0.35) 0 6px, transparent 6px 14px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── 封面 ── */
+.my-cat-guide__cover {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 30px 18px 24px;
+  text-align: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 16%, rgba(255, 224, 138, 0.14), transparent 55%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.02) 0 2px, transparent 2px 10px),
+    linear-gradient(180deg, #1b1538 0%, #120e2a 100%);
+  border-bottom: 2px solid #2a2650;
+}
+
+/* 封面像素月亮 */
+.my-cat-guide__cover-moon {
+  position: absolute;
+  top: 16px;
+  right: 22px;
+  width: 26px;
+  height: 26px;
+  background: #ffe08a;
+  clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
+  box-shadow: 0 0 18px rgba(255, 224, 138, 0.55);
+  image-rendering: pixelated;
+}
+
+.my-cat-guide__cover-eyebrow {
+  margin: 6px 0 0;
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: rgba(189, 147, 249, 0.85);
+}
+
+.my-cat-guide__cover-title {
+  margin: 0;
+  font-size: 17px;
+  letter-spacing: 3px;
+  color: #ffe08a;
+  text-shadow:
+    2px 2px 0 #07060e,
+    0 0 14px rgba(255, 224, 138, 0.4);
+}
+
+.my-cat-guide__cover-sub {
+  margin: 2px 0 0;
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  color: rgba(240, 235, 216, 0.55);
+}
+
+/* ── 章節（絲帶顏色 = 書架四本書） ── */
+.my-cat-guide__chapter {
+  position: relative;
+  padding: 18px 18px 16px 30px;
+  border-bottom: 2px dashed rgba(189, 147, 249, 0.22);
+}
+
+.my-cat-guide__chapter::before {
+  content: '';
+  position: absolute;
+  top: 16px;
+  left: 0;
+  width: 7px;
+  height: 30px;
+  background: var(--ribbon, #bd93f9);
+  /* 絲帶尾部三角剪口 */
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 82%, 0 100%);
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.55);
+  z-index: 2;
+}
+
+.my-cat-guide__chapter-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 10px;
+}
+
+.my-cat-guide__chapter-no {
+  flex-shrink: 0;
+  padding: 3px 7px;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #0d0b1e;
+  background: var(--ribbon, #bd93f9);
+  box-shadow: 2px 2px 0 #07060e;
+}
+
+.my-cat-guide__chapter-title {
+  margin: 0;
+  font-size: 0.95rem;
+  letter-spacing: 1px;
+  color: #f0ebd8;
+}
+
+.my-cat-guide__list {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.84rem;
+  line-height: 1.65;
+  color: rgba(240, 235, 216, 0.82);
+}
+
+.my-cat-guide__list strong {
+  color: #ffe08a;
+}
+
+.my-cat-guide__list li::marker {
+  color: var(--ribbon, #bd93f9);
+}
+
+/* 貓咪旁白（引用書架 icon 同一隻貓） */
+.my-cat-guide__meow {
+  position: relative;
+  margin: 12px 0 0;
+  padding: 8px 10px 8px 36px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: rgba(255, 224, 138, 0.9);
+  background: rgba(124, 92, 252, 0.08);
+  border: 1px dashed rgba(189, 147, 249, 0.4);
+}
+
+.my-cat-guide__meow::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 9px;
+  width: 19px;
+  height: 18px;
+  transform: translateY(-50%);
+  background: url('/catset_extra_assets/cat05_header_icon.png') no-repeat center / 19px 18px;
+  image-rendering: pixelated;
+}
+
+/* 戰利品獎勵 chips */
+.my-cat-guide__loot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.my-cat-guide__loot-item {
+  padding: 5px 9px;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #ffe08a;
+  background: #131028;
+  border: 1px solid rgba(255, 224, 138, 0.45);
+  box-shadow: 2px 2px 0 #07060e;
+  white-space: nowrap;
+}
+
+/* 摸摸冷卻（5 粒心 = 5 次） */
+.my-cat-guide__cd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.my-cat-guide__cd-slot {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 8px;
+  background: #131028;
+  border: 1px solid rgba(255, 107, 157, 0.4);
+  box-shadow: 2px 2px 0 #07060e;
+}
+
+.my-cat-guide__cd-heart {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.my-cat-guide__cd-label {
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: rgba(240, 235, 216, 0.8);
+  white-space: nowrap;
+}
+
+/* 三大屬性（迷你像素能量條） */
+.my-cat-guide__stats {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.my-cat-guide__stat {
+  display: grid;
+  grid-template-columns: 76px 1fr;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 4px;
+}
+
+.my-cat-guide__stat-name {
+  font-size: 0.82rem;
+}
+
+.my-cat-guide__stat-name strong {
+  color: var(--stat, #ffe08a);
+}
+
+.my-cat-guide__statbar {
+  height: 10px;
+  background: #07060e;
+  border: 1px solid #2a2650;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.6);
+}
+
+.my-cat-guide__statbar-fill {
+  display: block;
+  width: var(--fill, 50%);
+  height: 100%;
+  background: repeating-linear-gradient(90deg, var(--stat, #ffe08a) 0 6px, rgba(0, 0, 0, 0.28) 6px 8px);
+}
+
+.my-cat-guide__stat-desc {
+  grid-column: 1 / -1;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: rgba(240, 235, 216, 0.72);
+}
+
+/* 進化路線圖 */
+.my-cat-guide__evo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.my-cat-guide__evo-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 5px;
+  width: 92px;
+  padding: 10px 6px 8px;
+  text-align: center;
+  background: #131028;
+  border: 1px solid rgba(189, 147, 249, 0.4);
+  box-shadow: 2px 2px 0 #07060e;
+}
+
+.my-cat-guide__evo-arrow {
+  align-self: center;
+  font-size: 10px;
+  color: rgba(189, 147, 249, 0.7);
+}
+
+/* 同一隻貓 icon，一階比一階大隻 */
+.my-cat-guide__evo-icon {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 30px;
+  background: url('/catset_extra_assets/cat05_header_icon.png') no-repeat center bottom;
+  image-rendering: pixelated;
+}
+
+.my-cat-guide__evo-icon--s1 { width: 14px; background-size: 14px 13px; }
+.my-cat-guide__evo-icon--s2 { width: 19px; background-size: 19px 18px; }
+.my-cat-guide__evo-icon--s3 { width: 26px; background-size: 26px 25px; }
+
+.my-cat-guide__evo-icon--mystery {
+  width: 26px;
+  background: none;
+  align-items: center;
+  font-family: 'Zpix', 'Press Start 2P', monospace;
+  font-size: 16px;
+  color: #bd93f9;
+  text-shadow: 0 0 8px rgba(189, 147, 249, 0.8);
+}
+
+.my-cat-guide__evo-step--locked {
+  border-style: dashed;
+  opacity: 0.85;
+}
+
+.my-cat-guide__evo-name {
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #ffe08a;
+}
+
+.my-cat-guide__evo-req {
+  font-size: 0.68rem;
+  line-height: 1.4;
+  color: rgba(240, 235, 216, 0.6);
+}
+
+/* ── 封底 ── */
+.my-cat-guide__back-cover {
+  padding: 20px 18px 22px;
+  text-align: center;
+  background: linear-gradient(180deg, #120e2a 0%, #1b1538 100%);
+}
+
+.my-cat-guide__fin {
+  margin: 0 0 8px;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: rgba(189, 147, 249, 0.85);
+}
+
+.my-cat-guide__outro {
+  margin: 0;
+  font-size: 0.82rem;
+  color: rgba(240, 235, 216, 0.7);
+}
+
+@media (max-width: 480px) {
+  .my-cat-guide__chapter {
+    padding: 16px 12px 14px 24px;
+  }
+
+  .my-cat-guide__evo-step {
+    width: calc(50% - 20px);
+  }
+
+  .my-cat-guide__evo-arrow {
+    display: none;
+  }
+}
+
+/* ── Forum sidebar feed hint（打卡改到 /my-cat） ── */
+.moon-journey-panel__feed-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+  padding: 9px 12px;
+  font-size: 0.78rem;
+  color: rgba(240, 235, 216, 0.7);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px dashed var(--border, #2a2650);
+  border-radius: 8px;
+}
+
+.moon-journey-panel__feed-hint a,
+.moon-journey-account__feed-hint a {
+  color: var(--purple-light, #bd93f9);
+  text-decoration: none;
+}
+
+.moon-journey-account__feed-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: rgba(240, 235, 216, 0.7);
+}
+
+@media (max-width: 480px) {
+  .my-cat-panel {
+    padding: 10px;
+  }
+
+  .my-cat-room {
+    height: 280px;
+  }
+
+  .my-cat-room__window {
+    width: 100px;
+    height: 80px;
+  }
+
+  .my-cat-room__neon {
+    top: 30px;
+    right: 10px;
+    font-size: 10px;
+  }
+
+  .my-cat-room__shelf {
+    left: 12px;
+    width: 56px;
+  }
+
+  .my-cat-room__heart {
+    bottom: 128px;
+  }
+
+  .my-cat-stat {
+    grid-template-columns: 58px 1fr 34px;
   }
 }
 

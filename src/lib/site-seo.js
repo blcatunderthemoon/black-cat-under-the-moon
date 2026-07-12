@@ -40,6 +40,7 @@ const NOINDEX_EXACT = new Set([
   '/forgot-password',
   '/dashboard',
   '/mirror-card/me',
+  '/my-cat',
 ]);
 
 export function isNoIndexPath(pathname) {
