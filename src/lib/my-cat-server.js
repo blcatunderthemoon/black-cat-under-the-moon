@@ -28,6 +28,7 @@ import {
 } from './my-cat.js';
 import { pickCatLine } from './my-cat-lines.js';
 import { applyFeedMilestones } from './my-cat-awards.js';
+import { ensureUserCatRoom, buildRoomView } from './cat-room-server.js';
 import { filterContent } from './content-filter.js';
 import {
   performDailyCheckIn,
@@ -245,10 +246,11 @@ function buildShopView(catRow, mirror) {
 
 /** Full state for GET /api/my-cat. */
 export async function getMyCatState(admin, userId) {
-  const [rawCatRow, moonProfile, mirror] = await Promise.all([
+  const [rawCatRow, moonProfile, mirror, roomRow] = await Promise.all([
     ensureUserCat(admin, userId),
     fetchMoonProfileRow(admin, userId),
     fetchMirrorTypes(admin, userId),
+    ensureUserCatRoom(admin, userId),
   ]);
   const catRow = await ensureShopUnlockFlag(admin, userId, rawCatRow, mirror);
   const petsToday = await countPetsToday(admin, userId);
@@ -258,6 +260,7 @@ export async function getMyCatState(admin, userId) {
     cat: buildCatView(catRow, { moonJourney, mirror, petsToday }),
     moon_journey: moonJourney,
     shop: buildShopView(catRow, mirror),
+    room: buildRoomView(roomRow),
   };
 }
 

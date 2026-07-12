@@ -18450,7 +18450,7 @@ button.forum-tag-chip:hover {
   display: inline-flex;
   align-items: center;
   line-height: 1.2;
-  max-width: 120px;
+  max-width: 260px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -21930,12 +21930,21 @@ button.forum-tag-chip:hover {
     max-height: var(--mobile-vvh, 100dvh);
   }
 
+  /* Full-screen 模式：寫作區盡量填滿餘下空間，並設一個較大嘅最低高度，
+     令手機上有明顯更大嘅打字區（唔會得返一細條）。 */
+  .forum-compose-modal--add-chapter .forum-story-add-chapter__editor .forum-tiptap__editor-wrap {
+    flex: 1 1 auto;
+    min-height: 48vh;
+  }
+
+  .forum-compose-modal--add-chapter .forum-story-add-chapter__editor .forum-tiptap__editor-wrap .forum-tiptap__editor,
   .forum-compose-modal--add-chapter .forum-story-add-chapter__editor .forum-tiptap__editor-wrap .ProseMirror {
-    min-height: 200px;
+    flex: 1 1 auto;
+    min-height: 46vh;
   }
 
   .forum-compose-modal--add-chapter .forum-story-add-chapter__editor .forum-compose-field__preview {
-    min-height: 200px !important;
+    min-height: 46vh !important;
   }
 
   .forum-story-add-chapter__actions {
@@ -23209,6 +23218,129 @@ button.forum-tag-chip:hover {
   pointer-events: none;
 }
 
+/* ── 貓兜（食盆）Phase 3 — 餵食時罐罐 + 魚仔彈出 ── */
+/* 貓兜擺喺貓咪餵食時會行埋去嘅位置（中心偏左），確保「貓走向碗」對齊。 */
+.my-cat-room__bowl {
+  position: absolute;
+  bottom: 16px;
+  left: calc(50% - 86px);
+  z-index: 1;
+  width: 38px;
+  height: 22px;
+  pointer-events: none;
+}
+
+.my-cat-room__bowl-body {
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  bottom: 0;
+  height: 13px;
+  background: linear-gradient(180deg, #c4845a 0%, #8b5a3c 55%, #6b4228 100%);
+  border: 2px solid #4a2e18;
+  border-radius: 0 0 8px 8px;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 220, 180, 0.35),
+    0 2px 0 rgba(0, 0, 0, 0.35);
+}
+
+.my-cat-room__bowl-rim {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 4px;
+  height: 6px;
+  background: #d4a574;
+  border: 2px solid #5c3a20;
+  border-radius: 4px;
+  box-shadow: inset 0 1px 0 rgba(255, 240, 210, 0.5);
+}
+
+.my-cat-room__bowl--moon .my-cat-room__bowl-body {
+  background: linear-gradient(180deg, #c8d8f0 0%, #8aa4c8 55%, #5a7498 100%);
+  border-color: #3a5070;
+}
+
+.my-cat-room__bowl--moon .my-cat-room__bowl-rim {
+  background: #e8f0ff;
+  border-color: #6a88b0;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 0 10px rgba(180, 210, 255, 0.45);
+}
+
+.my-cat-room__bowl-food {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%) scale(0.4);
+  opacity: 0;
+  transition: none;
+  pointer-events: none;
+}
+
+.my-cat-room__bowl-food--visible {
+  opacity: 1;
+  animation: my-cat-bowl-food-pop 0.45s steps(4, jump-end) forwards;
+}
+
+.my-cat-room__bowl-food-mound {
+  display: block;
+  width: 24px;
+  height: 10px;
+  margin: 0 auto;
+  background: linear-gradient(180deg, #ffb88a 0%, #e87850 100%);
+  border: 2px solid #c05838;
+  border-radius: 50% 50% 40% 40% / 60% 60% 40% 40%;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.15);
+}
+
+.my-cat-room__bowl-food-fish {
+  position: absolute;
+  top: -6px;
+  right: -3px;
+  font-size: 11px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.4));
+  animation: my-cat-bowl-fish-bob 0.8s steps(2, jump-end) infinite;
+}
+
+.my-cat-room__bowl-sparkles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.my-cat-room__bowl-spark {
+  position: absolute;
+  font-size: 10px;
+  color: #ffe08a;
+  opacity: 0;
+  animation: my-cat-bowl-spark 1.2s steps(3, jump-end) infinite;
+}
+
+.my-cat-room__bowl-spark--1 { top: -2px; left: 2px; }
+.my-cat-room__bowl-spark--2 { top: 0; right: 0; animation-delay: 0.4s; }
+
+.my-cat-room--feeding .my-cat-room__moonpatch {
+  background: radial-gradient(ellipse at center, rgba(255, 232, 160, 0.32), rgba(255, 232, 160, 0.1) 58%, transparent 74%);
+}
+
+@keyframes my-cat-bowl-food-pop {
+  0%   { opacity: 0; transform: translateX(-50%) scale(0.3) translateY(8px); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
+}
+
+@keyframes my-cat-bowl-fish-bob {
+  0%, 100% { transform: translateY(0) rotate(-8deg); }
+  50%      { transform: translateY(-2px) rotate(6deg); }
+}
+
+@keyframes my-cat-bowl-spark {
+  0%, 100% { opacity: 0; transform: scale(0.6); }
+  50%      { opacity: 1; transform: scale(1); }
+}
+
 /* 貓（點擊互動） */
 .my-cat-panel__cat-btn {
   position: absolute;
@@ -23221,6 +23353,13 @@ button.forum-tag-chip:hover {
   padding: 0;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  transition: transform 0.35s steps(4, jump-end);
+}
+
+/* 餵食時貓咪行埋去貓兜（貓兜喺 left: 50% - 86px，貓身要行到碗邊） */
+.my-cat-panel__cat-btn--eating {
+  transform: translateX(calc(-50% - 58px)) scale(0.96);
+  cursor: default;
 }
 
 .my-cat-panel__cat-btn:active .cat-sprite {
@@ -24067,10 +24206,22 @@ a.my-cat-footer-chip--link:active {
   .my-cat-room__star,
   .my-cat-room__neon,
   .my-cat-room__heart,
+  .my-cat-room__bowl-food--visible,
+  .my-cat-room__bowl-food-fish,
+  .my-cat-room__bowl-spark,
   .my-cat-panel__bubble,
   .my-cat-panel__bubble-cursor,
   .header-my-cat-link--hungry .header-my-cat-link__sprite {
     animation: none;
+  }
+
+  .my-cat-panel__cat-btn--eating {
+    transition: none;
+  }
+
+  .my-cat-room__bowl-food--visible {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
   }
 }
 

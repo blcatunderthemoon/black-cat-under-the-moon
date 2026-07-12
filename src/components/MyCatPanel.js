@@ -7,6 +7,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import CatSprite from './CatSprite.js';
+import CatRoomBowl from './CatRoomBowl.js';
 import MoonLoading from './MoonLoading.js';
 import {
   GROWTH_STAGE_LABELS,
@@ -69,6 +70,7 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
   const [cat, setCat] = useState(null);
   const [moonJourney, setMoonJourney] = useState(null);
   const [shop, setShop] = useState(null);
+  const [room, setRoom] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
 
@@ -116,6 +118,7 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
     }
     if (data?.moon_journey) setMoonJourney(data.moon_journey);
     if (data?.shop) setShop(data.shop);
+    if (data?.room) setRoom(data.room);
   }, []);
 
   const loadCat = useCallback(async ({ silent = false } = {}) => {
@@ -508,6 +511,8 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
   }
 
   const stageLabel = GROWTH_STAGE_LABELS[cat.growth_stage] || '幼崽';
+  const isEating = anim === 'eat';
+  const bowlId = room?.bowl_id || 'bowl_basic';
   const petLimitReached = cat.next_pet_available_at == null;
   const nextPetTs = cat.next_pet_available_at ? new Date(cat.next_pet_available_at).getTime() : 0;
   const cooldownMs = petLimitReached ? 0 : Math.max(0, nextPetTs - nowTs);
@@ -520,7 +525,7 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
   return (
     <div className="my-cat-panel">
       {/* ── 像素房間場景 ── */}
-      <div className="my-cat-room">
+      <div className={`my-cat-room${isEating ? ' my-cat-room--feeding' : ''}`}>
         <div className="my-cat-room__wall" aria-hidden="true">
           <div className="my-cat-room__window">
             <span className="my-cat-room__moon" />
@@ -540,6 +545,10 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
         <div className="my-cat-room__floor" aria-hidden="true" />
         <span className="my-cat-room__beam" aria-hidden="true" />
         <span className="my-cat-room__moonpatch" aria-hidden="true" />
+
+        {!isAway && (
+          <CatRoomBowl bowlId={bowlId} isEating={isEating} />
+        )}
 
         {bubble && (
           <div className="my-cat-panel__bubble" role="status">
@@ -609,7 +618,7 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
         ) : (
           <button
             type="button"
-            className={`my-cat-panel__cat-btn${canPet ? '' : ' my-cat-panel__cat-btn--resting'}`}
+            className={`my-cat-panel__cat-btn${canPet ? '' : ' my-cat-panel__cat-btn--resting'}${isEating ? ' my-cat-panel__cat-btn--eating' : ''}`}
             onClick={handlePet}
             disabled={!canPet}
             aria-label="摸摸貓咪"
