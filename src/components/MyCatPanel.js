@@ -735,7 +735,7 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
         <p className="my-cat-panel__status" role="status">{statusMsg}</p>
       )}
 
-      {shop?.has_mirror && (
+      {shop && (
         <section
           className={`my-cat-shop${shop.unlocked ? '' : ' my-cat-shop--locked'}${shopOpen ? ' my-cat-shop--open' : ''}`}
           aria-label="貓咪商店"
@@ -821,7 +821,11 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
           </span>
         </div>
         {moonJourney && (
-          <div className="my-cat-footer-chip my-cat-footer-chip--growth">
+          <Link
+            href="/moon-journey#mj-levels-heading"
+            className="my-cat-footer-chip my-cat-footer-chip--growth my-cat-footer-chip--link"
+            title="睇等級與稱號說明"
+          >
             <span className="my-cat-footer-chip__icon" aria-hidden="true">{moonJourney.emoji}</span>
             <span className="my-cat-footer-chip__body">
               <span className="my-cat-footer-chip__label">
@@ -833,7 +837,8 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
                 </span>
               )}
             </span>
-          </div>
+            <span className="my-cat-footer-chip__go" aria-hidden="true">›</span>
+          </Link>
         )}
       </div>
     </div>
