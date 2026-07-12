@@ -156,11 +156,23 @@
   }
 
   /* 我的月光貓 — 唯一打卡入口（同 Next.js HeaderMyCatLink） */
+  var CAT_GIF_PREFIX = { cat01: 'cat', cat02: 'cat02', cat03: 'cat03', cat04: 'cat04', cat05: 'cat05' };
+  function myCatSpriteHtml(skinId) {
+    // 預設小黑貓（cat05）用手繪 header icon；其他貓用 idle 動畫第一幀。
+    if (!skinId || skinId === 'cat05' || !CAT_GIF_PREFIX[skinId]) {
+      return '<span class="header-my-cat-link__sprite" aria-hidden="true"></span>';
+    }
+    var prefix = CAT_GIF_PREFIX[skinId];
+    var url = '/catset_extra_assets/catset_extra_spritesheets/' + skinId + '_spritesheets/' + prefix + '_idle_slowblink_strip16.png';
+    var style = "background-image:url('" + url + "');background-size:1600% 100%;background-position:left center;background-repeat:no-repeat;";
+    return '<span class="header-my-cat-link__sprite header-my-cat-link__sprite--strip" style="' + style + '" aria-hidden="true"></span>';
+  }
   function myCatLinkHtml(meData) {
     var needsFeed = !!(meData && meData.my_cat && meData.my_cat.needs_feed_badge);
+    var skinId = meData && meData.my_cat ? meData.my_cat.skin_id : null;
     var title = needsFeed ? '我的月光貓 · 今日未餵食打卡' : '我的月光貓';
     return '<a href="/my-cat" class="auth-nav-badge__item auth-nav-badge__item--icon header-my-cat-link' + (needsFeed ? ' header-my-cat-link--hungry' : '') + '" title="' + title + '" aria-label="我的月光貓">' +
-      '<span class="header-my-cat-link__sprite" aria-hidden="true"></span>' +
+      myCatSpriteHtml(skinId) +
       (needsFeed ? '<span class="header-my-cat-link__dot" aria-hidden="true"></span>' : '') +
     '</a>';
   }

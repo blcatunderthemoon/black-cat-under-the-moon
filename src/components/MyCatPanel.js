@@ -6,6 +6,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import { useAuth } from '../lib/auth-context.js';
 import CatSprite from './CatSprite.js';
 import CatRoomBowl from './CatRoomBowl.js';
 import MoonLoading from './MoonLoading.js';
@@ -14,6 +15,7 @@ import {
   getCatAnimDurationMs,
   getCatStripUrl,
   getCatAnimMeta,
+  getCatMeowVolume,
   TOO_HUNGRY_THRESHOLD,
 } from '../lib/my-cat.js';
 import { ROOM_SLOTS, getWindowVariant } from '../lib/cat-room.js';
@@ -72,6 +74,7 @@ function StatBar({ icon, label, value, barClass, max = 100 }) {
 }
 
 export default function MyCatPanel({ accessToken, userId, soundEnabled = true }) {
+  const { refreshProfile } = useAuth();
   const [cat, setCat] = useState(null);
   const [moonJourney, setMoonJourney] = useState(null);
   const [shop, setShop] = useState(null);
@@ -181,8 +184,9 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
     if (!cat?.meow_url || typeof window === 'undefined') return;
     const audio = new Audio(cat.meow_url);
     audio.preload = 'auto';
+    audio.volume = getCatMeowVolume(cat.skin_id);
     audioRef.current = audio;
-  }, [cat?.meow_url]);
+  }, [cat?.meow_url, cat?.skin_id]);
 
   // 預載所有會用到嘅動畫 strip：唔預載嘅話，第一次摸摸（buff）／餵食（eat）
   // 要即場載圖，載入期間 background 係空 → 貓咪會「消失」一陣。
@@ -434,6 +438,7 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
         return;
       }
       applyState(data);
+      refreshProfile?.({ force: true });
       playMeow();
       playAnim('buff', getCatAnimDurationMs('buff', 1));
       const spent = data.shards_spent ? `（−✦ ${data.shards_spent}）` : '';
@@ -464,6 +469,7 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
         return;
       }
       applyState(data);
+      refreshProfile?.({ force: true });
       playMeow();
       playAnim('buff', getCatAnimDurationMs('buff', 1));
       setStatusMsg('換咗裝備貓咪～');

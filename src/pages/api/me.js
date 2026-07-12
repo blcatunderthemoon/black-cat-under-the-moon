@@ -33,7 +33,7 @@ async function handleGet(req, res) {
 
   const admin = getAdminClient();
 
-  const [{ count: unreadCount }, { data: mirrorCard }, { data: claimedResponse }, { data: subscription }] = await Promise.all([
+  const [{ count: unreadCount }, { data: mirrorCard }, { data: claimedResponse }, { data: subscription }, { data: catRow }] = await Promise.all([
     admin.from('inbox_messages').select('id', { count: 'exact', head: true })
       .eq('recipient_id', user.id).is('read_at', null).eq('is_hidden', false),
     admin.from('mirror_cards').select('id, public_slug, mirror_type, updated_at')
@@ -48,6 +48,7 @@ async function handleGet(req, res) {
       .order('current_period_end', { ascending: false })
       .limit(1)
       .maybeSingle(),
+    admin.from('user_cats').select('skin_id').eq('user_id', user.id).maybeSingle(),
   ]);
 
   const subscriptionTier = resolveSubscriptionTier(subscription);
@@ -116,6 +117,7 @@ async function handleGet(req, res) {
     // Header 🐾 badge — feed shares the check-in day, so no extra query needed.
     my_cat: {
       needs_feed_badge: !moonJourney.checked_in_today,
+      skin_id: catRow?.skin_id || 'cat05',
     },
   });
 }

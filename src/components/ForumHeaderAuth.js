@@ -104,7 +104,7 @@ export default function ForumHeaderAuth({ extra = null, moonJourney = null, redi
             <span className="app-header__nav-icon" aria-hidden="true">⚙</span>
           </Link>
           {moonJourney}
-          <HeaderMyCatLink variant="forum" needsFeedBadge={meData?.my_cat?.needs_feed_badge === true} />
+          <HeaderMyCatLink variant="forum" needsFeedBadge={meData?.my_cat?.needs_feed_badge === true} skinId={meData?.my_cat?.skin_id} />
         </span>
         {extra}
       </span>

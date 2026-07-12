@@ -184,6 +184,23 @@ export function getCatMeowUrl(skinId) {
 }
 
 /**
+ * 每隻貓叫聲音量（0–1）：唔同音檔錄音大細唔一，喺呢度校正到聽感一致。
+ * 獨處貓（cat01）原檔偏大聲 → 調細。
+ */
+export const CAT_MEOW_VOLUME = {
+  cat01: 0.45,
+  cat02: 1,
+  cat03: 1,
+  cat04: 1,
+  cat05: 1,
+};
+
+export function getCatMeowVolume(skinId) {
+  const v = CAT_MEOW_VOLUME[skinId];
+  return typeof v === 'number' ? v : 1;
+}
+
+/**
  * Growth stage (§3.3).
  * 僅靈魂值決定體型（已移除 Moon Journey Lv 捷徑）。
  * @returns {'kitten'|'juvenile'|'adult'|'hybrid'}

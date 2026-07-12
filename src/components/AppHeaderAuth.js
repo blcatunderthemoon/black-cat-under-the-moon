@@ -82,7 +82,10 @@ export default function AppHeaderAuth({ redirectPath, hideInbox: hideInboxProp, 
             <Link href="/account" className="auth-nav-badge__item auth-nav-badge__item--icon" title="設定">
               <span className="auth-nav-badge__icon" aria-hidden="true">⚙</span>
             </Link>
-            <HeaderMyCatLink needsFeedBadge={meData?.my_cat?.needs_feed_badge === true} />
+            <HeaderMyCatLink
+              needsFeedBadge={meData?.my_cat?.needs_feed_badge === true}
+              skinId={meData?.my_cat?.skin_id}
+            />
           </span>
         </div>
       </div>
