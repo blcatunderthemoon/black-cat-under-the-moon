@@ -8,6 +8,7 @@ import {
   DEFAULT_ROOM_OWNED,
   ROOM_ITEMS,
   getEquippedBowlId,
+  getEquippedWindowId,
 } from './cat-room.js';
 
 const FALLBACK_ROOM = {
@@ -59,6 +60,22 @@ export async function ensureUserCatRoom(admin, userId) {
   }
 }
 
+/** True when ensureUserCatRoom returned the un-persisted fallback (table missing). */
+export function isFallbackRoom(roomRow) {
+  return !roomRow?.user_id;
+}
+
+/** Upsert a patch onto the user's room row (equipped / owned_items). */
+export async function upsertUserCatRoom(admin, userId, patch) {
+  const { data, error } = await admin
+    .from('user_cat_room')
+    .upsert({ user_id: userId, ...patch }, { onConflict: 'user_id' })
+    .select('*')
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 /** Room payload for GET /api/my-cat. */
 export function buildRoomView(roomRow) {
   const equipped = { ...DEFAULT_ROOM_EQUIPPED, ...(roomRow?.equipped || {}) };
@@ -70,6 +87,7 @@ export function buildRoomView(roomRow) {
     equipped,
     owned_items: owned,
     bowl_id: getEquippedBowlId(equipped),
+    window_id: getEquippedWindowId(equipped),
     items: Object.values(ROOM_ITEMS).map((item) => ({
       ...item,
       owned: owned.includes(item.id),

@@ -23072,6 +23072,8 @@ button.forum-tag-chip:hover {
   box-shadow:
     0 0 0 2px #14102c,
     0 0 28px rgba(255, 224, 138, 0.18);
+  /* 星星／流星只喺窗框內（窗外夜空）出現，唔會飄入房間 */
+  overflow: hidden;
 }
 
 .my-cat-room__window-bars {
@@ -23086,12 +23088,12 @@ button.forum-tag-chip:hover {
 .my-cat-room__moon {
   position: absolute;
   top: 12px;
-  right: 14px;
-  width: 26px;
-  height: 26px;
+  right: 16px;
+  width: 18px;
+  height: 18px;
   background: #ffe08a;
   clip-path: polygon(25% 0, 75% 0, 100% 25%, 100% 75%, 75% 100%, 25% 100%, 0 75%, 0 25%);
-  box-shadow: 0 0 18px 4px rgba(255, 224, 138, 0.85);
+  box-shadow: 0 0 14px 3px rgba(255, 224, 138, 0.8);
 }
 
 /* 窗外星星（兩幀閃爍） */
@@ -23110,6 +23112,153 @@ button.forum-tag-chip:hover {
 @keyframes my-cat-star-blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.15; }
+}
+
+/* 流星（預設隱藏；只喺流星窗顯示）。
+   條紋方向同飛行方向對齊：rotate(150deg) → 頭部（右端亮點）指向左下，
+   再沿左下 translate，尾巴自然拖喺後面。 */
+.my-cat-room__meteor {
+  position: absolute;
+  top: 8px;
+  left: 72%;
+  width: 32px;
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 246, 208, 0.55) 62%, #fff 100%);
+  box-shadow: 0 0 6px rgba(255, 246, 208, 0.9);
+  opacity: 0;
+  transform: translate(0, 0) rotate(150deg);
+  transform-origin: right center;
+  pointer-events: none;
+}
+
+/* ── 窗外景升級款（可佈置）── */
+/* 銀河窗：紫粉螺旋星雲 + 旋轉銀河核心 + 雙層星塵 */
+.my-cat-room__window--galaxy {
+  background:
+    /* 中央銀河核心光暈 */
+    radial-gradient(30% 24% at 52% 46%, rgba(255, 244, 224, 0.55) 0%, rgba(255, 214, 170, 0.28) 30%, transparent 66%),
+    /* 紫粉星雲雲團 */
+    radial-gradient(64% 46% at 30% 64%, rgba(157, 106, 245, 0.55) 0%, transparent 64%),
+    radial-gradient(56% 42% at 72% 32%, rgba(255, 107, 173, 0.48) 0%, transparent 60%),
+    radial-gradient(40% 32% at 78% 74%, rgba(94, 165, 255, 0.4) 0%, transparent 62%),
+    /* 螺旋旋渦帶 */
+    conic-gradient(from 210deg at 52% 48%,
+      rgba(189, 147, 249, 0.42) 0deg,
+      transparent 55deg,
+      rgba(255, 107, 173, 0.34) 130deg,
+      transparent 200deg,
+      rgba(120, 170, 255, 0.32) 285deg,
+      transparent 340deg),
+    linear-gradient(180deg, #170a33 0%, #24103f 52%, #090518 100%);
+  box-shadow:
+    0 0 0 2px #14102c,
+    0 0 34px rgba(189, 147, 249, 0.4),
+    inset 0 0 26px rgba(20, 8, 40, 0.6);
+}
+
+.my-cat-room__window--galaxy .my-cat-room__moon {
+  background: #f3e6ff;
+  box-shadow:
+    0 0 14px 3px rgba(214, 184, 255, 0.85),
+    0 0 24px 5px rgba(255, 150, 210, 0.35);
+}
+
+/* 旋轉螺旋核心（慢速自轉，令星雲有流動感） */
+.my-cat-room__window--galaxy::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 52%;
+  width: 150%;
+  height: 150%;
+  transform: translate(-50%, -50%);
+  background:
+    conic-gradient(from 0deg at 50% 50%,
+      transparent 0deg,
+      rgba(214, 184, 255, 0.22) 40deg,
+      transparent 92deg,
+      rgba(255, 170, 214, 0.2) 176deg,
+      transparent 232deg,
+      rgba(150, 190, 255, 0.2) 310deg,
+      transparent 360deg);
+  border-radius: 50%;
+  opacity: 0.8;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  animation: my-cat-galaxy-spin 26s linear infinite;
+}
+
+/* 雙層星塵（大小星 + 閃爍飄移） */
+.my-cat-room__window--galaxy::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1.4px 1.4px at 20% 30%, #ffffff 99%, transparent),
+    radial-gradient(1.4px 1.4px at 68% 20%, #ffd9f2 99%, transparent),
+    radial-gradient(1.4px 1.4px at 44% 72%, #d7c6ff 99%, transparent),
+    radial-gradient(1.4px 1.4px at 82% 60%, #ffffff 99%, transparent),
+    radial-gradient(1.4px 1.4px at 30% 84%, #cfe0ff 99%, transparent),
+    radial-gradient(1px 1px at 12% 56%, #fff 99%, transparent),
+    radial-gradient(1px 1px at 58% 50%, #ffe6f6 99%, transparent),
+    radial-gradient(1px 1px at 90% 34%, #e6ddff 99%, transparent),
+    radial-gradient(1px 1px at 38% 14%, #ffffff 99%, transparent);
+  opacity: 0.9;
+  animation: my-cat-galaxy-drift 7s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes my-cat-galaxy-drift {
+  0% { transform: translate(0, 0); opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { transform: translate(5px, -3px); opacity: 0.6; }
+}
+
+@keyframes my-cat-galaxy-spin {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* 流星窗：深邃夜空（比預設更暗更藍）+ 週期性流星劃過 */
+.my-cat-room__window--meteor {
+  background:
+    radial-gradient(70% 50% at 60% 30%, rgba(60, 92, 160, 0.28) 0%, transparent 60%),
+    linear-gradient(180deg, #050820 0%, #0a1038 55%, #03040f 100%);
+  box-shadow:
+    0 0 0 2px #14102c,
+    inset 0 0 24px rgba(0, 0, 0, 0.55);
+}
+
+/* 主流星 */
+.my-cat-room__window--meteor .my-cat-room__meteor {
+  animation: my-cat-meteor-streak 4.6s ease-in infinite;
+}
+
+/* 副流星（另一條軌跡 + 延遲，令夜空更有活力） */
+.my-cat-room__window--meteor::after {
+  content: '';
+  position: absolute;
+  top: 30px;
+  left: 52%;
+  width: 24px;
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, transparent 0%, rgba(200, 224, 255, 0.5) 62%, #eaf2ff 100%);
+  box-shadow: 0 0 6px rgba(210, 230, 255, 0.85);
+  opacity: 0;
+  transform: translate(0, 0) rotate(150deg);
+  transform-origin: right center;
+  pointer-events: none;
+  animation: my-cat-meteor-streak 4.6s ease-in 2.3s infinite;
+}
+
+/* 頭部亮點指向左下，沿左下飛越窗口，飛完停一陣再嚟。 */
+@keyframes my-cat-meteor-streak {
+  0% { opacity: 0; transform: translate(0, 0) rotate(150deg); }
+  5% { opacity: 1; }
+  34% { opacity: 1; }
+  42%, 100% { opacity: 0; transform: translate(-92px, 54px) rotate(150deg); }
 }
 
 /* 霓虹招牌（呼吸） */
@@ -23217,6 +23366,110 @@ button.forum-tag-chip:hover {
   background: radial-gradient(ellipse at center, rgba(255, 232, 160, 0.24), rgba(255, 232, 160, 0.07) 58%, transparent 74%);
   pointer-events: none;
 }
+
+/* ── 貓窩（房間家具，右下角常駐）Phase 3 §12.3 ── */
+.my-cat-room__bed {
+  position: absolute;
+  bottom: 12px;
+  right: 3%;
+  z-index: 1;
+  width: 64px;
+  height: 44px;
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+
+/* 紙皮箱窩：開口向前嘅瓦通紙箱 + 翻開嘅箱蓋 + 軟墊 + 枕頭 */
+
+/* 箱身（主體） */
+.my-cat-room__bed-box {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: 0;
+  height: 30px;
+  background:
+    /* 瓦通坑紋 */
+    repeating-linear-gradient(
+      90deg,
+      rgba(74, 46, 24, 0.16) 0 3px,
+      transparent 3px 7px
+    ),
+    linear-gradient(180deg, #c88a4e 0%, #a9743f 42%, #855329 100%);
+  border: 2px solid #4a2e18;
+  border-radius: 3px 3px 6px 6px;
+  box-shadow:
+    inset 0 3px 0 rgba(255, 224, 180, 0.32),
+    inset 0 -5px 0 rgba(0, 0, 0, 0.26),
+    0 4px 0 rgba(0, 0, 0, 0.4),
+    0 0 16px rgba(255, 196, 120, 0.14);
+}
+
+/* 箱口內側陰影（開口深度感） */
+.my-cat-room__bed-box::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  top: 4px;
+  height: 13px;
+  background: linear-gradient(180deg, #2e1d0f 0%, #47301b 100%);
+  border-radius: 3px 3px 2px 2px;
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.55);
+}
+
+/* 封箱膠帶（正面豎紋細節） */
+.my-cat-room__bed-tape {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 12px;
+  height: 12px;
+  transform: translateX(-50%);
+  background: rgba(214, 197, 160, 0.55);
+  border-left: 1px solid rgba(255, 245, 220, 0.4);
+  border-right: 1px solid rgba(120, 92, 55, 0.5);
+}
+
+/* 翻開嘅箱蓋（左右各一片，微微外翻） */
+.my-cat-room__bed-flap {
+  position: absolute;
+  top: 0;
+  width: 30px;
+  height: 16px;
+  background: linear-gradient(180deg, #d59a5e 0%, #b07a44 100%);
+  border: 2px solid #4a2e18;
+  box-shadow: inset 0 2px 0 rgba(255, 230, 190, 0.4);
+}
+
+.my-cat-room__bed-flap--left {
+  left: 2px;
+  transform-origin: bottom right;
+  transform: skewX(24deg) rotate(-8deg);
+  border-radius: 4px 2px 0 0;
+}
+
+.my-cat-room__bed-flap--right {
+  right: 2px;
+  transform-origin: bottom left;
+  transform: skewX(-24deg) rotate(8deg);
+  border-radius: 2px 4px 0 0;
+}
+
+/* 軟墊（箱內冷色毛毯） */
+.my-cat-room__bed-cushion {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  top: 8px;
+  height: 15px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #7d8ec8 0%, #5666a0 55%, #45538c 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(210, 222, 255, 0.5),
+    inset 0 -3px 4px rgba(0, 0, 0, 0.3);
+}
+
 
 /* ── 貓兜（食盆）Phase 3 — 餵食時罐罐 + 魚仔彈出 ── */
 /* 貓兜擺喺貓咪餵食時會行埋去嘅位置（中心偏左），確保「貓走向碗」對齊。 */
@@ -23915,39 +24168,55 @@ button.forum-tag-chip:hover {
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
 }
 
-/* ── Footer ── */
 /* ── Footer 資訊列（像素 HUD chip） ── */
 .my-cat-panel__footer {
   display: flex;
   align-items: stretch;
   justify-content: space-between;
   gap: 10px;
-  padding-top: 12px;
-  border-top: 2px dashed #2a2650;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(189, 147, 249, 0.22);
+  background:
+    linear-gradient(90deg, transparent, rgba(189, 147, 249, 0.12) 50%, transparent) top / 100% 1px no-repeat;
 }
 
 .my-cat-footer-chip {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex: 1;
   min-width: 0;
-  padding: 8px 10px;
-  background: #131028;
+  min-height: 58px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: linear-gradient(165deg, rgba(26, 21, 51, 0.95) 0%, rgba(15, 12, 34, 0.98) 100%);
   border: 2px solid #2a2650;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    2px 3px 0 rgba(0, 0, 0, 0.35);
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 4px 0 rgba(0, 0, 0, 0.35);
 }
 
 .my-cat-footer-chip--shards {
-  border-color: rgba(255, 224, 138, 0.35);
-  background: linear-gradient(180deg, #1a1533 0%, #131028 100%);
+  border-color: rgba(255, 224, 138, 0.42);
+  background:
+    radial-gradient(120% 80% at 0% 0%, rgba(255, 224, 138, 0.12) 0%, transparent 58%),
+    linear-gradient(165deg, #1c1738 0%, #121028 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 224, 138, 0.12),
+    0 0 18px rgba(255, 200, 90, 0.08),
+    0 4px 0 rgba(0, 0, 0, 0.35);
 }
 
 .my-cat-footer-chip--growth {
-  border-color: rgba(189, 147, 249, 0.4);
-  background: linear-gradient(180deg, #1a1533 0%, #131028 100%);
+  border-color: rgba(189, 147, 249, 0.45);
+  background:
+    radial-gradient(120% 80% at 100% 0%, rgba(189, 147, 249, 0.14) 0%, transparent 58%),
+    linear-gradient(165deg, #1a1533 0%, #110e24 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(189, 147, 249, 0.1),
+    0 0 18px rgba(124, 92, 252, 0.08),
+    0 4px 0 rgba(0, 0, 0, 0.35);
 }
 
 /* 可點擊嘅膠囊（例如：等級稱號 → /moon-journey 說明頁） */
@@ -23958,11 +24227,11 @@ a.my-cat-footer-chip--link {
 }
 
 a.my-cat-footer-chip--link:hover {
-  border-color: rgba(189, 147, 249, 0.75);
+  border-color: rgba(189, 147, 249, 0.8);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    2px 3px 0 rgba(0, 0, 0, 0.35),
-    0 0 12px rgba(189, 147, 249, 0.25);
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 20px rgba(189, 147, 249, 0.28),
+    0 4px 0 rgba(0, 0, 0, 0.35);
 }
 
 a.my-cat-footer-chip--link:active {
@@ -23971,10 +24240,18 @@ a.my-cat-footer-chip--link:active {
 
 .my-cat-footer-chip__go {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
   margin-left: auto;
-  font-size: 1.1rem;
+  font-size: 1rem;
   line-height: 1;
-  color: rgba(189, 147, 249, 0.7);
+  color: rgba(189, 147, 249, 0.85);
+  background: rgba(7, 6, 14, 0.55);
+  border: 1px solid rgba(189, 147, 249, 0.35);
+  border-radius: 6px;
 }
 
 .my-cat-footer-chip__icon {
@@ -23982,91 +24259,220 @@ a.my-cat-footer-chip--link:active {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  font-size: 16px;
+  width: 36px;
+  height: 36px;
+  font-size: 18px;
   line-height: 1;
-  background: rgba(7, 6, 14, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.4);
+  border-radius: 10px;
+  background: rgba(7, 6, 14, 0.72);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    inset 0 0 10px rgba(0, 0, 0, 0.45),
+    0 0 12px rgba(255, 255, 255, 0.04);
 }
 
 .my-cat-footer-chip--shards .my-cat-footer-chip__icon {
   color: #ffe08a;
-  text-shadow: 0 0 8px rgba(255, 224, 138, 0.75);
+  border-color: rgba(255, 224, 138, 0.45);
+  text-shadow: 0 0 10px rgba(255, 224, 138, 0.85);
+  box-shadow:
+    inset 0 0 12px rgba(255, 200, 90, 0.15),
+    0 0 14px rgba(255, 200, 90, 0.2);
 }
 
 .my-cat-footer-chip--growth .my-cat-footer-chip__icon {
-  font-size: 15px;
+  font-size: 17px;
+  border-color: rgba(189, 147, 249, 0.4);
+  box-shadow:
+    inset 0 0 12px rgba(124, 92, 252, 0.15),
+    0 0 14px rgba(124, 92, 252, 0.18);
 }
 
 .my-cat-footer-chip__body {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  justify-content: center;
+  gap: 3px;
   min-width: 0;
 }
 
 .my-cat-footer-chip__label {
-  font-size: 0.68rem;
-  letter-spacing: 0.04em;
-  color: rgba(240, 235, 216, 0.55);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  color: rgba(240, 235, 216, 0.62);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.my-cat-footer-chip__value {
-  font-size: 14px;
+.my-cat-footer-chip__label--level {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(240, 235, 216, 0.88);
+  font-size: 0.78rem;
+}
+
+.my-cat-footer-chip__lv {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  font-size: 0.62rem;
   line-height: 1.2;
+  color: #f0ebd8;
+  background: rgba(189, 147, 249, 0.22);
+  border: 1px solid rgba(189, 147, 249, 0.5);
+  border-radius: 6px;
+  letter-spacing: 0.04em;
+}
+
+.my-cat-footer-chip__value {
+  font-size: 16px;
+  line-height: 1.15;
   color: #ffe08a;
-  text-shadow: 0 0 8px rgba(255, 224, 138, 0.45);
+  text-shadow: 0 0 10px rgba(255, 224, 138, 0.5);
+  letter-spacing: 0.02em;
 }
 
 .my-cat-footer-chip__value--streak {
   font-family: inherit;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
+  font-weight: 600;
   color: #ff9f6b;
   text-shadow: none;
+  white-space: nowrap;
+}
+
+.my-cat-footer-chip__value--hint {
+  font-family: inherit;
+  font-size: 0.68rem;
+  color: rgba(189, 147, 249, 0.75);
+  text-shadow: none;
+}
+
+/* 商店區塊群組 */
+.my-cat-panel__stores {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+/* 共用碎屑餘額 pill */
+.my-cat-shard-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  padding: 5px 11px;
+  font-size: 0.72rem;
+  line-height: 1;
+  color: #ffe08a;
+  background: linear-gradient(180deg, rgba(255, 224, 138, 0.2) 0%, rgba(255, 200, 90, 0.08) 100%);
+  border: 1px solid rgba(255, 224, 138, 0.58);
+  border-radius: 999px;
+  box-shadow:
+    inset 0 0 10px rgba(255, 224, 138, 0.2),
+    0 0 12px rgba(255, 200, 90, 0.16);
+  text-shadow: 0 0 8px rgba(255, 224, 138, 0.55);
+  letter-spacing: 0.03em;
+}
+
+.my-cat-shard-pill__icon {
+  font-size: 0.68rem;
+  opacity: 0.95;
 }
 
 /* 貓咪商店（Phase 2） */
 .my-cat-shop {
-  margin-top: 14px;
-  padding: 12px 14px;
-  border: 2px solid rgba(189, 147, 249, 0.45);
-  background: linear-gradient(180deg, #1a1533 0%, #131028 100%);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  margin-top: 0;
+  padding: 0;
+  border: 2px solid rgba(189, 147, 249, 0.48);
+  border-radius: 12px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #1c1738 0%, #121028 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 4px 0 rgba(0, 0, 0, 0.32);
 }
 
 .my-cat-shop--locked {
-  border-color: rgba(120, 110, 150, 0.35);
-  opacity: 0.92;
+  border-color: rgba(120, 110, 150, 0.4);
+  opacity: 0.94;
 }
 
 .my-cat-shop__head {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
   margin: 0;
-  padding: 0;
+  padding: 12px 14px;
   background: none;
   border: none;
   color: inherit;
   cursor: pointer;
   text-align: left;
+  transition: background 0.15s ease;
+}
+
+.my-cat-shop__head:hover {
+  background: rgba(189, 147, 249, 0.08);
 }
 
 .my-cat-shop--open .my-cat-shop__head {
-  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(189, 147, 249, 0.22);
+  background: rgba(189, 147, 249, 0.06);
+}
+
+.my-cat-shop__badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  font-size: 18px;
+  line-height: 1;
+  border-radius: 10px;
+  background: rgba(7, 6, 14, 0.65);
+  border: 2px solid rgba(189, 147, 249, 0.35);
+  box-shadow: inset 0 0 10px rgba(124, 92, 252, 0.12);
+}
+
+.my-cat-shop__head-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.my-cat-shop__hint {
+  font-size: 0.66rem;
+  color: rgba(240, 235, 216, 0.5);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.my-cat-shop__chevron-wrap {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(7, 6, 14, 0.55);
+  border: 1px solid rgba(189, 147, 249, 0.35);
 }
 
 .my-cat-shop__chevron {
-  font-size: 0.6rem;
-  color: rgba(189, 147, 249, 0.7);
-  margin-left: auto;
+  font-size: 0.58rem;
+  color: rgba(189, 147, 249, 0.85);
 }
 
 .my-cat-shop__title {
@@ -24074,6 +24480,10 @@ a.my-cat-footer-chip--link:active {
   font-size: 13px;
   color: #f0ebd8;
   letter-spacing: 0.06em;
+}
+
+.my-cat-shop--open .my-cat-shop__list {
+  padding: 10px 12px 12px;
 }
 
 .my-cat-shop__list {
@@ -24136,25 +24546,6 @@ a.my-cat-footer-chip--link:active {
   color: #ffe08a;
 }
 
-/* Header 碎屑餘額 — 金幣 chip */
-.my-cat-shop__head .my-cat-shop__price.pixel-font {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  font-size: 0.72rem;
-  line-height: 1;
-  color: #ffe08a;
-  background: linear-gradient(180deg, rgba(255, 224, 138, 0.16) 0%, rgba(255, 200, 90, 0.06) 100%);
-  border: 1px solid rgba(255, 224, 138, 0.55);
-  border-radius: 999px;
-  box-shadow:
-    inset 0 0 8px rgba(255, 224, 138, 0.18),
-    0 0 10px rgba(255, 200, 90, 0.15);
-  text-shadow: 0 0 8px rgba(255, 224, 138, 0.6);
-  letter-spacing: 0.04em;
-}
-
 .my-cat-shop__btn {
   grid-column: 3;
   grid-row: 1 / span 2;
@@ -24185,6 +24576,356 @@ a.my-cat-footer-chip--link:active {
   border-color: rgba(189, 147, 249, 0.5);
 }
 
+/* ── 房間佈置（碎屑家具商店）§12.5 ── */
+.my-cat-room-shop {
+  margin-top: 0;
+  padding: 0;
+  border: 2px solid rgba(124, 200, 255, 0.45);
+  border-radius: 12px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #121c32 0%, #0d1526 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 4px 0 rgba(0, 0, 0, 0.32);
+}
+
+.my-cat-room-shop__head {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  width: 100%;
+  margin: 0;
+  padding: 12px 14px;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.my-cat-room-shop__head:hover {
+  background: rgba(124, 200, 255, 0.08);
+}
+
+.my-cat-room-shop--open .my-cat-room-shop__head {
+  border-bottom: 1px solid rgba(124, 200, 255, 0.22);
+  background: rgba(124, 200, 255, 0.06);
+}
+
+.my-cat-room-shop__badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  font-size: 18px;
+  line-height: 1;
+  border-radius: 10px;
+  background: rgba(7, 6, 14, 0.65);
+  border: 2px solid rgba(124, 200, 255, 0.38);
+  box-shadow: inset 0 0 10px rgba(124, 200, 255, 0.1);
+}
+
+.my-cat-room-shop__head-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.my-cat-room-shop__hint {
+  font-size: 0.66rem;
+  color: rgba(240, 235, 216, 0.5);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.my-cat-room-shop__chevron-wrap {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(7, 6, 14, 0.55);
+  border: 1px solid rgba(124, 200, 255, 0.35);
+}
+
+.my-cat-room-shop__title {
+  margin: 0;
+  font-size: 13px;
+  color: #f0ebd8;
+  letter-spacing: 0.06em;
+}
+
+.my-cat-room-shop__chevron {
+  font-size: 0.58rem;
+  color: rgba(124, 200, 255, 0.85);
+}
+
+.my-cat-room-shop--open .my-cat-room-shop__body {
+  padding: 10px 12px 12px;
+}
+
+.my-cat-room-shop__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.my-cat-room-shop__slot-title {
+  margin: 0 0 6px;
+  font-size: 0.72rem;
+  color: rgba(124, 200, 255, 0.85);
+  letter-spacing: 0.08em;
+}
+
+.my-cat-room-shop__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.my-cat-furni {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 4px 12px;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid rgba(124, 200, 255, 0.22);
+  background: rgba(10, 16, 30, 0.6);
+}
+
+.my-cat-furni--equipped {
+  border-color: rgba(255, 224, 138, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(255, 224, 138, 0.2);
+}
+
+.my-cat-furni__preview {
+  grid-column: 1;
+  grid-row: 1 / span 3;
+  width: 56px;
+  height: 56px;
+  border: 1px solid rgba(124, 200, 255, 0.3);
+  border-radius: 6px;
+  background-color: rgba(8, 12, 24, 0.8);
+  image-rendering: pixelated;
+  overflow: hidden;
+  position: relative;
+}
+
+.my-cat-furni__info {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.my-cat-furni__name {
+  font-size: 0.9rem;
+  color: #f0ebd8;
+}
+
+.my-cat-furni__tag {
+  font-size: 0.62rem;
+  color: #ffe08a;
+  margin-left: 6px;
+}
+
+.my-cat-furni__desc {
+  font-size: 0.68rem;
+  color: rgba(240, 235, 216, 0.62);
+  line-height: 1.4;
+}
+
+.my-cat-furni__price {
+  font-size: 0.78rem;
+  color: #ffe08a;
+}
+
+.my-cat-furni__btn {
+  grid-column: 3;
+  grid-row: 1 / span 3;
+  padding: 6px 10px;
+  font-size: 0.68rem;
+  border: 2px solid #234;
+  background: #12233a;
+  color: #f0ebd8;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #050a12;
+}
+
+.my-cat-furni__btn:hover:not(:disabled) {
+  background: #1c3350;
+}
+
+.my-cat-furni__btn:active:not(:disabled) {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 #050a12;
+}
+
+.my-cat-furni__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.my-cat-furni__btn--equip {
+  border-color: rgba(124, 200, 255, 0.5);
+}
+
+/* 家具縮圖（純 CSS 迷你預覽） */
+.my-cat-furni__preview--bowl-basic,
+.my-cat-furni__preview--bowl-moon {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 12px;
+}
+
+.my-cat-furni__preview--bowl-basic::after,
+.my-cat-furni__preview--bowl-moon::after {
+  content: '';
+  width: 30px;
+  height: 16px;
+  border-radius: 0 0 9px 9px;
+  border: 2px solid #4a2e18;
+  background: linear-gradient(180deg, #c4845a 0%, #8b5a3c 60%, #6b4228 100%);
+  box-shadow: inset 0 3px 0 rgba(255, 220, 180, 0.35);
+}
+
+.my-cat-furni__preview--bowl-basic::before,
+.my-cat-furni__preview--bowl-moon::before {
+  content: '';
+  position: absolute;
+  bottom: 22px;
+  width: 34px;
+  height: 8px;
+  border-radius: 4px;
+  border: 2px solid #5c3a20;
+  background: #d4a574;
+  z-index: 1;
+}
+
+.my-cat-furni__preview--bowl-moon::after {
+  background: linear-gradient(180deg, #c8d8f0 0%, #8aa4c8 60%, #5a7498 100%);
+  border-color: #3a5070;
+}
+
+.my-cat-furni__preview--bowl-moon::before {
+  background: #e8f0ff;
+  border-color: #6a88b0;
+  box-shadow: 0 0 8px rgba(180, 210, 255, 0.6);
+}
+
+.my-cat-furni__preview--window-default {
+  background:
+    radial-gradient(1.5px 1.5px at 28% 36%, #cfd8ff 99%, transparent),
+    radial-gradient(1.5px 1.5px at 50% 68%, #cfd8ff 99%, transparent),
+    radial-gradient(1.5px 1.5px at 20% 72%, #9aa8e0 99%, transparent),
+    radial-gradient(7px 7px at 74% 28%, #ffe08a 62%, transparent 64%),
+    linear-gradient(180deg, #0a0f2e 0%, #12194a 100%);
+}
+
+.my-cat-furni__preview--window-default::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px 2px rgba(255, 224, 138, 0.5);
+}
+
+.my-cat-furni__preview--window-galaxy {
+  background:
+    radial-gradient(1.6px 1.6px at 22% 28%, #ffffff 99%, transparent),
+    radial-gradient(1.6px 1.6px at 68% 20%, #ffd9f2 99%, transparent),
+    radial-gradient(1.6px 1.6px at 46% 74%, #d7c6ff 99%, transparent),
+    radial-gradient(1.6px 1.6px at 82% 58%, #ffffff 99%, transparent),
+    radial-gradient(1px 1px at 14% 60%, #fff 99%, transparent),
+    radial-gradient(1px 1px at 60% 48%, #ffe6f6 99%, transparent),
+    /* 銀河核心亮點 */
+    radial-gradient(26% 22% at 52% 48%, rgba(255, 244, 224, 0.6) 0%, transparent 68%),
+    /* 星雲雲團 */
+    radial-gradient(60% 44% at 32% 62%, rgba(157, 106, 245, 0.62) 0%, transparent 64%),
+    radial-gradient(52% 40% at 72% 34%, rgba(255, 107, 173, 0.52) 0%, transparent 60%),
+    /* 螺旋旋渦帶 */
+    conic-gradient(from 210deg at 52% 48%,
+      rgba(189, 147, 249, 0.42) 0deg,
+      transparent 60deg,
+      rgba(255, 107, 173, 0.34) 140deg,
+      transparent 210deg,
+      rgba(120, 170, 255, 0.32) 290deg,
+      transparent 350deg),
+    linear-gradient(180deg, #170a33 0%, #24103f 52%, #090518 100%);
+}
+
+.my-cat-furni__preview--window-meteor {
+  background:
+    radial-gradient(1.5px 1.5px at 24% 32%, #e8eeff 99%, transparent),
+    radial-gradient(1.5px 1.5px at 64% 26%, #cdd9ff 99%, transparent),
+    radial-gradient(1.5px 1.5px at 44% 72%, #dfe8ff 99%, transparent),
+    radial-gradient(6px 6px at 76% 27%, #fff2c0 60%, transparent 62%),
+    linear-gradient(180deg, #060a24 0%, #0e1440 60%, #050818 100%);
+}
+
+/* 短促流星：斜劃 + 頭部發光 */
+.my-cat-furni__preview--window-meteor::after {
+  content: '';
+  position: absolute;
+  top: 13px;
+  left: 12px;
+  width: 24px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, #fff6d0 82%, #ffffff);
+  transform: rotate(32deg);
+  transform-origin: left center;
+  box-shadow: 0 0 6px rgba(255, 246, 208, 0.9);
+}
+
+.my-cat-furni__preview--bed-box {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 12px;
+}
+
+/* 迷你紙皮箱窩 */
+.my-cat-furni__preview--bed-box::after {
+  content: '';
+  width: 34px;
+  height: 18px;
+  border-radius: 3px 3px 5px 5px;
+  border: 2px solid #4a2e18;
+  background:
+    repeating-linear-gradient(90deg, rgba(74, 46, 24, 0.16) 0 3px, transparent 3px 7px),
+    linear-gradient(180deg, #c88a4e 0%, #a9743f 50%, #855329 100%);
+  box-shadow: inset 0 2px 0 rgba(255, 224, 180, 0.3);
+}
+
+/* 箱內軟墊 */
+.my-cat-furni__preview--bed-box::before {
+  content: '';
+  position: absolute;
+  bottom: 20px;
+  width: 30px;
+  height: 8px;
+  border-radius: 3px;
+  border: 2px solid #45538c;
+  background: linear-gradient(180deg, #7d8ec8 0%, #5666a0 100%);
+  z-index: 1;
+}
+
 @media (max-width: 480px) {
   .my-cat-panel__footer {
     flex-direction: row;
@@ -24192,13 +24933,42 @@ a.my-cat-footer-chip--link:active {
   }
 
   .my-cat-footer-chip {
-    gap: 8px;
-    padding: 8px;
+    gap: 10px;
+    min-height: 54px;
+    padding: 9px 10px;
   }
 
   .my-cat-footer-chip__icon {
-    width: 24px;
-    height: 24px;
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+
+  .my-cat-footer-chip__value {
+    font-size: 14px;
+  }
+
+  .my-cat-shop__head,
+  .my-cat-room-shop__head {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .my-cat-shop__badge,
+  .my-cat-room-shop__badge {
+    width: 34px;
+    height: 34px;
+    font-size: 16px;
+  }
+
+  .my-cat-shop__hint,
+  .my-cat-room-shop__hint {
+    font-size: 0.62rem;
+  }
+
+  .my-cat-shard-pill {
+    padding: 4px 9px;
+    font-size: 0.66rem;
   }
 }
 
@@ -24209,10 +24979,22 @@ a.my-cat-footer-chip--link:active {
   .my-cat-room__bowl-food--visible,
   .my-cat-room__bowl-food-fish,
   .my-cat-room__bowl-spark,
+  .my-cat-room__window--galaxy::before,
+  .my-cat-room__window--galaxy::after,
+  .my-cat-room__window--meteor .my-cat-room__meteor,
+  .my-cat-room__window--meteor::after,
   .my-cat-panel__bubble,
   .my-cat-panel__bubble-cursor,
   .header-my-cat-link--hungry .header-my-cat-link__sprite {
     animation: none;
+  }
+
+  /* 靜態流星：仍留一道淡淡光痕 */
+  .my-cat-room__window--meteor .my-cat-room__meteor {
+    opacity: 0.5;
+  }
+  .my-cat-room__window--meteor::after {
+    opacity: 0;
   }
 
   .my-cat-panel__cat-btn--eating {
@@ -24713,6 +25495,13 @@ a.moon-journey-dropdown-card__checkin--done {
   .my-cat-room__shelf {
     left: 12px;
     width: 56px;
+  }
+
+  /* 窄屏：貓窩再縮細啲並貼近右下角，避免同置中嘅貓咪重疊 */
+  .my-cat-room__bed {
+    right: 2%;
+    width: 54px;
+    height: 38px;
   }
 
   .my-cat-room__heart {

@@ -29,20 +29,22 @@ export const CAT_PRICE_FAMILY = 80;
 export const CAT_PRICE_OTHER = 150;
 
 /**
- * 靈魂值上限與成長門檻（2026-07-12 v3：約每月一階，體型越大需時越長）。
- * 純每日餵食 +1 靈魂估算：幼崽→少年 ~32 日、少年→成貓 ~53 日、成貓→混血 ~50 日。
+ * 靈魂值上限與成長門檻（2026-07-13 v4：更難升，體型越大需時越長）。
+ * 靈魂只由「參與」得來：Mirror 性格測驗（一次性）、玩漂流瓶、Forum 互動。
+ * 餵食唔再加靈魂（只回飽腹＋碎屑）。每日靈魂有上限，所以要日日返嚟參與先養得大。
  */
-export const SOUL_MAX = 150;
-export const GROWTH_SOUL_JUVENILE = 42;
-export const GROWTH_SOUL_ADULT = 95;
-export const GROWTH_SOUL_HYBRID = 145;
-/** 每日餵食（打卡）靈魂獎勵 — 成長主力來源 */
-export const FEED_SOUL_GAIN = 1;
-/** 體型愈大，每日靈魂愈難攞 */
+export const SOUL_MAX = 300;
+export const GROWTH_SOUL_JUVENILE = 90;
+export const GROWTH_SOUL_ADULT = 190;
+export const GROWTH_SOUL_HYBRID = 290;
+/**
+ * 餵食唔再回靈魂（v4）。保留常數＝0 以兼容舊呼叫點。
+ */
+export const FEED_SOUL_GAIN = 0;
 export const FEED_SOUL_GAIN_BY_STAGE = {
-  kitten: 1,
-  juvenile: 1,
-  adult: 1,
+  kitten: 0,
+  juvenile: 0,
+  adult: 0,
   hybrid: 0,
 };
 
@@ -235,4 +237,17 @@ export function applyStatDecay({ hunger, affection, daysSinceFed, daysSincePet }
 
 export function clampStat(value) {
   return Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
+}
+
+/** Admin test account — unlimited moon shards for shop QA (§7.1). */
+export const MY_CAT_UNLIMITED_SHARDS_EMAIL = 'blcatunderthemoon@gmail.com';
+export const MY_CAT_UNLIMITED_SHARDS_DISPLAY = 999_999;
+
+export function hasUnlimitedMoonShards(email) {
+  return String(email || '').trim().toLowerCase() === MY_CAT_UNLIMITED_SHARDS_EMAIL;
+}
+
+export function displayMoonShards(balance, unlimited) {
+  void unlimited;
+  return balance ?? 0;
 }

@@ -16,6 +16,7 @@ import {
   getCatAnimMeta,
   TOO_HUNGRY_THRESHOLD,
 } from '../lib/my-cat.js';
+import { ROOM_SLOTS, getWindowVariant } from '../lib/cat-room.js';
 
 const IDLE_REST_ANIM = 'idle_slowblink';
 // 商店預覽用嘅靜止貓（strip 第一格）
@@ -42,6 +43,10 @@ function formatCooldown(ms) {
   const m = Math.floor(total / 60);
   const s = total % 60;
   return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function formatShards(value) {
+  return Number(value ?? 0).toLocaleString('en-US');
 }
 
 function StatBar({ icon, label, value, barClass, max = 100 }) {
@@ -100,6 +105,8 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
   const [summoning, setSummoning] = useState(false);
   const [shopBusy, setShopBusy] = useState(null);
   const [shopOpen, setShopOpen] = useState(false);
+  const [roomBusy, setRoomBusy] = useState(null);
+  const [roomOpen, setRoomOpen] = useState(false);
 
   useEffect(() => { catRef.current = cat; }, [cat]);
 
@@ -117,7 +124,12 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
         : data.cat);
     }
     if (data?.moon_journey) setMoonJourney(data.moon_journey);
-    if (data?.shop) setShop(data.shop);
+    if (data?.shop) {
+      setShop(data.shop);
+    } else if (data?.cat) {
+      // Room shop responses may omit shop — keep shard balance in sync.
+      setShop((prev) => (prev ? { ...prev, moon_shards: data.cat.moon_shards } : prev));
+    }
     if (data?.room) setRoom(data.room);
   }, []);
 
@@ -424,7 +436,8 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
       applyState(data);
       playMeow();
       playAnim('buff', getCatAnimDurationMs('buff', 1));
-      setStatusMsg(`✨ 迎咗${data.cat?.family_zh || '新貓'}回家！`);
+      const spent = data.shards_spent ? `（−✦ ${data.shards_spent}）` : '';
+      setStatusMsg(`✨ 迎咗${data.cat?.family_zh || '新貓'}回家！${spent}`);
     } catch {
       setStatusMsg('網路錯誤，請重試');
     } finally {
@@ -458,6 +471,61 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
       setStatusMsg('網路錯誤，請重試');
     } finally {
       setShopBusy(null);
+    }
+  }
+
+  async function handleRoomBuy(itemId) {
+    if (!accessToken || roomBusy) return;
+    setRoomBusy(itemId);
+    setStatusMsg('');
+    try {
+      const r = await fetch('/api/my-cat/shop/buy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ item_id: itemId }),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        setStatusMsg(data.error || '購買失敗');
+        return;
+      }
+      applyState(data);
+      const spent = data.shards_spent ? `（−✦ ${data.shards_spent}）` : '';
+      setStatusMsg(`🏠 換上新家具了～${spent}`);
+    } catch {
+      setStatusMsg('網路錯誤，請重試');
+    } finally {
+      setRoomBusy(null);
+    }
+  }
+
+  async function handleRoomEquip(itemId) {
+    if (!accessToken || roomBusy) return;
+    setRoomBusy(itemId);
+    setStatusMsg('');
+    try {
+      const r = await fetch('/api/my-cat/room/equip', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ item_id: itemId }),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        setStatusMsg(data.error || '換裝失敗');
+        return;
+      }
+      applyState(data);
+      setStatusMsg('🏠 佈置好喇～');
+    } catch {
+      setStatusMsg('網路錯誤，請重試');
+    } finally {
+      setRoomBusy(null);
     }
   }
 
@@ -513,6 +581,8 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
   const stageLabel = GROWTH_STAGE_LABELS[cat.growth_stage] || '幼崽';
   const isEating = anim === 'eat';
   const bowlId = room?.bowl_id || 'bowl_basic';
+  const windowVariant = getWindowVariant(room?.window_id);
+  const bedId = room?.equipped?.bed || 'bed_box';
   const petLimitReached = cat.next_pet_available_at == null;
   const nextPetTs = cat.next_pet_available_at ? new Date(cat.next_pet_available_at).getTime() : 0;
   const cooldownMs = petLimitReached ? 0 : Math.max(0, nextPetTs - nowTs);
@@ -527,11 +597,12 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
       {/* ── 像素房間場景 ── */}
       <div className={`my-cat-room${isEating ? ' my-cat-room--feeding' : ''}`}>
         <div className="my-cat-room__wall" aria-hidden="true">
-          <div className="my-cat-room__window">
+          <div className={`my-cat-room__window my-cat-room__window--${windowVariant}`}>
             <span className="my-cat-room__moon" />
             <span className="my-cat-room__star my-cat-room__star--1" />
             <span className="my-cat-room__star my-cat-room__star--2" />
             <span className="my-cat-room__star my-cat-room__star--3" />
+            <span className="my-cat-room__meteor" aria-hidden="true" />
             <span className="my-cat-room__window-bars" />
           </div>
           <span className="my-cat-room__neon">meow<span className="my-cat-room__neon-tilde" aria-hidden="true">~</span></span>
@@ -546,7 +617,20 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
         <span className="my-cat-room__beam" aria-hidden="true" />
         <span className="my-cat-room__moonpatch" aria-hidden="true" />
 
-        {!isAway && (
+        {/* 貓窩（右下角家具，依裝備切換款式） */}
+        <span
+          className={`my-cat-room__bed my-cat-room__bed--${bedId}`}
+          aria-hidden="true"
+        >
+          <span className="my-cat-room__bed-flap my-cat-room__bed-flap--left" />
+          <span className="my-cat-room__bed-flap my-cat-room__bed-flap--right" />
+          <span className="my-cat-room__bed-box">
+            <span className="my-cat-room__bed-tape" />
+            <span className="my-cat-room__bed-cushion" />
+          </span>
+        </span>
+
+        {!isAway && isEating && (
           <CatRoomBowl bowlId={bowlId} isEating={isEating} />
         )}
 
@@ -744,6 +828,8 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
         <p className="my-cat-panel__status" role="status">{statusMsg}</p>
       )}
 
+      {(shop || room?.items?.length > 0) && (
+        <div className="my-cat-panel__stores" aria-label="商店與佈置">
       {shop && (
         <section
           className={`my-cat-shop${shop.unlocked ? '' : ' my-cat-shop--locked'}${shopOpen ? ' my-cat-shop--open' : ''}`}
@@ -755,18 +841,23 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
             aria-expanded={shopOpen}
             onClick={() => setShopOpen((v) => !v)}
           >
-            <h2 className="my-cat-shop__title pixel-font">🛒 貓咪商店</h2>
-            <span className="my-cat-shop__price pixel-font">✦ {shop.moon_shards}</span>
-            <span className="my-cat-shop__chevron" aria-hidden="true">{shopOpen ? '▲' : '▼'}</span>
+            <span className="my-cat-shop__badge" aria-hidden="true">🛒</span>
+            <span className="my-cat-shop__head-main">
+              <h2 className="my-cat-shop__title pixel-font">貓咪商店</h2>
+              <span className="my-cat-shop__hint">家族貓 · 換裝收集</span>
+            </span>
+            <span className="my-cat-shop__chevron-wrap" aria-hidden="true">
+              <span className="my-cat-shop__chevron">{shopOpen ? '▲' : '▼'}</span>
+            </span>
           </button>
           {shopOpen && (
             <ul className="my-cat-shop__list">
               {shop.skins.map((skin) => {
                 const busy = shopBusy === skin.skin_id;
-                const canBuy = shop.unlocked && !skin.owned && skin.price > 0
-                  && shop.moon_shards >= skin.price;
+                const canBuy = !skin.owned && skin.price > 0
+                  && cat.moon_shards >= skin.price;
                 const canEquip = skin.owned && !skin.equipped;
-                const locked = !skin.owned && skin.price > 0 && !shop.unlocked;
+                const locked = false;
                 return (
                   <li
                     key={skin.skin_id}
@@ -821,12 +912,102 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
         </section>
       )}
 
+      {room?.items?.length > 0 && (
+        <section
+          className={`my-cat-room-shop${roomOpen ? ' my-cat-room-shop--open' : ''}`}
+          aria-label="房間佈置"
+        >
+          <button
+            type="button"
+            className="my-cat-room-shop__head"
+            aria-expanded={roomOpen}
+            onClick={() => setRoomOpen((v) => !v)}
+          >
+            <span className="my-cat-room-shop__badge" aria-hidden="true">🏠</span>
+            <span className="my-cat-room-shop__head-main">
+              <h2 className="my-cat-room-shop__title pixel-font">房間佈置</h2>
+              <span className="my-cat-room-shop__hint">貓兜 · 窗外景 · 貓窩</span>
+            </span>
+            <span className="my-cat-room-shop__chevron-wrap" aria-hidden="true">
+              <span className="my-cat-room-shop__chevron">{roomOpen ? '▲' : '▼'}</span>
+            </span>
+          </button>
+          {roomOpen && (
+            <div className="my-cat-room-shop__body">
+              {Object.values(ROOM_SLOTS)
+                .sort((a, b) => a.order - b.order)
+                .map((slot) => {
+                  const slotItems = room.items.filter((it) => it.slot === slot.id);
+                  if (!slotItems.length) return null;
+                  return (
+                    <div key={slot.id} className="my-cat-room-shop__slot">
+                      <p className="my-cat-room-shop__slot-title">{slot.nameZh}</p>
+                      <ul className="my-cat-room-shop__list">
+                        {slotItems.map((it) => {
+                          const busy = roomBusy === it.id;
+                          const canBuy = !it.owned && it.shardCost > 0
+                            && cat.moon_shards >= it.shardCost;
+                          const canEquip = it.owned && !it.equipped;
+                          return (
+                            <li
+                              key={it.id}
+                              className={`my-cat-furni${it.equipped ? ' my-cat-furni--equipped' : ''}`}
+                            >
+                              <span
+                                className={`my-cat-furni__preview my-cat-furni__preview--${it.preview}`}
+                                aria-hidden="true"
+                              />
+                              <span className="my-cat-furni__info">
+                                <span className="my-cat-furni__name">
+                                  {it.nameZh}
+                                  {it.equipped && (
+                                    <span className="my-cat-furni__tag">佈置中</span>
+                                  )}
+                                </span>
+                                <span className="my-cat-furni__desc">{it.descZh}</span>
+                                <span className="my-cat-furni__price">
+                                  {it.shardCost === 0 ? '免費' : `✦ ${it.shardCost}`}
+                                </span>
+                              </span>
+                              {it.owned ? (
+                                <button
+                                  type="button"
+                                  className="my-cat-furni__btn my-cat-furni__btn--equip pixel-font"
+                                  disabled={!canEquip || busy}
+                                  onClick={() => handleRoomEquip(it.id)}
+                                >
+                                  {busy ? '…' : it.equipped ? '佈置中' : '佈置'}
+                                </button>
+                              ) : it.shardCost > 0 ? (
+                                <button
+                                  type="button"
+                                  className="my-cat-furni__btn pixel-font"
+                                  disabled={!canBuy || busy}
+                                  onClick={() => handleRoomBuy(it.id)}
+                                >
+                                  {busy ? '…' : '購買'}
+                                </button>
+                              ) : null}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+        </section>
+      )}
+        </div>
+      )}
+
       <div className="my-cat-panel__footer">
         <div className="my-cat-footer-chip my-cat-footer-chip--shards" title="月光碎屑">
           <span className="my-cat-footer-chip__icon" aria-hidden="true">✦</span>
           <span className="my-cat-footer-chip__body">
             <span className="my-cat-footer-chip__label">月光碎屑</span>
-            <span className="my-cat-footer-chip__value pixel-font">{cat.moon_shards}</span>
+            <span className="my-cat-footer-chip__value pixel-font">{formatShards(cat.moon_shards)}</span>
           </span>
         </div>
         {moonJourney && (
@@ -837,12 +1018,17 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
           >
             <span className="my-cat-footer-chip__icon" aria-hidden="true">{moonJourney.emoji}</span>
             <span className="my-cat-footer-chip__body">
-              <span className="my-cat-footer-chip__label">
-                Lv{moonJourney.level} {moonJourney.title_zh}
+              <span className="my-cat-footer-chip__label my-cat-footer-chip__label--level">
+                <span className="my-cat-footer-chip__lv pixel-font">Lv{moonJourney.level}</span>
+                {moonJourney.title_zh}
               </span>
-              {(moonJourney.checkin_streak ?? 0) > 0 && (
+              {(moonJourney.checkin_streak ?? 0) > 0 ? (
                 <span className="my-cat-footer-chip__value my-cat-footer-chip__value--streak">
                   🔥 連續 {moonJourney.checkin_streak} 天
+                </span>
+              ) : (
+                <span className="my-cat-footer-chip__value my-cat-footer-chip__value--hint">
+                  點擊睇等級說明
                 </span>
               )}
             </span>

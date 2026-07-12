@@ -3,7 +3,8 @@ import { Redis } from '@upstash/redis';
 import { checkIp } from '../../../lib/ip-guard.js';
 import { filterContent } from '../../../lib/content-filter.js';
 import { verifyTurnstile, turnstileFailureMessage } from '../../../lib/turnstile.js';
-import { getAdminClient } from '../../../lib/server-auth.js';
+import { getAdminClient, getOptionalUser } from '../../../lib/server-auth.js';
+import { awardBottleSoul } from '../../../lib/my-cat-awards.js';
 
 const ratelimit = process.env.UPSTASH_REDIS_REST_URL
   ? new Ratelimit({
@@ -138,6 +139,15 @@ export default async function handler(req, res) {
     if (error) {
       return res.status(500).json({ error: error.message });
     }
+
+    // 漂流瓶側錄（§7.2）：已登入就靜默加靈魂；回覆仍以匿名 user_id 儲存，唔綁定帳號。
+    // 失敗唔影響回覆結果。
+    getOptionalUser(req)
+      .then((user) => {
+        if (user) return awardBottleSoul(db, user.id);
+        return null;
+      })
+      .catch((err) => console.error('[bottle/reply] cat soul award failed:', err?.message || err));
 
     return res.status(200).json({ success: true });
   } catch (err) {

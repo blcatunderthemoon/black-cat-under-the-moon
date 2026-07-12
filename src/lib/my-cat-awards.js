@@ -14,6 +14,13 @@ export const MIRROR_FIRST_SHARDS_GAIN = 20;
 export const FORUM_POST_SHARDS_GAIN = 2;
 export const FORUM_POST_SHARDS_DAILY_LIMIT = 3;
 
+/** 論壇發帖靈魂（v4：參與養成）+1／帖，每日上限 2。 */
+export const FORUM_POST_SOUL_GAIN = 1;
+export const FORUM_POST_SOUL_DAILY_LIMIT = 2;
+/** 玩漂流瓶靈魂（投瓶／回覆）+1，每日上限 2。 */
+export const BOTTLE_SOUL_GAIN = 1;
+export const BOTTLE_SOUL_DAILY_LIMIT = 2;
+
 /** 確保 user_cats row 存在（獨立實作，避免同 my-cat-server 循環 import）。 */
 async function ensureCatRow(admin, userId) {
   const { data: existing } = await admin
@@ -185,5 +192,50 @@ export async function awardForumPostShards(admin, userId, postId) {
     actionType: 'forum_post',
     sourceId: String(postId),
     shardsDelta: FORUM_POST_SHARDS_GAIN,
+  });
+}
+
+/** 今日某 soul action 已發放次數（HK 曆日）。 */
+async function countCareToday(admin, userId, actionType) {
+  const dayStart = `${getHongKongDateString()}T00:00:00+08:00`;
+  const { count } = await admin
+    .from('cat_care_events')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('action_type', actionType)
+    .gte('created_at', dayStart);
+  return count ?? 0;
+}
+
+/**
+ * 論壇發帖靈魂 +1（每日上限 2）；`source_id` = post.id 防同帖重複。
+ * 靈魂只由參與得來，係成長主力（v4）。
+ */
+export async function awardForumPostSoul(admin, userId, postId) {
+  const used = await countCareToday(admin, userId, 'forum_soul');
+  if (used >= FORUM_POST_SOUL_DAILY_LIMIT) {
+    return { awarded: false, soul_gained: 0, shards_gained: 0 };
+  }
+  return awardCatCare(admin, userId, {
+    actionType: 'forum_soul',
+    sourceId: String(postId),
+    deltaSoul: FORUM_POST_SOUL_GAIN,
+  });
+}
+
+/**
+ * 玩漂流瓶靈魂 +1（投瓶／回覆，每日上限 2）。
+ * 隱私：唔會將身份寫入瓶身，只喺私有 ledger 靜默記帳（§7.2 漂流瓶側錄）。
+ * `source_id` 用「日期#序號」，每日封頂而唔綁定具體瓶子，保持匿名。
+ */
+export async function awardBottleSoul(admin, userId) {
+  const used = await countCareToday(admin, userId, 'bottle_play');
+  if (used >= BOTTLE_SOUL_DAILY_LIMIT) {
+    return { awarded: false, soul_gained: 0, shards_gained: 0 };
+  }
+  return awardCatCare(admin, userId, {
+    actionType: 'bottle_play',
+    sourceId: `${getHongKongDateString()}#${used + 1}`,
+    deltaSoul: BOTTLE_SOUL_GAIN,
   });
 }

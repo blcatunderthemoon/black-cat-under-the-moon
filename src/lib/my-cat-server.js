@@ -25,10 +25,23 @@ import {
   getFeedSoulGain,
   getCatMeowUrl,
   SOUL_MAX,
+  hasUnlimitedMoonShards,
+  displayMoonShards,
+  MY_CAT_UNLIMITED_SHARDS_DISPLAY,
 } from './my-cat.js';
 import { pickCatLine } from './my-cat-lines.js';
 import { applyFeedMilestones } from './my-cat-awards.js';
-import { ensureUserCatRoom, buildRoomView } from './cat-room-server.js';
+import {
+  ensureUserCatRoom,
+  buildRoomView,
+  upsertUserCatRoom,
+  isFallbackRoom,
+} from './cat-room-server.js';
+import {
+  DEFAULT_ROOM_EQUIPPED,
+  DEFAULT_ROOM_OWNED,
+  getRoomItem,
+} from './cat-room.js';
 import { filterContent } from './content-filter.js';
 import {
   performDailyCheckIn,
@@ -90,6 +103,34 @@ async function fetchMoonProfileRow(admin, userId) {
     moon_checkin_streak: 0,
     moon_last_checkin_date: null,
   };
+}
+
+async function fetchUserEmail(admin, userId) {
+  const { data } = await admin
+    .from('profiles')
+    .select('email')
+    .eq('id', userId)
+    .maybeSingle();
+  return data?.email || '';
+}
+
+async function isUnlimitedShardsUser(admin, userId) {
+  const email = await fetchUserEmail(admin, userId);
+  return hasUnlimitedMoonShards(email);
+}
+
+/** Admin test account：餘額太低先補到 999999，之後購買會正常扣數。 */
+async function ensureAdminTestShards(admin, userId, catRow) {
+  if (!await isUnlimitedShardsUser(admin, userId)) return catRow;
+  if ((catRow.moon_shards ?? 0) >= 1000) return catRow;
+  const { data, error } = await admin
+    .from('user_cats')
+    .update({ moon_shards: MY_CAT_UNLIMITED_SHARDS_DISPLAY })
+    .eq('user_id', userId)
+    .select('*')
+    .single();
+  if (error) throw error;
+  return data;
 }
 
 async function fetchMirrorTypes(admin, userId) {
@@ -164,7 +205,7 @@ function awayState(catRow, hunger, nowMs = Date.now()) {
  * Decay is computed lazily from stored values + elapsed time; stored stats
  * only change on feed/pet, so this stays idempotent.
  */
-function buildCatView(catRow, { moonJourney, mirror, petsToday }) {
+function buildCatView(catRow, { moonJourney, mirror, petsToday, unlimitedShards = false }) {
   const skinId = catRow.skin_id || DEFAULT_SKIN_ID;
   const todayHk = getHongKongDateString();
   const now = Date.now();
@@ -191,9 +232,9 @@ function buildCatView(catRow, { moonJourney, mirror, petsToday }) {
     soul: clampSoul(catRow.soul),
     soul_max: SOUL_MAX,
     growth_stage: growthStage,
-    moon_shards: catRow.moon_shards ?? 0,
+    moon_shards: displayMoonShards(catRow.moon_shards, unlimitedShards),
     owned_skins: catRow.owned_skins || [DEFAULT_SKIN_ID],
-    cat_shop_unlocked: !!catRow.cat_shop_unlocked,
+    cat_shop_unlocked: unlimitedShards || !!catRow.cat_shop_unlocked,
     fed_today: catRow.last_fed_date === todayHk,
     pets_today: petsToday ?? 0,
     pet_daily_limit: PET_DAILY_LIMIT,
@@ -210,6 +251,18 @@ function buildCatView(catRow, { moonJourney, mirror, petsToday }) {
  * （買貓後餘額跌返落去都唔會重新鎖返）。
  */
 async function ensureShopUnlockFlag(admin, userId, catRow, mirror) {
+  if (await isUnlimitedShardsUser(admin, userId)) {
+    if (!catRow.cat_shop_unlocked) {
+      const { data } = await admin
+        .from('user_cats')
+        .update({ cat_shop_unlocked: true })
+        .eq('user_id', userId)
+        .select('*')
+        .single();
+      return data || { ...catRow, cat_shop_unlocked: true };
+    }
+    return { ...catRow, cat_shop_unlocked: true };
+  }
   if (catRow.cat_shop_unlocked) return catRow;
   if (!mirror?.mirror_type) return catRow;
   if ((catRow.moon_shards ?? 0) < CAT_SHOP_UNLOCK_COST) return catRow;
@@ -223,16 +276,17 @@ async function ensureShopUnlockFlag(admin, userId, catRow, mirror) {
 }
 
 /** 商店 payload（§7.1）：五隻貓嘅價格／擁有／裝備狀態。 */
-function buildShopView(catRow, mirror) {
+function buildShopView(catRow, mirror, unlimitedShards = false) {
   const owned = catRow.owned_skins || [DEFAULT_SKIN_ID];
   const equipped = catRow.skin_id || DEFAULT_SKIN_ID;
   const mirrorType = mirror?.mirror_type || null;
   return {
-    unlocked: !!catRow.cat_shop_unlocked,
+    // 商店對所有人開放（唔再需要碎屑解鎖門檻）
+    unlocked: true,
     unlock_cost: CAT_SHOP_UNLOCK_COST,
     has_mirror: !!mirrorType,
     mirror_type: mirrorType,
-    moon_shards: catRow.moon_shards ?? 0,
+    moon_shards: displayMoonShards(catRow.moon_shards, unlimitedShards),
     skins: Object.keys(CAT_SKIN_CONFIG).map((skinId) => ({
       skin_id: skinId,
       family_zh: CAT_SKIN_CONFIG[skinId].familyZh,
@@ -246,20 +300,22 @@ function buildShopView(catRow, mirror) {
 
 /** Full state for GET /api/my-cat. */
 export async function getMyCatState(admin, userId) {
+  const unlimitedShards = await isUnlimitedShardsUser(admin, userId);
   const [rawCatRow, moonProfile, mirror, roomRow] = await Promise.all([
     ensureUserCat(admin, userId),
     fetchMoonProfileRow(admin, userId),
     fetchMirrorTypes(admin, userId),
     ensureUserCatRoom(admin, userId),
   ]);
-  const catRow = await ensureShopUnlockFlag(admin, userId, rawCatRow, mirror);
+  const toppedCatRow = await ensureAdminTestShards(admin, userId, rawCatRow);
+  const catRow = await ensureShopUnlockFlag(admin, userId, toppedCatRow, mirror);
   const petsToday = await countPetsToday(admin, userId);
   const moonJourney = buildMoonJourneySummary(moonProfile);
 
   return {
-    cat: buildCatView(catRow, { moonJourney, mirror, petsToday }),
+    cat: buildCatView(catRow, { moonJourney, mirror, petsToday, unlimitedShards }),
     moon_journey: moonJourney,
-    shop: buildShopView(catRow, mirror),
+    shop: buildShopView(catRow, mirror, unlimitedShards),
     room: buildRoomView(roomRow),
   };
 }
@@ -271,6 +327,7 @@ export async function getMyCatState(admin, userId) {
  * Idempotent per day via last_fed_date + ledgers.
  */
 export async function performCatFeed(admin, userId) {
+  const unlimitedShards = await isUnlimitedShardsUser(admin, userId);
   const todayHk = getHongKongDateString();
   const catRow = await ensureUserCat(admin, userId);
 
@@ -293,7 +350,7 @@ export async function performCatFeed(admin, userId) {
         ? '貓咪仲喺出面未返，等埋佢先。'
         : '貓咪離家出走咗，先按「召喚」叫佢返嚟。',
       moon_journey: moonJourney,
-      cat: buildCatView(catRow, { moonJourney, mirror, petsToday }),
+      cat: buildCatView(catRow, { moonJourney, mirror, petsToday, unlimitedShards }),
     };
   }
 
@@ -308,7 +365,7 @@ export async function performCatFeed(admin, userId) {
       awarded: false,
       shards_gained: 0,
       moon_journey: checkin.moon_journey,
-      cat: buildCatView(catRow, { moonJourney: checkin.moon_journey, mirror, petsToday }),
+      cat: buildCatView(catRow, { moonJourney: checkin.moon_journey, mirror, petsToday, unlimitedShards }),
     };
   }
 
@@ -415,7 +472,7 @@ export async function performCatFeed(admin, userId) {
     bonus_shards: bonusShards,
     bonus_soul: bonusSoul,
     moon_journey: checkin.moon_journey,
-    cat: buildCatView(updatedCatRow, { moonJourney: checkin.moon_journey, mirror, petsToday }),
+    cat: buildCatView(updatedCatRow, { moonJourney: checkin.moon_journey, mirror, petsToday, unlimitedShards }),
   };
 }
 
@@ -423,6 +480,7 @@ export async function performCatFeed(admin, userId) {
  * 召喚離家出走嘅貓（飽腹 0）：記低 summoned_at，1 小時後貓咪返嚟先可以餵返。
  */
 export async function performCatSummon(admin, userId) {
+  const unlimitedShards = await isUnlimitedShardsUser(admin, userId);
   const catRow = await ensureUserCat(admin, userId);
   const hungerNow = currentHunger(catRow);
   const awayInfo = awayState(catRow, hungerNow);
@@ -434,7 +492,7 @@ export async function performCatSummon(admin, userId) {
       countPetsToday(admin, userId),
     ]);
     const moonJourney = buildMoonJourneySummary(moonProfile);
-    return { cat: buildCatView(row, { moonJourney, mirror, petsToday }), ...extra };
+    return { cat: buildCatView(row, { moonJourney, mirror, petsToday, unlimitedShards }), ...extra };
   };
 
   if (!awayInfo.away) {
@@ -493,16 +551,17 @@ export async function performCatRename(admin, userId, rawName) {
     return { ok: false, error: '貓咪已經有名了，暫時只能改一次。', already_renamed: true };
   }
 
-  const [moonProfile, mirror, petsToday] = await Promise.all([
+  const [moonProfile, mirror, petsToday, unlimitedShards] = await Promise.all([
     fetchMoonProfileRow(admin, userId),
     fetchMirrorTypes(admin, userId),
     countPetsToday(admin, userId),
+    isUnlimitedShardsUser(admin, userId),
   ]);
   const moonJourney = buildMoonJourneySummary(moonProfile);
 
   return {
     ok: true,
-    cat: buildCatView(updated, { moonJourney, mirror, petsToday }),
+    cat: buildCatView(updated, { moonJourney, mirror, petsToday, unlimitedShards }),
   };
 }
 
@@ -512,6 +571,7 @@ export async function performCatRename(admin, userId, rawName) {
  * last_pet_at only advances on a counted tap, so blocked taps don't extend the wait.
  */
 export async function performCatPet(admin, userId, { lastLine = null } = {}) {
+  const unlimitedShards = await isUnlimitedShardsUser(admin, userId);
   const todayHk = getHongKongDateString();
   const catRow = await ensureUserCat(admin, userId);
   let petsToday = await countPetsToday(admin, userId);
@@ -529,7 +589,7 @@ export async function performCatPet(admin, userId, { lastLine = null } = {}) {
     return {
       line: picked.line,
       line_pool: picked.pool,
-      cat: buildCatView(row, { moonJourney, mirror, petsToday }),
+      cat: buildCatView(row, { moonJourney, mirror, petsToday, unlimitedShards }),
       ...extra,
     };
   };
@@ -599,31 +659,23 @@ export async function performCatBuySkin(admin, userId, skinId) {
     return { ok: false, error: '小黑貓本來就免費擁有。' };
   }
 
-  const [catRow, mirror] = await Promise.all([
-    ensureUserCat(admin, userId),
+  const [catRow, mirror, unlimitedShards] = await Promise.all([
+    ensureUserCat(admin, userId).then((row) => ensureAdminTestShards(admin, userId, row)),
     fetchMirrorTypes(admin, userId),
+    isUnlimitedShardsUser(admin, userId),
   ]);
 
-  if (!mirror?.mirror_type) {
-    return { ok: false, error: '先完成 Mirror 測驗，先可以迎家族貓回家。' };
-  }
-
+  // 商店對所有人開放：唔再要求完成 Mirror，亦唔再需要碎屑解鎖門檻；
+  // 淨係要有足夠碎屑就買得（admin 無限碎屑照免費）。
   const unlockedRow = await ensureShopUnlockFlag(admin, userId, catRow, mirror);
-  if (!unlockedRow.cat_shop_unlocked) {
-    return {
-      ok: false,
-      error: `月光碎屑要儲夠 ${CAT_SHOP_UNLOCK_COST} 先解鎖商店。`,
-      needs_unlock: true,
-    };
-  }
 
   const owned = unlockedRow.owned_skins || [DEFAULT_SKIN_ID];
   if (owned.includes(skinId)) {
     return { ok: false, error: '已經擁有呢隻貓。', already_owned: true };
   }
 
-  const price = getCatPrice(mirror.mirror_type, skinId);
-  if ((unlockedRow.moon_shards ?? 0) < price) {
+  const price = getCatPrice(mirror?.mirror_type, skinId);
+  if (!unlimitedShards && (unlockedRow.moon_shards ?? 0) < price) {
     return { ok: false, error: '月光碎屑唔夠。', insufficient_shards: true };
   }
 
@@ -643,14 +695,17 @@ export async function performCatBuySkin(admin, userId, skinId) {
   }
 
   const cfg = CAT_SKIN_CONFIG[skinId];
+  const nextShards = Math.max(0, (unlockedRow.moon_shards ?? 0) - price);
+  const updatePayload = {
+    owned_skins: [...owned, skinId],
+    skin_id: skinId,
+    meow_sound_id: cfg.meowId,
+    moon_shards: nextShards,
+  };
+
   const { data: updated, error: updateError } = await admin
     .from('user_cats')
-    .update({
-      owned_skins: [...owned, skinId],
-      moon_shards: (unlockedRow.moon_shards ?? 0) - price,
-      skin_id: skinId,
-      meow_sound_id: cfg.meowId,
-    })
+    .update(updatePayload)
     .eq('user_id', userId)
     .select('*')
     .single();
@@ -663,8 +718,8 @@ export async function performCatBuySkin(admin, userId, skinId) {
   return {
     ok: true,
     shards_spent: price,
-    cat: buildCatView(updated, { moonJourney, mirror, petsToday }),
-    shop: buildShopView(updated, mirror),
+    cat: buildCatView(updated, { moonJourney, mirror, petsToday, unlimitedShards }),
+    shop: buildShopView(updated, mirror, unlimitedShards),
   };
 }
 
@@ -691,16 +746,132 @@ export async function performCatEquip(admin, userId, skinId) {
     .single();
   if (error) throw error;
 
-  const [moonProfile, mirror, petsToday] = await Promise.all([
+  const [moonProfile, mirror, petsToday, unlimitedShards] = await Promise.all([
     fetchMoonProfileRow(admin, userId),
     fetchMirrorTypes(admin, userId),
     countPetsToday(admin, userId),
+    isUnlimitedShardsUser(admin, userId),
   ]);
   const moonJourney = buildMoonJourneySummary(moonProfile);
 
   return {
     ok: true,
-    cat: buildCatView(updated, { moonJourney, mirror, petsToday }),
-    shop: buildShopView(updated, mirror),
+    cat: buildCatView(updated, { moonJourney, mirror, petsToday, unlimitedShards }),
+    shop: buildShopView(updated, mirror, unlimitedShards),
   };
+}
+
+/** Cat + room payload for room shop responses (shard balance lives on user_cats). */
+async function buildRoomShopResult(admin, userId, catRow, roomRow, extra = {}) {
+  const [moonProfile, mirror, petsToday, unlimitedShards] = await Promise.all([
+    fetchMoonProfileRow(admin, userId),
+    fetchMirrorTypes(admin, userId),
+    countPetsToday(admin, userId),
+    isUnlimitedShardsUser(admin, userId),
+  ]);
+  const moonJourney = buildMoonJourneySummary(moonProfile);
+  return {
+    cat: buildCatView(catRow, { moonJourney, mirror, petsToday, unlimitedShards }),
+    shop: buildShopView(catRow, mirror, unlimitedShards),
+    room: buildRoomView(roomRow),
+    ...extra,
+  };
+}
+
+/**
+ * 買家具（§12.5 碎屑商店）：扣 user_cats.moon_shards，加入 owned_items，
+ * 並即時裝備到對應 slot。ledger action_type='shop_buy_room' 做冪等。
+ */
+export async function performRoomBuy(admin, userId, itemId) {
+  const item = getRoomItem(itemId);
+  if (!item) return { ok: false, error: '唔認得呢件家具。' };
+  if (item.shardCost <= 0) return { ok: false, error: '呢件係預設家具，唔使買。' };
+
+  let [catRow, roomRow] = await Promise.all([
+    ensureUserCat(admin, userId).then((row) => ensureAdminTestShards(admin, userId, row)),
+    ensureUserCatRoom(admin, userId),
+  ]);
+
+  // 房間表未 migrate → 唔好扣碎屑，直接提示。
+  if (isFallbackRoom(roomRow)) {
+    return { ok: false, error: '房間功能仲未開通，請稍後再試。', needs_migration: true };
+  }
+
+  const owned = roomRow.owned_items?.length ? roomRow.owned_items : [...DEFAULT_ROOM_OWNED];
+  if (owned.includes(itemId)) {
+    return { ok: false, error: '已經擁有呢件家具。', already_owned: true };
+  }
+
+  const unlimitedShards = await isUnlimitedShardsUser(admin, userId);
+  if (!unlimitedShards && (catRow.moon_shards ?? 0) < item.shardCost) {
+    return { ok: false, error: '月光碎屑唔夠。', insufficient_shards: true };
+  }
+
+  const { error: economyError } = await admin
+    .from('cat_economy_events')
+    .insert({
+      user_id: userId,
+      action_type: 'shop_buy_room',
+      source_id: itemId,
+      shards_delta: -item.shardCost,
+    });
+  if (economyError) {
+    if (economyError.code === '23505') {
+      return { ok: false, error: '已經擁有呢件家具。', already_owned: true };
+    }
+    throw economyError;
+  }
+
+  const { data: updatedCat, error: catErr } = await admin
+    .from('user_cats')
+    .update({ moon_shards: Math.max(0, (catRow.moon_shards ?? 0) - item.shardCost) })
+    .eq('user_id', userId)
+    .select('*')
+    .single();
+  if (catErr) throw catErr;
+  catRow = updatedCat;
+
+  const nextEquipped = {
+    ...DEFAULT_ROOM_EQUIPPED,
+    ...(roomRow.equipped || {}),
+    [item.slot]: itemId,
+  };
+  const updatedRoom = await upsertUserCatRoom(admin, userId, {
+    owned_items: [...owned, itemId],
+    equipped: nextEquipped,
+  });
+
+  return buildRoomShopResult(admin, userId, catRow, updatedRoom, {
+    ok: true,
+    shards_spent: item.shardCost,
+  });
+}
+
+/** 切換已擁有家具（每 slot 一件）。 */
+export async function performRoomEquip(admin, userId, itemId) {
+  const item = getRoomItem(itemId);
+  if (!item) return { ok: false, error: '唔認得呢件家具。' };
+
+  const roomRow = await ensureUserCatRoom(admin, userId);
+  if (isFallbackRoom(roomRow)) {
+    return { ok: false, error: '房間功能仲未開通，請稍後再試。', needs_migration: true };
+  }
+
+  const owned = roomRow.owned_items?.length ? roomRow.owned_items : [...DEFAULT_ROOM_OWNED];
+  if (!owned.includes(itemId)) {
+    return { ok: false, error: '未擁有呢件家具，要去商店換先。' };
+  }
+
+  const nextEquipped = {
+    ...DEFAULT_ROOM_EQUIPPED,
+    ...(roomRow.equipped || {}),
+    [item.slot]: itemId,
+  };
+  const updatedRoom = await upsertUserCatRoom(admin, userId, {
+    equipped: nextEquipped,
+    owned_items: owned,
+  });
+  const catRow = await ensureUserCat(admin, userId);
+
+  return buildRoomShopResult(admin, userId, catRow, updatedRoom, { ok: true });
 }

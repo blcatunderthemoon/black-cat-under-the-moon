@@ -295,8 +295,26 @@ async function postBottleReply(body) {
   return postWithTurnstile(API.reply, body);
 }
 
+/* 讀 Supabase session token（同 auth-nav.js 一樣由 localStorage 攞）。
+   純粹用嚟俾後端靜默加貓咪靈魂（漂流瓶側錄），瓶身仍然完全匿名。 */
+function getBottleAuthToken() {
+  try {
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.startsWith('sb-') && k.endsWith('-auth-token')) {
+        var v = JSON.parse(localStorage.getItem(k) || 'null');
+        if (v && v.access_token) return v.access_token;
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
 function jsonHeaders(extra) {
-  return Object.assign({ 'Content-Type': 'application/json' }, extra || {});
+  var base = { 'Content-Type': 'application/json' };
+  var token = getBottleAuthToken();
+  if (token) base.Authorization = 'Bearer ' + token;
+  return Object.assign(base, extra || {});
 }
 
 async function parseApiJson(res) {

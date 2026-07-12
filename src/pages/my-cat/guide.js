@@ -112,43 +112,43 @@ export default function MyCatGuidePage() {
               <li className="my-cat-guide__stat" style={{ '--stat': '#bd93f9', '--fill': '38%' }}>
                 <span className="my-cat-guide__stat-name"><strong>🔮 靈魂</strong></span>
                 <span className="my-cat-guide__statbar" aria-hidden="true"><span className="my-cat-guide__statbar-fill" /></span>
-                <span className="my-cat-guide__stat-desc">做 Mirror 性格測驗、玩月光漂流瓶會提升；<strong>唔會衰減</strong>，係成長進化嘅關鍵。</span>
+                <span className="my-cat-guide__stat-desc">做 Mirror 性格測驗、玩漂流瓶和 Forum 會提升；<strong>唔會衰減</strong>，係成長進化嘅關鍵。</span>
               </li>
             </ul>
           </Chapter>
 
           <Chapter no={5} ribbon="#bd93f9" title="成長階段" meow="有一日你會見到我真正嘅樣。">
             <ul className="my-cat-guide__list">
-              <li>靈魂值<strong>唔會跌</strong>，但升級要時間——大約<strong>每月一個階段</strong>，體型愈大愈難升。</li>
+              <li>靈魂值<strong>唔會跌</strong>，但每日靈魂有上限，體型愈大愈難升——認真養大約<strong>兩個月先一個階段</strong>。</li>
             </ul>
             <ol className="my-cat-guide__evo">
               <li className="my-cat-guide__evo-step">
                 <span className="my-cat-guide__evo-icon my-cat-guide__evo-icon--s1" aria-hidden="true" />
                 <span className="my-cat-guide__evo-name pixel-font">幼崽</span>
-                <span className="my-cat-guide__evo-req">初次見面 · 靈魂 &lt; 42</span>
+                <span className="my-cat-guide__evo-req">初次見面 · 靈魂 &lt; 90</span>
               </li>
               <li className="my-cat-guide__evo-arrow" aria-hidden="true">▶</li>
               <li className="my-cat-guide__evo-step">
                 <span className="my-cat-guide__evo-icon my-cat-guide__evo-icon--s2" aria-hidden="true" />
                 <span className="my-cat-guide__evo-name pixel-font">少年貓</span>
-                <span className="my-cat-guide__evo-req">靈魂 ≥ 42 · 約 1 個月</span>
+                <span className="my-cat-guide__evo-req">靈魂 ≥ 90 · 約 6–8 週</span>
               </li>
               <li className="my-cat-guide__evo-arrow" aria-hidden="true">▶</li>
               <li className="my-cat-guide__evo-step">
                 <span className="my-cat-guide__evo-icon my-cat-guide__evo-icon--s3" aria-hidden="true" />
                 <span className="my-cat-guide__evo-name pixel-font">成貓</span>
-                <span className="my-cat-guide__evo-req">靈魂 ≥ 95 + Mirror · 約 7–8 週</span>
+                <span className="my-cat-guide__evo-req">靈魂 ≥ 190 + Mirror · 約 3–4 個月</span>
               </li>
               <li className="my-cat-guide__evo-arrow" aria-hidden="true">▶</li>
               <li className="my-cat-guide__evo-step my-cat-guide__evo-step--locked">
                 <span className="my-cat-guide__evo-icon my-cat-guide__evo-icon--mystery" aria-hidden="true">?</span>
                 <span className="my-cat-guide__evo-name pixel-font">混血形態</span>
-                <span className="my-cat-guide__evo-req">靈魂 ≥ 145 + ??? · 最漫長</span>
+                <span className="my-cat-guide__evo-req">靈魂 ≥ 290 + ??? · 最漫長</span>
               </li>
             </ol>
             <ul className="my-cat-guide__list">
-              <li>每日餵食固定 <strong>+1 靈魂</strong>（主力來源）；Mirror、連續打卡、升級只得少量加成。</li>
-              <li>靈魂上限 <strong>150</strong>；冇 Moon Journey 等級捷徑，要靠每日返嚟養。</li>
+              <li>靈魂只由<strong>參與</strong>得來：Mirror 性格測驗（一次性 +8）、玩漂流瓶（每日 +2 封頂）、Forum 發帖（每日 +2 封頂）。餵食<strong>唔再加靈魂</strong>，凈係回飽腹同碎屑。</li>
+              <li>靈魂上限 <strong>300</strong>，每日靈魂有上限——要日日返嚟做唔同互動先養得大，冇捷徑。</li>
             </ul>
           </Chapter>
 
