@@ -133,9 +133,9 @@ export function getCatMeowUrl(skinId) {
  * @returns {'kitten'|'juvenile'|'adult'|'hybrid'}
  */
 export function getGrowthStage({ soul = 0, moonLevel = 1, hasMirror = false, hasShadow = false }) {
-  if (soul >= 80 && hasShadow) return 'hybrid';
-  if (soul >= 60 && hasMirror) return 'adult';
-  if (soul >= 25 || moonLevel >= 2) return 'juvenile';
+  if (soul >= 92 && hasShadow) return 'hybrid';
+  if (soul >= 75 && hasMirror) return 'adult';
+  if (soul >= 45 || moonLevel >= 4) return 'juvenile';
   return 'kitten';
 }
 

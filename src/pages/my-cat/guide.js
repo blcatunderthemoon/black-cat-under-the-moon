@@ -72,14 +72,17 @@ export default function MyCatGuidePage() {
               <li>每次成功摸摸：❤️ 好感 <strong>+2</strong>，每日最多 <strong>5 次</strong>。</li>
               <li>好感夠高，會解鎖新嘅台詞池 😽。</li>
             </ul>
-            <div className="my-cat-guide__cd" aria-label="摸摸冷卻時間">
+            <ol className="my-cat-guide__timeline" aria-label="摸摸冷卻時間">
               {['即時', '3分', '15分', '30分', '1小時'].map((t, i) => (
-                <span key={t} className="my-cat-guide__cd-slot">
-                  <span className="my-cat-guide__cd-heart" aria-hidden="true">❤️</span>
-                  <span className="my-cat-guide__cd-label pixel-font">{i + 1}. {t}</span>
-                </span>
+                <li key={t} className="my-cat-guide__timeline-step">
+                  <span className="my-cat-guide__timeline-node" aria-hidden="true">
+                    <span className="my-cat-guide__timeline-heart">❤️</span>
+                  </span>
+                  <span className="my-cat-guide__timeline-no pixel-font">{i + 1}</span>
+                  <span className="my-cat-guide__timeline-label pixel-font">{t}</span>
+                </li>
               ))}
-            </div>
+            </ol>
           </Chapter>
 
           <Chapter no={3} ribbon="#4fc3f7" title="三大屬性" meow="我嘅靈魂比你想像中深邃。">
@@ -113,19 +116,19 @@ export default function MyCatGuidePage() {
               <li className="my-cat-guide__evo-step">
                 <span className="my-cat-guide__evo-icon my-cat-guide__evo-icon--s2" aria-hidden="true" />
                 <span className="my-cat-guide__evo-name pixel-font">少年貓</span>
-                <span className="my-cat-guide__evo-req">靈魂 ≥ 25 或 Lv2</span>
+                <span className="my-cat-guide__evo-req">靈魂 ≥ 45 或 Lv4</span>
               </li>
               <li className="my-cat-guide__evo-arrow" aria-hidden="true">▶</li>
               <li className="my-cat-guide__evo-step">
                 <span className="my-cat-guide__evo-icon my-cat-guide__evo-icon--s3" aria-hidden="true" />
                 <span className="my-cat-guide__evo-name pixel-font">成貓</span>
-                <span className="my-cat-guide__evo-req">靈魂 ≥ 60 + Mirror Card</span>
+                <span className="my-cat-guide__evo-req">靈魂 ≥ 75 + Mirror Card</span>
               </li>
               <li className="my-cat-guide__evo-arrow" aria-hidden="true">▶</li>
               <li className="my-cat-guide__evo-step my-cat-guide__evo-step--locked">
                 <span className="my-cat-guide__evo-icon my-cat-guide__evo-icon--mystery" aria-hidden="true">?</span>
                 <span className="my-cat-guide__evo-name pixel-font">混血形態</span>
-                <span className="my-cat-guide__evo-req">靈魂 ≥ 80 + ???</span>
+                <span className="my-cat-guide__evo-req">靈魂 ≥ 92 + ???</span>
               </li>
             </ol>
           </Chapter>

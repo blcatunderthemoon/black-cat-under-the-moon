@@ -22747,10 +22747,37 @@ button.forum-tag-chip:hover {
   justify-self: end;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 600px) {
+  /* 手機：兩邊各取自然闊度、標題彈性置中，杜絕右側 nav 溢出蓋住標題 */
+  .app-page--my-cat > .app-header {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 8px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
   .app-page--my-cat > .app-header > .app-header__title {
     font-size: 11px;
     letter-spacing: 0.04em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  /* 收窄右側：手機隱藏問候名同分隔線，淨低圖示按鈕 */
+  .app-page--my-cat > .app-header .auth-nav-badge__name-group,
+  .app-page--my-cat > .app-header .auth-nav-badge__inner > .auth-nav-badge__sep {
+    display: none;
+  }
+
+  /* 右側圖示組收窄啲間距，貓咪入口更貼近登出 */
+  .app-page--my-cat > .app-header .auth-nav-badge__icon-group {
+    gap: 2px;
+  }
+
+  .app-page--my-cat > .app-header .app-header-logout-btn {
+    margin-left: 4px;
   }
 }
 
@@ -23935,35 +23962,85 @@ a.moon-journey-dropdown-card__checkin--done {
   white-space: nowrap;
 }
 
-/* 摸摸冷卻（5 粒心 = 5 次） */
-.my-cat-guide__cd {
+/* 摸摸冷卻 — 橫向時間軸（5 次 = 5 個節點） */
+.my-cat-guide__timeline {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
+  align-items: flex-start;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
 }
 
-.my-cat-guide__cd-slot {
-  display: inline-flex;
+.my-cat-guide__timeline-step {
+  position: relative;
+  flex: 1;
+  display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: 6px 8px;
-  background: #131028;
-  border: 1px solid rgba(255, 107, 157, 0.4);
-  box-shadow: 2px 2px 0 #07060e;
+  min-width: 0;
+  padding-top: 2px;
 }
 
-.my-cat-guide__cd-heart {
+/* 節點之間嘅虛線軌道 */
+.my-cat-guide__timeline-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 15px;
+  left: calc(50% + 14px);
+  right: calc(-50% + 14px);
+  height: 2px;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255, 107, 157, 0.55) 0 5px,
+    transparent 5px 9px
+  );
+  pointer-events: none;
+}
+
+.my-cat-guide__timeline-node {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: #131028;
+  border: 2px solid rgba(255, 107, 157, 0.65);
+  box-shadow:
+    0 0 0 2px #07060e,
+    0 0 10px rgba(255, 107, 157, 0.25);
+}
+
+.my-cat-guide__timeline-heart {
   font-size: 13px;
   line-height: 1;
 }
 
-.my-cat-guide__cd-label {
-  font-size: 8px;
+.my-cat-guide__timeline-no {
+  margin-top: 5px;
+  font-size: 7px;
   letter-spacing: 1px;
-  color: rgba(240, 235, 216, 0.8);
+  color: rgba(255, 107, 157, 0.85);
+}
+
+.my-cat-guide__timeline-label {
+  margin-top: 2px;
+  font-size: 8px;
+  letter-spacing: 0.5px;
+  color: rgba(240, 235, 216, 0.88);
+  text-align: center;
   white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .my-cat-guide__timeline-label {
+    font-size: 7px;
+    letter-spacing: 0;
+    white-space: normal;
+    line-height: 1.35;
+    max-width: 52px;
+  }
 }
 
 /* 三大屬性（迷你像素能量條） */
