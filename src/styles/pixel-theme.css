@@ -7196,11 +7196,6 @@
   padding: 10px 16px 6px;
 }
 
-.inbox-thread-source-tag__icon {
-  font-size: 14px;
-  line-height: 1;
-}
-
 .inbox-thread-source-tag__label {
   font-family: 'Press Start 2P', monospace;
   font-size: 8px;
@@ -7209,13 +7204,6 @@
   padding: 3px 8px;
   background: rgba(0, 229, 255, 0.1);
   border: 1px solid rgba(0, 229, 255, 0.35);
-}
-
-.inbox-thread-source-tag__partner {
-  font-family: var(--font-zh);
-  font-size: 12px;
-  font-weight: 600;
-  color: #f3e8ff;
 }
 
 .app-header--account .inbox-thread-title-link {
@@ -22724,20 +22712,25 @@ button.forum-tag-chip:hover {
   gap: 12px;
 }
 
+/* ── 三個字（主頁／標題／登出）視覺同大：Noto 用基準 px，像素字加大補償 ──
+   Noto Sans（主頁）字面較滿，像素字（Zpix）同 px 下睇落細，
+   故像素字統一比 Noto 大 3px；登出強制用同一 Zpix 令右側同標題完全一致。 */
 .app-page--my-cat > .app-header > .app-header__back {
   grid-column: 1;
   justify-self: start;
+  font-family: var(--font-zh);
+  font-size: 14px;
+  line-height: 1.4;
 }
 
 .app-page--my-cat > .app-header > .app-header__title {
   grid-column: 2;
   justify-self: center;
   flex: unset;
-  /* Zpix 像素字喺同一 px 下比主頁嘅 Noto Sans 睇落細，故加大到視覺對齊 */
   font-family: 'Zpix', 'Press Start 2P', monospace;
-  font-size: 15px;
-  letter-spacing: 0.08em;
-  line-height: 1.2;
+  font-size: 17px;
+  letter-spacing: 0.06em;
+  line-height: 1.4;
   color: var(--purple-light);
   -webkit-font-smoothing: none;
   text-rendering: geometricPrecision;
@@ -22748,9 +22741,13 @@ button.forum-tag-chip:hover {
   justify-self: end;
 }
 
-/* 登出掣（像素字）加大到同主頁（Noto Sans 13px）視覺對齊 */
 .app-page--my-cat > .app-header .app-header-logout-btn {
-  font-size: 15px;
+  font-family: 'Zpix', 'Press Start 2P', monospace;
+  font-size: 17px;
+  letter-spacing: 0.06em;
+  line-height: 1.4;
+  -webkit-font-smoothing: none;
+  text-rendering: geometricPrecision;
 }
 
 @media (max-width: 600px) {
@@ -22762,14 +22759,14 @@ button.forum-tag-chip:hover {
     padding-right: 10px;
   }
 
-  /* 手機：主頁（Noto）加大到 15px；像素字（標題／登出）加大到 16px 視覺對齊 */
+  /* 手機：保持三者視覺同大 — Noto 15px，像素字（標題／登出）18px */
   .app-page--my-cat > .app-header > .app-header__back {
     font-size: 15px;
     padding: 8px 12px;
   }
 
   .app-page--my-cat > .app-header > .app-header__title {
-    font-size: 16px;
+    font-size: 18px;
     letter-spacing: 0.04em;
     white-space: nowrap;
     overflow: hidden;
@@ -22778,7 +22775,7 @@ button.forum-tag-chip:hover {
   }
 
   .app-page--my-cat > .app-header .app-header-logout-btn {
-    font-size: 16px;
+    font-size: 18px;
   }
 
   /* 收窄右側：手機隱藏問候名同分隔線，淨低圖示按鈕 */
@@ -23888,13 +23885,6 @@ button.forum-tag-chip:hover {
   letter-spacing: 0.06em;
 }
 
-.my-cat-shop__hint {
-  margin: 0 0 10px;
-  font-size: 0.72rem;
-  line-height: 1.5;
-  color: rgba(240, 235, 216, 0.55);
-}
-
 .my-cat-shop__list {
   display: flex;
   flex-direction: column;
@@ -23903,10 +23893,10 @@ button.forum-tag-chip:hover {
 
 .my-cat-shop__item {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 6px 10px;
+  grid-template-columns: auto 1fr auto;
+  gap: 4px 12px;
   align-items: center;
-  padding: 8px 10px;
+  padding: 8px 12px;
   border: 1px solid rgba(189, 147, 249, 0.25);
   background: rgba(15, 12, 34, 0.65);
 }
@@ -23916,8 +23906,31 @@ button.forum-tag-chip:hover {
   box-shadow: inset 0 0 0 1px rgba(255, 224, 138, 0.2);
 }
 
+/* 貓咪預覽（strip 第一格靜態縮圖） */
+.my-cat-shop__thumb {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  width: 72px;
+  height: 72px;
+  background-repeat: no-repeat;
+  background-position: left center;
+  image-rendering: pixelated;
+  border: 1px solid rgba(189, 147, 249, 0.3);
+  border-radius: 6px;
+  background-color: rgba(10, 8, 22, 0.6);
+  box-shadow: inset 0 0 12px rgba(124, 92, 252, 0.18);
+}
+
+.my-cat-shop__info {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
 .my-cat-shop__name {
-  font-size: 0.82rem;
+  font-size: 0.9rem;
   color: #f0ebd8;
 }
 
@@ -23928,13 +23941,31 @@ button.forum-tag-chip:hover {
 }
 
 .my-cat-shop__price {
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   color: #ffe08a;
-  grid-column: 1;
+}
+
+/* Header 碎屑餘額 — 金幣 chip */
+.my-cat-shop__head .my-cat-shop__price.pixel-font {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  line-height: 1;
+  color: #ffe08a;
+  background: linear-gradient(180deg, rgba(255, 224, 138, 0.16) 0%, rgba(255, 200, 90, 0.06) 100%);
+  border: 1px solid rgba(255, 224, 138, 0.55);
+  border-radius: 999px;
+  box-shadow:
+    inset 0 0 8px rgba(255, 224, 138, 0.18),
+    0 0 10px rgba(255, 200, 90, 0.15);
+  text-shadow: 0 0 8px rgba(255, 224, 138, 0.6);
+  letter-spacing: 0.04em;
 }
 
 .my-cat-shop__btn {
-  grid-column: 2;
+  grid-column: 3;
   grid-row: 1 / span 2;
   padding: 6px 10px;
   font-size: 0.68rem;

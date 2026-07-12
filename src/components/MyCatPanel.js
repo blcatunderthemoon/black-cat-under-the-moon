@@ -12,10 +12,14 @@ import {
   GROWTH_STAGE_LABELS,
   getCatAnimDurationMs,
   getCatStripUrl,
+  getCatAnimMeta,
   TOO_HUNGRY_THRESHOLD,
 } from '../lib/my-cat.js';
 
 const IDLE_REST_ANIM = 'idle_slowblink';
+// 商店預覽用嘅靜止貓（strip 第一格）
+const SHOP_PREVIEW_ANIM = 'sit_slowblink';
+const SHOP_PREVIEW_FRAMES = getCatAnimMeta(SHOP_PREVIEW_ANIM).frames;
 // 閒置時偶爾播一段的小動作池（播完再回到靜止）
 const IDLE_VARIETY_ANIMS = [
   'idle_slowblink',
@@ -130,22 +134,30 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
 
   useEffect(() => { loadCat(); }, [loadCat]);
 
-  // 離家出走召喚倒數：每秒 tick；時間到就靜默刷新（貓咪返嚟）。
+  // 統一每秒 tick：摸摸冷卻 + 離家出走召喚倒數共用一個 timer。
+  // 只要有任何一個未來目標就每秒更新 nowTs（令倒數即時遞減）；
+  // 召喚倒數到時就靜默刷新（貓咪返嚟）。
+  const petAvailableAt = cat?.next_pet_available_at || null;
+  const catReturnsAt = cat?.cat_returns_at || null;
   useEffect(() => {
-    const iso = cat?.cat_returns_at;
-    if (!iso) return undefined;
-    const target = new Date(iso).getTime();
+    const petTarget = petAvailableAt ? new Date(petAvailableAt).getTime() : 0;
+    const returnTarget = catReturnsAt ? new Date(catReturnsAt).getTime() : 0;
+    const hasFuture = petTarget > Date.now() || returnTarget > Date.now();
+    if (!hasFuture) return undefined;
+
     setNowTs(Date.now());
     const iv = setInterval(() => {
       const t = Date.now();
       setNowTs(t);
-      if (t >= target) {
-        clearInterval(iv);
+      const petPending = petTarget > t;
+      const returnPending = returnTarget > t;
+      if (returnTarget && t >= returnTarget) {
         loadCat({ silent: true });
       }
+      if (!petPending && !returnPending) clearInterval(iv);
     }, 1000);
     return () => clearInterval(iv);
-  }, [cat?.cat_returns_at, loadCat]);
+  }, [petAvailableAt, catReturnsAt, loadCat]);
 
   // Preload the single meow bound to the equipped skin (§8.1).
   useEffect(() => {
@@ -188,21 +200,6 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
     const t = setTimeout(() => setFeedReward(null), 2800);
     return () => clearTimeout(t);
   }, [feedReward]);
-
-  // Tick every second while a pet cooldown is counting down.
-  useEffect(() => {
-    const iso = cat?.next_pet_available_at;
-    if (!iso) return undefined;
-    const target = new Date(iso).getTime();
-    if (target <= Date.now()) return undefined;
-    setNowTs(Date.now());
-    const iv = setInterval(() => {
-      const t = Date.now();
-      setNowTs(t);
-      if (t >= target) clearInterval(iv);
-    }, 1000);
-    return () => clearInterval(iv);
-  }, [cat?.next_pet_available_at]);
 
   // RPG typewriter reveal for the speech bubble.
   useEffect(() => {
@@ -752,23 +749,27 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
             <span className="my-cat-shop__chevron" aria-hidden="true">{shopOpen ? '▲' : '▼'}</span>
           </button>
           {shopOpen && (
-            <>
-              {!shop.unlocked && (
-                <p className="my-cat-shop__hint">
-                  儲夠 <strong>{shop.unlock_cost}</strong> 月光碎屑先可以買家族貓（而家 {shop.moon_shards}）
-                </p>
-              )}
-              <ul className="my-cat-shop__list">
-                {shop.skins.map((skin) => {
-                  const busy = shopBusy === skin.skin_id;
-                  const canBuy = shop.unlocked && !skin.owned && skin.price > 0
-                    && shop.moon_shards >= skin.price;
-                  const canEquip = skin.owned && !skin.equipped;
-                  return (
-                    <li
-                      key={skin.skin_id}
-                      className={`my-cat-shop__item${skin.equipped ? ' my-cat-shop__item--equipped' : ''}`}
-                    >
+            <ul className="my-cat-shop__list">
+              {shop.skins.map((skin) => {
+                const busy = shopBusy === skin.skin_id;
+                const canBuy = shop.unlocked && !skin.owned && skin.price > 0
+                  && shop.moon_shards >= skin.price;
+                const canEquip = skin.owned && !skin.equipped;
+                const locked = !skin.owned && skin.price > 0 && !shop.unlocked;
+                return (
+                  <li
+                    key={skin.skin_id}
+                    className={`my-cat-shop__item${skin.equipped ? ' my-cat-shop__item--equipped' : ''}`}
+                  >
+                    <span
+                      className="my-cat-shop__thumb"
+                      style={{
+                        backgroundImage: `url(${getCatStripUrl(skin.skin_id, SHOP_PREVIEW_ANIM)})`,
+                        backgroundSize: `${SHOP_PREVIEW_FRAMES * 100}% 100%`,
+                      }}
+                      aria-hidden="true"
+                    />
+                    <span className="my-cat-shop__info">
                       <span className="my-cat-shop__name">
                         {skin.family_zh}
                         {skin.is_family && skin.price > 0 && (
@@ -781,30 +782,30 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
                       <span className="my-cat-shop__price">
                         {skin.price === 0 ? '免費' : `✦ ${skin.price}`}
                       </span>
-                      {skin.owned ? (
-                        <button
-                          type="button"
-                          className="my-cat-shop__btn my-cat-shop__btn--equip pixel-font"
-                          disabled={!canEquip || busy || isAway}
-                          onClick={() => handleShopEquip(skin.skin_id)}
-                        >
-                          {busy ? '…' : skin.equipped ? '已裝備' : '裝備'}
-                        </button>
-                      ) : skin.price > 0 ? (
-                        <button
-                          type="button"
-                          className="my-cat-shop__btn pixel-font"
-                          disabled={!canBuy || busy}
-                          onClick={() => handleShopBuy(skin.skin_id)}
-                        >
-                          {busy ? '…' : shop.unlocked ? '購買' : '未解鎖'}
-                        </button>
-                      ) : null}
-                    </li>
-                  );
-                })}
-              </ul>
-            </>
+                    </span>
+                    {skin.owned ? (
+                      <button
+                        type="button"
+                        className="my-cat-shop__btn my-cat-shop__btn--equip pixel-font"
+                        disabled={!canEquip || busy || isAway}
+                        onClick={() => handleShopEquip(skin.skin_id)}
+                      >
+                        {busy ? '…' : skin.equipped ? '已裝備' : '裝備'}
+                      </button>
+                    ) : skin.price > 0 ? (
+                      <button
+                        type="button"
+                        className="my-cat-shop__btn pixel-font"
+                        disabled={!canBuy || busy}
+                        onClick={() => handleShopBuy(skin.skin_id)}
+                      >
+                        {busy ? '…' : locked ? '未解鎖' : '購買'}
+                      </button>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ul>
           )}
         </section>
       )}

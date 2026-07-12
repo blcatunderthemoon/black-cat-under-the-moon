@@ -242,9 +242,12 @@ export default function ThreadPage() {
   const letterMessages = isPhotoExchangeThread
     ? []
     : messages.filter((m) => isLetterMessage(m));
+  // 一個 thread 只代表一次連線；match_card 可能重複入庫，只保留第一張。
   const matchMessages = isPhotoExchangeThread
     ? []
-    : messages.filter((m) => m.message_type === 'match_card');
+    : messages
+        .filter((m) => m.message_type === 'match_card')
+        .slice(0, 1);
   const exchangeRequests = isPhotoExchangeThread
     ? messages.filter((m) => m.message_type === 'photo_exchange_request')
     : [];
@@ -338,13 +341,6 @@ export default function ThreadPage() {
             <ScrollMixedText text={data.status_banner} />
           </div>
         )}
-
-        {data?.thread?.source_type === 'match' && other?.display_name ? (
-          <p className="inbox-thread-source-tag inbox-thread-source-tag--match">
-            <span className="inbox-thread-source-tag__icon" aria-hidden="true">🎯</span>
-            <span className="inbox-thread-source-tag__partner">{other.display_name}</span>
-          </p>
-        ) : null}
 
         <div className={`thread-messages thread-messages--moon${isPhotoExchangeThread ? ' thread-messages--photo-exchange' : ''}${isMatchOnlyThread ? ' thread-messages--match-only' : ''}`}>
           {!data ? (
