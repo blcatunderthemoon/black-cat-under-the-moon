@@ -2642,6 +2642,15 @@ function buildTextInput(q) {
       }
     }
 
+    // Email 格式檢查（要有本地名、@ 同 .域名，例如 name@example.com）
+    if (q.inputType === 'email' && raw.length > 0) {
+      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw);
+      if (!emailOk) {
+        valid = false;
+        warn.textContent = '請輸入有效嘅電郵地址（需要 @ 同 .com 等域名）';
+      }
+    }
+
     if (!valid && warn.textContent) {
       warn.style.display = 'block';
       warn.classList.add('show');
@@ -3084,6 +3093,8 @@ function handleNext(skipClickSound = false) {
     if (!inp) return;
     const raw = inp.value.trim();
     if (!raw && !q.optional) return;
+    // Email 欄位一定要係有效格式先可以繼續
+    if (q.inputType === 'email' && raw && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw)) return;
     answers[q.field] = raw;
   } else if (q.type === 'textarea') {
     const ta = $qAnswers.querySelector('.pixel-textarea');
