@@ -255,7 +255,7 @@ function buildCatView(catRow, { moonJourney, mirror, petsToday, unlimitedShards 
   return {
     skin_id: skinId,
     family_zh: CAT_SKIN_CONFIG[skinId]?.familyZh || '小黑貓',
-    name: catRow.custom_name || CAT_SKIN_CONFIG[skinId]?.familyZh || '小黑貓',
+    name: catRow.custom_name || (CAT_SKIN_CONFIG[skinId]?.familyZh || '小黑貓').replace(/家族$/, ''),
     custom_name: catRow.custom_name || null,
     can_rename: !catRow.renamed_at,
     meow_url: getCatMeowUrl(skinId),
