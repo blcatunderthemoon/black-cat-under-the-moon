@@ -1,7 +1,29 @@
+const path = require('path');
+const os = require('os');
+
+/**
+ * Webpack's persistent filesystem cache (`*.pack.gz`) is the chronic OneDrive
+ * corruption source: OneDrive locks/renames those blobs mid-write, spamming
+ * "ENOENT rename ...pack.gz_" and eventually corrupting the dev build.
+ * We move ONLY that cache outside OneDrive (%LOCALAPPDATA%). It's plain cache
+ * blobs, so it doesn't need Node module resolution and is safe to delete.
+ *
+ * NOTE: distDir itself must stay INSIDE the project — the compiled server files
+ * `require('next/...')` / `react/jsx-dev-runtime`, which resolve by walking up
+ * for node_modules. A distDir outside the project has no node_modules above it
+ * and every API route / _document throws MODULE_NOT_FOUND.
+ */
+function resolveDevWebpackCacheDir() {
+  const localAppData = process.env.LOCALAPPDATA
+    || path.join(os.homedir(), 'AppData', 'Local');
+  return path.join(localAppData, 'blackcat-under-the-moon-next', 'webpack-cache');
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Local dev only: keep cache under node_modules (less OneDrive corruption than repo-root .next).
-  // Production / Vercel must use the default `.next` so routes-manifest.json is found at deploy.
+  // Local dev only: keep cache under node_modules (less OneDrive corruption than
+  // repo-root .next), while staying inside the project so module resolution works.
+  // Production / Vercel must use the default `.next` so routes-manifest.json is found.
   ...(process.env.NODE_ENV === 'development'
     ? { distDir: 'node_modules/.cache/next' }
     : {}),
@@ -61,6 +83,11 @@ const nextConfig = {
         poll: 1000,
         aggregateTimeout: 300,
       };
+      // Move the persistent webpack cache out of OneDrive to stop the recurring
+      // "ENOENT rename ...pack.gz_" corruption that blanks pages.
+      if (config.cache && typeof config.cache === 'object') {
+        config.cache.cacheDirectory = resolveDevWebpackCacheDir();
+      }
     }
     return config;
   },

@@ -13,6 +13,7 @@ export default function ForumStoryAddChapter({
 }) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [unlockByComment, setUnlockByComment] = useState(false);
   const contentRef = useRef('');
   const editorFlushRef = useRef(null);
   const [submitting, setSubmitting] = useState(false);
@@ -44,6 +45,7 @@ export default function ForumStoryAddChapter({
         body: JSON.stringify({
           title: title.trim() || null,
           content: normalized,
+          unlock_by_comment: unlockByComment,
         }),
       });
       const payload = await res.json().catch(() => ({}));
@@ -54,6 +56,7 @@ export default function ForumStoryAddChapter({
       addedChapters = Array.isArray(payload.chapters) ? payload.chapters : [];
       setTitle('');
       setContent('');
+      setUnlockByComment(false);
     } catch {
       setError('網絡錯誤，請稍後再試。');
       return;
@@ -110,6 +113,24 @@ export default function ForumStoryAddChapter({
         className="forum-story-add-chapter__editor"
         storyMode
       />
+      <label className="forum-story-bonus-toggle">
+        <input
+          type="checkbox"
+          className="forum-story-bonus-toggle__checkbox"
+          checked={unlockByComment}
+          onChange={(e) => setUnlockByComment(e.target.checked)}
+          disabled={submitting}
+        />
+        <span className="forum-story-bonus-toggle__body">
+          <span className="forum-story-bonus-toggle__label">
+            <span className="forum-story-bonus-toggle__badge" aria-hidden="true">番外</span>
+            設為番外篇 · 留言解鎖
+          </span>
+          <span className="forum-story-bonus-toggle__hint">
+            讀者需在此故事留言後，方可閱讀這一章（你自己不受限）。
+          </span>
+        </span>
+      </label>
       <div className="forum-story-add-chapter__actions">
         <button
           type="submit"

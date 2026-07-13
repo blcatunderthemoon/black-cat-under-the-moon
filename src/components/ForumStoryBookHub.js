@@ -25,6 +25,35 @@ function formatDate(iso) {
   }
 }
 
+/** Deterministic hue (0–359) from the title so each book gets a stable accent. */
+function storyCoverHue(str = '') {
+  let h = 0;
+  for (let i = 0; i < str.length; i += 1) {
+    h = (h * 31 + str.charCodeAt(i)) >>> 0;
+  }
+  return h % 360;
+}
+
+/** On-brand generated cover for stories without an uploaded cover image. */
+function StoryPlaceholderCover({ title }) {
+  const hue = storyCoverHue(title || '無題');
+  return (
+    <div
+      className="forum-story-reader__cover-hero forum-story-reader__cover-hero--gen"
+      style={{ '--cover-hue': hue }}
+    >
+      <div className="forum-story-cover-gen">
+        <span className="forum-story-cover-gen__moon" aria-hidden="true" />
+        <span className="forum-story-cover-gen__eyebrow">STORY</span>
+        <span className="forum-story-cover-gen__title">{title || '無題'}</span>
+        <span className="forum-story-cover-gen__cat" aria-hidden="true">🐈‍⬛</span>
+      </div>
+      <span className="forum-story-reader__cover-spine" aria-hidden="true" />
+      <span className="forum-story-reader__cover-shine" aria-hidden="true" />
+    </div>
+  );
+}
+
 export default function ForumStoryBookHub({
   post,
   chapters,
@@ -126,7 +155,9 @@ export default function ForumStoryBookHub({
   const enterReadResume = readingResumeReady && hasReadingProgress;
 
   const canEditCover = canEdit;
-  const showCoverColumn = post.cover_image_url || canEditCover;
+  const hasRealCover = !!post.cover_image_url;
+  const showPlaceholderCover = !hasRealCover && !canEditCover;
+  const showCoverColumn = hasRealCover || canEditCover || showPlaceholderCover;
   const displaySynopsis = resolveStorySynopsis(post);
   const showSynopsisBlock = !!displaySynopsis || canEdit;
 
@@ -159,7 +190,7 @@ export default function ForumStoryBookHub({
                 accessToken={accessToken}
                 onUpdated={(patch) => onPostUpdate?.(patch)}
               />
-            ) : (
+            ) : hasRealCover ? (
               <div className="forum-story-reader__cover-hero">
                 <img
                   src={optimizeForumDisplayUrl(post.cover_image_url)}
@@ -170,6 +201,8 @@ export default function ForumStoryBookHub({
                 <span className="forum-story-reader__cover-spine" aria-hidden="true" />
                 <span className="forum-story-reader__cover-shine" aria-hidden="true" />
               </div>
+            ) : (
+              <StoryPlaceholderCover title={post.title} />
             )}
           </div>
         )}
@@ -277,30 +310,42 @@ export default function ForumStoryBookHub({
           ) : chapters.length > 0 ? (
             <ol className="forum-story-chapters__list">
               {chapters.map((ch, index) => {
-                const locked = !isGuestReadableChapter(ch.chapter_number, loggedIn);
+                const isBonus = !!ch.bonus;
+                // Prefer the server's authoritative lock (covers 番外篇 comment gate);
+                // fall back to the guest login gate for older payloads.
+                const locked = ch.locked ?? !isGuestReadableChapter(ch.chapter_number, loggedIn);
+                const lockReason = ch.lock_reason
+                  || (locked ? (loggedIn ? 'comment' : 'login') : null);
+                const isCommentLock = locked && loggedIn && lockReason === 'comment';
+                const lockedLabel = isCommentLock
+                  ? `${ch.display_title}（留言後可解鎖番外篇）`
+                  : `${ch.display_title}（登入後可閱讀）`;
                 return (
                 <li key={ch.id || ch.chapter_number} className="forum-story-chapters__item">
                   <div className="forum-story-chapters__row">
                     <button
                       type="button"
-                      className={`forum-story-chapters__link${locked ? ' forum-story-chapters__link--locked' : ''}`}
+                      className={`forum-story-chapters__link${locked ? ' forum-story-chapters__link--locked' : ''}${isBonus ? ' forum-story-chapters__link--bonus' : ''}`}
                       onClick={() => {
                         if (locked) {
+                          if (isCommentLock) {
+                            onScrollToComments?.();
+                            return;
+                          }
                           window.location.href = loginHref;
                           return;
                         }
                         onReadChapter(ch.chapter_number);
                       }}
-                      aria-label={
-                        locked
-                          ? `${ch.display_title}（登入後可閱讀）`
-                          : ch.display_title
-                      }
+                      aria-label={locked ? lockedLabel : ch.display_title}
                     >
                       <span className="forum-story-chapters__spine" aria-hidden="true" />
                       <span className="forum-story-chapters__num">{String(ch.chapter_number).padStart(2, '0')}</span>
                       <span className="forum-story-chapters__name-wrap">
                         <span className="forum-story-chapters__name">{ch.display_title}</span>
+                        {isBonus && (
+                          <span className="forum-story-chapters__bonus" title="番外篇 · 留言解鎖">番外</span>
+                        )}
                         {index === 0 && chapters.length === 1 && (
                           <span className="forum-story-chapters__hint">最新</span>
                         )}

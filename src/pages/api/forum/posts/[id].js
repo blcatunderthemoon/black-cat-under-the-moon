@@ -24,8 +24,7 @@ import { isMatureForumTopicStored } from '../../../../lib/forum-mature.js';
 import { isStoryPost, validateStoryCoverUrl, STORY_SYNOPSIS_MAX } from '../../../../lib/forum-story.js';
 import {
   fetchStoryChapters,
-  serializeStoryChapters,
-  serializeGuestStoryChapters,
+  serializeStoryChaptersForViewer,
   GUEST_FREE_CHAPTER_COUNT,
 } from '../../../../lib/forum-story-chapters.js';
 
@@ -220,6 +219,10 @@ async function handleGet(req, res, postId) {
     }
   });
 
+  const viewerIsAuthor = !!viewer && viewer.id === post.author_id;
+  const viewerHasCommented = viewerIsAuthor
+    || (!!viewer && (comments || []).some((c) => c.author_id === viewer.id));
+
   const enrichedComments = (comments || []).map((c) => ({
     id: c.id,
     parent_comment_id: c.parent_comment_id,
@@ -266,9 +269,11 @@ async function handleGet(req, res, postId) {
     comments: enrichedComments,
     polls,
     chapters: isStoryPost(post)
-      ? (viewer
-        ? serializeStoryChapters(storyChapters)
-        : serializeGuestStoryChapters(storyChapters))
+      ? serializeStoryChaptersForViewer(storyChapters, {
+        loggedIn: !!viewer,
+        isAuthor: viewerIsAuthor,
+        hasCommented: viewerHasCommented,
+      })
       : undefined,
     chapters_locked: isStoryPost(post) && !viewer,
     guest_free_chapters: isStoryPost(post) ? GUEST_FREE_CHAPTER_COUNT : undefined,

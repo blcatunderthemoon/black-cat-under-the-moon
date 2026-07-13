@@ -13,6 +13,9 @@ export default function ForumStoryEditChapter({
 }) {
   const [title, setTitle] = useState(chapter?.title || '');
   const [content, setContent] = useState(chapter?.content || '');
+  const [unlockByComment, setUnlockByComment] = useState(
+    !!(chapter?.unlock_by_comment ?? chapter?.bonus),
+  );
   const contentRef = useRef(chapter?.content || '');
   const editorFlushRef = useRef(null);
   const [submitting, setSubmitting] = useState(false);
@@ -80,6 +83,7 @@ export default function ForumStoryEditChapter({
           body: JSON.stringify({
             title: title.trim() || null,
             content: normalized,
+            unlock_by_comment: unlockByComment,
           }),
         },
       );
@@ -151,6 +155,24 @@ export default function ForumStoryEditChapter({
         className="forum-story-add-chapter__editor"
         storyMode
       />
+      <label className="forum-story-bonus-toggle">
+        <input
+          type="checkbox"
+          className="forum-story-bonus-toggle__checkbox"
+          checked={unlockByComment}
+          onChange={(e) => setUnlockByComment(e.target.checked)}
+          disabled={submitting}
+        />
+        <span className="forum-story-bonus-toggle__body">
+          <span className="forum-story-bonus-toggle__label">
+            <span className="forum-story-bonus-toggle__badge" aria-hidden="true">番外</span>
+            設為番外篇 · 留言解鎖
+          </span>
+          <span className="forum-story-bonus-toggle__hint">
+            讀者需在此故事留言後，方可閱讀這一章（你自己不受限）。
+          </span>
+        </span>
+      </label>
       <div className="forum-story-add-chapter__actions">
         <button
           type="submit"

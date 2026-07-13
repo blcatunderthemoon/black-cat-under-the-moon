@@ -1703,6 +1703,13 @@ body.lang-en .mode-top-bar--legal .home-back-btn .en {
   transform: translateY(-1px);
 }
 
+/* 換裝貓：用 idle 動畫第一幀做 header icon（全身像素貓，稍為放大睇得清） */
+.header-my-cat-link__sprite--strip {
+  width: 24px;
+  height: 24px;
+  background-repeat: no-repeat;
+}
+
 .header-my-cat-link__dot {
   position: absolute;
   top: 1px;

@@ -147,7 +147,7 @@ export default function MyCatGuidePage() {
               </li>
             </ol>
             <ul className="my-cat-guide__list">
-              <li>靈魂只由<strong>參與</strong>得來：Mirror 性格測驗（一次性 +8）、玩漂流瓶（每日 +2 封頂）、Forum 發帖（每日 +2 封頂）。餵食<strong>唔再加靈魂</strong>，凈係回飽腹同碎屑。</li>
+              <li>靈魂只由<strong>參與</strong>得來：Mirror 性格測驗（一次性 +8）、玩漂流瓶（每日 +1 封頂）、Forum 發帖（每日 +2 封頂）。餵食<strong>唔再加靈魂</strong>，凈係回飽腹同碎屑。</li>
               <li>靈魂上限 <strong>300</strong>，每日靈魂有上限——要日日返嚟做唔同互動先養得大，冇捷徑。</li>
             </ul>
           </Chapter>

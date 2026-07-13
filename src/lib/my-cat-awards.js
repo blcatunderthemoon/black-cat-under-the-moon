@@ -17,9 +17,9 @@ export const FORUM_POST_SHARDS_DAILY_LIMIT = 3;
 /** 論壇發帖靈魂（v4：參與養成）+1／帖，每日上限 2。 */
 export const FORUM_POST_SOUL_GAIN = 1;
 export const FORUM_POST_SOUL_DAILY_LIMIT = 2;
-/** 玩漂流瓶靈魂（投瓶／回覆）+1，每日上限 2。 */
+/** 玩漂流瓶靈魂（投瓶／回覆）+1，每日上限 1。 */
 export const BOTTLE_SOUL_GAIN = 1;
-export const BOTTLE_SOUL_DAILY_LIMIT = 2;
+export const BOTTLE_SOUL_DAILY_LIMIT = 1;
 
 /** 確保 user_cats row 存在（獨立實作，避免同 my-cat-server 循環 import）。 */
 async function ensureCatRow(admin, userId) {

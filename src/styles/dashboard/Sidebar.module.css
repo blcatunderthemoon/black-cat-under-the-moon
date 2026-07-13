@@ -44,10 +44,28 @@
 /* Nav */
 .nav {
   flex: 1;
+  min-height: 0; /* allow flex child to shrink so overflow-y works */
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 16px 10px;
   display: flex;
   flex-direction: column;
   gap: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(124, 92, 252, 0.4) transparent;
+}
+
+.nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.nav::-webkit-scrollbar-thumb {
+  background: rgba(124, 92, 252, 0.4);
+  border-radius: 3px;
+}
+
+.nav::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .navItem {

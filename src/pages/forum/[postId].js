@@ -363,8 +363,10 @@ export default function ForumPostPage({ seo = null }) {
       if (!r.ok) { setCommentError(result.error || '留言失敗。'); return; }
       setComment('');
       clearForumDraft(forumCommentDraftKey(postId));
+      let hadLockedBonus = false;
       setData((d) => {
         if (!d) return d;
+        hadLockedBonus = (d.chapters || []).some((c) => c.bonus && c.locked);
         const nextComments = [...(d.comments || []), result.comment];
         return {
           ...d,
@@ -375,6 +377,8 @@ export default function ForumPostPage({ seo = null }) {
           },
         };
       });
+      // 留言後解鎖番外篇：重新載入以取回已解鎖的章節內容。
+      if (hadLockedBonus) reloadPost();
     } catch {
       setCommentError('留言失敗，請稍後再試。');
     } finally {

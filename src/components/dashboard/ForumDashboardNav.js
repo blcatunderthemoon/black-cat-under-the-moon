@@ -6,6 +6,7 @@ export const FORUM_DASHBOARD_NAV_ITEMS = [
   { href: '/dashboard/forum', label: '檢舉佇列', icon: '📋' },
   { href: '/dashboard/forum/team', label: '版主團隊', icon: '🛡️' },
   { href: '/dashboard/forum-monitor', label: '內容監控', icon: '🔍' },
+  { href: '/dashboard/forum-banner', label: '論壇橫幅', icon: '📣' },
 ];
 
 const ITEMS = FORUM_DASHBOARD_NAV_ITEMS;

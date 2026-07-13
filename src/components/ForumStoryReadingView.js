@@ -16,16 +16,26 @@ export default function ForumStoryReadingView({
   onPollVote,
   onExitRead,
   onGoChapter,
+  onUnlockViaComment,
 }) {
   const chapter = getChapterByNumber(chapters, chapterNumber) || chapters[0];
   const currentNum = chapter?.chapter_number || 1;
   const prevChapter = chapters.find((ch) => ch.chapter_number === currentNum - 1);
   const nextChapter = chapters.find((ch) => ch.chapter_number === currentNum + 1);
   const isLast = !nextChapter;
-  const isLocked = !isGuestReadableChapter(currentNum, loggedIn);
+  // Server marks 番外篇 (comment-gated) chapters as locked; fall back to the
+  // guest login gate for older payloads.
+  const serverLocked = !!chapter?.locked;
+  const lockReason = chapter?.lock_reason
+    || (serverLocked ? (loggedIn ? 'comment' : 'login') : null);
+  const isLocked = serverLocked || !isGuestReadableChapter(currentNum, loggedIn);
+  const isCommentLock = isLocked && loggedIn && lockReason === 'comment';
 
   function goChapterIfAllowed(chNum) {
-    if (!loggedIn && !isGuestReadableChapter(chNum, false)) {
+    const target = chapters.find((ch) => ch.chapter_number === chNum);
+    // Only the guest login gate blocks navigation; comment-gated 番外篇 chapters
+    // open and show the "留言解鎖" prompt in-place.
+    if (!loggedIn && !isGuestReadableChapter(chNum, false) && !(target?.locked && loggedIn)) {
       window.location.href = loginHref;
       return;
     }
@@ -167,13 +177,28 @@ export default function ForumStoryReadingView({
 
         <div className={`forum-story-reader__page forum-story-reader__page--${READ_MODE} forum-story-reading__page`}>
           {isLocked ? (
-            <div className="forum-story-chapters__login-gate forum-story-reading__login-gate">
-              <span className="forum-story-chapters__login-icon" aria-hidden="true">🔒</span>
-              <p className="forum-story-chapters__login-text">登入會員即可閱讀章節內容</p>
-              <Link href={loginHref} className="forum-story-chapters__login-btn">
-                登入閱讀
-              </Link>
-            </div>
+            isCommentLock ? (
+              <div className="forum-story-chapters__login-gate forum-story-reading__login-gate forum-story-chapters__login-gate--bonus">
+                <span className="forum-story-chapters__login-icon" aria-hidden="true">🔒</span>
+                <p className="forum-story-chapters__login-title">番外篇 · 留言解鎖</p>
+                <p className="forum-story-chapters__login-text">在下方留言，即可解鎖這段番外篇內容。</p>
+                <button
+                  type="button"
+                  className="forum-story-chapters__login-btn"
+                  onClick={() => onUnlockViaComment?.()}
+                >
+                  去留言解鎖
+                </button>
+              </div>
+            ) : (
+              <div className="forum-story-chapters__login-gate forum-story-reading__login-gate">
+                <span className="forum-story-chapters__login-icon" aria-hidden="true">🔒</span>
+                <p className="forum-story-chapters__login-text">登入會員即可閱讀章節內容</p>
+                <Link href={loginHref} className="forum-story-chapters__login-btn">
+                  登入閱讀
+                </Link>
+              </div>
+            )
           ) : (
             <ForumMarkdownBody
               content={chapter.content}

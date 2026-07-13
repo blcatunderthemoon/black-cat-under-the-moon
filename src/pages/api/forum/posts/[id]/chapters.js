@@ -10,6 +10,8 @@ import {
   ensureChapterOneMigrated,
   fetchStoryChapters,
   serializeStoryChapters,
+  serializeStoryChaptersForViewer,
+  viewerHasCommentedOnPost,
 } from '../../../../../lib/forum-story-chapters.js';
 
 export default async function handler(req, res) {
@@ -35,8 +37,9 @@ async function loadStoryPost(admin, postId) {
 }
 
 async function handleGet(req, res, postId) {
+  let user;
   try {
-    await requireUser(req);
+    user = await requireUser(req);
   } catch (err) {
     return sendAuthError(res, err);
   }
@@ -46,8 +49,20 @@ async function handleGet(req, res, postId) {
   if (!post) return res.status(404).json({ error: 'Story not found' });
 
   const chapters = await fetchStoryChapters(admin, post);
+
+  const isAuthor = post.author_id === user.id;
+  if (isAuthor) {
+    // Author edits chapters here, so they always receive full bodies.
+    return res.status(200).json({ chapters: serializeStoryChapters(chapters) });
+  }
+
+  const hasCommented = await viewerHasCommentedOnPost(admin, postId, user.id);
   return res.status(200).json({
-    chapters: serializeStoryChapters(chapters),
+    chapters: serializeStoryChaptersForViewer(chapters, {
+      loggedIn: true,
+      isAuthor: false,
+      hasCommented,
+    }),
   });
 }
 
@@ -72,6 +87,7 @@ async function handlePost(req, res, postId) {
   const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
   const content = normalizeForumBodyContent(body.content);
   const title = body.title != null ? String(body.title).trim().slice(0, STORY_CHAPTER_TITLE_MAX) : null;
+  const unlockByComment = body.unlock_by_comment === true;
 
   if (!content.trim() || content.trim().length < 10) {
     return res.status(400).json({ error: '章節內容最少需要 10 個字。' });
@@ -86,16 +102,29 @@ async function handlePost(req, res, postId) {
   const maxNumber = chapters.reduce((max, ch) => Math.max(max, ch.chapter_number || 0), 0);
   const nextNumber = maxNumber + 1;
 
-  const { data: inserted, error } = await admin
+  const baseRow = {
+    story_post_id: post.id,
+    chapter_number: nextNumber,
+    title: title || null,
+    content,
+  };
+
+  let inserted = null;
+  let error = null;
+  ({ data: inserted, error } = await admin
     .from('forum_story_chapters')
-    .insert({
-      story_post_id: post.id,
-      chapter_number: nextNumber,
-      title: title || null,
-      content,
-    })
-    .select('id, chapter_number, title, content, created_at')
-    .single();
+    .insert({ ...baseRow, unlock_by_comment: unlockByComment })
+    .select('id, chapter_number, title, content, created_at, unlock_by_comment')
+    .single());
+
+  // unlock_by_comment column not migrated yet → save the chapter without the flag.
+  if (error?.code === '42703') {
+    ({ data: inserted, error } = await admin
+      .from('forum_story_chapters')
+      .insert(baseRow)
+      .select('id, chapter_number, title, content, created_at')
+      .single());
+  }
 
   if (error) {
     if (error.code === '42P01' || error.code === '42703') {

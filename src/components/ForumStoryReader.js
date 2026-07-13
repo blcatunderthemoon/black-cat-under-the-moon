@@ -81,6 +81,12 @@ export default function ForumStoryReader({
     router.push({ pathname: router.pathname, query: rest }, undefined, { shallow: true });
   }, [router]);
 
+  // 番外篇留言解鎖：離開閱讀模式並捲到留言區（留言後 chapters 會重新載入解鎖）。
+  const unlockViaComment = useCallback(() => {
+    exitRead();
+    setTimeout(() => onScrollToComments?.(), 60);
+  }, [exitRead, onScrollToComments]);
+
   useEffect(() => {
     if (!post?.id) return undefined;
     let cancelled = false;
@@ -112,6 +118,7 @@ export default function ForumStoryReader({
         onPollVote={onPollVote}
         onExitRead={exitRead}
         onGoChapter={goRead}
+        onUnlockViaComment={unlockViaComment}
       />
     );
   }

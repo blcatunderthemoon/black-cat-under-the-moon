@@ -13,6 +13,8 @@ const MAIN_NAV_ITEMS = [
   { href: '/dashboard/email-automation', icon: '📧', label: '郵件自動化' },
   { href: '/dashboard/export', icon: '⬡', label: '匯出下載' },
   { href: '/dashboard/experiment-lab', icon: '◇', label: '實驗室' },
+  { href: '/dashboard/topic-banner', icon: '📌', label: '漂流瓶橫幅' },
+  { href: '/dashboard/forum-banner', icon: '📣', label: '論壇橫幅' },
 ];
 
 const MEMBER_NAV_ITEMS = [

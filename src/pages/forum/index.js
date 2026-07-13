@@ -70,6 +70,7 @@ import {
   fetchMatureGateAck,
 } from '../../lib/forum-mature.js';
 import ForumHorizontalScroll from '../../components/ForumHorizontalScroll.js';
+import ForumBannerTicker from '../../components/ForumBannerTicker.js';
 
 const SORT_OPTIONS = [
   { id: 'latest', label: '最新', icon: '🕐', hint: '依發文時間由新到舊' },
@@ -1111,6 +1112,8 @@ export default function ForumPage() {
                 </span>
               </div>
             </div>
+
+            <ForumBannerTicker />
 
             {topic === '全部' && (
               <div className="forum-treehole-panels forum-treehole-panels--mobile">

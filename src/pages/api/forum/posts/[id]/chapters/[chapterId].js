@@ -88,17 +88,39 @@ async function handlePatch(req, res, postId, chapterId) {
     updates.content = content;
   }
 
+  const wantsBonusUpdate = Object.prototype.hasOwnProperty.call(body, 'unlock_by_comment');
+  if (wantsBonusUpdate) {
+    updates.unlock_by_comment = body.unlock_by_comment === true;
+  }
+
   if (!Object.keys(updates).length) {
     return res.status(400).json({ error: '沒有可更新的欄位。' });
   }
 
-  const { data: updated, error } = await admin
+  let updated = null;
+  let error = null;
+  ({ data: updated, error } = await admin
     .from('forum_story_chapters')
     .update(updates)
     .eq('id', chapter.id)
     .eq('story_post_id', post.id)
-    .select('id, chapter_number, title, content, created_at')
-    .single();
+    .select('id, chapter_number, title, content, created_at, unlock_by_comment')
+    .single());
+
+  // unlock_by_comment column not migrated yet → retry without the flag so the
+  // rest of the edit (title/content) still saves.
+  if (error?.code === '42703') {
+    const { unlock_by_comment, ...safeUpdates } = updates;
+    if (Object.keys(safeUpdates).length) {
+      ({ data: updated, error } = await admin
+        .from('forum_story_chapters')
+        .update(safeUpdates)
+        .eq('id', chapter.id)
+        .eq('story_post_id', post.id)
+        .select('id, chapter_number, title, content, created_at')
+        .single());
+    }
+  }
 
   if (error) {
     if (error.code === '42P01' || error.code === '42703') {

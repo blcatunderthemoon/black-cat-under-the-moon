@@ -164,7 +164,11 @@
     }
     var prefix = CAT_GIF_PREFIX[skinId];
     var url = '/catset_extra_assets/catset_extra_spritesheets/' + skinId + '_spritesheets/' + prefix + '_idle_slowblink_strip16.png';
-    var style = "background-image:url('" + url + "');background-size:1600% 100%;background-position:left center;background-repeat:no-repeat;";
+    // Frame 0 的貓坐喺 40px 幀嘅偏低中央（bbox≈x10–26,y17–32），純中置會裁到貓。
+    // 放大幀後再按貓真實中心比例偏移，令貓完整塞入 24px icon（同 HeaderMyCatLink 一致）。
+    var frameSize = 50, box = 24, catCx = 0.45, catCy = 0.61;
+    var posX = box / 2 - catCx * frameSize, posY = box / 2 - catCy * frameSize;
+    var style = "background-image:url('" + url + "');background-size:" + (16 * frameSize) + "px " + frameSize + "px;background-position:" + posX + "px " + posY + "px;background-repeat:no-repeat;";
     return '<span class="header-my-cat-link__sprite header-my-cat-link__sprite--strip" style="' + style + '" aria-hidden="true"></span>';
   }
   function myCatLinkHtml(meData) {

@@ -8,6 +8,13 @@ import Link from 'next/link';
 import { MY_CAT_PATH, DEFAULT_SKIN_ID, getCatStripUrl, getCatAnimMeta } from '../lib/my-cat.js';
 
 const HEADER_ICON_ANIM = 'idle_slowblink';
+// Header icon box size (px) and per-frame zoom. The 40px idle frame has the cat
+// sitting low-centre (bbox ≈ x10–26, y17–32), so a plain frame-centre crops it.
+// We scale the frame up then offset by the cat's real centre ratio to fit it.
+const HEADER_ICON_BOX = 24;
+const HEADER_ICON_FRAME = 50; // scaled from the native 40px frame (1.25×)
+const CAT_CENTER_X = 0.45; // 18/40 — cat sits slightly left of centre
+const CAT_CENTER_Y = 0.61; // 24.5/40 — cat sits in the lower half
 
 export default function HeaderMyCatLink({
   needsFeedBadge = false,
@@ -21,13 +28,17 @@ export default function HeaderMyCatLink({
 
   // 預設小黑貓用手繪 header icon；其他貓用 idle strip 第一幀，換貓即換 icon。
   const useStrip = skinId && skinId !== DEFAULT_SKIN_ID;
-  const spriteStyle = useStrip
-    ? {
-        backgroundImage: `url(${getCatStripUrl(skinId, HEADER_ICON_ANIM)})`,
-        backgroundSize: `${getCatAnimMeta(HEADER_ICON_ANIM).frames * 100}% 100%`,
-        backgroundPosition: 'left center',
-      }
-    : undefined;
+  let spriteStyle;
+  if (useStrip) {
+    const { frames } = getCatAnimMeta(HEADER_ICON_ANIM);
+    const posX = HEADER_ICON_BOX / 2 - CAT_CENTER_X * HEADER_ICON_FRAME;
+    const posY = HEADER_ICON_BOX / 2 - CAT_CENTER_Y * HEADER_ICON_FRAME;
+    spriteStyle = {
+      backgroundImage: `url(${getCatStripUrl(skinId, HEADER_ICON_ANIM)})`,
+      backgroundSize: `${frames * HEADER_ICON_FRAME}px ${HEADER_ICON_FRAME}px`,
+      backgroundPosition: `${posX}px ${posY}px`,
+    };
+  }
 
   return (
     <Link
