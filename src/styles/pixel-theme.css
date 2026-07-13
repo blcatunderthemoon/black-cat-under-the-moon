@@ -15153,7 +15153,7 @@
   align-items: stretch;
   gap: 0;
   padding: 0;
-  min-height: 48px;
+  min-height: 40px;
   overflow: hidden;
   border: 1px solid rgba(255, 159, 67, 0.42);
   background:
@@ -15190,7 +15190,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 46px;
+  width: 38px;
   line-height: 1;
   background:
     radial-gradient(circle at 50% 42%, rgba(255, 140, 50, 0.32) 0%, rgba(255, 120, 40, 0.12) 55%, transparent 80%);
@@ -15200,7 +15200,7 @@
 .forum-banner-ticker__sigil-icon {
   position: relative;
   z-index: 1;
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1;
   filter: drop-shadow(0 0 6px rgba(255, 140, 50, 0.6));
   animation: forum-banner-flicker 2.4s ease-in-out infinite;
@@ -15210,8 +15210,8 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
   transform: translate(-50%, -50%);
   border-radius: 50%;
   background: rgba(255, 140, 50, 0.35);
@@ -15238,7 +15238,7 @@
   gap: 0;
   white-space: nowrap;
   animation: forum-banner-marquee var(--forum-banner-duration, 24s) linear infinite;
-  padding: 13px 0;
+  padding: 9px 0;
 }
 
 .forum-banner-ticker:hover .forum-banner-ticker__content {
@@ -15254,8 +15254,8 @@
 .forum-banner-ticker__item {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
-  padding: 3px 22px;
+  gap: 7px;
+  padding: 2px 14px;
   font-family: 'Noto Sans TC', sans-serif;
   font-size: 13px;
   line-height: 1.5;
@@ -15280,14 +15280,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1;
   flex-shrink: 0;
-  border-radius: 50%;
-  background: rgba(255, 159, 67, 0.1);
-  box-shadow: 0 0 0 1px rgba(255, 159, 67, 0.16) inset;
 }
 
 .forum-banner-ticker__label {
@@ -15379,19 +15374,17 @@
 
 @media (max-width: 480px) {
   .forum-banner-ticker__sigil {
-    width: 40px;
+    width: 34px;
   }
 
   .forum-banner-ticker__item {
     font-size: 12px;
-    padding: 3px 16px;
-    gap: 7px;
+    padding: 2px 12px;
+    gap: 6px;
   }
 
   .forum-banner-ticker__icon {
-    width: 22px;
-    height: 22px;
-    font-size: 13px;
+    font-size: 14px;
   }
 
   .forum-banner-ticker__label {
