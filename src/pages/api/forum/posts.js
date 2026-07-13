@@ -10,7 +10,7 @@ import { extractPollIdsFromContent, validatePollsForContent } from '../../../lib
 import { insertPollsForPost } from '../../../lib/forum-poll-stats.js';
 import { getViewerBookmarkedPostIds, getViewerLikedPostIds } from '../../../lib/forum-stats.js';
 import { mapForumPostListPreview } from '../../../lib/forum-list-preview.js';
-import { loadForumAuthorMeta, resolveForumAuthorDisplayName } from '../../../lib/forum-author-names.js';
+import { loadForumAuthorMeta, resolveForumPostAuthorDisplayName, isForumPostAnonymous } from '../../../lib/forum-author-names.js';
 import { getTagsByPostIds, getPostIdsForTag, insertTagsForPost, getTagLabelMapForPosts } from '../../../lib/forum-tag-stats.js';
 import { validateForumTags } from '../../../lib/forum-tags.js';
 import { assertAndConsumeQuota } from '../../../lib/permissions.js';
@@ -49,6 +49,7 @@ const POST_LIST_CORE = `
   topic,
   mood_tag,
   anonymous_name_snapshot,
+  hide_username,
   like_count,
   comment_count,
   visibility,
@@ -70,6 +71,7 @@ const POST_LIST_COLUMN_TIERS = [
   topic,
   mood_tag,
   anonymous_name_snapshot,
+  hide_username,
   like_count,
   comment_count,
   visibility,
@@ -330,20 +332,23 @@ async function handleGetInner(req, res) {
   });
 
   const previews = (posts || []).map((p) => {
+    const hideUsername = isForumPostAnonymous(p);
     const mapped = mapForumPostListPreview({
       ...p,
-      anonymous_name_snapshot: resolveForumAuthorDisplayName(
-        authorNames[p.author_id],
-        p.anonymous_name_snapshot,
-      ),
+      hide_username: hideUsername,
+      anonymous_name_snapshot: resolveForumPostAuthorDisplayName({
+        hideUsername,
+        liveName: authorNames[p.author_id],
+        snapshot: p.anonymous_name_snapshot,
+      }),
       tags: tagsByPostId[p.id] || (p.mood_tag ? [p.mood_tag] : []),
       comment_count: p.comment_count ?? 0,
       is_mine: viewer?.id === p.author_id,
       viewer_liked: likedIds.has(p.id),
       viewer_bookmarked: bookmarkedIds.has(p.id),
-      author_is_premium: !!authorPremium[p.author_id],
-      author_mirror_type: mirrorByAuthor[p.author_id] || null,
-      author_mirror_slug: slugByAuthor[p.author_id] || null,
+      author_is_premium: hideUsername ? false : !!authorPremium[p.author_id],
+      author_mirror_type: hideUsername ? null : (mirrorByAuthor[p.author_id] || null),
+      author_mirror_slug: hideUsername ? null : (slugByAuthor[p.author_id] || null),
       author_id: undefined,
     });
     if (isGuest && p.visibility === 'members_only') {
@@ -392,6 +397,7 @@ async function handlePost(req, res) {
     cover_image_url: coverPayload,
     synopsis: synopsisPayload,
     chapter_one_title: chapterOneTitlePayload,
+    hide_username: hideUsernamePayload,
   } = body;
 
   const storyPost = isStoryTopic(topic);
@@ -481,13 +487,17 @@ async function handlePost(req, res) {
   }
 
   const admin = getAdminClient();
+  const hideUsername = !storyPost && !!hideUsernamePayload;
   const insertRow = {
     author_id: user.id,
     title: title?.trim().slice(0, 100) || null,
     content: normalizedContent,
     topic: topic || '社群',
     mood_tag: tagValidation.tags[0] || null,
-    anonymous_name_snapshot: profile.display_name,
+    anonymous_name_snapshot: hideUsername
+      ? resolveForumPostAuthorDisplayName({ hideUsername: true })
+      : profile.display_name,
+    hide_username: hideUsername,
     visibility: postVisibility,
     ...(storyPost ? {
       cover_image_url: coverImageUrl,
@@ -501,8 +511,8 @@ async function handlePost(req, res) {
     .select('id, title, topic, created_at')
     .single();
 
-  if (postResult.error?.code === '42703' && storyPost) {
-    const { cover_image_url: _c, synopsis: _s, ...fallbackRow } = insertRow;
+  if (postResult.error?.code === '42703') {
+    const { hide_username: _hide, cover_image_url: _c, synopsis: _s, ...fallbackRow } = insertRow;
     postResult = await admin
       .from('forum_posts')
       .insert(fallbackRow)

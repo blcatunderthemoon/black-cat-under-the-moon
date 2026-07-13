@@ -11,6 +11,40 @@ export function resolveForumAuthorDisplayName(liveName, snapshot) {
   return snap || FORUM_FALLBACK_AUTHOR_NAME;
 }
 
+/** True when a post was published with username hidden. */
+export function isForumPostAnonymous(post) {
+  return !!post?.hide_username;
+}
+
+/**
+ * Public author label for a forum post (respects hide_username).
+ * Comments always use resolveForumAuthorDisplayName on the commenter profile.
+ */
+export function resolveForumPostAuthorDisplayName({ hideUsername, liveName, snapshot } = {}) {
+  if (hideUsername) return FORUM_FALLBACK_AUTHOR_NAME;
+  return resolveForumAuthorDisplayName(liveName, snapshot);
+}
+
+/**
+ * Strip mirror / premium hints for anonymous posts.
+ * @param {object} post — row with hide_username, anonymous_name_snapshot
+ * @param {object} [meta] — { display_name, mirror_slug, mirror_type, is_premium }
+ */
+export function mapForumPostAuthorPublic(post, meta = {}) {
+  const hide = isForumPostAnonymous(post);
+  return {
+    display_name: resolveForumPostAuthorDisplayName({
+      hideUsername: hide,
+      liveName: meta.display_name,
+      snapshot: post?.anonymous_name_snapshot,
+    }),
+    mirror_slug: hide ? null : (meta.mirror_slug || null),
+    mirror_type: hide ? null : (meta.mirror_type || null),
+    is_premium: hide ? false : !!meta.is_premium,
+    is_anonymous: hide,
+  };
+}
+
 /**
  * @param {import('@supabase/supabase-js').SupabaseClient} admin
  * @param {string[]} userIds

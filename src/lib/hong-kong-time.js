@@ -35,6 +35,17 @@ export function getHongKongDateString(date = new Date()) {
   return new Intl.DateTimeFormat('en-CA', { timeZone: HK_TZ }).format(date);
 }
 
+/** Hour of day (0–23) in Hong Kong — used for morning/evening meal windows. */
+export function getHongKongHour(date = new Date()) {
+  const hour = new Intl.DateTimeFormat('en-GB', {
+    timeZone: HK_TZ,
+    hour: '2-digit',
+    hour12: false,
+  }).format(date);
+  const parsed = Number(hour);
+  return Number.isFinite(parsed) ? parsed % 24 : 0;
+}
+
 /** UTC instant for 00:00:00 on a Hong Kong calendar date (HK is always UTC+8). */
 export function hongKongMidnightUtc(year, month, day) {
   return new Date(Date.UTC(year, month - 1, day, -8, 0, 0, 0));

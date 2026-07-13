@@ -460,7 +460,9 @@
   /* Forum header — row 1: back + logo + logout; row 2: name + actions */
   .app-header--forum:not(.app-header--breadcrumbs) {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    /* 1fr auto 1fr keeps the centre logo truly centred relative to the header,
+       regardless of the differing widths of the 主頁 / 登出 side buttons. */
+    grid-template-columns: 1fr auto 1fr;
     grid-template-rows: auto auto;
     align-items: center;
     position: relative;
@@ -1153,7 +1155,9 @@
   /* Forum header — two-row grid on all mobile widths */
   .app-header--forum:not(.app-header--breadcrumbs) {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    /* 1fr auto 1fr keeps the centre logo truly centred relative to the header,
+       regardless of the differing widths of the 主頁 / 登出 side buttons. */
+    grid-template-columns: 1fr auto 1fr;
     grid-template-rows: auto auto;
     align-items: center;
     position: relative;

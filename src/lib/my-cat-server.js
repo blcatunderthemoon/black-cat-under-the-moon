@@ -9,7 +9,9 @@ import {
   CAT_SKIN_CONFIG,
   CAT_SHOP_UNLOCK_COST,
   getCatPrice,
-  FEED_SHARDS_GAIN,
+  mealWindowForHour,
+  feedShardsForWindow,
+  MEAL_LABEL,
   HUNGER_FULL,
   CAT_SUMMON_WAIT_MS,
   computeHungerFromFedAt,
@@ -48,6 +50,7 @@ import {
   buildMoonJourneySummary,
   getHongKongDateString,
 } from './moon-journey.js';
+import { getHongKongHour } from './hong-kong-time.js';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -156,7 +159,30 @@ async function countPetsToday(admin, userId) {
 }
 
 /**
- * 現時飽腹：優先用 last_fed_at 新制（餵食回滿 100，24 小時線性跌到 0）；
+ * 今日（香港曆日）早／晚兩餐各自是否已餵。
+ * source_id 格式：`${todayHk}#am` / `${todayHk}#pm`。
+ * 兼容舊制（source_id 為純日期，冇時段後綴）：當日曾餵過 → 當作早餐已餵，
+ * 令遷移當日唔會突然多一餐。
+ */
+async function getMealsFedToday(admin, userId, todayHk = getHongKongDateString()) {
+  const { data } = await admin
+    .from('cat_care_events')
+    .select('source_id')
+    .eq('user_id', userId)
+    .eq('action_type', 'daily_feed')
+    .like('source_id', `${todayHk}%`);
+  const ids = (data || []).map((r) => r.source_id);
+  const meals = {
+    am: ids.includes(`${todayHk}#am`),
+    pm: ids.includes(`${todayHk}#pm`),
+  };
+  // 舊制：純日期紀錄視為早餐已餵。
+  if (!meals.am && !meals.pm && ids.includes(todayHk)) meals.am = true;
+  return meals;
+}
+
+/**
+ * 現時飽腹：優先用 last_fed_at 新制（餵食回滿 100，30 小時線性跌到 0）；
  * 未有時間戳（舊資料）就用舊制曆日衰減。
  */
 function currentHunger(catRow, nowMs = Date.now()) {
@@ -173,7 +199,7 @@ function currentHunger(catRow, nowMs = Date.now()) {
 }
 
 /**
- * 現時好感（v2）：由上次摸摸（last_pet_at）起 24 小時按比例減到 0。
+ * 現時好感（v2）：由上次摸摸（last_pet_at）起 30 小時按比例減到 0。
  * 未摸過就以 created_at 做基準。
  */
 function currentAffection(catRow, nowMs = Date.now()) {
@@ -205,10 +231,16 @@ function awayState(catRow, hunger, nowMs = Date.now()) {
  * Decay is computed lazily from stored values + elapsed time; stored stats
  * only change on feed/pet, so this stays idempotent.
  */
-function buildCatView(catRow, { moonJourney, mirror, petsToday, unlimitedShards = false }) {
+function buildCatView(catRow, { moonJourney, mirror, petsToday, unlimitedShards = false, meals = null }) {
   const skinId = catRow.skin_id || DEFAULT_SKIN_ID;
   const todayHk = getHongKongDateString();
   const now = Date.now();
+
+  // 一日兩餐：以現時香港時段決定「今餐」係早定晚，再睇該餐係否已餵。
+  const mealWindow = mealWindowForHour(getHongKongHour());
+  const amFed = meals ? !!meals.am : (catRow.last_fed_date === todayHk);
+  const pmFed = meals ? !!meals.pm : false;
+  const mealFed = mealWindow === 'am' ? amFed : pmFed;
 
   const hunger = currentHunger(catRow, now);
   const affection = currentAffection(catRow, now);
@@ -235,7 +267,14 @@ function buildCatView(catRow, { moonJourney, mirror, petsToday, unlimitedShards 
     moon_shards: displayMoonShards(catRow.moon_shards, unlimitedShards),
     owned_skins: catRow.owned_skins || [DEFAULT_SKIN_ID],
     cat_shop_unlocked: unlimitedShards || !!catRow.cat_shop_unlocked,
-    fed_today: catRow.last_fed_date === todayHk,
+    // fed_today 現指「今餐已餵」，令餵食掣按時段自動鎖／解鎖（早晚各一次）。
+    fed_today: mealFed,
+    meal_window: mealWindow,
+    meal_label: MEAL_LABEL[mealWindow],
+    meal_fed: mealFed,
+    am_fed: amFed,
+    pm_fed: pmFed,
+    both_meals_fed: amFed && pmFed,
     pets_today: petsToday ?? 0,
     pet_daily_limit: PET_DAILY_LIMIT,
     next_pet_available_at: nextPetAvailableIso(
@@ -309,11 +348,14 @@ export async function getMyCatState(admin, userId) {
   ]);
   const toppedCatRow = await ensureAdminTestShards(admin, userId, rawCatRow);
   const catRow = await ensureShopUnlockFlag(admin, userId, toppedCatRow, mirror);
-  const petsToday = await countPetsToday(admin, userId);
+  const [petsToday, meals] = await Promise.all([
+    countPetsToday(admin, userId),
+    getMealsFedToday(admin, userId),
+  ]);
   const moonJourney = buildMoonJourneySummary(moonProfile);
 
   return {
-    cat: buildCatView(catRow, { moonJourney, mirror, petsToday, unlimitedShards }),
+    cat: buildCatView(catRow, { moonJourney, mirror, petsToday, unlimitedShards, meals }),
     moon_journey: moonJourney,
     shop: buildShopView(catRow, mirror, unlimitedShards),
     room: buildRoomView(roomRow),
@@ -321,55 +363,68 @@ export async function getMyCatState(admin, userId) {
 }
 
 /**
- * Feed = unified daily ritual (§5.2):
- * one HK calendar day → Moon Journey check-in (+2 EXP) + hunger 回滿 100 + shards +3.
- * 飽腹 v2：餵完 24 小時線性跌到 0。離家出走期間唔餵得（要先召喚等佢返嚟）。
- * Idempotent per day via last_fed_date + ledgers.
+ * Feed = 一日兩餐（v5，§5.2）：早（05:00–16:59）、晚（17:00–翌日 04:59）各一次。
+ * 每餐回滿飽腹 100，碎屑早 +2 / 晚 +1（全日仍 +3）。
+ * Moon Journey 打卡（+2 EXP）＋連續天數 streak 每日一次，喺當日第一餐結算；
+ * 第二餐唔會再打卡（already_checked_in），但照樣回滿飽腹＋領該餐碎屑。
+ * 飽腹餵完 30 小時線性跌到 0；離家出走期間唔餵得（要先召喚）。
+ * Idempotent per meal via ledger source_id = `${todayHk}#${window}`。
  */
 export async function performCatFeed(admin, userId) {
   const unlimitedShards = await isUnlimitedShardsUser(admin, userId);
   const todayHk = getHongKongDateString();
+  const mealWindow = mealWindowForHour(getHongKongHour());
+  const mealSource = `${todayHk}#${mealWindow}`;
   const catRow = await ensureUserCat(admin, userId);
 
   // 離家出走中 → 唔餵得，提示先召喚。
   const hungerNow = currentHunger(catRow);
   const awayInfo = awayState(catRow, hungerNow);
   if (awayInfo.away) {
-    const [mirror, petsToday] = await Promise.all([
+    const [mirror, petsToday, meals] = await Promise.all([
       fetchMirrorTypes(admin, userId),
       countPetsToday(admin, userId),
+      getMealsFedToday(admin, userId, todayHk),
     ]);
     const moonProfile = await fetchMoonProfileRow(admin, userId);
     const moonJourney = buildMoonJourneySummary(moonProfile);
     return {
       away: true,
       already_fed_today: false,
+      meal_window: mealWindow,
       awarded: false,
       shards_gained: 0,
       error: awayInfo.summon_pending
         ? '貓咪仲喺出面未返，等埋佢先。'
         : '貓咪離家出走咗，先按「召喚」叫佢返嚟。',
       moon_journey: moonJourney,
-      cat: buildCatView(catRow, { moonJourney, mirror, petsToday, unlimitedShards }),
+      cat: buildCatView(catRow, { moonJourney, mirror, petsToday, unlimitedShards, meals }),
     };
   }
 
-  // Moon Journey check-in is itself idempotent per HK day.
+  // Moon Journey check-in（streak + 當日 +2 EXP）本身每 HK 日冪等 → 第一餐結算。
   const checkin = await performDailyCheckIn(admin, userId);
 
-  if (catRow.last_fed_date === todayHk) {
+  // 今餐已餵？（早晚各自獨立）
+  const mealsBefore = await getMealsFedToday(admin, userId, todayHk);
+  if (mealsBefore[mealWindow]) {
     const mirror = await fetchMirrorTypes(admin, userId);
     const petsToday = await countPetsToday(admin, userId);
     return {
       already_fed_today: true,
+      meal_window: mealWindow,
+      meal_label: MEAL_LABEL[mealWindow],
+      am_fed: mealsBefore.am,
+      pm_fed: mealsBefore.pm,
+      both_meals_fed: mealsBefore.am && mealsBefore.pm,
       awarded: false,
       shards_gained: 0,
       moon_journey: checkin.moon_journey,
-      cat: buildCatView(catRow, { moonJourney: checkin.moon_journey, mirror, petsToday, unlimitedShards }),
+      cat: buildCatView(catRow, { moonJourney: checkin.moon_journey, mirror, petsToday, unlimitedShards, meals: mealsBefore }),
     };
   }
 
-  // Care ledger — the 23505 path means a concurrent feed won.
+  // Care ledger — 23505 代表併發／同餐已被記帳。
   const mirrorPre = await fetchMirrorTypes(admin, userId);
   const feedSoulForInsert = getFeedSoulGain(getGrowthStage({
     soul: catRow.soul,
@@ -382,13 +437,14 @@ export async function performCatFeed(admin, userId) {
     .insert({
       user_id: userId,
       action_type: 'daily_feed',
-      source_id: todayHk,
+      source_id: mealSource,
       delta_hunger: HUNGER_FULL,
       delta_soul: feedSoulForInsert,
     });
   if (careError && careError.code !== '23505') throw careError;
   const firstFeed = !careError;
 
+  const shardsForMeal = feedShardsForWindow(mealWindow);
   let shardsGained = 0;
   let feedSoulGained = 0;
   let nextRow = catRow;
@@ -401,10 +457,10 @@ export async function performCatFeed(admin, userId) {
       .insert({
         user_id: userId,
         action_type: 'daily_feed',
-        source_id: todayHk,
-        shards_delta: FEED_SHARDS_GAIN,
+        source_id: mealSource,
+        shards_delta: shardsForMeal,
       });
-    if (!shardError) shardsGained = FEED_SHARDS_GAIN;
+    if (!shardError) shardsGained = shardsForMeal;
     else if (shardError.code !== '23505') throw shardError;
 
     const { data: updated, error: updateError } = await admin
@@ -422,10 +478,8 @@ export async function performCatFeed(admin, userId) {
       .single();
     if (updateError) throw updateError;
     nextRow = updated;
-  } else if (catRow.last_fed_date !== todayHk) {
-    // Ledger already recorded today's feed but the row is stale (e.g. an
-    // earlier update failed before the schema was migrated). Heal the row so
-    // fed_today is reported correctly and the feed button locks out.
+  } else {
+    // Ledger 已記今餐但 row 未更新（例如較早一次 update 失敗）→ 補回飽腹。
     const { data: healed, error: healError } = await admin
       .from('user_cats')
       .update({
@@ -442,8 +496,12 @@ export async function performCatFeed(admin, userId) {
   }
 
   const mirror = mirrorPre;
-  const petsToday = await countPetsToday(admin, userId);
+  const [petsToday, mealsAfter] = await Promise.all([
+    countPetsToday(admin, userId),
+    getMealsFedToday(admin, userId, todayHk),
+  ]);
 
+  // Streak／升級里程碑：ledger 冪等，任何一餐實際餵到都結算一次（重複自動去重）。
   let bonusShards = 0;
   let bonusSoul = 0;
   if (firstFeed) {
@@ -464,6 +522,11 @@ export async function performCatFeed(admin, userId) {
 
   return {
     already_fed_today: !firstFeed,
+    meal_window: mealWindow,
+    meal_label: MEAL_LABEL[mealWindow],
+    am_fed: mealsAfter.am,
+    pm_fed: mealsAfter.pm,
+    both_meals_fed: mealsAfter.am && mealsAfter.pm,
     awarded: !!checkin.awarded,
     exp_gained: checkin.awarded ? checkin.exp_gained : 0,
     leveled_up: !!checkin.leveled_up,
@@ -472,7 +535,7 @@ export async function performCatFeed(admin, userId) {
     bonus_shards: bonusShards,
     bonus_soul: bonusSoul,
     moon_journey: checkin.moon_journey,
-    cat: buildCatView(updatedCatRow, { moonJourney: checkin.moon_journey, mirror, petsToday, unlimitedShards }),
+    cat: buildCatView(updatedCatRow, { moonJourney: checkin.moon_journey, mirror, petsToday, unlimitedShards, meals: mealsAfter }),
   };
 }
 
@@ -486,13 +549,14 @@ export async function performCatSummon(admin, userId) {
   const awayInfo = awayState(catRow, hungerNow);
 
   const buildResult = async (row, extra) => {
-    const [moonProfile, mirror, petsToday] = await Promise.all([
+    const [moonProfile, mirror, petsToday, meals] = await Promise.all([
       fetchMoonProfileRow(admin, userId),
       fetchMirrorTypes(admin, userId),
       countPetsToday(admin, userId),
+      getMealsFedToday(admin, userId),
     ]);
     const moonJourney = buildMoonJourneySummary(moonProfile);
-    return { cat: buildCatView(row, { moonJourney, mirror, petsToday, unlimitedShards }), ...extra };
+    return { cat: buildCatView(row, { moonJourney, mirror, petsToday, unlimitedShards, meals }), ...extra };
   };
 
   if (!awayInfo.away) {
@@ -557,11 +621,12 @@ export async function performCatRename(admin, userId, rawName) {
     countPetsToday(admin, userId),
     isUnlimitedShardsUser(admin, userId),
   ]);
+  const meals = await getMealsFedToday(admin, userId);
   const moonJourney = buildMoonJourneySummary(moonProfile);
 
   return {
     ok: true,
-    cat: buildCatView(updated, { moonJourney, mirror, petsToday, unlimitedShards }),
+    cat: buildCatView(updated, { moonJourney, mirror, petsToday, unlimitedShards, meals }),
   };
 }
 
@@ -580,16 +645,17 @@ export async function performCatPet(admin, userId, { lastLine = null } = {}) {
   const lastPetMs = catRow.last_pet_at ? new Date(catRow.last_pet_at).getTime() : 0;
 
   const buildResult = async (row, extra) => {
-    const [moonProfile, mirror] = await Promise.all([
+    const [moonProfile, mirror, meals] = await Promise.all([
       fetchMoonProfileRow(admin, userId),
       fetchMirrorTypes(admin, userId),
+      getMealsFedToday(admin, userId, todayHk),
     ]);
     const moonJourney = buildMoonJourneySummary(moonProfile);
     const picked = pickCatLine({ affection: row.affection, lastLine });
     return {
       line: picked.line,
       line_pool: picked.pool,
-      cat: buildCatView(row, { moonJourney, mirror, petsToday, unlimitedShards }),
+      cat: buildCatView(row, { moonJourney, mirror, petsToday, unlimitedShards, meals }),
       ...extra,
     };
   };
@@ -633,7 +699,7 @@ export async function performCatPet(admin, userId, { lastLine = null } = {}) {
     return buildResult(catRow, { counted: false });
   }
 
-  // 好感 v2：喺「現時（已衰減）」值上 +20，落盤並重置 24 小時衰減基準。
+  // 好感 v2：喺「現時（已衰減）」值上 +20，落盤並重置 30 小時衰減基準。
   // 每日 5 次 × 20 = 100 → 摸滿必到頂。
   const newAffection = clampStat(currentAffection(catRow, now) + PET_AFFECTION_GAIN);
 
@@ -711,14 +777,17 @@ export async function performCatBuySkin(admin, userId, skinId) {
     .single();
   if (updateError) throw updateError;
 
-  const petsToday = await countPetsToday(admin, userId);
+  const [petsToday, meals] = await Promise.all([
+    countPetsToday(admin, userId),
+    getMealsFedToday(admin, userId),
+  ]);
   const moonProfile = await fetchMoonProfileRow(admin, userId);
   const moonJourney = buildMoonJourneySummary(moonProfile);
 
   return {
     ok: true,
     shards_spent: price,
-    cat: buildCatView(updated, { moonJourney, mirror, petsToday, unlimitedShards }),
+    cat: buildCatView(updated, { moonJourney, mirror, petsToday, unlimitedShards, meals }),
     shop: buildShopView(updated, mirror, unlimitedShards),
   };
 }
@@ -746,32 +815,34 @@ export async function performCatEquip(admin, userId, skinId) {
     .single();
   if (error) throw error;
 
-  const [moonProfile, mirror, petsToday, unlimitedShards] = await Promise.all([
+  const [moonProfile, mirror, petsToday, unlimitedShards, meals] = await Promise.all([
     fetchMoonProfileRow(admin, userId),
     fetchMirrorTypes(admin, userId),
     countPetsToday(admin, userId),
     isUnlimitedShardsUser(admin, userId),
+    getMealsFedToday(admin, userId),
   ]);
   const moonJourney = buildMoonJourneySummary(moonProfile);
 
   return {
     ok: true,
-    cat: buildCatView(updated, { moonJourney, mirror, petsToday, unlimitedShards }),
+    cat: buildCatView(updated, { moonJourney, mirror, petsToday, unlimitedShards, meals }),
     shop: buildShopView(updated, mirror, unlimitedShards),
   };
 }
 
 /** Cat + room payload for room shop responses (shard balance lives on user_cats). */
 async function buildRoomShopResult(admin, userId, catRow, roomRow, extra = {}) {
-  const [moonProfile, mirror, petsToday, unlimitedShards] = await Promise.all([
+  const [moonProfile, mirror, petsToday, unlimitedShards, meals] = await Promise.all([
     fetchMoonProfileRow(admin, userId),
     fetchMirrorTypes(admin, userId),
     countPetsToday(admin, userId),
     isUnlimitedShardsUser(admin, userId),
+    getMealsFedToday(admin, userId),
   ]);
   const moonJourney = buildMoonJourneySummary(moonProfile);
   return {
-    cat: buildCatView(catRow, { moonJourney, mirror, petsToday, unlimitedShards }),
+    cat: buildCatView(catRow, { moonJourney, mirror, petsToday, unlimitedShards, meals }),
     shop: buildShopView(catRow, mirror, unlimitedShards),
     room: buildRoomView(roomRow),
     ...extra,

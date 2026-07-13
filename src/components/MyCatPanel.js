@@ -24,6 +24,16 @@ const IDLE_REST_ANIM = 'idle_slowblink';
 // 商店預覽用嘅靜止貓（strip 第一格）
 const SHOP_PREVIEW_ANIM = 'sit_slowblink';
 const SHOP_PREVIEW_FRAMES = getCatAnimMeta(SHOP_PREVIEW_ANIM).frames;
+// 放大裁切：每格 sprite 本身有留白，放大後裁走留白令貓咪睇落大隻啲。
+// 以 thumb（72px）為基準，zoom 越大貓越大；置中裁切保留身體。
+const SHOP_THUMB_PX = 72;
+const SHOP_PREVIEW_ZOOM = 1.5;
+const SHOP_FRAME_PX = SHOP_THUMB_PX * SHOP_PREVIEW_ZOOM;
+// 貓咪喺每格內嘅中心比例（水平置中、垂直略低以保住坐姿腳掌）。
+const SHOP_CAT_CX = 0.5;
+const SHOP_CAT_CY = 0.54;
+const SHOP_PREVIEW_POS_X = SHOP_THUMB_PX / 2 - SHOP_CAT_CX * SHOP_FRAME_PX;
+const SHOP_PREVIEW_POS_Y = SHOP_THUMB_PX / 2 - SHOP_CAT_CY * SHOP_FRAME_PX;
 // 閒置時偶爾播一段的小動作池（播完再回到靜止）
 const IDLE_VARIETY_ANIMS = [
   'idle_slowblink',
@@ -400,7 +410,7 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
       if (data.away) {
         setStatusMsg(data.error || '貓咪離家出走咗，先召喚佢返嚟。');
       } else if (data.already_fed_today) {
-        setStatusMsg('今日已餵過罐罐 🐟');
+        setStatusMsg(data.both_meals_fed ? '今日兩餐都餵過罐罐 🐟' : '呢餐已餵過罐罐 🐟');
       } else {
         playMeow();
         playAnim('eat', getCatAnimDurationMs('eat', 2));
@@ -595,6 +605,11 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
   const isAway = !!cat.away;
   const canPet = !isAway && !petLimitReached && cooldownMs <= 0;
   const tooHungry = !isAway && cat.hunger < TOO_HUNGRY_THRESHOLD;
+  // 一日兩餐：早晚各一次，掣按時段自動鎖／解鎖。
+  const mealLabel = cat.meal_label || (cat.meal_window === 'pm' ? '晚餐' : '早餐');
+  const mealFed = !!cat.fed_today;
+  const bothMealsFed = !!cat.both_meals_fed;
+  const nextMealHint = cat.meal_window === 'am' ? '晚餐 17:00 後' : '早餐 05:00 後';
   const returnTs = cat.cat_returns_at ? new Date(cat.cat_returns_at).getTime() : 0;
   const returnMs = Math.max(0, returnTs - nowTs);
 
@@ -822,12 +837,18 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
 
       <button
         type="button"
-        className={`my-cat-panel__feed-btn pixel-font${cat.fed_today ? ' my-cat-panel__feed-btn--done' : ''}`}
+        className={`my-cat-panel__feed-btn pixel-font${mealFed ? ' my-cat-panel__feed-btn--done' : ''}`}
         onClick={handleFeed}
-        disabled={feeding || cat.fed_today || isAway}
+        disabled={feeding || mealFed || isAway}
       >
-        <span aria-hidden="true">{cat.fed_today ? '✓' : '🥫'}</span>
-        {feeding ? '餵食中…' : cat.fed_today ? '今日已餵食' : isAway ? '貓咪出走中…' : '餵食罐罐'}
+        <span aria-hidden="true">{mealFed ? '✓' : '🥫'}</span>
+        {feeding
+          ? '餵食中…'
+          : isAway
+            ? '貓咪出走中…'
+            : mealFed
+              ? (bothMealsFed ? '今日兩餐已餵食' : `${mealLabel}已餵 · ${nextMealHint}`)
+              : `餵${mealLabel}罐罐`}
       </button>
 
       {statusMsg && (
@@ -873,7 +894,8 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
                       className="my-cat-shop__thumb"
                       style={{
                         backgroundImage: `url(${getCatStripUrl(skin.skin_id, SHOP_PREVIEW_ANIM)})`,
-                        backgroundSize: `${SHOP_PREVIEW_FRAMES * 100}% 100%`,
+                        backgroundSize: `${SHOP_PREVIEW_FRAMES * SHOP_FRAME_PX}px ${SHOP_FRAME_PX}px`,
+                        backgroundPosition: `${SHOP_PREVIEW_POS_X}px ${SHOP_PREVIEW_POS_Y}px`,
                       }}
                       aria-hidden="true"
                     />

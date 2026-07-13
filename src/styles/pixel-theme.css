@@ -10865,6 +10865,47 @@
     0 0 52px rgba(124, 92, 252, 0.14) !important;
 }
 
+/* 圍爐置頂 — purple glowing frame (mirrors the crowned glow in violet) */
+.pixel-post-card--pinned,
+.forum-post-card--pinned {
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(189, 147, 249, 0.5) !important;
+  box-shadow:
+    0 0 0 1px rgba(189, 147, 249, 0.16) inset,
+    0 4px 28px rgba(124, 92, 252, 0.16),
+    0 0 44px rgba(124, 92, 252, 0.14) !important;
+}
+
+.pixel-post-card--pinned::before,
+.forum-post-card--pinned::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    rgba(124, 92, 252, 0.15) 0%,
+    rgba(189, 147, 249, 0.9) 22%,
+    rgba(233, 213, 255, 0.75) 50%,
+    rgba(189, 147, 249, 0.9) 78%,
+    rgba(124, 92, 252, 0.15) 100%
+  );
+  z-index: 1;
+  pointer-events: none;
+}
+
+.app-page--forum .pixel-post-card--pinned:hover,
+.app-page--forum .forum-post-card--pinned:hover {
+  border-color: rgba(189, 147, 249, 0.64) !important;
+  box-shadow:
+    0 0 0 1px rgba(189, 147, 249, 0.2) inset,
+    0 6px 34px rgba(124, 92, 252, 0.22),
+    0 0 52px rgba(124, 92, 252, 0.18) !important;
+}
+
 .forum-mod-toolbar__badge--crown {
   color: #fff8e7;
   background: linear-gradient(105deg, rgba(255, 200, 80, 0.28), rgba(124, 92, 252, 0.28));
@@ -12727,6 +12768,51 @@
 
 .forum-visibility-field__hint {
   margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.forum-anonymous-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.forum-anonymous-field:hover {
+  border-color: rgba(255, 179, 71, 0.28);
+}
+
+.forum-anonymous-field--active {
+  border-color: rgba(255, 179, 71, 0.45);
+  background: rgba(255, 140, 66, 0.08);
+}
+
+.forum-anonymous-field input {
+  margin-top: 3px;
+  accent-color: #ffb347;
+}
+
+.forum-anonymous-field__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.forum-anonymous-field__title {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.forum-anonymous-field__hint {
   font-size: 12px;
   color: var(--text-muted);
   line-height: 1.5;
@@ -21174,12 +21260,27 @@ button.forum-tag-chip:hover {
 
   .forum-story-reader--hub .forum-story-reader__stats {
     margin-top: 10px;
-    gap: 6px;
+    gap: 5px;
+    /* Keep 章 / 留言 / 閱讀 on a single row even in the narrow info column;
+       badges shrink to share the width, with scroll as an extreme fallback. */
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .forum-story-reader--hub .forum-story-reader__stats::-webkit-scrollbar {
+    display: none;
   }
 
   .forum-story-reader--hub .forum-story-reader__stat {
-    padding: 5px 10px;
+    flex: 1 1 0;
+    justify-content: center;
+    padding: 5px 6px;
     font-size: 11px;
+  }
+
+  .forum-story-reader--hub .forum-story-reader__stat-icon {
+    font-size: 12px;
   }
 
   .forum-story-reader--hub .forum-story-reader__complete-action {
@@ -23906,9 +24007,10 @@ button.forum-tag-chip:hover {
 .my-cat-room__bowl {
   position: absolute;
   bottom: 16px;
-  /* 餵食時貓身中心行到 50% - 58px；碗闊 38px，碗心對正貓頭 → left = 50% - 58px - 19px */
-  left: calc(50% - 77px);
-  z-index: 1;
+  /* 餵食時貓身中心行到 50% - 58px；碗略為向右移，碗心對正貓頭（碗闊 38px） */
+  left: calc(50% - 67px);
+  /* 碗喺貓前面（上層）先合乎邏輯：貓兜擺喺地上，貓咪低頭食 */
+  z-index: 3;
   width: 38px;
   height: 22px;
   pointer-events: none;
@@ -24767,7 +24869,7 @@ a.my-cat-footer-chip--link:active {
 
 .my-cat-footer-chip__value--streak {
   font-family: inherit;
-  font-size: 0.68rem;
+  font-size: 0.6rem;
   font-weight: 600;
   color: #ff9f6b;
   text-shadow: none;
@@ -25377,6 +25479,10 @@ a.my-cat-footer-chip--link:active {
 
   .my-cat-footer-chip__value {
     font-size: 14px;
+  }
+
+  .my-cat-footer-chip__value--streak {
+    font-size: 0.54rem;
   }
 
   .my-cat-shop__head,

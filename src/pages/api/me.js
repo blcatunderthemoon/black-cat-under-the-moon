@@ -202,6 +202,7 @@ async function handlePatch(req, res) {
       .from('forum_posts')
       .update({ anonymous_name_snapshot: updates.display_name })
       .eq('author_id', user.id)
+      .or('hide_username.is.null,hide_username.eq.false')
       .then(() => {})
       .catch((syncErr) => {
         console.error('[me] forum name sync failed:', syncErr?.message || syncErr);

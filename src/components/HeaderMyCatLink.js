@@ -12,7 +12,7 @@ const HEADER_ICON_ANIM = 'idle_slowblink';
 // sitting low-centre (bbox ≈ x10–26, y17–32), so a plain frame-centre crops it.
 // We scale the frame up then offset by the cat's real centre ratio to fit it.
 const HEADER_ICON_BOX = 24;
-const HEADER_ICON_FRAME = 50; // scaled from the native 40px frame (1.25×)
+const HEADER_ICON_FRAME = 40; // native 40px frame — keeps the cat inside the icon border with margin
 const CAT_CENTER_X = 0.45; // 18/40 — cat sits slightly left of centre
 const CAT_CENTER_Y = 0.61; // 24.5/40 — cat sits in the lower half
 

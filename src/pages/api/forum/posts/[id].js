@@ -18,7 +18,7 @@ import {
 import { getPollsForPost } from '../../../../lib/forum-poll-stats.js';
 import { getTagsByPostIds, getTagLabelMapForPosts } from '../../../../lib/forum-tag-stats.js';
 import { canonicalForumTagKey } from '../../../../lib/forum-tags.js';
-import { resolveForumAuthorDisplayName } from '../../../../lib/forum-author-names.js';
+import { mapForumPostAuthorPublic, resolveForumAuthorDisplayName } from '../../../../lib/forum-author-names.js';
 import { awardMoonJourneyExp, MOON_JOURNEY_EXP } from '../../../../lib/moon-journey.js';
 import { isMatureForumTopicStored } from '../../../../lib/forum-mature.js';
 import { isStoryPost, validateStoryCoverUrl, STORY_SYNOPSIS_MAX } from '../../../../lib/forum-story.js';
@@ -29,7 +29,7 @@ import {
 } from '../../../../lib/forum-story-chapters.js';
 
 const POST_DETAIL_CORE = `
-  id, author_id, title, content, topic, mood_tag, anonymous_name_snapshot,
+  id, author_id, title, content, topic, mood_tag, anonymous_name_snapshot, hide_username,
   like_count, comment_count, visibility, is_pinned, is_highlighted, created_at
 `;
 
@@ -208,7 +208,7 @@ async function handleGet(req, res, postId) {
   const authorMap = {};
   (profilesResult.data || []).forEach((p) => {
     authorMap[p.id] = {
-      display_name: resolveForumAuthorDisplayName(p.display_name),
+      display_name: p.display_name,
       is_premium: p.subscription_tier === 'premium',
     };
   });
@@ -230,7 +230,10 @@ async function handleGet(req, res, postId) {
     like_count: c.like_count || 0,
     created_at: c.created_at,
     author: {
-      ...(authorMap[c.author_id] || { display_name: '神秘貓咪', is_premium: false }),
+      display_name: resolveForumAuthorDisplayName(authorMap[c.author_id]?.display_name),
+      is_premium: authorMap[c.author_id]?.is_premium || false,
+      mirror_slug: authorMap[c.author_id]?.mirror_slug || null,
+      mirror_type: authorMap[c.author_id]?.mirror_type || null,
     },
     is_mine: viewer?.id === c.author_id,
     is_op: c.author_id === post.author_id,
@@ -246,17 +249,17 @@ async function handleGet(req, res, postId) {
       viewer_liked: likedIds.has(postId),
       viewer_bookmarked: bookmarkedIds.has(postId),
       author: {
-        display_name: resolveForumAuthorDisplayName(
-          authorProfile?.display_name,
-          post.anonymous_name_snapshot,
-        ),
-        mirror_slug: mirrorCard?.public_slug || null,
-        mirror_type: mirrorCard?.mirror_type || null,
-        is_premium: authorProfile?.subscription_tier === 'premium',
+        ...mapForumPostAuthorPublic(post, {
+          display_name: authorProfile?.display_name,
+          mirror_slug: mirrorCard?.public_slug,
+          mirror_type: mirrorCard?.mirror_type,
+          is_premium: authorProfile?.subscription_tier === 'premium',
+        }),
         forum_role: ['moderator', 'admin'].includes(authorProfile?.forum_role)
           ? authorProfile.forum_role
           : undefined,
       },
+      hide_username: !!post.hide_username,
       tags: postTags,
       is_pinned: post.is_pinned || false,
       is_highlighted: post.is_highlighted || false,

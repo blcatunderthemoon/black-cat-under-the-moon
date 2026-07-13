@@ -373,6 +373,15 @@ body::-webkit-scrollbar {
     flex-direction: column;
     align-items: stretch;
   }
+
+  /* Premium match results (echo.html): on mobile the results overlay drops to
+     document flow. When the brand header is shown above it, that header already
+     clears the fixed top bar, so the overlay's own top-bar padding just leaves a
+     large empty gap between the header and the results. Collapse it in that case.
+     If the header is hidden the overlay keeps its top-bar clearance. */
+  body:has(#site-header:not([hidden])) #already-screen.overlay-screen--match-results {
+    padding-top: 8px;
+  }
 }
 
 /* Post-submit: thank-you / already-submitted — quiz chrome must not appear (all breakpoints). */

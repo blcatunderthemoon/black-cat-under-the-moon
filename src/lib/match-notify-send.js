@@ -22,6 +22,7 @@ import {
   resolveResponseDeliveryEmail,
 } from './match-response-auth.js';
 import { isSuccessfulSentMatchNote, shouldDeliverInboxForPair } from './match-sent-record.js';
+import { fetchAllRows } from './supabase-fetch-all.js';
 import { buildMatchCardHtml } from '../pages/api/match_card/template.js';
 
 function getSupabase() {
@@ -73,7 +74,11 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
   const userMap = Object.fromEntries((users || []).map((u) => [Number(u.id), u]));
   const premiumCtx = await buildMatchResponsePremiumContext(users || []);
 
-  const { data: sentRows } = await supabase.from('sent_matches').select('user_a_id, user_b_id, sent_at, notes');
+  // Paginate past PostgREST's 1000-row cap so monthly quota counts stay correct
+  // once sent_matches exceeds 1000 rows.
+  const { data: sentRows } = await fetchAllRows(() =>
+    supabase.from('sent_matches').select('user_a_id, user_b_id, sent_at, notes'),
+  );
   const successfulSentRows = (sentRows || []).filter((row) => isSuccessfulSentMatchNote(row.notes));
   const monthlyCounts = buildMonthlyMatchCounts(successfulSentRows);
 

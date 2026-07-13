@@ -37,7 +37,7 @@ export default function MyCatGuidePage() {
     <>
       <SeoHead
         title="月光貓養成秘笈"
-        description="我的月光貓完整玩法：每日餵食打卡、摸摸貓咪、屬性成長與月光碎屑。"
+        description="我的月光貓完整玩法：早晚兩餐餵食打卡、摸摸貓咪、屬性成長與月光碎屑。"
         path="/my-cat/guide"
         noindex
       />
@@ -58,13 +58,14 @@ export default function MyCatGuidePage() {
             <p className="my-cat-guide__cover-sub">著・小黑貓｜月光出版社 · 初版</p>
           </header>
 
-          <Chapter no={1} ribbon="#ffb347" title="每日餵食＝打卡" meow="罐罐！罐罐！唔該每日準時。">
+          <Chapter no={1} ribbon="#ffb347" title="一日兩餐＝早晚打卡" meow="罐罐！罐罐！早晚記得餵！">
             <ul className="my-cat-guide__list">
-              <li>每日（香港時間）可以餵 <strong>一次</strong> 罐罐，同時就係你嘅每日打卡。</li>
-              <li>餵完飽腹即刻<strong>回滿 100</strong>，之後 <strong>24 小時</strong>內慢慢跌返落 0 — 記得每日返嚟續命！</li>
-              <li>連續每日餵食可以累積連續打卡日數 🔥。</li>
+              <li>每日（香港時間）分 <strong>兩餐</strong>：<strong>早餐 05:00–16:59</strong>、<strong>晚餐 17:00 之後</strong>，各可以餵 <strong>一次</strong>。</li>
+              <li>每餐飽腹即刻<strong>回滿 100</strong>，之後 <strong>30 小時</strong>內慢慢跌返落 0 — 記得早晚返嚟續命！</li>
+              <li>獎勵分開兩餐領：<strong>碎屑早 +2 / 晚 +1</strong>（全日仍然 <strong>+3</strong>）。</li>
+              <li>當日 <strong>第一餐</strong>順便完成每日打卡（EXP +2、連續打卡日數 +1）🔥。</li>
             </ul>
-            <Loot items={['🐟 飽腹回滿 100', '⭐ EXP +2', '✦ 碎屑 +3']} />
+            <Loot items={['🐟 每餐飽腹回滿 100', '⭐ EXP +2（每日第一餐）', '✦ 碎屑早 +2 / 晚 +1（全日 +3）']} />
           </Chapter>
 
           <Chapter no={2} ribbon="#ff8a5c" title="貓咪離家出走？！" meow="唔係嬲你，我只係去咗搵嘢食。">
@@ -80,7 +81,7 @@ export default function MyCatGuidePage() {
             <ul className="my-cat-guide__list">
               <li>點擊貓咪，佢會 <strong>Meow~</strong> 一聲、擺個開心動作，仲會同你講嘢。</li>
               <li>每次成功摸摸：❤️ 好感 <strong>+20</strong>，每日最多 <strong>5 次</strong> — 摸滿 5 次好感必定爆滿 100！</li>
-              <li>好感同飽腹一樣會喺 <strong>24 小時</strong>內慢慢跌返落 0，想貓咪日日黐身就要日日摸。</li>
+              <li>好感同飽腹一樣會喺 <strong>30 小時</strong>內慢慢跌返落 0，想貓咪日日黐身就要日日摸。</li>
               <li><strong>好感愈高，貓咪愈活躍</strong>：會更頻密咁舔毛、伸懶腰、擺尾；好感低就淨係坐喺度眨眼。</li>
               <li>好感夠高，會解鎖新嘅台詞池 😽。</li>
             </ul>
@@ -102,12 +103,12 @@ export default function MyCatGuidePage() {
               <li className="my-cat-guide__stat" style={{ '--stat': '#4fc3f7', '--fill': '72%' }}>
                 <span className="my-cat-guide__stat-name"><strong>🐟 飽腹</strong></span>
                 <span className="my-cat-guide__statbar" aria-hidden="true"><span className="my-cat-guide__statbar-fill" /></span>
-                <span className="my-cat-guide__stat-desc">餵食回滿 100，24 小時內線性跌到 0。低過 20 貓咪<strong>冇心機郁</strong>；去到 0 會<strong>離家出走</strong>（召喚後 1 小時返嚟）。</span>
+                <span className="my-cat-guide__stat-desc">餵食回滿 100，30 小時內線性跌到 0。低過 20 貓咪<strong>冇心機郁</strong>；去到 0 會<strong>離家出走</strong>（召喚後 1 小時返嚟）。</span>
               </li>
               <li className="my-cat-guide__stat" style={{ '--stat': '#ff6b9d', '--fill': '54%' }}>
                 <span className="my-cat-guide__stat-name"><strong>❤️ 好感</strong></span>
                 <span className="my-cat-guide__statbar" aria-hidden="true"><span className="my-cat-guide__statbar-fill" /></span>
-                <span className="my-cat-guide__stat-desc">每次摸 +20，摸滿 5 次到頂 100；同飽腹一樣，24 小時內慢慢跌到 0。<strong>好感愈高，貓咪愈活躍</strong>，會更加密咁做唔同小動作。</span>
+                <span className="my-cat-guide__stat-desc">每次摸 +20，摸滿 5 次到頂 100；同飽腹一樣，30 小時內慢慢跌到 0。<strong>好感愈高，貓咪愈活躍</strong>，會更加密咁做唔同小動作。</span>
               </li>
               <li className="my-cat-guide__stat" style={{ '--stat': '#bd93f9', '--fill': '38%' }}>
                 <span className="my-cat-guide__stat-name"><strong>🔮 靈魂</strong></span>
@@ -154,7 +155,7 @@ export default function MyCatGuidePage() {
 
           <Chapter no={6} ribbon="#ffe08a" title="月光碎屑" meow="碎屑唔係垃圾，係貨幣！">
             <ul className="my-cat-guide__list">
-              <li>每日餵食會賺到 ✦ 月光碎屑，喺頁面底部可以睇到餘額。</li>
+              <li>每餐餵食都會賺到 ✦ 月光碎屑（早 +2 / 晚 +1），喺頁面底部可以睇到餘額。</li>
               <li>將來嘅「貓咪商店」可以用碎屑換新貓咪同房間裝飾，記住儲定先！</li>
             </ul>
           </Chapter>
@@ -169,7 +170,7 @@ export default function MyCatGuidePage() {
           {/* ── 封底 ── */}
           <footer className="my-cat-guide__back-cover">
             <p className="my-cat-guide__fin pixel-font">— 全書完 —</p>
-            <p className="my-cat-guide__outro">🐾 每晚返嚟餵一餵、摸一摸，月光貓會一直陪住你。</p>
+            <p className="my-cat-guide__outro">🐾 早晚返嚟各餵一餐、摸一摸，月光貓會一直陪住你。</p>
           </footer>
         </div>
       </AppShell>

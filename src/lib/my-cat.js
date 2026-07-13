@@ -57,6 +57,36 @@ export function getCatPrice(mirrorType, targetSkinId) {
 /* Interaction tuning (§4) */
 export const FEED_HUNGER_GAIN = 25;
 export const FEED_SHARDS_GAIN = 3;
+
+/**
+ * 一日兩餐（2026-07-13 v5）：由「每日一次打卡」改成「早、晚各一次」。
+ * 全日總獎勵維持不變（EXP +2 / 碎屑 +3），只係分兩次領，鼓勵一日返嚟兩次。
+ * 時段（香港時間）：早餐 05:00–16:59；其餘（17:00 至翌日 04:59）為晚餐。
+ * 每個時段各自可餵一次（以香港曆日 + 時段做冪等鍵）。
+ */
+export const MEAL_MORNING_START_HOUR = 5;   // 含：≥ 05:00 起為早餐
+export const MEAL_EVENING_START_HOUR = 17;  // 含：≥ 17:00 起為晚餐
+export const MEAL_WINDOWS = ['am', 'pm'];
+export const MEAL_LABEL = { am: '早餐', pm: '晚餐' };
+/** 各餐碎屑：早 +2、晚 +1（全日仍為 +3）。 */
+export const FEED_SHARDS_BY_WINDOW = { am: 2, pm: 1 };
+
+/** 由香港時 hour（0–23）判斷屬早餐（am）定晚餐（pm）。 */
+export function mealWindowForHour(hkHour) {
+  const h = Number(hkHour);
+  return (h >= MEAL_MORNING_START_HOUR && h < MEAL_EVENING_START_HOUR) ? 'am' : 'pm';
+}
+
+/** 某餐可領嘅碎屑數。 */
+export function feedShardsForWindow(win) {
+  return FEED_SHARDS_BY_WINDOW[win] ?? 0;
+}
+
+/** 該餐時段下次開放嘅提示文案（給前端按鈕用）。 */
+export const MEAL_NEXT_HINT = {
+  am: '晚餐 17:00 後再嚟',
+  pm: '早餐 05:00 後再嚟',
+};
 // 好感 v2：每次摸 +20 → 每日 5 次摸滿必到 100
 export const PET_AFFECTION_GAIN = 20;
 
@@ -89,12 +119,12 @@ export const AFFECTION_DECAY_PER_3_DAYS = 5;
 export const AFFECTION_FLOOR = 30;
 
 /**
- * 飽腹 v2：餵食回滿 100，之後 24 小時**線性**跌到 0。
+ * 飽腹 v2：餵食回滿 100，之後 30 小時**線性**跌到 0。
  * 跌到 0 → 貓咪離家出走；按「召喚」等 1 小時先返嚟。
  * 太餓（< TOO_HUNGRY_THRESHOLD）→ 冇心機郁（閒置動畫停晒）。
  */
 export const HUNGER_FULL = 100;
-export const HUNGER_EMPTY_MS = 24 * 60 * 60 * 1000;
+export const HUNGER_EMPTY_MS = 30 * 60 * 60 * 1000;
 export const CAT_SUMMON_WAIT_MS = 60 * 60 * 1000;
 export const TOO_HUNGRY_THRESHOLD = 20;
 
@@ -108,10 +138,10 @@ export function computeHungerFromFedAt(lastFedAtMs, nowMs = Date.now()) {
 }
 
 /**
- * 好感 v2：同飽腹一樣，由上次摸摸起 24 小時**按比例**慢慢減到 0。
+ * 好感 v2：同飽腹一樣，由上次摸摸起 30 小時**按比例**慢慢減到 0。
  * baseAffection = 上次摸摸時落盤嘅好感值。
  */
-export const AFFECTION_EMPTY_MS = 24 * 60 * 60 * 1000;
+export const AFFECTION_EMPTY_MS = 30 * 60 * 60 * 1000;
 
 export function computeAffectionFromPetAt(baseAffection, lastPetAtMs, nowMs = Date.now()) {
   const base = clampStat(baseAffection);

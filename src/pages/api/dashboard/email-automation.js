@@ -20,6 +20,8 @@ import { buildMatchResponsePremiumContext } from '../../../lib/match-response-pr
 import { filterSuccessfulSentRows, isFailedSentMatchNote } from '../../../lib/match-sent-record.js';
 import { pairHasSameResponseEmail } from '../../../lib/match-response-auth.js';
 import { pickLatestResponsesPerPerson } from '../../../lib/response-dedupe.js';
+import { buildLatestResponseIdResolver, remapPairRowToLatest } from '../../../lib/match-person-remap.js';
+import { fetchAllRows } from '../../../lib/supabase-fetch-all.js';
 import { authorizeStationOrForumAdmin } from '../../../lib/station-or-forum-admin-auth.js';
 
 const supabase = createClient(
@@ -75,10 +77,13 @@ async function handleGet(req, res) {
   const minScore = req.query.minScore ? Number(req.query.minScore) : 60;
   const premiumOnly = req.query.premium_only === '1';
 
-  const { data: allUsers, error: usersError } = await supabase
-    .from('responses')
-    .select('*')
-    .or('claim_status.neq.duplicate,claim_status.is.null');
+  // Paginate past PostgREST's 1000-row cap so matching sees every response.
+  const { data: allUsers, error: usersError } = await fetchAllRows(() =>
+    supabase
+      .from('responses')
+      .select('*')
+      .or('claim_status.neq.duplicate,claim_status.is.null'),
+  );
 
   if (usersError) return res.status(500).json({ error: usersError.message });
 
@@ -87,14 +92,28 @@ async function handleGet(req, res) {
   const users = pickLatestResponsesPerPerson(allUsers || []);
   if (users.length < 2) return res.status(200).json({ pairs: [], total: 0 });
 
-  // Fetch sent_matches and email_drafts in parallel for annotation
-  const [sentResult, draftResult] = await Promise.all([
-    supabase.from('sent_matches').select('id, user_a_id, user_b_id, sent_at, notes'),
-    supabase.from('email_drafts').select('id, user_a_id, user_b_id'),
+  // Fetch sent_matches, email_drafts and the full response identity index in
+  // parallel for annotation. The identity index MUST include superseded/duplicate
+  // rows so we can map old sent/draft response ids back to a person's latest row.
+  const [sentResult, draftResult, allResponseKeysResult] = await Promise.all([
+    fetchAllRows(() => supabase.from('sent_matches').select('id, user_a_id, user_b_id, sent_at, notes')),
+    fetchAllRows(() => supabase.from('email_drafts').select('id, user_a_id, user_b_id')),
+    fetchAllRows(() => supabase.from('responses').select('id, email, normalized_email, user_id')),
   ]);
   // Gracefully handle missing tables (code 42P01 = undefined_table)
-  const sentRows  = (!sentResult.error  || sentResult.error.code  === '42P01') ? (sentResult.data  || []) : [];
-  const draftRows = (!draftResult.error || draftResult.error.code === '42P01') ? (draftResult.data || []) : [];
+  const rawSentRows  = (!sentResult.error  || sentResult.error.code  === '42P01') ? (sentResult.data  || []) : [];
+  const rawDraftRows = (!draftResult.error || draftResult.error.code === '42P01') ? (draftResult.data || []) : [];
+
+  // Sent/draft records store the response id that was current at send time. After
+  // a person resubmits the questionnaire they get a NEW latest id, so match those
+  // records by PERSON (latest id) — otherwise already-sent pairs wrongly reappear
+  // as unsent and monthly quota undercounts. Falls back to raw ids when unknown.
+  const resolveLatestId = buildLatestResponseIdResolver(
+    allResponseKeysResult.error ? (allUsers || []) : (allResponseKeysResult.data || []),
+    users,
+  );
+  const sentRows  = rawSentRows.map((r) => remapPairRowToLatest(resolveLatestId, r));
+  const draftRows = rawDraftRows.map((r) => remapPairRowToLatest(resolveLatestId, r));
   const successfulSentRows = filterSuccessfulSentRows(sentRows);
 
   // Build lookup map with normalised pair keys "smallId:largeId" → sent_matches.id

@@ -838,7 +838,7 @@ export default function ForumPostPage({ seo = null }) {
               )}
             <article className={isStoryPost(post)
               ? 'forum-story-reader-shell'
-              : `pixel-card forum-post-card${post.is_highlighted ? ' forum-post-card--crowned' : ''}`}>
+              : `pixel-card forum-post-card${post.is_highlighted ? ' forum-post-card--crowned' : (post.is_pinned ? ' forum-post-card--pinned' : '')}`}>
               {isStoryPost(post) ? (
                 <ForumStoryReader
                   post={post}
@@ -879,6 +879,9 @@ export default function ForumPostPage({ seo = null }) {
                   <ForumPostTags tags={post.tags} tagLabels={data?.tag_labels} variant="detail" />
                   {post.visibility === 'members_only' && (
                     <span className="forum-visibility-badge">🔒 會員限定</span>
+                  )}
+                  {post.hide_username && (
+                    <span className="forum-visibility-badge">🎭 匿名</span>
                   )}
                   {post.is_hidden && (
                     <span className="forum-visibility-badge">🌑 夜幕降臨</span>
@@ -1122,7 +1125,7 @@ export async function getServerSideProps({ params, res }) {
     const admin = getAdminClient();
     const { data: post } = await admin
       .from('forum_posts')
-      .select('id, title, content, topic, visibility, anonymous_name_snapshot, like_count, comment_count, created_at')
+      .select('id, title, content, topic, visibility, anonymous_name_snapshot, hide_username, like_count, comment_count, created_at')
       .eq('id', postId)
       .maybeSingle();
 
@@ -1142,7 +1145,7 @@ export async function getServerSideProps({ params, res }) {
           title: post.title || '貼文',
           // Members-only/mature posts stay noindex and expose no content.
           excerpt: indexable ? seoExcerpt(post.content) : '',
-          author_name: indexable ? (post.anonymous_name_snapshot || null) : null,
+          author_name: indexable && !post.hide_username ? (post.anonymous_name_snapshot || null) : null,
           like_count: post.like_count || 0,
           comment_count: post.comment_count || 0,
           created_at: post.created_at || null,

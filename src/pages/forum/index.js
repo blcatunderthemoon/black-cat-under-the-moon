@@ -308,6 +308,7 @@ export default function ForumPage() {
     topic: defaultTopic,
     tags: [],
     visibility: 'public',
+    hide_username: false,
     polls: [],
     cover_image_url: '',
     synopsis: '',
@@ -770,7 +771,8 @@ export default function ForumPage() {
         : (draft?.mood_tag ? [canonicalForumTagKey(draft.mood_tag)] : []),
       visibility: isMatureForumTopic(nextTopic) || draft?.visibility === 'members_only'
         ? 'members_only'
-        : 'public',
+        : (draft?.visibility || 'public'),
+      hide_username: !!draft?.hide_username,
       polls: Array.isArray(draft?.polls) ? draft.polls : [],
       cover_image_url: draft?.cover_image_url || '',
       synopsis: draft?.synopsis || '',
@@ -797,6 +799,7 @@ export default function ForumPage() {
       topic: topic === '全部' ? '社群' : topic,
       tags: [],
       visibility: 'public',
+      hide_username: false,
       polls: [],
       cover_image_url: '',
       synopsis: '',
@@ -842,6 +845,7 @@ export default function ForumPage() {
         topic: topic === '全部' ? '社群' : topic,
         tags: [],
         visibility: 'public',
+        hide_username: false,
         polls: [],
         cover_image_url: '',
         synopsis: '',
@@ -1221,7 +1225,7 @@ export default function ForumPage() {
                   <ul className="pixel-list">
                     {feedPosts.map((post) => (
                       <li key={post.id}>
-                        <article className={`pixel-post-card${post.is_highlighted ? ' pixel-post-card--crowned' : ''}`}>
+                        <article className={`pixel-post-card${post.is_highlighted ? ' pixel-post-card--crowned' : (post.is_pinned ? ' pixel-post-card--pinned' : '')}`}>
                           {session && (
                             <button
                               type="button"
@@ -1263,6 +1267,9 @@ export default function ForumPage() {
                               />
                               {post.visibility === 'members_only' && (
                                 <span className="forum-visibility-badge">🔒 會員限定</span>
+                              )}
+                              {post.hide_username && (
+                                <span className="forum-visibility-badge">🎭 匿名</span>
                               )}
                               {post.is_pinned && (
                                 <span className="forum-visibility-badge">📌 圍爐置頂</span>
@@ -1388,6 +1395,7 @@ export default function ForumPage() {
                         ...f,
                         topic: nextTopic,
                         visibility: isMatureForumTopic(nextTopic) ? 'members_only' : f.visibility,
+                        hide_username: isStoryTopic(nextTopic) ? false : f.hide_username,
                         tags: isStoryTopic(nextTopic) ? [] : f.tags,
                       }));
                     }}
@@ -1468,6 +1476,20 @@ export default function ForumPage() {
                     <p className="forum-visibility-field__hint">會員限定貼文僅登入用戶可閱讀，未登入者不會在列表看到。</p>
                   )}
                 </fieldset>
+                )}
+                {!isStoryTopic(form.topic) && (
+                  <label className={`forum-anonymous-field${form.hide_username ? ' forum-anonymous-field--active' : ''}`}>
+                    <input
+                      type="checkbox"
+                      checked={!!form.hide_username}
+                      onChange={(e) => setForm((f) => ({ ...f, hide_username: e.target.checked }))}
+                      disabled={submitting}
+                    />
+                    <span className="forum-anonymous-field__copy">
+                      <span className="forum-anonymous-field__title">🎭 匿名發文</span>
+                      <span className="forum-anonymous-field__hint">隱藏你的用戶名，對外顯示為「神秘貓咪」。留言仍會顯示你的用戶名。</span>
+                    </span>
+                  </label>
                 )}
                 {isStoryTopic(form.topic) && (
                   <label className="forum-compose-form__field">

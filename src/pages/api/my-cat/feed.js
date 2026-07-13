@@ -1,7 +1,8 @@
 /**
- * POST /api/my-cat/feed — unified daily ritual (§5.2, docs/MY-CAT-GAME-DESIGN.md).
- * One HK calendar day: Moon Journey check-in (+2 EXP) + hunger +25 + moon shards +3.
- * Idempotent; repeat calls return already_fed_today.
+ * POST /api/my-cat/feed — 一日兩餐（§5.2, docs/MY-CAT-GAME-DESIGN.md）。
+ * 早餐 05:00–16:59、晚餐 17:00 之後，各一次：每餐飽腹回滿 100、碎屑早 +2 / 晚 +1。
+ * 當日第一餐順便完成 Moon Journey 打卡（+2 EXP、streak +1）。
+ * 每餐冪等（ledger source_id = `${date}#am|pm`）；重複呼叫回 already_fed_today。
  */
 
 import { requireUser, sendAuthError, getAdminClient } from '../../../lib/server-auth.js';
