@@ -762,6 +762,18 @@ export function EmailAutomationPanel() {
                           {isAutomationPairSent(p) && (
                             <span className={`${styles.badge} ${styles.badgeSent}`}>✉ 已發送</span>
                           )}
+                          {!isAutomationPairSent(p) && p.last_send_failed && (
+                            <span
+                              className={`${styles.badge} ${styles.badgeError}`}
+                              title={
+                                p.last_send_failed_at
+                                  ? `上次發送失敗（${new Date(p.last_send_failed_at).toLocaleString('zh-HK')}），仍未成功投送，可重新發送。`
+                                  : '上次發送失敗，仍未成功投送，可重新發送。'
+                              }
+                            >
+                              ↻ 上次失敗·可重試
+                            </span>
+                          )}
                           {!isAutomationPairSent(p) && p.in_draft && (
                             <span className={`${styles.badge} ${styles.badgeDraft}`}>📝 草稿</span>
                           )}

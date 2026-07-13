@@ -17,7 +17,7 @@ import {
   getResponseMatchQuota,
 } from '../../../lib/match-delivery-quota.js';
 import { buildMatchResponsePremiumContext } from '../../../lib/match-response-premium.js';
-import { filterSuccessfulSentRows } from '../../../lib/match-sent-record.js';
+import { filterSuccessfulSentRows, isFailedSentMatchNote } from '../../../lib/match-sent-record.js';
 import { pairHasSameResponseEmail } from '../../../lib/match-response-auth.js';
 import { pickLatestResponsesPerPerson } from '../../../lib/response-dedupe.js';
 import { authorizeStationOrForumAdmin } from '../../../lib/station-or-forum-admin-auth.js';
@@ -104,6 +104,18 @@ async function handleGet(req, res) {
       return [`${a}:${b}`, Number(r.id)];
     }),
   );
+  // Failed attempts: a sent_matches row exists but its notes mark it as a failed
+  // delivery. These are intentionally excluded from `sentMap` so the pair remains
+  // available for retry — we surface them via `last_send_failed` so admins know
+  // WHY a pair reappears in the unsent list.
+  const failedMap = new Map(
+    sentRows
+      .filter((r) => isFailedSentMatchNote(r.notes))
+      .map((r) => {
+        const [a, b] = normalisePair(Number(r.user_a_id), Number(r.user_b_id));
+        return [`${a}:${b}`, { at: r.sent_at || null, notes: r.notes || null }];
+      }),
+  );
   const draftMap = new Map(
     (draftRows || []).map((r) => {
       const [a, b] = normalisePair(Number(r.user_a_id), Number(r.user_b_id));
@@ -181,6 +193,8 @@ async function handleGet(req, res) {
         score_breakdown: dimensionScores,
         sent_match_id: sentMap.get(pairKey) ?? null,
         already_sent: sentMap.has(pairKey),
+        last_send_failed: !sentMap.has(pairKey) && failedMap.has(pairKey),
+        last_send_failed_at: (!sentMap.has(pairKey) && failedMap.get(pairKey)?.at) || null,
         in_draft: draftMap.has(pairKey),
         draft_id: draftMap.get(pairKey) ?? null,
         user_a_quota: quotaFirst,
@@ -213,6 +227,7 @@ async function handleGet(req, res) {
     quota_blocked: filteredPairs.filter((p) => p.quota_blocked && !p.already_sent).length,
     sent_in_list: filteredPairs.filter((p) => p.sent_match_id != null).length,
     sent_in_db: successfulSentRows.length,
+    last_send_failed: filteredPairs.filter((p) => p.last_send_failed).length,
   };
 
   return res.status(200).json({
