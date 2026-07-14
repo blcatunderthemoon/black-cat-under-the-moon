@@ -14675,6 +14675,29 @@
   box-shadow: 0 0 14px rgba(255, 140, 66, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.22);
   transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 5.5rem;
+}
+
+.forum-comment-form__submit .loading-send-stack {
+  margin: 0;
+}
+
+.forum-comment-form__submit .moon-loading {
+  flex-shrink: 0;
+}
+
+.forum-comment-form__submit--pending,
+.forum-comment-form__submit--pending:disabled {
+  opacity: 0.92;
+  cursor: wait;
+}
+
+.forum-comment-form--sending {
+  pointer-events: none;
 }
 
 .forum-comment-form__submit:hover:not(:disabled) {
@@ -14682,9 +14705,24 @@
   box-shadow: 0 0 20px rgba(255, 140, 66, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
-.forum-comment-form__submit:disabled {
+.forum-comment-form__submit:disabled:not(.forum-comment-form__submit--pending) {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.forum-comment-item--pending {
+  opacity: 0.72;
+}
+
+.forum-comment-item__sending {
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.forum-comment-item__sending .loading-send-stack {
+  margin: 0;
 }
 
 .forum-comment-form__footer {

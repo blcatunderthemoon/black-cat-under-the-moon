@@ -7,21 +7,6 @@ import { filterContent } from '../../../../../lib/content-filter.js';
 import { dispatchForumMentions } from '../../../../../lib/forum-mention-notify.js';
 import { awardMoonJourneyExp, MOON_JOURNEY_EXP } from '../../../../../lib/moon-journey.js';
 
-async function incrementPostCommentCount(admin, postId) {
-  const { data: post } = await admin
-    .from('forum_posts')
-    .select('comment_count')
-    .eq('id', postId)
-    .maybeSingle();
-
-  if (!post) return;
-
-  await admin
-    .from('forum_posts')
-    .update({ comment_count: (post.comment_count || 0) + 1 })
-    .eq('id', postId);
-}
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -63,7 +48,7 @@ export default async function handler(req, res) {
 
   const { data: post } = await admin
     .from('forum_posts')
-    .select('id, visibility, author_id')
+    .select('id, visibility, author_id, comment_count')
     .eq('id', postId)
     .maybeSingle();
 
@@ -115,15 +100,16 @@ export default async function handler(req, res) {
     });
   }
 
-  let commentCount = 0;
+  // Denormalized +1 instead of a full COUNT(*) round-trip after insert.
+  const commentCount = (Number(post.comment_count) || 0) + 1;
   try {
-    await incrementPostCommentCount(admin, postId);
-    const { count } = await admin
-      .from('forum_comments')
-      .select('id', { count: 'exact', head: true })
-      .eq('post_id', postId)
-      .eq('is_hidden', false);
-    commentCount = count ?? 0;
+    const { error: countError } = await admin
+      .from('forum_posts')
+      .update({ comment_count: commentCount })
+      .eq('id', postId);
+    if (countError) {
+      console.error('[forum/comments] count update failed:', countError.message);
+    }
   } catch (countErr) {
     console.error('[forum/comments] count update failed:', countErr?.message || countErr);
   }

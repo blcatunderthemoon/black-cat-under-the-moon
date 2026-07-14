@@ -206,7 +206,7 @@ function buildPostJsonLd(seo) {
 }
 
 export default function ForumPostPage({ seo = null }) {
-  const { session, profile, refreshProfile, loading: authLoading } = useAuth();
+  const { session, profile, displayName, refreshProfile, loading: authLoading } = useAuth();
   const router = useRouter();
   const postId = normalizeRouteId(router.query.postId);
   const commentsRef = useRef(null);
@@ -350,24 +350,73 @@ export default function ForumPostPage({ seo = null }) {
 
   async function handleComment(e) {
     e.preventDefault();
-    if (!comment.trim() || submitting) return;
+    const content = comment.trim();
+    if (!content || submitting) return;
+
+    const optimisticId = `pending-${Date.now()}`;
+    const optimisticComment = {
+      id: optimisticId,
+      content,
+      created_at: new Date().toISOString(),
+      like_count: 0,
+      viewer_liked: false,
+      author: { display_name: displayName || profile?.profile?.display_name || '我' },
+      is_mine: true,
+      is_op: !!(data?.post && (data.post.is_mine || data.post.author_id === session?.user?.id)),
+      _pending: true,
+    };
+
     setSubmitting(true);
     setCommentError('');
+    setComment('');
+    clearForumDraft(forumCommentDraftKey(postId));
+    setData((d) => {
+      if (!d) return d;
+      const nextComments = [...(d.comments || []), optimisticComment];
+      return {
+        ...d,
+        comments: nextComments,
+        post: {
+          ...d.post,
+          comment_count: (d.post?.comment_count || d.comments?.length || 0) + 1,
+        },
+      };
+    });
+    requestAnimationFrame(() => {
+      commentsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    });
+
     try {
       const r = await fetch(`/api/forum/posts/${encodeURIComponent(postId)}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-        body: JSON.stringify({ content: comment.trim() }),
+        body: JSON.stringify({ content }),
       });
       const result = await r.json();
-      if (!r.ok) { setCommentError(result.error || '留言失敗。'); return; }
-      setComment('');
-      clearForumDraft(forumCommentDraftKey(postId));
+      if (!r.ok) {
+        setData((d) => {
+          if (!d) return d;
+          const nextComments = (d.comments || []).filter((c) => c.id !== optimisticId);
+          return {
+            ...d,
+            comments: nextComments,
+            post: {
+              ...d.post,
+              comment_count: Math.max(0, (d.post?.comment_count || nextComments.length + 1) - 1),
+            },
+          };
+        });
+        setComment(content);
+        setCommentError(result.error || '留言失敗。');
+        return;
+      }
       let hadLockedBonus = false;
       setData((d) => {
         if (!d) return d;
         hadLockedBonus = (d.chapters || []).some((c) => c.bonus && c.locked);
-        const nextComments = [...(d.comments || []), result.comment];
+        const nextComments = (d.comments || []).map((c) => (
+          c.id === optimisticId ? { ...result.comment, _pending: false } : c
+        ));
         return {
           ...d,
           comments: nextComments,
@@ -380,6 +429,19 @@ export default function ForumPostPage({ seo = null }) {
       // 留言後解鎖番外篇：重新載入以取回已解鎖的章節內容。
       if (hadLockedBonus) reloadPost();
     } catch {
+      setData((d) => {
+        if (!d) return d;
+        const nextComments = (d.comments || []).filter((c) => c.id !== optimisticId);
+        return {
+          ...d,
+          comments: nextComments,
+          post: {
+            ...d.post,
+            comment_count: Math.max(0, (d.post?.comment_count || nextComments.length + 1) - 1),
+          },
+        };
+      });
+      setComment(content);
       setCommentError('留言失敗，請稍後再試。');
     } finally {
       setSubmitting(false);
@@ -1005,11 +1067,17 @@ export default function ForumPostPage({ seo = null }) {
               ) : (
                 <ul className="pixel-list forum-comment-list">
                   {visibleComments.map((c) => (
-                    <li key={c.id} className="pixel-comment-item forum-comment-item">
+                    <li
+                      key={c.id}
+                      className={`pixel-comment-item forum-comment-item${c._pending ? ' forum-comment-item--pending' : ''}`}
+                      aria-busy={c._pending ? true : undefined}
+                    >
                       <div className="forum-comment-item__header">
                         <AuthorLinks author={c.author} isMine={c.is_mine} />
-                        <span className="forum-comment-item__date">{formatDate(c.created_at)}</span>
-                        {session && !c.is_mine && (
+                        <span className="forum-comment-item__date">
+                          {c._pending ? '發送中…' : formatDate(c.created_at)}
+                        </span>
+                        {session && !c.is_mine && !c._pending && (
                           <button
                             type="button"
                             className="forum-btn-report-reply"
@@ -1024,7 +1092,11 @@ export default function ForumPostPage({ seo = null }) {
                       </div>
                       <div className="forum-comment-item__body-row">
                         <ForumMarkdownBody content={c.content} className="forum-comment-item__content" />
-                        {session && !c.is_mine ? (
+                        {c._pending ? (
+                          <span className="forum-comment-item__sending" aria-hidden="true">
+                            <MoonLoading label="" size={18} centered={false} />
+                          </span>
+                        ) : session && !c.is_mine ? (
                           <button
                             type="button"
                             className={`forum-btn-like-comment${
@@ -1056,7 +1128,11 @@ export default function ForumPostPage({ seo = null }) {
                 <MoonLoading centered={false} size={24} />
               </div>
             ) : session ? (
-              <form onSubmit={handleComment} className="forum-comment-form">
+              <form
+                onSubmit={handleComment}
+                className={`forum-comment-form${submitting ? ' forum-comment-form--sending' : ''}`}
+                aria-busy={submitting}
+              >
                 <ForumCommentField
                   postId={postId}
                   value={comment}
@@ -1071,9 +1147,17 @@ export default function ForumPostPage({ seo = null }) {
                   <button
                     type="submit"
                     disabled={submitting || !comment.trim()}
-                    className="forum-comment-form__submit"
+                    className={`forum-comment-form__submit${submitting ? ' forum-comment-form__submit--pending' : ''}`}
+                    aria-busy={submitting}
                   >
-                    {submitting ? '發送中…' : '留言'}
+                    {submitting ? (
+                      <>
+                        <MoonLoading label="" size={16} centered={false} />
+                        <span>發送中…</span>
+                      </>
+                    ) : (
+                      '留言'
+                    )}
                   </button>
                 </div>
                 {commentError && <p className="pixel-error">{commentError}</p>}
