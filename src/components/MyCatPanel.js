@@ -609,7 +609,7 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
   const mealLabel = cat.meal_label || (cat.meal_window === 'pm' ? '晚餐' : '早餐');
   const mealFed = !!cat.fed_today;
   const bothMealsFed = !!cat.both_meals_fed;
-  const nextMealHint = cat.meal_window === 'am' ? '晚餐 17:00 後' : '早餐 05:00 後';
+  const nextMealHint = cat.meal_window === 'am' ? '晚餐 17:01 後' : '早餐 00:00 後';
   const returnTs = cat.cat_returns_at ? new Date(cat.cat_returns_at).getTime() : 0;
   const returnMs = Math.max(0, returnTs - nowTs);
 

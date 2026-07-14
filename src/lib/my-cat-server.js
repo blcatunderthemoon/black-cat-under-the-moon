@@ -50,7 +50,7 @@ import {
   buildMoonJourneySummary,
   getHongKongDateString,
 } from './moon-journey.js';
-import { getHongKongHour } from './hong-kong-time.js';
+import { getHongKongHour, getHongKongMinute } from './hong-kong-time.js';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -237,7 +237,7 @@ function buildCatView(catRow, { moonJourney, mirror, petsToday, unlimitedShards 
   const now = Date.now();
 
   // 一日兩餐：以現時香港時段決定「今餐」係早定晚，再睇該餐係否已餵。
-  const mealWindow = mealWindowForHour(getHongKongHour());
+  const mealWindow = mealWindowForHour(getHongKongHour(), getHongKongMinute());
   const amFed = meals ? !!meals.am : (catRow.last_fed_date === todayHk);
   const pmFed = meals ? !!meals.pm : false;
   const mealFed = mealWindow === 'am' ? amFed : pmFed;
@@ -363,7 +363,7 @@ export async function getMyCatState(admin, userId) {
 }
 
 /**
- * Feed = 一日兩餐（v5，§5.2）：早（05:00–16:59）、晚（17:00–翌日 04:59）各一次。
+ * Feed = 一日兩餐（v6，§5.2）：早（00:00–17:00）、晚（17:01–23:59）各一次。
  * 每餐回滿飽腹 100，碎屑早 +2 / 晚 +1（全日仍 +3）。
  * Moon Journey 打卡（+2 EXP）＋連續天數 streak 每日一次，喺當日第一餐結算；
  * 第二餐唔會再打卡（already_checked_in），但照樣回滿飽腹＋領該餐碎屑。
@@ -373,7 +373,7 @@ export async function getMyCatState(admin, userId) {
 export async function performCatFeed(admin, userId) {
   const unlimitedShards = await isUnlimitedShardsUser(admin, userId);
   const todayHk = getHongKongDateString();
-  const mealWindow = mealWindowForHour(getHongKongHour());
+  const mealWindow = mealWindowForHour(getHongKongHour(), getHongKongMinute());
   const mealSource = `${todayHk}#${mealWindow}`;
   const catRow = await ensureUserCat(admin, userId);
 

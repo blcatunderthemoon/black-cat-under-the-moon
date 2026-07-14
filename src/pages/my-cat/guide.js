@@ -60,7 +60,7 @@ export default function MyCatGuidePage() {
 
           <Chapter no={1} ribbon="#ffb347" title="一日兩餐＝早晚打卡" meow="罐罐！罐罐！早晚記得餵！">
             <ul className="my-cat-guide__list">
-              <li>每日（香港時間）分 <strong>兩餐</strong>：<strong>早餐 05:00–16:59</strong>、<strong>晚餐 17:00 之後</strong>，各可以餵 <strong>一次</strong>。</li>
+              <li>每日（香港時間）分 <strong>兩餐</strong>：<strong>早餐 00:00–17:00</strong>、<strong>晚餐 17:01–23:59</strong>，各可以餵 <strong>一次</strong>。</li>
               <li>每餐飽腹即刻<strong>回滿 100</strong>，之後 <strong>30 小時</strong>內慢慢跌返落 0 — 記得早晚返嚟續命！</li>
               <li>獎勵分開兩餐領：<strong>碎屑早 +2 / 晚 +1</strong>（全日仍然 <strong>+3</strong>）。</li>
               <li>當日 <strong>第一餐</strong>順便完成每日打卡（EXP +2、連續打卡日數 +1）🔥。</li>

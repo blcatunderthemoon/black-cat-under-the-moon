@@ -59,22 +59,30 @@ export const FEED_HUNGER_GAIN = 25;
 export const FEED_SHARDS_GAIN = 3;
 
 /**
- * 一日兩餐（2026-07-13 v5）：由「每日一次打卡」改成「早、晚各一次」。
+ * 一日兩餐（2026-07-14 v6）：由「每日一次打卡」改成「早、晚各一次」。
  * 全日總獎勵維持不變（EXP +2 / 碎屑 +3），只係分兩次領，鼓勵一日返嚟兩次。
- * 時段（香港時間）：早餐 05:00–16:59；其餘（17:00 至翌日 04:59）為晚餐。
+ * 時段（香港時間）：早餐 00:00–17:00（含）；晚餐 17:01–23:59。
  * 每個時段各自可餵一次（以香港曆日 + 時段做冪等鍵）。
  */
-export const MEAL_MORNING_START_HOUR = 5;   // 含：≥ 05:00 起為早餐
-export const MEAL_EVENING_START_HOUR = 17;  // 含：≥ 17:00 起為晚餐
+export const MEAL_MORNING_START_HOUR = 0;   // 含：00:00 起為早餐
+export const MEAL_EVENING_START_HOUR = 17;  // 17:00 仍屬早餐；17:01 起為晚餐
 export const MEAL_WINDOWS = ['am', 'pm'];
 export const MEAL_LABEL = { am: '早餐', pm: '晚餐' };
 /** 各餐碎屑：早 +2、晚 +1（全日仍為 +3）。 */
 export const FEED_SHARDS_BY_WINDOW = { am: 2, pm: 1 };
 
-/** 由香港時 hour（0–23）判斷屬早餐（am）定晚餐（pm）。 */
-export function mealWindowForHour(hkHour) {
+/**
+ * 由香港時 hour + minute 判斷屬早餐（am）定晚餐（pm）。
+ * 早餐：00:00–17:00（含 17:00）；晚餐：17:01–23:59。
+ * 僅傳 hour 時：hour < 17 → am，hour >= 17 → pm（17 點整冇分鐘時視作晚餐偏保守；請用 mealWindowNow）。
+ */
+export function mealWindowForHour(hkHour, hkMinute = 0) {
   const h = Number(hkHour);
-  return (h >= MEAL_MORNING_START_HOUR && h < MEAL_EVENING_START_HOUR) ? 'am' : 'pm';
+  const m = Number(hkMinute) || 0;
+  if (!Number.isFinite(h)) return 'am';
+  if (h < MEAL_EVENING_START_HOUR) return 'am';
+  if (h > MEAL_EVENING_START_HOUR) return 'pm';
+  return m <= 0 ? 'am' : 'pm';
 }
 
 /** 某餐可領嘅碎屑數。 */
@@ -84,9 +92,10 @@ export function feedShardsForWindow(win) {
 
 /** 該餐時段下次開放嘅提示文案（給前端按鈕用）。 */
 export const MEAL_NEXT_HINT = {
-  am: '晚餐 17:00 後再嚟',
-  pm: '早餐 05:00 後再嚟',
+  am: '晚餐 17:01 後再嚟',
+  pm: '早餐 00:00 後再嚟',
 };
+
 // 好感 v2：每次摸 +20 → 每日 5 次摸滿必到 100
 export const PET_AFFECTION_GAIN = 20;
 

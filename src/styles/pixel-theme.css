@@ -21260,12 +21260,11 @@ button.forum-tag-chip:hover {
 
   .forum-story-reader--hub .forum-story-reader__stats {
     margin-top: 10px;
-    gap: 5px;
-    /* Keep 章 / 留言 / 閱讀 on a single row even in the narrow info column;
-       badges shrink to share the width, with scroll as an extreme fallback. */
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
+    gap: 6px;
+    /* Narrow info column beside cover: wrap into a readable stack instead of
+       shrinking three pills until icons + text overlap. */
+    flex-wrap: wrap;
+    overflow-x: visible;
   }
 
   .forum-story-reader--hub .forum-story-reader__stats::-webkit-scrollbar {
@@ -21273,14 +21272,19 @@ button.forum-tag-chip:hover {
   }
 
   .forum-story-reader--hub .forum-story-reader__stat {
-    flex: 1 1 0;
-    justify-content: center;
-    padding: 5px 6px;
+    flex: 0 0 auto;
+    justify-content: flex-start;
+    gap: 4px;
+    padding: 5px 10px;
     font-size: 11px;
   }
 
   .forum-story-reader--hub .forum-story-reader__stat-icon {
     font-size: 12px;
+  }
+
+  .forum-story-reader--hub .forum-story-reader__stat-text {
+    overflow: visible;
   }
 
   .forum-story-reader--hub .forum-story-reader__complete-action {

@@ -46,6 +46,16 @@ export function getHongKongHour(date = new Date()) {
   return Number.isFinite(parsed) ? parsed % 24 : 0;
 }
 
+/** Minute of hour (0–59) in Hong Kong. */
+export function getHongKongMinute(date = new Date()) {
+  const minute = new Intl.DateTimeFormat('en-GB', {
+    timeZone: HK_TZ,
+    minute: '2-digit',
+  }).format(date);
+  const parsed = Number(minute);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 /** UTC instant for 00:00:00 on a Hong Kong calendar date (HK is always UTC+8). */
 export function hongKongMidnightUtc(year, month, day) {
   return new Date(Date.UTC(year, month - 1, day, -8, 0, 0, 0));
