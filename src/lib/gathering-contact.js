@@ -1,0 +1,38 @@
+/**
+ * Contact validation for Moonlight Gatherings (email + phone).
+ */
+
+export const GATHERING_EMAIL_MAX = 120;
+export const GATHERING_PHONE_MAX = 20;
+
+/** Basic email check — not full RFC, enough for form gate. */
+export function normalizeGatheringEmail(raw) {
+  const s = String(raw || '').trim().toLowerCase();
+  if (!s || s.length < 5 || s.length > GATHERING_EMAIL_MAX) return null;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(s)) return null;
+  return s;
+}
+
+/**
+ * Accept HK mobile/local or +852… ; keep digits and leading +.
+ * @returns {string|null} normalised phone string
+ */
+export function normalizeGatheringPhone(raw) {
+  let s = String(raw || '').trim();
+  if (!s) return null;
+  s = s.replace(/[\s\-()]/g, '');
+  if (!/^\+?[0-9]+$/u.test(s)) return null;
+  if (s.length < 8 || s.length > GATHERING_PHONE_MAX) return null;
+  // Prefer local 8-digit or intl with country code
+  if (!s.startsWith('+') && !/^[0-9]{8,11}$/u.test(s)) return null;
+  return s;
+}
+
+export function parseGatheringContact(body, { emailKey = 'email', phoneKey = 'phone' } = {}) {
+  const email = normalizeGatheringEmail(body?.[emailKey]);
+  const phone = normalizeGatheringPhone(body?.[phoneKey]);
+  const errors = [];
+  if (!email) errors.push('請填寫有效電郵。');
+  if (!phone) errors.push('請填寫有效電話（8–20 位數字，可含 +852）。');
+  return { ok: errors.length === 0, email, phone, error: errors[0] || null, errors };
+}

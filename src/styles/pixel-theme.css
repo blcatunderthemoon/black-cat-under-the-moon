@@ -1666,6 +1666,55 @@
   border: none;
 }
 
+.inbox-system-notice-row {
+  width: 100%;
+  padding: 8px 0 4px;
+}
+
+.inbox-system-notice {
+  width: min(100%, 380px);
+  margin: 0 auto;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(255, 224, 102, 0.35);
+  background: linear-gradient(165deg, rgba(28, 24, 48, 0.95) 0%, rgba(12, 10, 22, 0.98) 100%);
+  color: #f0ebd8;
+  text-align: left;
+}
+
+.inbox-system-notice__eyebrow {
+  margin: 0 0 0.35rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: rgba(255, 224, 102, 0.8);
+}
+
+.inbox-system-notice__body {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: #e8e4f0;
+  white-space: pre-wrap;
+}
+
+.inbox-system-notice__link {
+  display: inline-block;
+  margin-top: 0.65rem;
+  font-size: 0.85rem;
+}
+
+.inbox-system-notice__time {
+  display: block;
+  margin-top: 0.55rem;
+  font-size: 0.72rem;
+  color: rgba(232, 228, 240, 0.45);
+}
+
+.inbox-letter-row--system .inbox-letter-row__new-badge--system {
+  background: rgba(255, 224, 102, 0.2);
+  color: #ffe066;
+  border-color: rgba(255, 224, 102, 0.45);
+}
+
 .inbox-match-card-row {
   width: 100%;
   padding: 8px 0 4px;

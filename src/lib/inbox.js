@@ -282,37 +282,57 @@ export async function listThreads(userId, { limit = 20, offset = 0 } = {}) {
     const threadMessages = messagesByThread[thread.id] || [];
     const latestMessage = threadMessages[threadMessages.length - 1] || null;
     const unreadCount = unreadByThread[thread.id] || 0;
+    const isSystem = thread.source_type === 'system';
 
-    const channelMeta = thread.source_type === 'photo_exchange'
-      ? enrichPhotoExchangeThread({
-        viewerId: userId,
-        messages: threadMessages,
-        latestMessage,
-        viewerTier,
-      })
-      : thread.source_type === 'match'
-        ? enrichMatchThreadListItem({
-          unreadCount,
-          matchMessage: matchCardByThread[thread.id] || null,
-        })
-        : enrichThreadWithChannel({
-          threadId: thread.id,
+    const channelMeta = isSystem
+      ? {
+          mysterious_title: (latestMessage?.content || '系統通知').slice(0, 80),
+          list_meta: thread.source_id === 'gathering'
+            ? '月光聚會通知'
+            : thread.source_id === 'forum_moderation'
+              ? '論壇守護通知'
+              : '系統通知',
+          can_reply: false,
+          reply_opportunity: false,
+        }
+      : thread.source_type === 'photo_exchange'
+        ? enrichPhotoExchangeThread({
           viewerId: userId,
-          viewerTier,
           messages: threadMessages,
-          participantTiers,
-        });
+          latestMessage,
+          viewerTier,
+        })
+        : thread.source_type === 'match'
+          ? enrichMatchThreadListItem({
+            unreadCount,
+            matchMessage: matchCardByThread[thread.id] || null,
+          })
+          : enrichThreadWithChannel({
+            threadId: thread.id,
+            viewerId: userId,
+            viewerTier,
+            messages: threadMessages,
+            participantTiers,
+          });
 
     const otherProfile = soloPartner ? null : profileById[otherId];
     const matchCard = matchCardByThread[thread.id] || null;
 
+    const systemName = thread.source_id === 'gathering'
+      ? '月光聚會'
+      : thread.source_id === 'forum_moderation'
+        ? '論壇守護'
+        : '系統通知';
+
     return {
       ...thread,
       other_participant: {
-        id: soloPartner ? null : otherId,
-        display_name: soloPartner?.name || otherProfile?.display_name || '神秘貓咪',
-        avatar_style: otherProfile?.avatar_style || null,
-        mirror_card_slug: soloPartner ? null : (slugByUser[otherId] || null),
+        id: isSystem || soloPartner ? null : otherId,
+        display_name: isSystem
+          ? systemName
+          : (soloPartner?.name || otherProfile?.display_name || '神秘貓咪'),
+        avatar_style: isSystem ? null : (otherProfile?.avatar_style || null),
+        mirror_card_slug: isSystem || soloPartner ? null : (slugByUser[otherId] || null),
         partner_response_id: soloPartner?.responseId || null,
       },
       unread_count: unreadCount,
@@ -538,42 +558,63 @@ export async function getThread(threadId, userId) {
     };
   });
 
-  const channelMeta = thread.source_type === 'photo_exchange'
-    ? enrichPhotoExchangeThread({
-      viewerId: userId,
-      messages: messages || [],
-      latestMessage: (messages || []).slice(-1)[0] || null,
-      viewerTier,
-    })
-    : thread.source_type === 'match'
-      ? enrichMatchThreadListItem({
-        unreadCount: unreadIds.length,
-        matchMessage: (messages || []).find((m) => m.message_type === 'match_card' && m.recipient_id === userId)
-          || (messages || []).find((m) => m.message_type === 'match_card')
-          || null,
-      })
-      : enrichThreadWithChannel({
-        threadId,
+  const channelMeta = thread.source_type === 'system'
+    ? {
+        mysterious_title: '系統通知',
+        list_meta: thread.source_id === 'gathering'
+          ? '月光聚會通知'
+          : thread.source_id === 'forum_moderation'
+            ? '論壇守護通知'
+            : '系統通知',
+        can_reply: false,
+        reply_opportunity: false,
+        compose_enabled: false,
+      }
+    : thread.source_type === 'photo_exchange'
+      ? enrichPhotoExchangeThread({
         viewerId: userId,
-        viewerTier,
         messages: messages || [],
-        participantTiers,
-      });
+        latestMessage: (messages || []).slice(-1)[0] || null,
+        viewerTier,
+      })
+      : thread.source_type === 'match'
+        ? enrichMatchThreadListItem({
+          unreadCount: unreadIds.length,
+          matchMessage: (messages || []).find((m) => m.message_type === 'match_card' && m.recipient_id === userId)
+            || (messages || []).find((m) => m.message_type === 'match_card')
+            || null,
+        })
+        : enrichThreadWithChannel({
+          threadId,
+          viewerId: userId,
+          viewerTier,
+          messages: messages || [],
+          participantTiers,
+        });
 
   const activeLetterQuota = viewerTier === 'premium'
     ? await getQuotaUsage(userId, 'active_letter_monthly')
     : null;
+
+  const isSystem = thread.source_type === 'system';
+  const systemName = thread.source_id === 'gathering'
+    ? '月光聚會'
+    : thread.source_id === 'forum_moderation'
+      ? '論壇守護'
+      : '系統通知';
 
   return {
     thread,
     messages: messagesWithSenders,
     marked_read_count: markedReadCount,
     other_participant: {
-      id: soloPartner ? null : otherId,
-      display_name: soloPartner?.name || otherProfile?.display_name || '神秘貓咪',
-      avatar_style: otherProfile?.avatar_style || null,
-      mirror_card_slug: soloPartner ? null : (slugByUser[otherId] || null),
-      is_premium: soloPartner ? false : participantTiers[otherId] === 'premium',
+      id: isSystem || soloPartner ? null : otherId,
+      display_name: isSystem
+        ? systemName
+        : (soloPartner?.name || otherProfile?.display_name || '神秘貓咪'),
+      avatar_style: isSystem ? null : (otherProfile?.avatar_style || null),
+      mirror_card_slug: isSystem || soloPartner ? null : (slugByUser[otherId] || null),
+      is_premium: isSystem || soloPartner ? false : participantTiers[otherId] === 'premium',
       partner_response_id: soloPartner?.responseId || null,
     },
     viewer_letter_prefs: normalizeLetterPrefs(viewerProfileResult.data?.letter_prefs, viewerTier),

@@ -7,6 +7,7 @@
 import { TYPE_ORDER, getFamilyNameZh } from './mirror-personality.js';
 import { normalizeGatheringTags, gatheringTagLabels, GATHERING_TAG_LABEL_BY_ID } from './gathering-tags.js';
 import { normalizeGatheringPublicLocation } from './gathering-districts.js';
+import { parseGatheringContact } from './gathering-contact.js';
 import { HK_TZ, databaseNowIso } from './hong-kong-time.js';
 import { filterContent } from './content-filter.js';
 import { isBlocked } from './permissions.js';
@@ -208,6 +209,18 @@ export function validateGatheringInput(body = {}, { partial = false } = {}) {
     else out.location_private = locationPrivate;
   }
 
+  if (!partial || body.host_email !== undefined || body.host_phone !== undefined || body.email !== undefined || body.phone !== undefined) {
+    const contact = parseGatheringContact({
+      email: body.host_email ?? body.email,
+      phone: body.host_phone ?? body.phone,
+    });
+    if (!contact.ok) errors.push(contact.error);
+    else {
+      out.host_email = contact.email;
+      out.host_phone = contact.phone;
+    }
+  }
+
   if (!partial || body.max_participants !== undefined) {
     const max = Number(body.max_participants ?? GATHERING_DEFAULT_MAX_PARTICIPANTS);
     if (!Number.isInteger(max) || max < 2 || max > 30) errors.push('人數上限需為 2–30。');
@@ -324,6 +337,7 @@ export function toPublicGathering(row, {
     timezone: row.timezone || HK_TZ,
     location_public: row.location_public,
     location_private: includePrivate ? (row.location_private || null) : undefined,
+    // host_email / host_phone: never public — stored for ops / host–attendee coordination only
     max_participants: max,
     approved_count: approvedCount,
     seats_left: Math.max(0, max - approvedCount),
@@ -335,7 +349,10 @@ export function toPublicGathering(row, {
     premium_only: !!row.premium_only,
     status: lazyUpdateStatus(row),
     my_attendance: myAttendance
-      ? { status: myAttendance.status, knock_message: myAttendance.knock_message || null }
+      ? {
+        status: myAttendance.status,
+        knock_message: myAttendance.knock_message || null,
+      }
       : null,
     created_at: row.created_at,
   };

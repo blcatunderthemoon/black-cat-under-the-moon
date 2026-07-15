@@ -589,6 +589,8 @@
 }
 
 .gathering-form__field input[type='text'],
+.gathering-form__field input[type='email'],
+.gathering-form__field input[type='tel'],
 .gathering-form__field input[type='number'],
 .gathering-form__field input[type='datetime-local'],
 .gathering-form__field input:not([type]),
@@ -944,10 +946,30 @@
   font-size: 0.75rem;
 }
 
+.gathering-host-queue__contact {
+  margin: 0 0 0.3rem;
+  color: rgba(196, 181, 253, 0.9);
+  font-size: 0.78rem;
+  word-break: break-all;
+}
+
 .gathering-host-queue__knock {
   margin: 0;
   color: var(--gathering-dim);
   font-size: 0.8rem;
+}
+
+.gathering-form__contact {
+  gap: 0.65rem;
+  padding: 0.75rem 0 0.15rem;
+  border-top: 1px solid rgba(240, 235, 216, 0.1);
+}
+
+.gathering-form__contact legend {
+  padding: 0;
+  margin-bottom: 0.25rem;
+  color: var(--gathering-cream);
+  font-size: 0.9rem;
 }
 
 .gathering-detail__knock-q {
@@ -1446,6 +1468,8 @@
   }
 
   .gathering-form__field input[type='text'],
+  .gathering-form__field input[type='email'],
+  .gathering-form__field input[type='tel'],
   .gathering-form__field input[type='number'],
   .gathering-form__field input[type='datetime-local'],
   .gathering-form__field input:not([type]),

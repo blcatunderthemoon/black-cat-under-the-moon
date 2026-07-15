@@ -87,10 +87,12 @@ export async function notifyGatheringDecision({
   gatheringTitle,
   approved,
 }) {
+  if (!applicantId) return false;
   const admin = getAdminClient();
+  const title = String(gatheringTitle || '月光聚會').slice(0, 40);
   const content = approved
-    ? `✅ 你已獲邀參加聚會「${String(gatheringTitle).slice(0, 40)}」。可到活動頁查看私密地點／連結。`
-    : `等候下一輪月光吧——聚會「${String(gatheringTitle).slice(0, 40)}」的申請未獲批准。`;
+    ? `✅ 主辦人已批准你參加「${title}」。可到活動頁查看私密地點／連結。`
+    : `🌙 主辦人婉拒了你參加「${title}」的申請。等候下一輪月光吧。`;
   return sendSystemMessage(admin, applicantId, content, {
     kind: approved ? 'gathering_approved' : 'gathering_rejected',
     gathering_id: gatheringId,

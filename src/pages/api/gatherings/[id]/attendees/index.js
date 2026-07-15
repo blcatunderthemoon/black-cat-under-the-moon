@@ -26,7 +26,7 @@ export default async function handler(req, res) {
 
   let query = admin
     .from('gathering_attendees')
-    .select('id, user_id, status, knock_message, created_at, reviewed_at')
+    .select('id, user_id, status, knock_message, contact_email, contact_phone, created_at, reviewed_at')
     .eq('gathering_id', id)
     .order('created_at', { ascending: true });
 
@@ -56,6 +56,8 @@ export default async function handler(req, res) {
       user_id: a.user_id,
       status: a.status,
       knock_message: a.knock_message,
+      contact_email: a.contact_email || null,
+      contact_phone: a.contact_phone || null,
       created_at: a.created_at,
       reviewed_at: a.reviewed_at,
       display_name: profileMap.get(a.user_id)?.display_name || '匿名貓咪',

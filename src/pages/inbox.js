@@ -252,9 +252,10 @@ export default function InboxPage() {
                 const hasUnread = thread.unread_count > 0;
                 const hasReplyOpportunity = thread.reply_opportunity;
                 const isMatch = thread.source_type === 'match';
+                const isSystem = thread.source_type === 'system';
                 const iconVariant = hasUnread ? 'sealed-glow' : 'read';
                 const metaText = thread.list_meta
-                  || (hasUnread && hasReplyOpportunity && !isMatch ? '1 封回信機會待用' : null);
+                  || (hasUnread && hasReplyOpportunity && !isMatch && !isSystem ? '1 封回信機會待用' : null);
                 const isMirrorClosed = metaText === LIST_META_MIRROR_CLOSED;
 
                 const isPhotoExchange = thread.source_type === 'photo_exchange';
@@ -274,17 +275,18 @@ export default function InboxPage() {
                         isMirrorClosed && 'inbox-letter-row--closed',
                         isPhotoExchange && 'inbox-letter-row--photo-exchange',
                         isMatch && 'inbox-letter-row--match',
+                        isSystem && 'inbox-letter-row--system',
                         isMatchUnread && 'inbox-letter-row--match-unread',
                         isMatchRead && 'inbox-letter-row--match-read',
-                        hasReplyOpportunity && hasUnread && !isMatch && 'inbox-letter-row--opportunity',
+                        hasReplyOpportunity && hasUnread && !isMatch && !isSystem && 'inbox-letter-row--opportunity',
                       ].filter(Boolean).join(' ')}
                     >
                       {hasUnread && (
                         <span
-                          className={`inbox-letter-row__new-badge${isMatch ? ' inbox-letter-row__new-badge--match' : ''}`}
-                          aria-label={isMatch ? '新的連線通知' : '未讀的新訊息'}
+                          className={`inbox-letter-row__new-badge${isMatch ? ' inbox-letter-row__new-badge--match' : ''}${isSystem ? ' inbox-letter-row__new-badge--system' : ''}`}
+                          aria-label={isMatch ? '新的連線通知' : isSystem ? '新的系統通知' : '未讀的新訊息'}
                         >
-                          {isMatch ? '連線' : 'NEW'}
+                          {isMatch ? '連線' : isSystem ? '通知' : 'NEW'}
                         </span>
                       )}
                       {isPhotoExchange ? (
@@ -310,7 +312,7 @@ export default function InboxPage() {
                             <span className={`inbox-letter-row__title${isMatch ? ' inbox-letter-row__title--match' : ''}`}>
                               {isMatch
                                 ? matchTitle
-                                : (thread.mysterious_title || '來自夜色的低語…')}
+                                : (thread.mysterious_title || thread.latest_message?.content || '來自夜色的低語…')}
                             </span>
                             {isMatch && thread.match_score != null && (
                               <span

@@ -36,6 +36,8 @@ export default function GatheringCreateForm({ meta }) {
   const [startsAt, setStartsAt] = useState(toLocalInputValue());
   const [locationPublic, setLocationPublic] = useState('');
   const [locationPrivate, setLocationPrivate] = useState('');
+  const [hostEmail, setHostEmail] = useState(() => session?.user?.email || '');
+  const [hostPhone, setHostPhone] = useState('');
   const [maxParticipants, setMaxParticipants] = useState(meta?.gates?.default_max_participants || 8);
   const [requireKnock, setRequireKnock] = useState(true);
   const [knockQuestion, setKnockQuestion] = useState('');
@@ -46,6 +48,12 @@ export default function GatheringCreateForm({ meta }) {
   const atTagLimit = tags.length >= GATHERING_MAX_TAGS;
   const districts = meta?.districts?.length ? meta.districts : HK_DISTRICTS;
   const onlineLabel = meta?.location_online || GATHERING_LOCATION_ONLINE;
+
+  useEffect(() => {
+    if (session?.user?.email && !hostEmail) {
+      setHostEmail(session.user.email);
+    }
+  }, [session?.user?.email, hostEmail]);
 
   useEffect(() => {
     if (meta?.gates?.default_max_participants) {
@@ -119,6 +127,8 @@ export default function GatheringCreateForm({ meta }) {
           starts_at: startsIso,
           location_public: locationPublic,
           location_private: locationPrivate || null,
+          host_email: hostEmail,
+          host_phone: hostPhone,
           max_participants: Number(maxParticipants),
           require_knock_message: requireKnock,
           knock_question: requireKnock ? knockQuestion : null,
@@ -255,6 +265,35 @@ export default function GatheringCreateForm({ meta }) {
           placeholder={isOnline ? 'Discord / Meet 連結' : '詳細地址'}
         />
       </label>
+
+      <fieldset className="gathering-form__field gathering-form__contact">
+        <legend>聯絡資料（僅批准參加者可見）*</legend>
+        <label className="gathering-form__field">
+          <span>電郵 *</span>
+          <input
+            type="email"
+            value={hostEmail}
+            onChange={(e) => setHostEmail(e.target.value)}
+            maxLength={120}
+            required
+            autoComplete="email"
+            placeholder="you@example.com"
+          />
+        </label>
+        <label className="gathering-form__field">
+          <span>電話 *</span>
+          <input
+            type="tel"
+            value={hostPhone}
+            onChange={(e) => setHostPhone(e.target.value)}
+            maxLength={20}
+            required
+            autoComplete="tel"
+            placeholder="例如：91234567 或 +85291234567"
+          />
+        </label>
+        <p className="gathering-form__hint">方便聯絡；電郵同電話唔會公開顯示喺活動頁／列表。</p>
+      </fieldset>
 
       <label className="gathering-form__field">
         <span>人數上限（2–30）</span>

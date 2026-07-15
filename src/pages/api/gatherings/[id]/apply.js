@@ -2,17 +2,18 @@
  * POST /api/gatherings/[id]/apply — RSVP / knock
  */
 
-import { requireUser, sendAuthError, getAdminClient, ensureProfile } from '../../../../../lib/server-auth.js';
-import { filterContent } from '../../../../../lib/content-filter.js';
+import { requireUser, sendAuthError, getAdminClient, ensureProfile } from '../../../../lib/server-auth.js';
+import { filterContent } from '../../../../lib/content-filter.js';
 import {
   loadGatheringActor,
   assertCanApply,
   assertNotBlockedWithHost,
   maybeMarkCompleted,
   toPublicGathering,
-} from '../../../../../lib/gatherings.js';
-import { notifyGatheringApplication, notifyGatheringDecision } from '../../../../../lib/gathering-notify.js';
-import { databaseNowIso } from '../../../../../lib/hong-kong-time.js';
+} from '../../../../lib/gatherings.js';
+import { notifyGatheringApplication, notifyGatheringDecision } from '../../../../lib/gathering-notify.js';
+import { databaseNowIso } from '../../../../lib/hong-kong-time.js';
+import { parseGatheringContact } from '../../../../lib/gathering-contact.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -41,6 +42,11 @@ export default async function handler(req, res) {
 
   const blockCheck = await assertNotBlockedWithHost(row.host_id, user.id);
   if (!blockCheck.ok) return res.status(blockCheck.status).json({ error: blockCheck.error, code: blockCheck.code });
+
+  const contact = parseGatheringContact(req.body || {});
+  if (!contact.ok) {
+    return res.status(400).json({ error: contact.error, code: 'contact_required' });
+  }
 
   let knockMessage = req.body?.knock_message == null ? null : String(req.body.knock_message).trim();
   if (row.require_knock_message && (!knockMessage || knockMessage.length < 1)) {
@@ -81,6 +87,8 @@ export default async function handler(req, res) {
     user_id: user.id,
     status: autoApprove ? 'approved' : 'pending',
     knock_message: knockMessage || null,
+    contact_email: contact.email,
+    contact_phone: contact.phone,
     reviewed_at: autoApprove ? databaseNowIso() : null,
     reviewed_by: autoApprove ? row.host_id : null,
     updated_at: databaseNowIso(),
@@ -113,21 +121,29 @@ export default async function handler(req, res) {
   }
 
   if (!autoApprove) {
-    notifyGatheringApplication({
-      hostId: row.host_id,
-      gatheringId: id,
-      gatheringTitle: row.title,
-      startsAt: row.starts_at,
-      applicantName: actor.profile.display_name,
-      knockMessage,
-    }).catch((err) => console.error('[gatherings/apply] notify failed:', err?.message || err));
+    try {
+      await notifyGatheringApplication({
+        hostId: row.host_id,
+        gatheringId: id,
+        gatheringTitle: row.title,
+        startsAt: row.starts_at,
+        applicantName: actor.profile.display_name,
+        knockMessage,
+      });
+    } catch (err) {
+      console.error('[gatherings/apply] notify failed:', err?.message || err);
+    }
   } else {
-    notifyGatheringDecision({
-      applicantId: user.id,
-      gatheringId: id,
-      gatheringTitle: row.title,
-      approved: true,
-    }).catch(() => {});
+    try {
+      await notifyGatheringDecision({
+        applicantId: user.id,
+        gatheringId: id,
+        gatheringTitle: row.title,
+        approved: true,
+      });
+    } catch (err) {
+      console.error('[gatherings/apply] auto-approve notify failed:', err?.message || err);
+    }
   }
 
   const refreshed = (await admin.from('gatherings').select('*').eq('id', id).maybeSingle()).data || row;

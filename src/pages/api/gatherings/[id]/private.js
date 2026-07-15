@@ -2,8 +2,8 @@
  * GET /api/gatherings/[id]/private — private location (host or approved)
  */
 
-import { requireUser, sendAuthError, getAdminClient } from '../../../../../lib/server-auth.js';
-import { canViewPrivateLocation, maybeMarkCompleted } from '../../../../../lib/gatherings.js';
+import { requireUser, sendAuthError, getAdminClient } from '../../../../lib/server-auth.js';
+import { canViewPrivateLocation, maybeMarkCompleted } from '../../../../lib/gatherings.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });

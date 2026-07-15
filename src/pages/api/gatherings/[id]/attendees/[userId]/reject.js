@@ -52,12 +52,16 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: '婉拒失敗。' });
   }
 
-  notifyGatheringDecision({
-    applicantId: userId,
-    gatheringId: id,
-    gatheringTitle: row.title,
-    approved: false,
-  }).catch((err) => console.error('[gatherings/reject] notify failed:', err?.message || err));
+  try {
+    await notifyGatheringDecision({
+      applicantId: userId,
+      gatheringId: id,
+      gatheringTitle: row.title,
+      approved: false,
+    });
+  } catch (err) {
+    console.error('[gatherings/reject] notify failed:', err?.message || err);
+  }
 
   return res.status(200).json({ success: true, status: 'rejected' });
 }

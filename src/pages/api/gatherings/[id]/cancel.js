@@ -2,9 +2,9 @@
  * POST /api/gatherings/[id]/cancel — host cancels gathering
  */
 
-import { requireUser, sendAuthError, getAdminClient } from '../../../../../lib/server-auth.js';
-import { databaseNowIso } from '../../../../../lib/hong-kong-time.js';
-import { notifyGatheringCancelled } from '../../../../../lib/gathering-notify.js';
+import { requireUser, sendAuthError, getAdminClient } from '../../../../lib/server-auth.js';
+import { databaseNowIso } from '../../../../lib/hong-kong-time.js';
+import { notifyGatheringCancelled } from '../../../../lib/gathering-notify.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });

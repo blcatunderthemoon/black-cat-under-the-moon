@@ -32,8 +32,14 @@ export default function GatheringDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [knock, setKnock] = useState('');
+  const [email, setEmail] = useState(() => session?.user?.email || '');
+  const [phone, setPhone] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
+
+  useEffect(() => {
+    if (session?.user?.email && !email) setEmail(session.user.email);
+  }, [session?.user?.email, email]);
 
   const load = useCallback(async () => {
     if (!id || typeof id !== 'string') return;
@@ -79,7 +85,11 @@ export default function GatheringDetailPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ knock_message: knock || null }),
+        body: JSON.stringify({
+          knock_message: knock || null,
+          email,
+          phone,
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -218,6 +228,31 @@ export default function GatheringDetailPage() {
                   </>
                 ) : gathering.status === 'open' ? (
                   <>
+                    <label className="gathering-form__field">
+                      <span>電郵 *</span>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        maxLength={120}
+                        required
+                        autoComplete="email"
+                        placeholder="you@example.com"
+                      />
+                    </label>
+                    <label className="gathering-form__field">
+                      <span>電話 *</span>
+                      <input
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        maxLength={20}
+                        required
+                        autoComplete="tel"
+                        placeholder="例如：91234567 或 +85291234567"
+                      />
+                    </label>
+                    <p className="gathering-form__hint">僅主辦人可見，唔會公開顯示。</p>
                     {gathering.require_knock_message && (
                       <label className="gathering-form__field">
                         <span>敲門暗號 *</span>
@@ -234,7 +269,7 @@ export default function GatheringDetailPage() {
                         />
                       </label>
                     )}
-                    <button type="button" className="gatherings-hero__cta" disabled={busy} onClick={apply}>
+                    <button type="button" className="gatherings-hero__cta" disabled={busy || !email.trim() || !phone.trim()} onClick={apply}>
                       申請加入
                     </button>
                   </>

@@ -31,6 +31,10 @@ function isLetterMessage(msg) {
   return type === 'user_letter' || type === 'letter' || !type;
 }
 
+function isSystemMessage(msg) {
+  return msg?.message_type === 'system';
+}
+
 function formatTime(dateStr) {
   if (!dateStr) return '';
   const d = new Date(dateStr);
@@ -239,9 +243,13 @@ export default function ThreadPage() {
 
   const messages = data?.messages || [];
   const isPhotoExchangeThread = data?.thread?.source_type === 'photo_exchange';
+  const isSystemThread = data?.thread?.source_type === 'system';
   const letterMessages = isPhotoExchangeThread
     ? []
     : messages.filter((m) => isLetterMessage(m));
+  const systemMessages = isPhotoExchangeThread
+    ? []
+    : messages.filter((m) => isSystemMessage(m));
   // 一個 thread 只代表一次連線；match_card 可能重複入庫，只保留第一張。
   const matchMessages = isPhotoExchangeThread
     ? []
@@ -254,7 +262,9 @@ export default function ThreadPage() {
   const other = data?.other_participant;
   const pageTitle = isPhotoExchangeThread
     ? `與 ${other?.display_name || '對方'} 交換相`
-    : (other?.display_name || '對話');
+    : isSystemThread
+      ? (other?.display_name || '系統通知')
+      : (other?.display_name || '對話');
   const mirrorCardHref = other?.mirror_card_slug
     ? `/mirror-card/${encodeURIComponent(other.mirror_card_slug)}`
     : null;
@@ -332,17 +342,17 @@ export default function ThreadPage() {
         backHref="/inbox"
         backLabel="返回"
         headerVariant="account"
-        pageClassName={`app-page--inbox app-page--thread${isPhotoExchangeThread ? ' app-page--photo-exchange-thread' : ''}${isMatchOnlyThread ? ' app-page--match-thread' : ''}`}
+        pageClassName={`app-page--inbox app-page--thread${isPhotoExchangeThread ? ' app-page--photo-exchange-thread' : ''}${isMatchOnlyThread ? ' app-page--match-thread' : ''}${isSystemThread ? ' app-page--system-thread' : ''}`}
         nav={<AppHeaderAuth redirectPath={router.asPath || '/inbox'} />}
       >
-        {data?.status_banner && (
+        {data?.status_banner && !isSystemThread && (
           <div className="channel-status-banner" role="status">
             <span className="channel-status-banner__icon" aria-hidden="true">⏳</span>
             <ScrollMixedText text={data.status_banner} />
           </div>
         )}
 
-        <div className={`thread-messages thread-messages--moon${isPhotoExchangeThread ? ' thread-messages--photo-exchange' : ''}${isMatchOnlyThread ? ' thread-messages--match-only' : ''}`}>
+        <div className={`thread-messages thread-messages--moon${isPhotoExchangeThread ? ' thread-messages--photo-exchange' : ''}${isMatchOnlyThread ? ' thread-messages--match-only' : ''}${isSystemThread ? ' thread-messages--system' : ''}`}>
           {!data ? (
             <MoonLoading className="letter-thread letter-thread--centered" />
           ) : (
@@ -378,11 +388,14 @@ export default function ThreadPage() {
               ) : (
                 <>
               <div className="thread-messages__inner thread-messages__inner--scroll thread-messages__inner--desk">
-                {letterMessages.length === 0 && matchMessages.length === 0 && exchangeRequests.length === 0 && !composeMode && (
+                {letterMessages.length === 0 && matchMessages.length === 0 && systemMessages.length === 0 && exchangeRequests.length === 0 && !composeMode && (
                   <p className="pixel-muted letter-thread letter-thread--centered letter-thread--empty">
                     暫時沒有訊息。
                   </p>
                 )}
+                {systemMessages.map((msg, index) => (
+                  <SystemNoticeItem key={msg.id} msg={msg} stackIndex={index} />
+                ))}
                 {matchMessages.map((msg, index) => (
                   <MessageItem
                     key={msg.id}
@@ -390,7 +403,7 @@ export default function ThreadPage() {
                     isMine={msg.is_mine}
                     otherName={other?.display_name}
                     mirrorCardHref={mirrorCardHref}
-                    stackIndex={index}
+                    stackIndex={systemMessages.length + index}
                   />
                 ))}
                 {letterMessages.map((msg, index) => (
@@ -399,7 +412,7 @@ export default function ThreadPage() {
                     msg={msg}
                     isMine={msg.is_mine}
                     otherName={other?.display_name}
-                    stackIndex={matchMessages.length + index}
+                    stackIndex={systemMessages.length + matchMessages.length + index}
                   />
                 ))}
                 <div ref={bottomRef} />
@@ -410,13 +423,13 @@ export default function ThreadPage() {
           )}
         </div>
 
-        {composeMode === 'reply' && !isPhotoExchangeThread && (
+        {composeMode === 'reply' && !isPhotoExchangeThread && !isSystemThread && (
           <div className="thread-compose-dock">
             {renderComposeForm(letterMessages.length + matchMessages.length)}
           </div>
         )}
 
-        {showMidnightBar && !isPhotoExchangeThread && (
+        {showMidnightBar && !isPhotoExchangeThread && !isSystemThread && (
           <div className="channel-status-footer channel-status-footer--midnight" role="status">
             <ChannelStatusLine
               text={data.status_footer}
@@ -443,6 +456,41 @@ function stickyNoteTilt(seed) {
     h = (h * 31 + s.charCodeAt(i)) | 0;
   }
   return ((Math.abs(h) % 41) - 20) / 10;
+}
+
+function SystemNoticeItem({ msg, stackIndex = 0 }) {
+  const url = typeof msg.payload?.gathering_url === 'string'
+    ? msg.payload.gathering_url
+    : (typeof msg.payload?.forum_url === 'string' ? msg.payload.forum_url : null);
+  const cta = msg.payload?.kind === 'gathering_application'
+    ? '查看申請 →'
+    : msg.payload?.kind === 'gathering_approved'
+      ? '查看聚會 →'
+      : msg.payload?.kind === 'gathering_rejected'
+        ? '查看聚會 →'
+        : url
+          ? '查看詳情 →'
+          : null;
+
+  return (
+    <div
+      className="letter-row letter-row--center inbox-system-notice-row"
+      style={{ '--letter-z': stackIndex + 1 }}
+    >
+      <article className="inbox-system-notice">
+        <p className="inbox-system-notice__eyebrow">系統通知</p>
+        <p className="inbox-system-notice__body">{msg.content}</p>
+        {url && cta && (
+          <Link href={url} className="inbox-system-notice__link pixel-link">
+            {cta}
+          </Link>
+        )}
+        <time className="inbox-system-notice__time" dateTime={msg.created_at}>
+          {formatTime(msg.created_at)}
+        </time>
+      </article>
+    </div>
+  );
 }
 
 function MessageItem({ msg, isMine, otherName, mirrorCardHref, stackIndex = 0 }) {

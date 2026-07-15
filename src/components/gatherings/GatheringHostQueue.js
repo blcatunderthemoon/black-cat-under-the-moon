@@ -72,6 +72,13 @@ export default function GatheringHostQueue({ gatheringId, knockQuestion }) {
         <li key={a.id} className="gathering-host-queue__item">
           <div>
             <p className="gathering-host-queue__name">{a.display_name}</p>
+            {(a.contact_email || a.contact_phone) && (
+              <p className="gathering-host-queue__contact">
+                {a.contact_email && <span>{a.contact_email}</span>}
+                {a.contact_email && a.contact_phone && <span aria-hidden="true"> · </span>}
+                {a.contact_phone && <span>{a.contact_phone}</span>}
+              </p>
+            )}
             {a.knock_message && (
               <div className="gathering-host-queue__answer">
                 {knockQuestion && <p className="gathering-host-queue__q">{knockQuestion}</p>}

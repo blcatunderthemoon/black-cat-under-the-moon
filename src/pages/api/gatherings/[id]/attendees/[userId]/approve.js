@@ -61,12 +61,16 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: '批准失敗。' });
   }
 
-  notifyGatheringDecision({
-    applicantId: userId,
-    gatheringId: id,
-    gatheringTitle: row.title,
-    approved: true,
-  }).catch((err) => console.error('[gatherings/approve] notify failed:', err?.message || err));
+  try {
+    await notifyGatheringDecision({
+      applicantId: userId,
+      gatheringId: id,
+      gatheringTitle: row.title,
+      approved: true,
+    });
+  } catch (err) {
+    console.error('[gatherings/approve] notify failed:', err?.message || err);
+  }
 
   return res.status(200).json({ success: true, status: 'approved' });
 }

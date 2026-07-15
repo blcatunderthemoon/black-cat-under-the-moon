@@ -2,8 +2,8 @@
  * POST /api/gatherings/[id]/withdraw — withdraw pending / approved RSVP
  */
 
-import { requireUser, sendAuthError, getAdminClient } from '../../../../../lib/server-auth.js';
-import { databaseNowIso } from '../../../../../lib/hong-kong-time.js';
+import { requireUser, sendAuthError, getAdminClient } from '../../../../lib/server-auth.js';
+import { databaseNowIso } from '../../../../lib/hong-kong-time.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
