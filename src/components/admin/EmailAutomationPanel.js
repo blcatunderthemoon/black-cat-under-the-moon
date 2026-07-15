@@ -76,6 +76,7 @@ export function EmailAutomationPanel() {
   // ── Filter ────────────────────────────────────────────────────────────────
   const [minScore, setMinScore] = useState('60');
   const [loadingPairs, setLoadingPairs] = useState(false);
+  const [loadError, setLoadError] = useState('');
 
   // ── Pairs data ────────────────────────────────────────────────────────────
   const [pairs, setPairs] = useState(null);       // null = not loaded yet
@@ -113,17 +114,33 @@ export function EmailAutomationPanel() {
     setLoadingPairs(true);
     setChecked({});
     setSendResults(null);
+    setLoadError('');
     try {
       const params = new URLSearchParams({ mode: 'pairs', minScore: minScore || '0' });
       if (viewMode === 'premium') params.set('premium_only', '1');
       const res  = await apiFetch(`/api/dashboard/email-automation?${params}`);
-      const data = await res.json();
-      setPairs(data.pairs || []);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setPairs(null);
+        setPairsTotal(0);
+        setPairsSummary(null);
+        setLoadError(
+          data.error
+          || (res.status === 401 || res.status === 403
+            ? '權限不足或登入已過期，請重新登入後再試。'
+            : res.status === 503
+              ? 'Dashboard 驗證未設定（DASHBOARD_SECRET），或服務暫不可用。'
+              : `載入失敗（HTTP ${res.status}）`),
+        );
+        return;
+      }
+      setPairs(Array.isArray(data.pairs) ? data.pairs : []);
       setPairsTotal(data.total || 0);
       setPairsSummary(data.summary || null);
-    } catch {
-      setPairs([]);
+    } catch (err) {
+      setPairs(null);
       setPairsSummary(null);
+      setLoadError(err?.message || '網絡錯誤，請稍後再試。');
     } finally {
       setLoadingPairs(false);
     }
@@ -133,7 +150,12 @@ export function EmailAutomationPanel() {
     setLoadingDrafts(true);
     try {
       const res  = await apiFetch('/api/dashboard/email-automation?mode=drafts');
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setDrafts([]);
+        setLoadError((prev) => prev || data.error || `草稿載入失敗（HTTP ${res.status}）`);
+        return;
+      }
       setDrafts(data.drafts || []);
     } catch {
       setDrafts([]);
@@ -509,6 +531,16 @@ export function EmailAutomationPanel() {
             {loadingPairs ? '計算中…' : '載入配對'}
           </button>
         </div>
+
+        {loadError && (
+          <div className={styles.loadError} role="alert">
+            <strong>無法載入配對</strong>
+            <p>{loadError}</p>
+            <p className={styles.loadErrorHint}>
+              請確認已用論壇管理員帳號登入；若剛改過環境變數／middleware，請重啟 server 後再試。
+            </p>
+          </div>
+        )}
 
         {/* ── Moonlight Passport instant queue ───────────────────────────── */}
         {pairsSummary && (

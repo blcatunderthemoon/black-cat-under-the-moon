@@ -847,6 +847,17 @@ html:has(.mode-top-bar--quiz) {
     height: 26px;
   }
 
+  .mode-top-bar--index.mode-top-bar--greeting .header-my-cat-link {
+    width: 26px;
+    min-width: 26px;
+    height: 26px;
+  }
+
+  .mode-top-bar--index.mode-top-bar--greeting .header-my-cat-link__sprite--strip {
+    width: 18px;
+    height: 18px;
+  }
+
   .mode-header-chip {
     font-size: 10px;
     padding: 0 6px;
@@ -901,6 +912,12 @@ html:has(.mode-top-bar--quiz) {
     min-width: 28px;
     height: 28px;
     padding: 0;
+  }
+
+  .header-my-cat-link {
+    width: 28px;
+    min-width: 28px;
+    height: 28px;
   }
   .auth-nav-badge__item--signup {
     font-size: 9px;
@@ -1661,6 +1678,13 @@ body.lang-en .mode-top-bar--legal .home-back-btn .en {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0;
   border-radius: 8px;
   background: linear-gradient(180deg, rgba(124, 92, 252, 0.26) 0%, rgba(52, 38, 100, 0.3) 100%);
   box-shadow:
@@ -1693,9 +1717,11 @@ body.lang-en .mode-top-bar--legal .home-back-btn .en {
   display: block;
   width: 19px;
   height: 18px;
+  flex-shrink: 0;
+  overflow: hidden;
   background: url('/catset_extra_assets/cat05_header_icon.png') no-repeat center / 19px 18px;
   image-rendering: pixelated;
-  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.55)) drop-shadow(0 0 4px rgba(189, 147, 249, 0.55));
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.55));
   transition: transform 0.15s ease-out;
 }
 
@@ -1703,11 +1729,12 @@ body.lang-en .mode-top-bar--legal .home-back-btn .en {
   transform: translateY(-1px);
 }
 
-/* 換裝貓：用 idle 動畫第一幀做 header icon（全身像素貓，稍為放大睇得清） */
+/* 換裝貓：idle strip 第一幀縮放入 icon，避免原生 40px 幀溢出頂欄 */
 .header-my-cat-link__sprite--strip {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   background-repeat: no-repeat;
+  filter: none;
 }
 
 .header-my-cat-link__dot {

@@ -73,6 +73,32 @@
 .loadBtn:hover { opacity: 0.9; box-shadow: var(--glow); }
 .loadBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+.loadError {
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  background: rgba(248, 113, 113, 0.12);
+  color: #fecaca;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.loadError strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #fda4af;
+}
+
+.loadError p {
+  margin: 0;
+}
+
+.loadErrorHint {
+  margin-top: 8px !important;
+  color: #a89cc8;
+  font-size: 12px;
+}
+
 /* Section card */
 .sectionCard {
   background: var(--bg-surface);

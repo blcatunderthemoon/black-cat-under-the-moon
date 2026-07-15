@@ -1,5 +1,8 @@
 /**
  * Auth for forum moderation APIs: Bearer + forum_role, or station x-dashboard-key.
+ *
+ * When Authorization Bearer is present, prefer session actor over station key so
+ * /admin pages authenticate as forum admin even if DASHBOARD_SECRET is unset.
  */
 
 import { isDashboardKeyValid } from './dashboard-auth.js';
@@ -28,16 +31,30 @@ async function resolveDashboardActorId() {
  * @returns {Promise<{ actorId: string|null, role: string, viaDashboard: boolean, moderatorTopics?: string[] }|null>}
  */
 export async function resolveModerationActor(req, res, { requireAdmin = false } = {}) {
-  const dashKey = req.headers['x-dashboard-key'] || '';
-  if (isDashboardKeyValid(dashKey)) {
-    const actorId = await resolveDashboardActorId();
-    return { actorId, role: 'admin', viaDashboard: true };
+  const bearer = req.headers?.authorization || '';
+  const preferSession = bearer.startsWith('Bearer ');
+
+  if (!preferSession) {
+    const dashKey = req.headers['x-dashboard-key'] || '';
+    if (isDashboardKeyValid(dashKey)) {
+      const actorId = await resolveDashboardActorId();
+      return { actorId, role: 'admin', viaDashboard: true };
+    }
   }
 
   let user;
   try {
     user = await requireUser(req);
   } catch (err) {
+    // Station clients with a valid key but no Bearer still work above; if Bearer
+    // was preferred and failed, try station key as fallback.
+    if (preferSession) {
+      const dashKey = req.headers['x-dashboard-key'] || '';
+      if (isDashboardKeyValid(dashKey)) {
+        const actorId = await resolveDashboardActorId();
+        return { actorId, role: 'admin', viaDashboard: true };
+      }
+    }
     sendAuthError(res, err);
     return null;
   }

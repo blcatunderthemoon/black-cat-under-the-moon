@@ -3,20 +3,18 @@
  *
  * Protects all /api/dashboard/* routes.
  *
- * Setup:
- *   1. Set DASHBOARD_SECRET in Vercel environment variables (any strong random string).
- *   2. Each dashboard page/client must send header: x-dashboard-key: <DASHBOARD_SECRET>
+ * Auth paths (first match wins):
+ *   1. Bearer — production forum-admin session (API verifies role)
+ *   2. x-dashboard-key — when DASHBOARD_SECRET / DASHBOARD_PASSWORD is set
+ *   3. No secret — pass through; Node API handlers enforce (dev bypass / 503 / Bearer)
  *
- * Local dev: if DASHBOARD_SECRET is not set, all requests pass through.
- * Production: returns 503 when DASHBOARD_SECRET is missing.
+ * Note: Edge middleware may not see the same env as Node API routes after a
+ * stale `next build`. Do not fail-closed here when the secret is missing —
+ * `checkDashboardAuth` / `authorizeStationOrForumAdmin` own that decision.
  */
 
 import { NextResponse } from 'next/server';
 import { getDashboardSecret } from './lib/dashboard-secret.js';
-
-function isProduction() {
-  return process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production';
-}
 
 export function middleware(request) {
   const { pathname } = request.nextUrl;
@@ -26,27 +24,20 @@ export function middleware(request) {
     return NextResponse.next();
   }
 
-  const secret = getDashboardSecret();
-
-  if (!secret) {
-    if (isProduction()) {
-      return new NextResponse(JSON.stringify({
-        error: 'Dashboard authentication is not configured',
-        code: 'DASHBOARD_SECRET_MISSING',
-      }), {
-        status: 503,
-        headers: { 'content-type': 'application/json' },
-      });
-    }
-    return NextResponse.next();
-  }
-
-  const provided = request.headers.get('x-dashboard-key');
+  // Production dashboard uses forum admin Bearer; never block on missing secret.
   const bearer = request.headers.get('authorization');
   if (bearer?.startsWith('Bearer ')) {
     return NextResponse.next();
   }
 
+  const secret = getDashboardSecret();
+
+  // No station key configured — let API routes decide.
+  if (!secret) {
+    return NextResponse.next();
+  }
+
+  const provided = request.headers.get('x-dashboard-key');
   if (!provided || provided !== secret) {
     return new NextResponse(JSON.stringify({ error: 'Unauthorised.' }), {
       status: 401,

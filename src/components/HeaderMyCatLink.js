@@ -8,13 +8,12 @@ import Link from 'next/link';
 import { MY_CAT_PATH, DEFAULT_SKIN_ID, getCatStripUrl, getCatAnimMeta } from '../lib/my-cat.js';
 
 const HEADER_ICON_ANIM = 'idle_slowblink';
-// Header icon box size (px) and per-frame zoom. The 40px idle frame has the cat
-// sitting low-centre (bbox ≈ x10–26, y17–32), so a plain frame-centre crops it.
-// We scale the frame up then offset by the cat's real centre ratio to fit it.
-const HEADER_ICON_BOX = 24;
-const HEADER_ICON_FRAME = 40; // native 40px frame — keeps the cat inside the icon border with margin
+// Icon box vs drawn frame. Family skins use idle strip frame 0; scale the 40px
+// source frame down so the whole cat fits inside the icon without overflowing.
+const HEADER_ICON_BOX = 22;
+const HEADER_ICON_FRAME = 22; // displayed size (source frames are 40px)
 const CAT_CENTER_X = 0.45; // 18/40 — cat sits slightly left of centre
-const CAT_CENTER_Y = 0.61; // 24.5/40 — cat sits in the lower half
+const CAT_CENTER_Y = 0.58; // slightly raised so ears stay inside the clip
 
 export default function HeaderMyCatLink({
   needsFeedBadge = false,

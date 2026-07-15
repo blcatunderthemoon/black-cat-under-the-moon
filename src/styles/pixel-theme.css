@@ -16825,9 +16825,9 @@ button.forum-tag-chip:hover {
   margin-top: 4px;
 }
 
-/* Forum loading — warm shimmer text + animated dots */
+/* Forum loading — warm shimmer text + animated dots (icon stays still) */
 .app-page--forum .loading-send-stack {
-  animation: forum-loading-bob 2.8s ease-in-out infinite !important;
+  animation: none !important;
 }
 
 .app-page--forum .moon-loading__label {
@@ -16856,11 +16856,6 @@ button.forum-tag-chip:hover {
   -webkit-text-fill-color: #ffe9b8 !important;
   color: #ffe9b8 !important;
   animation: forum-loading-dots 1.4s steps(4, end) infinite !important;
-}
-
-@keyframes forum-loading-bob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
 }
 
 @keyframes forum-loading-shimmer {
@@ -23400,6 +23395,13 @@ button.forum-tag-chip:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0;
   border-radius: 8px;
   /* inset ring (唔會撐大盒子) + 柔和光暈 → 突出但唔破壞排版平衡 */
   background: linear-gradient(180deg, rgba(124, 92, 252, 0.26) 0%, rgba(52, 38, 100, 0.3) 100%);
@@ -23433,9 +23435,11 @@ button.forum-tag-chip:hover {
   display: block;
   width: 19px;
   height: 18px;
+  flex-shrink: 0;
+  overflow: hidden;
   background: url('/catset_extra_assets/cat05_header_icon.png') no-repeat center / 19px 18px;
   image-rendering: pixelated;
-  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.55)) drop-shadow(0 0 4px rgba(189, 147, 249, 0.55));
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.55));
   transition: transform 0.15s ease-out;
 }
 
@@ -23443,15 +23447,18 @@ button.forum-tag-chip:hover {
   transform: translateY(-1px);
 }
 
-/* 換裝貓：用 idle 動畫第一幀做 header icon（全身像素貓，稍為放大睇得清） */
+/* 換裝貓：idle strip 第一幀縮放入 icon，避免原生 40px 幀撐出頂欄 */
 .header-my-cat-link__sprite--strip {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   background-repeat: no-repeat;
+  filter: none;
 }
 
 .header-my-cat-link--forum {
-  padding: 4px 7px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
 }
 
 .header-my-cat-link__dot {
