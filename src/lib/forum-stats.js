@@ -28,6 +28,30 @@ export async function getCommentCountsByPostIds(admin, postIds) {
   return counts;
 }
 
+/** Recount visible comments and write forum_posts.comment_count (heals drift). */
+export async function syncPostCommentCount(admin, postId) {
+  if (!postId) return null;
+  const { count, error } = await admin
+    .from('forum_comments')
+    .select('id', { count: 'exact', head: true })
+    .eq('post_id', postId)
+    .eq('is_hidden', false);
+  if (error) {
+    console.error('[forum-stats] sync comment count failed:', error.message);
+    return null;
+  }
+  const next = count ?? 0;
+  const { error: updErr } = await admin
+    .from('forum_posts')
+    .update({ comment_count: next })
+    .eq('id', postId);
+  if (updErr) {
+    console.error('[forum-stats] sync comment count write failed:', updErr.message);
+    return null;
+  }
+  return next;
+}
+
 export async function getViewerLikedPostIds(admin, userId, postIds) {
   if (!userId || !postIds?.length) return new Set();
   const { data, error } = await admin

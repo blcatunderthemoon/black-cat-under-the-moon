@@ -10,6 +10,7 @@ import {
   buildReportNotifyContext,
   notifyForumModerators,
 } from '../../../lib/forum-moderation-notify.js';
+import { syncPostCommentCount } from '../../../lib/forum-stats.js';
 import {
   createRateLimiter,
   rateLimitOrPass,
@@ -57,7 +58,7 @@ export default async function handler(req, res) {
 
   const { data: target } = await admin
     .from(table)
-    .select('id, report_count')
+    .select(target_type === 'comment' ? 'id, report_count, is_hidden, post_id' : 'id, report_count')
     .eq('id', target_id)
     .maybeSingle();
 
@@ -65,6 +66,9 @@ export default async function handler(req, res) {
 
   const newCount = (target.report_count || 0) + 1;
   const patch = { report_count: newCount };
+  const willAutoHideComment = target_type === 'comment'
+    && shouldAutoHide(newCount)
+    && !target.is_hidden;
 
   if (shouldAutoHide(newCount)) {
     if (target_type === 'post') {
@@ -75,6 +79,10 @@ export default async function handler(req, res) {
   }
 
   await admin.from(table).update(patch).eq('id', target_id);
+
+  if (willAutoHideComment && target.post_id) {
+    await syncPostCommentCount(admin, target.post_id);
+  }
 
   let moderatorNotified = false;
   if (shouldNotifyModerators(newCount)) {

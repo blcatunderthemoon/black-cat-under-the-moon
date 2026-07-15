@@ -90,6 +90,14 @@ export default function ForumHeaderAuth({ extra = null, moonJourney = null, redi
             <span className="app-header__nav-icon forum-header-bookmark-btn__icon" aria-hidden="true">🔖</span>
           </button>
           <Link
+            href="/gatherings"
+            className="app-header__nav-link app-header__nav-link--icon"
+            title="月光聚會"
+            aria-label="月光聚會"
+          >
+            <span className="app-header__nav-icon" aria-hidden="true">📅</span>
+          </Link>
+          <Link
             href="/inbox"
             className={`app-header__nav-link app-header__nav-link--icon${unread > 0 ? ' app-header__nav-link--inbox-unread' : ''}`}
             title="收件箱"

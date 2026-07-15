@@ -8,7 +8,7 @@ import { filterContent } from '../../../lib/content-filter.js';
 import { dispatchForumMentions } from '../../../lib/forum-mention-notify.js';
 import { extractPollIdsFromContent, validatePollsForContent } from '../../../lib/forum-poll.js';
 import { insertPollsForPost } from '../../../lib/forum-poll-stats.js';
-import { getViewerBookmarkedPostIds, getViewerLikedPostIds } from '../../../lib/forum-stats.js';
+import { getViewerBookmarkedPostIds, getViewerLikedPostIds, getCommentCountsByPostIds } from '../../../lib/forum-stats.js';
 import { mapForumPostListPreview } from '../../../lib/forum-list-preview.js';
 import { loadForumAuthorMeta, resolveForumPostAuthorDisplayName, isForumPostAnonymous } from '../../../lib/forum-author-names.js';
 import { getTagsByPostIds, getPostIdsForTag, insertTagsForPost, getTagLabelMapForPosts } from '../../../lib/forum-tag-stats.js';
@@ -312,10 +312,11 @@ async function handleGetInner(req, res) {
   const postIds = (posts || []).map((p) => p.id);
   const authorIds = [...new Set((posts || []).map((p) => p.author_id).filter(Boolean))];
   const tagsByPostIdPromise = getTagsByPostIds(admin, postIds);
-  const [likedIds, bookmarkedIds, tagsByPostId, authorCardsResult, authorMeta, tagLabels] = await Promise.all([
+  const [likedIds, bookmarkedIds, tagsByPostId, liveCommentCounts, authorCardsResult, authorMeta, tagLabels] = await Promise.all([
     getViewerLikedPostIds(admin, viewer?.id, postIds),
     getViewerBookmarkedPostIds(admin, viewer?.id, postIds),
     tagsByPostIdPromise,
+    getCommentCountsByPostIds(admin, postIds),
     authorIds.length
       ? admin.from('mirror_cards').select('user_id, mirror_type, public_slug').in('user_id', authorIds)
       : Promise.resolve({ data: [] }),
@@ -342,7 +343,7 @@ async function handleGetInner(req, res) {
         snapshot: p.anonymous_name_snapshot,
       }),
       tags: tagsByPostId[p.id] || (p.mood_tag ? [p.mood_tag] : []),
-      comment_count: p.comment_count ?? 0,
+      comment_count: liveCommentCounts[p.id] ?? 0,
       is_mine: viewer?.id === p.author_id,
       viewer_liked: likedIds.has(p.id),
       viewer_bookmarked: bookmarkedIds.has(p.id),

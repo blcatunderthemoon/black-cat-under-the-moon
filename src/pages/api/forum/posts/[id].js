@@ -240,10 +240,21 @@ async function handleGet(req, res, postId) {
     viewer_liked: likedCommentIds.has(c.id),
   }));
 
+  const liveCommentCount = enrichedComments.length;
+  if ((Number(post.comment_count) || 0) !== liveCommentCount) {
+    // Heal denormalized counter when comments were hidden/auto-modded
+    Promise.resolve(
+      admin.from('forum_posts').update({ comment_count: liveCommentCount }).eq('id', postId),
+    ).catch((err) => {
+      console.error('[forum/posts] comment_count heal failed:', err?.message || err);
+    });
+  }
+
   return res.status(200).json({
     post: {
       ...post,
-      comment_count: post.comment_count ?? enrichedComments.length,
+      // Prefer live visible comments over denormalized column (can drift after hide/moderation)
+      comment_count: liveCommentCount,
       author_id: undefined,
       is_mine: viewer?.id === post.author_id,
       viewer_liked: likedIds.has(postId),

@@ -841,7 +841,9 @@ export default function ForumPostPage({ seo = null }) {
   }
 
   const needsMatureAck = post && isMatureForumTopicStored(post.topic) && !matureAcked;
-  const commentCount = comments.length || post?.comment_count || 0;
+  const commentCount = commentsBootstrapping
+    ? (post?.comment_count || 0)
+    : comments.length;
 
   if (needsMatureAck) {
     return (

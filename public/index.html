@@ -38,7 +38,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/questionnaire.css?v=20260706ios">
-<link rel="stylesheet" href="css/auth-nav.css?v=20260715caticon">
+<link rel="stylesheet" href="css/auth-nav.css?v=20260715calnoborder">
 <link rel="stylesheet" href="css/mobile-webview-scroll.css?v=20260713echo">
 <link rel="stylesheet" href="css/welcome-atmosphere.css?v=20260708presence2">
 <script src="/js/posthog-page-context.js" defer></script>
@@ -107,7 +107,10 @@
 <!-- Unified mode top bar -->
 <div class="mode-top-bar mode-top-bar--index">
   <div class="mode-top-bar__row">
-    <span class="mode-top-bar__spacer" aria-hidden="true"></span>
+    <a href="/gatherings" class="mode-header-chip mode-top-bar__gatherings-link" title="月光聚會" aria-label="月光聚會">
+      <span class="home-back-btn__icon" aria-hidden="true">📅</span>
+      <span class="home-back-btn__label mode-top-bar__gatherings-label">月光聚會</span>
+    </a>
     <span class="mode-top-bar__center mode-top-bar__mode-tag" id="mode-top-bar-label"></span>
     <div class="mode-top-bar__header-end">
       <p class="welcome-greeting" id="welcome-greeting" hidden aria-live="polite"></p>

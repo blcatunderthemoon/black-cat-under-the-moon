@@ -66,6 +66,14 @@ export default function AppHeaderAuth({ redirectPath, hideInbox: hideInboxProp, 
           )}
           {!hideName && profileHydrated && name && <NavSep />}
           <span className="auth-nav-badge__icon-group">
+            <Link
+              href="/gatherings"
+              className="auth-nav-badge__item auth-nav-badge__item--icon"
+              title="月光聚會"
+              aria-label="月光聚會"
+            >
+              <span className="auth-nav-badge__icon" aria-hidden="true">📅</span>
+            </Link>
             {!hideInbox && (
               <Link
                 href="/inbox"

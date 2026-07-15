@@ -4,6 +4,7 @@
 
 import { databaseNowIso } from './hong-kong-time.js';
 import { getAdminClient } from './server-auth.js';
+import { syncPostCommentCount } from './forum-stats.js';
 import { validateForumTags } from './forum-tags.js';
 import { insertTagsForPost } from './forum-tag-stats.js';
 
@@ -217,11 +218,17 @@ export async function hideForumComment(commentId, { actorId, note } = {}) {
     .maybeSingle();
   if (!before) return { ok: false, status: 404, error: 'Comment not found' };
 
+  if (before.is_hidden) {
+    return { ok: true };
+  }
+
   const { error } = await admin
     .from('forum_comments')
     .update({ is_hidden: true })
     .eq('id', commentId);
   if (error) return { ok: false, status: 500, error: 'Hide failed' };
+
+  await syncPostCommentCount(admin, before.post_id);
 
   await logForumModeration({
     actorId,

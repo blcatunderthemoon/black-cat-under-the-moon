@@ -1,0 +1,145 @@
+/**
+ * POST /api/gatherings/[id]/apply — RSVP / knock
+ */
+
+import { requireUser, sendAuthError, getAdminClient, ensureProfile } from '../../../../../lib/server-auth.js';
+import { filterContent } from '../../../../../lib/content-filter.js';
+import {
+  loadGatheringActor,
+  assertCanApply,
+  assertNotBlockedWithHost,
+  maybeMarkCompleted,
+  toPublicGathering,
+} from '../../../../../lib/gatherings.js';
+import { notifyGatheringApplication, notifyGatheringDecision } from '../../../../../lib/gathering-notify.js';
+import { databaseNowIso } from '../../../../../lib/hong-kong-time.js';
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const { id } = req.query;
+  if (!id || typeof id !== 'string') return res.status(400).json({ error: '缺少聚會 id' });
+
+  let user;
+  try {
+    user = await requireUser(req);
+  } catch (err) {
+    return sendAuthError(res, err);
+  }
+
+  await ensureProfile(user);
+  const admin = getAdminClient();
+  const actor = await loadGatheringActor(admin, user.id);
+  if (!actor.ok) return res.status(actor.status).json({ error: actor.error, code: actor.code });
+
+  let row = (await admin.from('gatherings').select('*').eq('id', id).maybeSingle()).data;
+  if (!row) return res.status(404).json({ error: '找不到此聚會。' });
+  row = await maybeMarkCompleted(admin, row);
+
+  const applyGate = assertCanApply(actor, row);
+  if (!applyGate.ok) return res.status(applyGate.status).json({ error: applyGate.error, code: applyGate.code });
+
+  const blockCheck = await assertNotBlockedWithHost(row.host_id, user.id);
+  if (!blockCheck.ok) return res.status(blockCheck.status).json({ error: blockCheck.error, code: blockCheck.code });
+
+  let knockMessage = req.body?.knock_message == null ? null : String(req.body.knock_message).trim();
+  if (row.require_knock_message && (!knockMessage || knockMessage.length < 1)) {
+    return res.status(400).json({ error: '請回答敲門問題。', code: 'knock_required' });
+  }
+  if (knockMessage && knockMessage.length > 200) {
+    return res.status(400).json({ error: '敲門回答最多 200 字。' });
+  }
+  if (knockMessage) {
+    const filtered = filterContent(knockMessage);
+    if (filtered.blocked) {
+      if (filtered.crisis) return res.status(451).json({ error: 'crisis', crisis: true });
+      return res.status(422).json({ error: '敲門回答包含不允許的詞語。' });
+    }
+  }
+
+  const { data: existing } = await admin
+    .from('gathering_attendees')
+    .select('*')
+    .eq('gathering_id', id)
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (existing) {
+    if (existing.status === 'pending' || existing.status === 'approved') {
+      return res.status(409).json({ error: '你已經申請或已獲邀。', code: 'already_applied' });
+    }
+    if (existing.status === 'rejected') {
+      return res.status(409).json({ error: '此聚會申請已被婉拒，無法再申請。', code: 'rejected' });
+    }
+  }
+
+  const autoApprove = row.approval_mode === 'auto' && row.status === 'open'
+    && (row.approved_count || 0) < row.max_participants;
+
+  const attendeePayload = {
+    gathering_id: id,
+    user_id: user.id,
+    status: autoApprove ? 'approved' : 'pending',
+    knock_message: knockMessage || null,
+    reviewed_at: autoApprove ? databaseNowIso() : null,
+    reviewed_by: autoApprove ? row.host_id : null,
+    updated_at: databaseNowIso(),
+  };
+
+  let attendance;
+  if (existing?.status === 'withdrawn') {
+    const { data, error } = await admin
+      .from('gathering_attendees')
+      .update(attendeePayload)
+      .eq('id', existing.id)
+      .select('*')
+      .single();
+    if (error) {
+      console.error('[gatherings/apply] update failed:', error.message);
+      return res.status(500).json({ error: '申請失敗。' });
+    }
+    attendance = data;
+  } else {
+    const { data, error } = await admin
+      .from('gathering_attendees')
+      .insert(attendeePayload)
+      .select('*')
+      .single();
+    if (error) {
+      console.error('[gatherings/apply] insert failed:', error.message);
+      return res.status(500).json({ error: '申請失敗。' });
+    }
+    attendance = data;
+  }
+
+  if (!autoApprove) {
+    notifyGatheringApplication({
+      hostId: row.host_id,
+      gatheringId: id,
+      gatheringTitle: row.title,
+      startsAt: row.starts_at,
+      applicantName: actor.profile.display_name,
+      knockMessage,
+    }).catch((err) => console.error('[gatherings/apply] notify failed:', err?.message || err));
+  } else {
+    notifyGatheringDecision({
+      applicantId: user.id,
+      gatheringId: id,
+      gatheringTitle: row.title,
+      approved: true,
+    }).catch(() => {});
+  }
+
+  const refreshed = (await admin.from('gatherings').select('*').eq('id', id).maybeSingle()).data || row;
+
+  return res.status(200).json({
+    attendance: {
+      status: attendance.status,
+      knock_message: attendance.knock_message,
+    },
+    gathering: toPublicGathering(refreshed, {
+      myAttendance: attendance,
+      includePrivate: attendance.status === 'approved',
+    }),
+  });
+}

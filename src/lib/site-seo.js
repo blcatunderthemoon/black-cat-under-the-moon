@@ -18,6 +18,7 @@ export const STATIC_SITEMAP_PATHS = [
   { path: '/cat-families', changefreq: 'monthly', priority: '0.8' },
   { path: '/drift-bottle.html', changefreq: 'monthly', priority: '0.8' },
   { path: '/forum', changefreq: 'daily', priority: '0.9' },
+  { path: '/gatherings', changefreq: 'daily', priority: '0.8' },
   { path: '/moon-journey', changefreq: 'monthly', priority: '0.7' },
   { path: '/premium', changefreq: 'monthly', priority: '0.7' },
   { path: '/contact.html', changefreq: 'yearly', priority: '0.4' },

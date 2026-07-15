@@ -107,9 +107,9 @@ html:has(.mode-top-bar--quiz) {
   display: none !important;
 }
 
-/* Index — greeting sits in nav row, immediately before moon badge */
+/* Index — left gatherings chip stays; greeting sits in nav row before moon badge */
 .mode-top-bar--index.mode-top-bar--greeting .mode-top-bar__row {
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
 }
 
 .mode-top-bar--index.mode-top-bar--greeting .mode-top-bar__spacer,
@@ -117,8 +117,12 @@ html:has(.mode-top-bar--quiz) {
   display: none;
 }
 
+.mode-top-bar--index.mode-top-bar--greeting .mode-top-bar__gatherings-link {
+  display: inline-flex;
+}
+
 .mode-top-bar--index.mode-top-bar--greeting .mode-top-bar__header-end {
-  grid-column: 1;
+  grid-column: 2;
   width: 100%;
   max-width: 100%;
   justify-content: flex-end;
@@ -189,6 +193,50 @@ html:has(.mode-top-bar--quiz) {
 
 .mode-top-bar__spacer {
   grid-column: 1;
+}
+
+/* Index left entry — Moonlight Gatherings (icon only, no chip border) */
+.mode-top-bar__gatherings-link.mode-header-chip {
+  grid-column: 1;
+  justify-self: start;
+  position: static;
+  transform: none;
+  letter-spacing: 0.02em;
+  gap: 5px;
+  z-index: 2;
+  padding: 0 4px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.mode-top-bar__gatherings-link.mode-header-chip::after {
+  display: none;
+}
+
+.mode-top-bar__gatherings-link.mode-header-chip:hover {
+  color: #ffe066;
+  border: none;
+  box-shadow: none;
+}
+
+@media (max-width: 420px) {
+  .mode-top-bar__gatherings-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .mode-top-bar__gatherings-link.mode-header-chip {
+    padding: 0;
+    min-width: 32px;
+  }
 }
 
 /* Center mode / progress chip */
