@@ -226,7 +226,7 @@ export default function GatheringDetailPage() {
                       <button type="button" disabled={busy} onClick={withdraw}>撤回</button>
                     )}
                   </>
-                ) : gathering.status === 'open' ? (
+                ) : gathering.status === 'open' && session ? (
                   <>
                     <label className="gathering-form__field">
                       <span>電郵 *</span>
@@ -273,14 +273,13 @@ export default function GatheringDetailPage() {
                       申請加入
                     </button>
                   </>
-                ) : (
-                  <p className="gatherings-empty">此聚會目前無法報名。</p>
-                )}
-                {!session && (
+                ) : gathering.status === 'open' && !session ? (
                   <p className="gathering-detail__login-hint">
                     <Link href={`/login?redirect=${encodeURIComponent(`/gatherings/${id}`)}`}>登入</Link>
                     {' '}後先可以申請。
                   </p>
+                ) : (
+                  <p className="gatherings-empty">此聚會目前無法報名。</p>
                 )}
               </section>
             )}
