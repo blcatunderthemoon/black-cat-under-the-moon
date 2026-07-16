@@ -790,6 +790,16 @@
   margin-top: 0.25rem;
 }
 
+/* LoadingText default uses moon-send gradient (blue); keep white on gold CTA */
+.gathering-form__submit .moon-loading__label,
+.gathering-form__submit .moon-loading__label .loading-dots::after {
+  background: none;
+  -webkit-background-clip: unset;
+  background-clip: unset;
+  -webkit-text-fill-color: #fff;
+  color: #fff;
+}
+
 /* Create page hero */
 .gatherings-hero--create {
   display: flex;

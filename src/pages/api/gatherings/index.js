@@ -185,8 +185,26 @@ async function handlePost(req, res) {
     .single();
 
   if (error) {
-    console.error('[gatherings] create failed:', error.message);
-    return res.status(500).json({ error: '發起聚會失敗，請稍後再試。' });
+    console.error('[gatherings] create failed:', error.message, error.code, error.details);
+    const msg = String(error.message || '');
+    if (
+      msg.includes('schema cache')
+      || msg.includes('does not exist')
+      || msg.includes('gatherings')
+      || error.code === 'PGRST204'
+      || error.code === 'PGRST205'
+      || error.code === '42P01'
+    ) {
+      return res.status(503).json({
+        error: '月光聚會資料庫尚未就緒。請在 Supabase 依序執行 gatherings migrations（含聯絡欄位），然後執行：NOTIFY pgrst, \'reload schema\';',
+        code: 'migration_required',
+        detail: process.env.NODE_ENV === 'development' ? msg : undefined,
+      });
+    }
+    return res.status(500).json({
+      error: '發起聚會失敗，請稍後再試。',
+      detail: process.env.NODE_ENV === 'development' ? msg : undefined,
+    });
   }
 
   return res.status(201).json({
