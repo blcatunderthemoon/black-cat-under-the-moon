@@ -252,7 +252,9 @@ export default function InboxPage() {
                 const hasUnread = thread.unread_count > 0;
                 const hasReplyOpportunity = thread.reply_opportunity;
                 const isMatch = thread.source_type === 'match';
-                const isSystem = thread.source_type === 'system';
+                const isSystem = thread.source_type === 'system'
+                  || thread.source_id === 'gathering'
+                  || thread.source_id === 'forum_moderation';
                 const iconVariant = hasUnread ? 'sealed-glow' : 'read';
                 const metaText = thread.list_meta
                   || (hasUnread && hasReplyOpportunity && !isMatch && !isSystem ? '1 封回信機會待用' : null);

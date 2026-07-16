@@ -210,10 +210,11 @@ export function validateGatheringInput(body = {}, { partial = false } = {}) {
   }
 
   if (!partial || body.host_email !== undefined || body.host_phone !== undefined || body.email !== undefined || body.phone !== undefined) {
+    const isOnline = out.is_online != null ? out.is_online : !!body.is_online;
     const contact = parseGatheringContact({
       email: body.host_email ?? body.email,
       phone: body.host_phone ?? body.phone,
-    });
+    }, { phoneRequired: !isOnline });
     if (!contact.ok) errors.push(contact.error);
     else {
       out.host_email = contact.email;

@@ -44,7 +44,7 @@ export default async function handler(req, res) {
   const blockCheck = await assertNotBlockedWithHost(row.host_id, user.id);
   if (!blockCheck.ok) return res.status(blockCheck.status).json({ error: blockCheck.error, code: blockCheck.code });
 
-  const contact = parseGatheringContact(req.body || {});
+  const contact = parseGatheringContact(req.body || {}, { phoneRequired: !row.is_online });
   if (!contact.ok) {
     return res.status(400).json({ error: contact.error, code: 'contact_required' });
   }

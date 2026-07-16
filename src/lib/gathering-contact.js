@@ -28,11 +28,26 @@ export function normalizeGatheringPhone(raw) {
   return s;
 }
 
-export function parseGatheringContact(body, { emailKey = 'email', phoneKey = 'phone' } = {}) {
+/**
+ * @param {object} body
+ * @param {{ emailKey?: string, phoneKey?: string, phoneRequired?: boolean }} [opts]
+ *   phoneRequired defaults true (offline). Online gatherings may omit phone.
+ */
+export function parseGatheringContact(body, {
+  emailKey = 'email',
+  phoneKey = 'phone',
+  phoneRequired = true,
+} = {}) {
   const email = normalizeGatheringEmail(body?.[emailKey]);
-  const phone = normalizeGatheringPhone(body?.[phoneKey]);
+  const phoneRaw = body?.[phoneKey];
+  const phoneEmpty = phoneRaw == null || String(phoneRaw).trim() === '';
+  const phone = phoneEmpty ? null : normalizeGatheringPhone(phoneRaw);
   const errors = [];
   if (!email) errors.push('請填寫有效電郵。');
-  if (!phone) errors.push('請填寫有效電話（8–20 位數字，可含 +852）。');
+  if (phoneRequired && !phone) {
+    errors.push('請填寫有效電話（8–20 位數字，可含 +852）。');
+  } else if (!phoneEmpty && !phone) {
+    errors.push('電話格式無效（8–20 位數字，可含 +852）。');
+  }
   return { ok: errors.length === 0, email, phone, error: errors[0] || null, errors };
 }

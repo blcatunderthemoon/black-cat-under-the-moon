@@ -27,12 +27,15 @@ import PixelMixedLabel from '../../components/PixelMixedLabel.js';
 import { markInboxThreadReadLocally } from '../../lib/inbox-read-sync.js';
 
 function isLetterMessage(msg) {
+  if (isSystemMessage(msg)) return false;
   const type = msg?.message_type;
   return type === 'user_letter' || type === 'letter' || !type;
 }
 
 function isSystemMessage(msg) {
-  return msg?.message_type === 'system';
+  if (msg?.message_type === 'system') return true;
+  const kind = msg?.payload?.kind;
+  return typeof kind === 'string' && kind.startsWith('gathering_');
 }
 
 function formatTime(dateStr) {
@@ -243,7 +246,9 @@ export default function ThreadPage() {
 
   const messages = data?.messages || [];
   const isPhotoExchangeThread = data?.thread?.source_type === 'photo_exchange';
-  const isSystemThread = data?.thread?.source_type === 'system';
+  const isSystemThread = data?.thread?.source_type === 'system'
+    || data?.thread?.source_id === 'gathering'
+    || data?.thread?.source_id === 'forum_moderation';
   const letterMessages = isPhotoExchangeThread
     ? []
     : messages.filter((m) => isLetterMessage(m));
@@ -478,7 +483,11 @@ function SystemNoticeItem({ msg, stackIndex = 0 }) {
       style={{ '--letter-z': stackIndex + 1 }}
     >
       <article className="inbox-system-notice">
-        <p className="inbox-system-notice__eyebrow">系統通知</p>
+        <p className="inbox-system-notice__eyebrow">
+          {typeof msg.payload?.kind === 'string' && msg.payload.kind.startsWith('gathering_')
+            ? '月光聚會'
+            : '系統通知'}
+        </p>
         <p className="inbox-system-notice__body">{msg.content}</p>
         {url && cta && (
           <Link href={url} className="inbox-system-notice__link pixel-link">

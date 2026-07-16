@@ -345,19 +345,23 @@ export default function GatheringDetailPage() {
                         />
                       </label>
                       <label className="gathering-form__field">
-                        <span>電話 *</span>
+                        <span>{gathering.is_online ? '電話（選填）' : '電話 *'}</span>
                         <input
                           type="tel"
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
                           maxLength={20}
-                          required
+                          required={!gathering.is_online}
                           autoComplete="tel"
                           placeholder="例如：91234567"
                         />
                       </label>
                     </div>
-                    <p className="gathering-form__hint">僅主辦人可見，唔會公開顯示。</p>
+                    <p className="gathering-form__hint">
+                      {gathering.is_online
+                        ? '僅主辦人可見；線上聚會電話可留空。'
+                        : '僅主辦人可見，唔會公開顯示。'}
+                    </p>
 
                     {gathering.require_knock_message && (
                       <label className="gathering-form__field gathering-detail__knock-field">
@@ -380,7 +384,7 @@ export default function GatheringDetailPage() {
                       <button
                         type="submit"
                         className="gatherings-hero__cta gathering-detail__apply-cta"
-                        disabled={busy || !email.trim() || !phone.trim()}
+                        disabled={busy || !email.trim() || (!gathering.is_online && !phone.trim())}
                       >
                         {busy ? '提交中…' : '申請加入'}
                       </button>

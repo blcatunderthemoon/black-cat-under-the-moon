@@ -50,14 +50,15 @@ export default async function handler(req, res) {
         ? await canViewPrivateLocation(admin, row, user.id)
         : false;
 
-      // Backfill missed Inbox approval/rejection notices (silent if already sent / migration missing).
+      // Backfill missed Inbox approval/rejection notices.
+      let inboxNotified = null;
       if (
         user
         && user.id !== row.host_id
         && (myAttendance?.status === 'approved' || myAttendance?.status === 'rejected')
       ) {
         try {
-          await ensureGatheringDecisionNotified({
+          inboxNotified = await ensureGatheringDecisionNotified({
             applicantId: user.id,
             gatheringId: row.id,
             gatheringTitle: row.title,
@@ -65,6 +66,7 @@ export default async function handler(req, res) {
           });
         } catch (err) {
           console.error('[gatherings/id] ensure notify failed:', err?.message || err);
+          inboxNotified = false;
         }
       }
 
@@ -75,6 +77,7 @@ export default async function handler(req, res) {
           includePrivate,
         }),
         is_host: !!(user && user.id === row.host_id),
+        inbox_decision_notified: inboxNotified,
       });
     }
 

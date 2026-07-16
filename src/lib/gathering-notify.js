@@ -1,69 +1,103 @@
 /**
- * Moonlight Gatherings — Inbox system notifications (Phase 1: 1:1 system threads).
+ * Moonlight Gatherings — Inbox notifications for host + applicant.
+ * Uses source_type=system when allowed; falls back to direct + gathering source_id
+ * so notices still land even before the inbox system migration is applied.
  */
 
 import { getAdminClient } from './server-auth.js';
 import { databaseNowIso } from './hong-kong-time.js';
 import { formatGatheringHkTime } from './gatherings.js';
 
-const SOURCE_ID = 'gathering';
+export const GATHERING_INBOX_SOURCE_ID = 'gathering';
 
-async function findOrCreateGatheringSystemThread(admin, userId) {
-  const { data: existing, error: findErr } = await admin
+async function findExistingGatheringThread(admin, userId) {
+  // Prefer true system threads, then legacy fallback.
+  const { data: systemThread } = await admin
     .from('inbox_threads')
-    .select('id')
-    .eq('source_type', 'system')
-    .eq('source_id', SOURCE_ID)
+    .select('id, source_type')
+    .eq('source_id', GATHERING_INBOX_SOURCE_ID)
     .eq('participant_a', userId)
     .eq('participant_b', userId)
+    .order('created_at', { ascending: true })
     .limit(1)
     .maybeSingle();
 
-  if (findErr) {
-    console.error('[gathering-notify] thread find failed:', findErr.message, findErr.code);
-  }
+  if (systemThread?.id) return systemThread;
+  return null;
+}
+
+async function findOrCreateGatheringSystemThread(admin, userId) {
+  const existing = await findExistingGatheringThread(admin, userId);
   if (existing?.id) return existing.id;
 
+  // Try system first (correct schema).
   const { data: created, error } = await admin
     .from('inbox_threads')
     .insert({
       participant_a: userId,
       participant_b: userId,
       source_type: 'system',
-      source_id: SOURCE_ID,
+      source_id: GATHERING_INBOX_SOURCE_ID,
       last_message_at: databaseNowIso(),
     })
     .select('id')
     .single();
 
-  if (error) {
-    console.error(
-      '[gathering-notify] thread create failed:',
-      error.message,
-      error.code,
-      error.details,
-      '— run migration 20260716005000_inbox_system_messages_fix.sql',
-    );
+  if (!error && created?.id) return created.id;
+
+  console.warn(
+    '[gathering-notify] system thread blocked, falling back to direct:',
+    error?.message,
+    error?.code,
+  );
+
+  // Fallback: direct self-thread (works with older CHECK constraints).
+  const { data: fallback, error: fallbackErr } = await admin
+    .from('inbox_threads')
+    .insert({
+      participant_a: userId,
+      participant_b: userId,
+      source_type: 'direct',
+      source_id: GATHERING_INBOX_SOURCE_ID,
+      last_message_at: databaseNowIso(),
+    })
+    .select('id')
+    .single();
+
+  if (fallbackErr) {
+    console.error('[gathering-notify] fallback thread create failed:', fallbackErr.message, fallbackErr.code);
     return null;
   }
-  return created.id;
+  return fallback.id;
 }
 
 async function insertInboxMessage(admin, row) {
-  const { error } = await admin.from('inbox_messages').insert(row);
-  if (!error) return { ok: true };
+  const attempts = [
+    row,
+    // message_type system may be blocked — use user_letter with same payload.
+    row.message_type === 'system'
+      ? { ...row, message_type: 'user_letter' }
+      : null,
+    // sender_id null may be blocked — omit field.
+    (() => {
+      const { sender_id: _s, ...rest } = row;
+      return rest;
+    })(),
+    (() => {
+      const { sender_id: _s, ...rest } = row;
+      return { ...rest, message_type: 'user_letter' };
+    })(),
+  ].filter(Boolean);
 
-  // sender_id NULL may be rejected before migration; retry without the column.
-  if (row.sender_id === null && /sender_id|null/i.test(String(error.message || ''))) {
-    const { sender_id: _omit, ...rest } = row;
-    const retry = await admin.from('inbox_messages').insert(rest);
-    if (!retry.error) return { ok: true };
-    console.error('[gathering-notify] message insert retry failed:', retry.error.message, retry.error.code);
-    return { ok: false, error: retry.error };
+  let lastError = null;
+  for (const attempt of attempts) {
+    const { error } = await admin.from('inbox_messages').insert(attempt);
+    if (!error) return { ok: true, message_type: attempt.message_type };
+    lastError = error;
   }
 
-  console.error('[gathering-notify] message insert failed:', error.message, error.code, error.details);
-  return { ok: false, error };
+  console.error('[gathering-notify] message insert failed:', lastError?.message, lastError?.code, lastError?.details);
+  return { ok: false, error: lastError };
 }
 
 async function sendSystemMessage(admin, userId, content, payload) {
@@ -91,7 +125,6 @@ async function hasGatheringSystemMessage(admin, userId, { kind, gatheringId, app
     .from('inbox_messages')
     .select('id')
     .eq('recipient_id', userId)
-    .eq('message_type', 'system')
     .filter('payload->>kind', 'eq', kind)
     .filter('payload->>gathering_id', 'eq', String(gatheringId))
     .limit(1);
@@ -150,11 +183,11 @@ export async function notifyGatheringApplicationReceived({
     kind: 'gathering_applied',
     gatheringId,
   })) {
-    return false;
+    return true;
   }
   const when = formatGatheringHkTime(startsAt);
   const title = String(gatheringTitle || '月光聚會').slice(0, 40);
-  const content = `🌙 你已申請「${title}」${when ? `（${when}）` : ''}。等候主辦人審核，結果會喺呢度通知你。`;
+  const content = `🌙 你已申請「${title}」${when ? `（${when}）` : ''}。等候主辦人審核，結果會喺 Inbox 通知你。`;
   return sendSystemMessage(admin, applicantId, content, {
     kind: 'gathering_applied',
     gathering_id: gatheringId,
@@ -195,7 +228,7 @@ export async function ensureGatheringDecisionNotified({
   const admin = getAdminClient();
   const kind = approved ? 'gathering_approved' : 'gathering_rejected';
   if (await hasGatheringSystemMessage(admin, applicantId, { kind, gatheringId })) {
-    return true; // already in Inbox
+    return true;
   }
   return notifyGatheringDecision({
     applicantId,
@@ -224,13 +257,13 @@ export async function ensureGatheringApplicationNotified({
     gatheringId,
     applicantId,
   });
-  if (already) return false;
+  if (already) return true;
   const joined = await hasGatheringSystemMessage(admin, hostId, {
     kind: 'gathering_joined',
     gatheringId,
     applicantId,
   });
-  if (joined) return false;
+  if (joined) return true;
 
   return notifyGatheringApplication({
     hostId,
@@ -262,4 +295,9 @@ export async function notifyGatheringCancelled({
     if (ok) any = true;
   }
   return any;
+}
+
+/** True when an inbox thread is a Moonlight Gathering notice thread. */
+export function isGatheringInboxThread(thread) {
+  return thread?.source_id === GATHERING_INBOX_SOURCE_ID;
 }

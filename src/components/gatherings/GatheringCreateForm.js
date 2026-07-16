@@ -154,6 +154,20 @@ export default function GatheringCreateForm({ meta }) {
     <form className="gathering-form" onSubmit={onSubmit}>
       <GatheringSafetyNotice />
 
+      <fieldset className="gathering-form__field gathering-form__row gathering-form__mode">
+        <legend className="gathering-form__mode-legend">聚會形式</legend>
+        <div className="gathering-form__mode-options" role="radiogroup" aria-label="聚會形式">
+          <label className={`gathering-form__mode-opt${!isOnline ? ' is-on' : ''}`}>
+            <input type="radio" checked={!isOnline} onChange={() => setIsOnline(false)} />
+            <span>線下</span>
+          </label>
+          <label className={`gathering-form__mode-opt${isOnline ? ' is-on' : ''}`}>
+            <input type="radio" checked={isOnline} onChange={() => setIsOnline(true)} />
+            <span>線上</span>
+          </label>
+        </div>
+      </fieldset>
+
       <label className="gathering-form__field">
         <span>聚會主題 *</span>
         <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={40} required placeholder="例如：旺角深夜桌遊局" />
@@ -217,20 +231,6 @@ export default function GatheringCreateForm({ meta }) {
         <p className="gathering-form__hint">可揀預設標籤，或自己加一個（唔使加 #）。</p>
       </fieldset>
 
-      <fieldset className="gathering-form__field gathering-form__row gathering-form__mode">
-        <legend className="gathering-form__mode-legend">聚會形式</legend>
-        <div className="gathering-form__mode-options" role="radiogroup" aria-label="聚會形式">
-          <label className={`gathering-form__mode-opt${!isOnline ? ' is-on' : ''}`}>
-            <input type="radio" checked={!isOnline} onChange={() => setIsOnline(false)} />
-            <span>線下</span>
-          </label>
-          <label className={`gathering-form__mode-opt${isOnline ? ' is-on' : ''}`}>
-            <input type="radio" checked={isOnline} onChange={() => setIsOnline(true)} />
-            <span>線上</span>
-          </label>
-        </div>
-      </fieldset>
-
       <label className="gathering-form__field">
         <span>開始時間 *</span>
         <input type="datetime-local" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} required />
@@ -281,18 +281,22 @@ export default function GatheringCreateForm({ meta }) {
           />
         </label>
         <label className="gathering-form__field">
-          <span>電話 *</span>
+          <span>{isOnline ? '電話（選填）' : '電話 *'}</span>
           <input
             type="tel"
             value={hostPhone}
             onChange={(e) => setHostPhone(e.target.value)}
             maxLength={20}
-            required
+            required={!isOnline}
             autoComplete="tel"
             placeholder="例如：91234567 或 +85291234567"
           />
         </label>
-        <p className="gathering-form__hint">方便聯絡；電郵同電話唔會公開顯示喺活動頁／列表。</p>
+        <p className="gathering-form__hint">
+          {isOnline
+            ? '方便聯絡；線上聚會電話可留空。電郵同電話唔會公開顯示喺活動頁／列表。'
+            : '方便聯絡；電郵同電話唔會公開顯示喺活動頁／列表。'}
+        </p>
       </fieldset>
 
       <label className="gathering-form__field">

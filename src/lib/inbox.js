@@ -13,6 +13,7 @@ import { INBOX_MESSAGE_MAX_LENGTH } from './inbox-limits.js';
 import { enrichThreadWithChannel, enrichPhotoExchangeThread } from './inbox-channel.js';
 import { getPhotoExchangesByIds } from './photo-exchange.js';
 import { normalizeLetterPrefs, validateLetterStyle } from './letter-gameplay.js';
+import { isGatheringInboxThread } from './gathering-notify.js';
 import {
   enrichMatchThreadListItem,
   indexMatchCardsByThread,
@@ -282,7 +283,7 @@ export async function listThreads(userId, { limit = 20, offset = 0 } = {}) {
     const threadMessages = messagesByThread[thread.id] || [];
     const latestMessage = threadMessages[threadMessages.length - 1] || null;
     const unreadCount = unreadByThread[thread.id] || 0;
-    const isSystem = thread.source_type === 'system';
+    const isSystem = thread.source_type === 'system' || isGatheringInboxThread(thread);
 
     const channelMeta = isSystem
       ? {
@@ -558,7 +559,7 @@ export async function getThread(threadId, userId) {
     };
   });
 
-  const channelMeta = thread.source_type === 'system'
+  const channelMeta = (thread.source_type === 'system' || isGatheringInboxThread(thread))
     ? {
         mysterious_title: '系統通知',
         list_meta: thread.source_id === 'gathering'
@@ -596,7 +597,7 @@ export async function getThread(threadId, userId) {
     ? await getQuotaUsage(userId, 'active_letter_monthly')
     : null;
 
-  const isSystem = thread.source_type === 'system';
+  const isSystem = thread.source_type === 'system' || isGatheringInboxThread(thread);
   const systemName = thread.source_id === 'gathering'
     ? '月光聚會'
     : thread.source_id === 'forum_moderation'
