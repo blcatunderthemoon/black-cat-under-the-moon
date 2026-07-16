@@ -3,6 +3,7 @@
  */
 
 import { requireUser, sendAuthError, getAdminClient } from '../../../../../lib/server-auth.js';
+import { ensureGatheringApplicationNotified } from '../../../../../lib/gathering-notify.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
@@ -18,7 +19,11 @@ export default async function handler(req, res) {
   }
 
   const admin = getAdminClient();
-  const { data: row } = await admin.from('gatherings').select('id, host_id').eq('id', id).maybeSingle();
+  const { data: row } = await admin
+    .from('gatherings')
+    .select('id, host_id, title, starts_at')
+    .eq('id', id)
+    .maybeSingle();
   if (!row) return res.status(404).json({ error: '找不到此聚會。' });
   if (row.host_id !== user.id) return res.status(403).json({ error: '只有主辦人可以查看申請列表。' });
 
@@ -48,6 +53,24 @@ export default async function handler(req, res) {
     ]);
     profileMap = new Map((profiles || []).map((p) => [p.id, p]));
     mirrorMap = new Map((mirrors || []).map((m) => [m.user_id, m.mirror_type]));
+  }
+
+  // Backfill host Inbox notices for pending applications that never notified.
+  const pending = (attendees || []).filter((a) => a.status === 'pending');
+  if (pending.length) {
+    await Promise.all(
+      pending.map((a) => ensureGatheringApplicationNotified({
+        hostId: row.host_id,
+        gatheringId: row.id,
+        gatheringTitle: row.title,
+        startsAt: row.starts_at,
+        applicantId: a.user_id,
+        applicantName: profileMap.get(a.user_id)?.display_name,
+        knockMessage: a.knock_message,
+      }).catch((err) => {
+        console.error('[gatherings/attendees] ensure host notify failed:', err?.message || err);
+      })),
+    );
   }
 
   return res.status(200).json({

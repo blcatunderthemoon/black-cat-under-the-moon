@@ -154,13 +154,13 @@ export default function GatheringsIndexPage() {
       <GatheringShell maxWidth="880px">
         <header className="gatherings-hero gatherings-hero--compact gatherings-hero--cal">
           <div className="gatherings-hero__copy">
-            <p className="gatherings-hero__eyebrow">Moonlight Gatherings</p>
+            <p className="gatherings-hero__eyebrow">QUEST BOARD · Moonlight Gatherings</p>
             <h1 className="gatherings-hero__title">
               <span className="gatherings-hero__cal" aria-hidden="true">📅</span>
               {' '}月光聚會
             </h1>
             <p className="gatherings-hero__lead">
-              揀日子發起/參加聚會
+              揀日子發起／參加聚會 · 組隊見面
             </p>
           </div>
           <div className="gatherings-hero__actions">

@@ -10,6 +10,7 @@ import {
   assertNotBlockedWithHost,
   maybeMarkCompleted,
   toPublicGathering,
+  syncGatheringApprovedCount,
 } from '../../../../lib/gatherings.js';
 import { notifyGatheringApplication, notifyGatheringDecision } from '../../../../lib/gathering-notify.js';
 import { databaseNowIso } from '../../../../lib/hong-kong-time.js';
@@ -120,22 +121,28 @@ export default async function handler(req, res) {
     attendance = data;
   }
 
-  if (!autoApprove) {
+  let hostNotified = false;
+  let applicantNotified = false;
+
+  // Host always gets Inbox notice when someone applies / auto-joins.
+  try {
+    hostNotified = await notifyGatheringApplication({
+      hostId: row.host_id,
+      gatheringId: id,
+      gatheringTitle: row.title,
+      startsAt: row.starts_at,
+      applicantId: user.id,
+      applicantName: actor.profile.display_name,
+      knockMessage,
+      autoApproved,
+    });
+  } catch (err) {
+    console.error('[gatherings/apply] host notify failed:', err?.message || err);
+  }
+
+  if (autoApprove) {
     try {
-      await notifyGatheringApplication({
-        hostId: row.host_id,
-        gatheringId: id,
-        gatheringTitle: row.title,
-        startsAt: row.starts_at,
-        applicantName: actor.profile.display_name,
-        knockMessage,
-      });
-    } catch (err) {
-      console.error('[gatherings/apply] notify failed:', err?.message || err);
-    }
-  } else {
-    try {
-      await notifyGatheringDecision({
+      applicantNotified = await notifyGatheringDecision({
         applicantId: user.id,
         gatheringId: id,
         gatheringTitle: row.title,
@@ -144,6 +151,10 @@ export default async function handler(req, res) {
     } catch (err) {
       console.error('[gatherings/apply] auto-approve notify failed:', err?.message || err);
     }
+  }
+
+  if (attendance.status === 'approved') {
+    await syncGatheringApprovedCount(admin, id);
   }
 
   const refreshed = (await admin.from('gatherings').select('*').eq('id', id).maybeSingle()).data || row;
@@ -157,5 +168,7 @@ export default async function handler(req, res) {
       myAttendance: attendance,
       includePrivate: attendance.status === 'approved',
     }),
+    host_notified: hostNotified,
+    applicant_notified: applicantNotified,
   });
 }

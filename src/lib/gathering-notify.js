@@ -9,7 +9,7 @@ import { formatGatheringHkTime } from './gatherings.js';
 const SOURCE_ID = 'gathering';
 
 async function findOrCreateGatheringSystemThread(admin, userId) {
-  const { data: existing } = await admin
+  const { data: existing, error: findErr } = await admin
     .from('inbox_threads')
     .select('id')
     .eq('source_type', 'system')
@@ -19,6 +19,9 @@ async function findOrCreateGatheringSystemThread(admin, userId) {
     .limit(1)
     .maybeSingle();
 
+  if (findErr) {
+    console.error('[gathering-notify] thread find failed:', findErr.message, findErr.code);
+  }
   if (existing?.id) return existing.id;
 
   const { data: created, error } = await admin
@@ -34,7 +37,7 @@ async function findOrCreateGatheringSystemThread(admin, userId) {
     .single();
 
   if (error) {
-    console.error('[gathering-notify] thread create failed:', error.message);
+    console.error('[gathering-notify] thread create failed:', error.message, error.code, error.details);
     return null;
   }
   return created.id;
@@ -54,7 +57,7 @@ async function sendSystemMessage(admin, userId, content, payload) {
   });
 
   if (error) {
-    console.error('[gathering-notify] message insert failed:', error.message);
+    console.error('[gathering-notify] message insert failed:', error.message, error.code, error.details);
     return false;
   }
 
@@ -62,21 +65,52 @@ async function sendSystemMessage(admin, userId, content, payload) {
   return true;
 }
 
+async function hasGatheringSystemMessage(admin, userId, { kind, gatheringId, applicantId }) {
+  let query = admin
+    .from('inbox_messages')
+    .select('id')
+    .eq('recipient_id', userId)
+    .eq('message_type', 'system')
+    .filter('payload->>kind', 'eq', kind)
+    .filter('payload->>gathering_id', 'eq', String(gatheringId))
+    .limit(1);
+
+  if (applicantId) {
+    query = query.filter('payload->>applicant_id', 'eq', String(applicantId));
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    console.error('[gathering-notify] dedupe check failed:', error.message);
+    return false;
+  }
+  return (data || []).length > 0;
+}
+
 export async function notifyGatheringApplication({
   hostId,
   gatheringId,
   gatheringTitle,
   startsAt,
+  applicantId,
   applicantName,
   knockMessage,
+  autoApproved = false,
 }) {
+  if (!hostId) return false;
   const admin = getAdminClient();
   const when = formatGatheringHkTime(startsAt);
   const knock = knockMessage ? `回答：「${String(knockMessage).slice(0, 80)}」` : '（冇留言）';
-  const content = `🌙 有人申請加入你的聚會「${String(gatheringTitle).slice(0, 40)}」${when ? `（${when}）` : ''}。申請人：${applicantName || '匿名貓咪'}。${knock}`;
+  const title = String(gatheringTitle || '月光聚會').slice(0, 40);
+  const name = applicantName || '匿名貓咪';
+  const content = autoApproved
+    ? `🌙 ${name} 已加入你的聚會「${title}」${when ? `（${when}）` : ''}（自動批准）。${knock}`
+    : `🌙 有人申請加入你的聚會「${title}」${when ? `（${when}）` : ''}。申請人：${name}。${knock}`;
+
   return sendSystemMessage(admin, hostId, content, {
-    kind: 'gathering_application',
+    kind: autoApproved ? 'gathering_joined' : 'gathering_application',
     gathering_id: gatheringId,
+    applicant_id: applicantId || null,
     gathering_url: `/gatherings/${gatheringId}`,
   });
 }
@@ -97,6 +131,69 @@ export async function notifyGatheringDecision({
     kind: approved ? 'gathering_approved' : 'gathering_rejected',
     gathering_id: gatheringId,
     gathering_url: `/gatherings/${gatheringId}`,
+  });
+}
+
+/**
+ * If approval/rejection notice never landed (e.g. source_type CHECK blocked insert),
+ * send it once when the applicant next loads the gathering.
+ */
+export async function ensureGatheringDecisionNotified({
+  applicantId,
+  gatheringId,
+  gatheringTitle,
+  approved,
+}) {
+  if (!applicantId || !gatheringId || approved == null) return false;
+  const admin = getAdminClient();
+  const kind = approved ? 'gathering_approved' : 'gathering_rejected';
+  if (await hasGatheringSystemMessage(admin, applicantId, { kind, gatheringId })) {
+    return false;
+  }
+  return notifyGatheringDecision({
+    applicantId,
+    gatheringId,
+    gatheringTitle,
+    approved,
+  });
+}
+
+/**
+ * Backfill host Inbox when a pending application never produced a system notice.
+ */
+export async function ensureGatheringApplicationNotified({
+  hostId,
+  gatheringId,
+  gatheringTitle,
+  startsAt,
+  applicantId,
+  applicantName,
+  knockMessage,
+}) {
+  if (!hostId || !gatheringId || !applicantId) return false;
+  const admin = getAdminClient();
+  const already = await hasGatheringSystemMessage(admin, hostId, {
+    kind: 'gathering_application',
+    gatheringId,
+    applicantId,
+  });
+  if (already) return false;
+  // Also treat auto-join notice as already notified for this applicant.
+  const joined = await hasGatheringSystemMessage(admin, hostId, {
+    kind: 'gathering_joined',
+    gatheringId,
+    applicantId,
+  });
+  if (joined) return false;
+
+  return notifyGatheringApplication({
+    hostId,
+    gatheringId,
+    gatheringTitle,
+    startsAt,
+    applicantId,
+    applicantName,
+    knockMessage,
   });
 }
 

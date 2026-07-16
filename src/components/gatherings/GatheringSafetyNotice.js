@@ -1,13 +1,23 @@
 /**
- * Safety notice for gatherings — collapsible to keep hero clear.
+ * Safety notice for gatherings — open by default, still collapsible.
  */
 
-export default function GatheringSafetyNotice({ defaultOpen = false }) {
+import { useState } from 'react';
+
+export default function GatheringSafetyNotice({ defaultOpen = true }) {
+  const [open, setOpen] = useState(defaultOpen);
+
   return (
-    <details className="gathering-safety" {...(defaultOpen ? { open: true } : {})}>
+    <details
+      className="gathering-safety"
+      open={open}
+      onToggle={(e) => setOpen(e.currentTarget.open)}
+    >
       <summary className="gathering-safety__summary">
         <span className="gathering-safety__title">安全小提示</span>
-        <span className="gathering-safety__hint" aria-hidden="true">點開睇</span>
+        <span className="gathering-safety__hint" aria-hidden="true">
+          {open ? '收起' : '展開'}
+        </span>
       </summary>
       <ul className="gathering-safety__list">
         <li>詳細地址／語音連結只會喺獲批准後先顯示。</li>

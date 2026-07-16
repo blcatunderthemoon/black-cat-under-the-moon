@@ -5,7 +5,7 @@
 import { requireUser, sendAuthError, getAdminClient } from '../../../../../../lib/server-auth.js';
 import { databaseNowIso } from '../../../../../../lib/hong-kong-time.js';
 import { notifyGatheringDecision } from '../../../../../../lib/gathering-notify.js';
-import { maybeMarkCompleted } from '../../../../../../lib/gatherings.js';
+import { maybeMarkCompleted, syncGatheringApprovedCount } from '../../../../../../lib/gatherings.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -41,7 +41,15 @@ export default async function handler(req, res) {
     .maybeSingle();
 
   if (!attendance) return res.status(404).json({ error: '找不到申請。' });
-  if (attendance.status === 'approved') return res.status(200).json({ success: true, already: true });
+  if (attendance.status === 'approved') {
+    const synced = await syncGatheringApprovedCount(admin, id);
+    return res.status(200).json({
+      success: true,
+      already: true,
+      approved_count: synced?.approved_count ?? row.approved_count,
+      gathering_status: synced?.status ?? row.status,
+    });
+  }
   if (attendance.status !== 'pending') {
     return res.status(409).json({ error: '只能批准審核中的申請。' });
   }
@@ -61,8 +69,11 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: '批准失敗。' });
   }
 
+  const synced = await syncGatheringApprovedCount(admin, id);
+
+  let notified = false;
   try {
-    await notifyGatheringDecision({
+    notified = await notifyGatheringDecision({
       applicantId: userId,
       gatheringId: id,
       gatheringTitle: row.title,
@@ -72,5 +83,11 @@ export default async function handler(req, res) {
     console.error('[gatherings/approve] notify failed:', err?.message || err);
   }
 
-  return res.status(200).json({ success: true, status: 'approved' });
+  return res.status(200).json({
+    success: true,
+    status: 'approved',
+    approved_count: synced?.approved_count ?? (row.approved_count || 0) + 1,
+    gathering_status: synced?.status ?? row.status,
+    notified,
+  });
 }

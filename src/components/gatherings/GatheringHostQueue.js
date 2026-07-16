@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../lib/auth-context.js';
 import LoadingText from '../LoadingText.js';
 
-export default function GatheringHostQueue({ gatheringId, knockQuestion }) {
+export default function GatheringHostQueue({ gatheringId, knockQuestion, onChanged }) {
   const { session } = useAuth();
   const [attendees, setAttendees] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,6 +53,7 @@ export default function GatheringHostQueue({ gatheringId, knockQuestion }) {
         return;
       }
       await load();
+      if (typeof onChanged === 'function') onChanged(data);
     } catch {
       setError('網絡錯誤');
     } finally {

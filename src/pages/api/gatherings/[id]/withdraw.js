@@ -4,6 +4,7 @@
 
 import { requireUser, sendAuthError, getAdminClient } from '../../../../lib/server-auth.js';
 import { databaseNowIso } from '../../../../lib/hong-kong-time.js';
+import { syncGatheringApprovedCount } from '../../../../lib/gatherings.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -41,5 +42,11 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: '撤回失敗。' });
   }
 
-  return res.status(200).json({ success: true, status: 'withdrawn' });
+  const synced = await syncGatheringApprovedCount(admin, id);
+
+  return res.status(200).json({
+    success: true,
+    status: 'withdrawn',
+    approved_count: synced?.approved_count,
+  });
 }

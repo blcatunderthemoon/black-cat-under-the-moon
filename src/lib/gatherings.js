@@ -305,6 +305,58 @@ export async function countHostedThisHkMonth(admin, hostId) {
   return count ?? 0;
 }
 
+/**
+ * Recount approved attendees and sync gatherings.approved_count / open|full.
+ * Safe to call even if the DB trigger is missing.
+ */
+export async function syncGatheringApprovedCount(admin, gatheringId) {
+  const { count, error: countErr } = await admin
+    .from('gathering_attendees')
+    .select('id', { count: 'exact', head: true })
+    .eq('gathering_id', gatheringId)
+    .eq('status', 'approved');
+
+  if (countErr) {
+    console.error('[gatherings] count approved failed:', countErr.message);
+    return null;
+  }
+
+  const cnt = count ?? 0;
+  const { data: row, error: rowErr } = await admin
+    .from('gatherings')
+    .select('id, max_participants, status')
+    .eq('id', gatheringId)
+    .maybeSingle();
+
+  if (rowErr || !row) {
+    console.error('[gatherings] sync load failed:', rowErr?.message);
+    return null;
+  }
+
+  const patch = {
+    approved_count: cnt,
+    updated_at: databaseNowIso(),
+  };
+
+  if (row.status !== 'cancelled' && row.status !== 'completed') {
+    if (cnt >= (row.max_participants || 0)) patch.status = 'full';
+    else if (row.status === 'full') patch.status = 'open';
+  }
+
+  const { data, error } = await admin
+    .from('gatherings')
+    .update(patch)
+    .eq('id', gatheringId)
+    .select('*')
+    .single();
+
+  if (error) {
+    console.error('[gatherings] sync approved_count failed:', error.message);
+    return null;
+  }
+  return data;
+}
+
 /** Strip secrets for public API payloads. */
 export function toPublicGathering(row, {
   myAttendance = null,

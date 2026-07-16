@@ -462,7 +462,7 @@ function SystemNoticeItem({ msg, stackIndex = 0 }) {
   const url = typeof msg.payload?.gathering_url === 'string'
     ? msg.payload.gathering_url
     : (typeof msg.payload?.forum_url === 'string' ? msg.payload.forum_url : null);
-  const cta = msg.payload?.kind === 'gathering_application'
+  const cta = msg.payload?.kind === 'gathering_application' || msg.payload?.kind === 'gathering_joined'
     ? '查看申請 →'
     : msg.payload?.kind === 'gathering_approved'
       ? '查看聚會 →'

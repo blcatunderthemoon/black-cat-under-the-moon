@@ -14,6 +14,7 @@ import {
   canViewPrivateLocation,
 } from '../../../../lib/gatherings.js';
 import { databaseNowIso } from '../../../../lib/hong-kong-time.js';
+import { ensureGatheringDecisionNotified } from '../../../../lib/gathering-notify.js';
 
 async function loadGathering(admin, id) {
   const { data, error } = await admin.from('gatherings').select('*').eq('id', id).maybeSingle();
@@ -44,14 +45,33 @@ export default async function handler(req, res) {
       const attendanceMap = user
         ? await getAttendanceMap(admin, [row.id], user.id)
         : new Map();
+      const myAttendance = user ? (attendanceMap.get(row.id) || null) : null;
       const includePrivate = user
         ? await canViewPrivateLocation(admin, row, user.id)
         : false;
 
+      // Backfill missed Inbox approval/rejection notices (silent if already sent / migration missing).
+      if (
+        user
+        && user.id !== row.host_id
+        && (myAttendance?.status === 'approved' || myAttendance?.status === 'rejected')
+      ) {
+        try {
+          await ensureGatheringDecisionNotified({
+            applicantId: user.id,
+            gatheringId: row.id,
+            gatheringTitle: row.title,
+            approved: myAttendance.status === 'approved',
+          });
+        } catch (err) {
+          console.error('[gatherings/id] ensure notify failed:', err?.message || err);
+        }
+      }
+
       return res.status(200).json({
         gathering: toPublicGathering(row, {
           host: hostMap.get(row.host_id) || null,
-          myAttendance: attendanceMap.get(row.id) || null,
+          myAttendance,
           includePrivate,
         }),
         is_host: !!(user && user.id === row.host_id),

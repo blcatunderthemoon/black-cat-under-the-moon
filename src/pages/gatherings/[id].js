@@ -161,7 +161,7 @@ export default function GatheringDetailPage() {
       />
       <GatheringShell
         title="聚會詳情"
-        maxWidth="680px"
+        maxWidth="720px"
         redirectPath={id ? `/gatherings/${id}` : '/gatherings'}
       >
         {loading ? (
@@ -169,47 +169,108 @@ export default function GatheringDetailPage() {
         ) : error || !gathering ? (
           <p className="gatherings-empty gatherings-empty--err">{error || '找不到聚會'}</p>
         ) : (
-          <article className="gathering-detail">
-            <div className="gathering-detail__badges">
-              <span>{gathering.is_online ? '線上' : '線下'}</span>
-              <span>{STATUS_LABEL[gathering.status] || gathering.status}</span>
-            </div>
-            <h1 className="gathering-detail__title">{gathering.title}</h1>
-            <p className="gathering-detail__meta">{gathering.starts_at_hk}</p>
-            <p className="gathering-detail__meta">{gathering.location_public}</p>
-            {gathering.host && (
-              <p className="gathering-detail__host">
-                主辦：{gathering.host.display_name}
-                {gathering.host.family_zh ? ` · ${gathering.host.family_zh}` : ''}
-              </p>
-            )}
+          <article className="gathering-detail gathering-detail--quest">
+            <Link href="/gatherings" className="gathering-detail__back">
+              ← 返回月曆
+            </Link>
+
+            <header className="gathering-detail__hero gathering-hud">
+              <div className="gathering-hud__corners" aria-hidden="true" />
+              <p className="gathering-detail__quest-label">QUEST · 月光聚會</p>
+              <div className="gathering-detail__badges">
+                <span className={`gathering-detail__badge gathering-detail__badge--${gathering.is_online ? 'online' : 'offline'}`}>
+                  {gathering.is_online ? '線上' : '線下'}
+                </span>
+                <span className={`gathering-detail__badge gathering-detail__badge--status-${gathering.status}`}>
+                  {STATUS_LABEL[gathering.status] || gathering.status}
+                </span>
+              </div>
+              <h1 className="gathering-detail__title">{gathering.title}</h1>
+            </header>
+
+            <dl className="gathering-detail__facts gathering-hud gathering-hud--stats">
+              <div className="gathering-hud__corners" aria-hidden="true" />
+              <div className="gathering-detail__fact">
+                <dt>時間</dt>
+                <dd>{gathering.starts_at_hk}</dd>
+              </div>
+              <div className="gathering-detail__fact">
+                <dt>地點</dt>
+                <dd>{gathering.location_public}</dd>
+              </div>
+              {gathering.host && (
+                <div className="gathering-detail__fact">
+                  <dt>主辦</dt>
+                  <dd>
+                    {gathering.host.display_name}
+                    {gathering.host.family_zh ? (
+                      <span className="gathering-detail__host-family"> · {gathering.host.family_zh}</span>
+                    ) : null}
+                  </dd>
+                </div>
+              )}
+            </dl>
+
             {!!gathering.tag_labels?.length && (
-              <p className="gathering-detail__tags">{gathering.tag_labels.join(' ')}</p>
+              <div className="gathering-detail__tags" aria-label="標籤">
+                {gathering.tag_labels.map((label) => (
+                  <span key={label} className="gathering-detail__tag">{label}</span>
+                ))}
+              </div>
             )}
+
             {gathering.description && (
-              <p className="gathering-detail__desc">{gathering.description}</p>
+              <div className="gathering-detail__desc-block gathering-hud">
+                <div className="gathering-hud__corners" aria-hidden="true" />
+                <p className="gathering-detail__desc-label">任務說明</p>
+                <p className="gathering-detail__desc">{gathering.description}</p>
+              </div>
             )}
-            <p className="gathering-detail__seats">
-              人數 {gathering.approved_count}/{gathering.max_participants}
-            </p>
+
+            <div
+              className="gathering-detail__seats gathering-hud gathering-hud--gauge"
+              aria-label={`人數 ${gathering.approved_count}/${gathering.max_participants}`}
+            >
+              <div className="gathering-hud__corners" aria-hidden="true" />
+              <div className="gathering-detail__seats-head">
+                <span>PARTY</span>
+                <strong>{gathering.approved_count}/{gathering.max_participants}</strong>
+              </div>
+              <div className="gathering-detail__seats-track">
+                <div
+                  className="gathering-detail__seats-fill"
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      Math.round(((gathering.approved_count || 0) / Math.max(1, gathering.max_participants || 1)) * 100),
+                    )}%`,
+                  }}
+                />
+              </div>
+            </div>
 
             {gathering.location_private != null && gathering.location_private !== '' && (
-              <div className="gathering-detail__private">
-                <p className="gathering-detail__private-label">私密地點／連結</p>
+              <div className="gathering-detail__private gathering-hud gathering-hud--loot">
+                <div className="gathering-hud__corners" aria-hidden="true" />
+                <p className="gathering-detail__private-label">已解鎖 · 私密地點／連結</p>
                 <p className="gathering-detail__private-value">{gathering.location_private}</p>
               </div>
             )}
 
             <GatheringSafetyNotice />
 
-            {msg && <p className="gathering-detail__msg" role="status">{msg}</p>}
+            {msg && !gathering.my_attendance?.status && (
+              <p className="gathering-detail__msg" role="status">{msg}</p>
+            )}
 
             {isHost ? (
-              <section className="gathering-detail__host-panel">
+              <section className="gathering-detail__host-panel gathering-hud">
+                <div className="gathering-hud__corners" aria-hidden="true" />
                 <h2>主辦人審批</h2>
                 <GatheringHostQueue
                   gatheringId={gathering.id}
                   knockQuestion={gathering.knock_question}
+                  onChanged={() => load()}
                 />
                 {gathering.status !== 'cancelled' && gathering.status !== 'completed' && (
                   <button type="button" className="gathering-detail__danger" disabled={busy} onClick={cancelGathering}>
@@ -218,66 +279,128 @@ export default function GatheringDetailPage() {
                 )}
               </section>
             ) : (
-              <section className="gathering-detail__rsvp">
-                {gathering.my_attendance?.status ? (
-                  <>
-                    <p>你的狀態：{STATUS_LABEL[gathering.my_attendance.status] || gathering.my_attendance.status}</p>
+              <section className="gathering-detail__rsvp gathering-hud">
+                <div className="gathering-hud__corners" aria-hidden="true" />
+                {gathering.my_attendance?.status
+                  && gathering.my_attendance.status !== 'withdrawn' ? (
+                  <div className={`gathering-detail__attendance gathering-detail__attendance--${gathering.my_attendance.status}`}>
+                    <header className="gathering-detail__attendance-head">
+                      <p className="gathering-detail__attendance-kicker">任務狀態</p>
+                      <p className={`gathering-detail__rsvp-chip gathering-detail__rsvp-chip--${gathering.my_attendance.status}`}>
+                        {STATUS_LABEL[gathering.my_attendance.status] || gathering.my_attendance.status}
+                      </p>
+                    </header>
+                    <p className="gathering-detail__attendance-copy">
+                      {gathering.my_attendance.status === 'pending' && '申請已送出，等候主辦人審核。批核後會喺 Inbox 收到通知。'}
+                      {gathering.my_attendance.status === 'approved' && '任務已接受！私密地點／連結已解鎖；記得準時同注意安全。'}
+                      {gathering.my_attendance.status === 'rejected' && '今次未獲邀。可以睇其他月光聚會，或者稍後再申請其他場次。'}
+                      {gathering.my_attendance.status === 'waitlist' && '你而家喺候補名單，有位會再通知你。'}
+                    </p>
+                    {msg ? (
+                      <p className="gathering-detail__attendance-flash" role="status">{msg}</p>
+                    ) : null}
+                    {gathering.my_attendance.knock_message && (
+                      <div className="gathering-detail__attendance-knock">
+                        <p className="gathering-detail__attendance-knock-label">你嘅敲門答案</p>
+                        <p className="gathering-detail__attendance-knock-body">{gathering.my_attendance.knock_message}</p>
+                      </div>
+                    )}
                     {(gathering.my_attendance.status === 'pending' || gathering.my_attendance.status === 'approved') && (
-                      <button type="button" disabled={busy} onClick={withdraw}>撤回</button>
+                      <div className="gathering-detail__attendance-actions">
+                        <button type="button" className="gathering-detail__rsvp-ghost" disabled={busy} onClick={withdraw}>
+                          {busy ? '處理中…' : '撤回申請'}
+                        </button>
+                      </div>
                     )}
-                  </>
+                  </div>
                 ) : gathering.status === 'open' && session ? (
-                  <>
-                    <label className="gathering-form__field">
-                      <span>電郵 *</span>
-                      <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        maxLength={120}
-                        required
-                        autoComplete="email"
-                        placeholder="you@example.com"
-                      />
-                    </label>
-                    <label className="gathering-form__field">
-                      <span>電話 *</span>
-                      <input
-                        type="tel"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        maxLength={20}
-                        required
-                        autoComplete="tel"
-                        placeholder="例如：91234567 或 +85291234567"
-                      />
-                    </label>
-                    <p className="gathering-form__hint">僅主辦人可見，唔會公開顯示。</p>
+                  <form
+                    className="gathering-detail__apply"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      apply();
+                    }}
+                  >
+                    <header className="gathering-detail__apply-head">
+                      <h2 className="gathering-detail__rsvp-title">接受任務 · 申請加入</h2>
+                      <p className="gathering-detail__apply-lead">填聯絡同敲門答案，等主辦人批核。</p>
+                    </header>
+
+                    <fieldset className="gathering-detail__apply-block">
+                      <legend>聯絡資料 *</legend>
+                      <div className="gathering-detail__apply-grid">
+                        <label className="gathering-form__field">
+                          <span>電郵</span>
+                          <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            maxLength={120}
+                            required
+                            autoComplete="email"
+                            placeholder="you@example.com"
+                          />
+                        </label>
+                        <label className="gathering-form__field">
+                          <span>電話</span>
+                          <input
+                            type="tel"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            maxLength={20}
+                            required
+                            autoComplete="tel"
+                            placeholder="例如：91234567"
+                          />
+                        </label>
+                      </div>
+                      <p className="gathering-form__hint">僅主辦人可見，唔會公開顯示喺活動頁。</p>
+                    </fieldset>
+
                     {gathering.require_knock_message && (
-                      <label className="gathering-form__field">
-                        <span>敲門暗號 *</span>
+                      <fieldset className="gathering-detail__apply-block gathering-detail__apply-block--knock">
+                        <legend>敲門暗號 *</legend>
                         {gathering.knock_question && (
-                          <p className="gathering-detail__knock-q">{gathering.knock_question}</p>
+                          <div className="gathering-detail__knock-card">
+                            <p className="gathering-detail__knock-card-label">主辦問</p>
+                            <p className="gathering-detail__knock-q">{gathering.knock_question}</p>
+                          </div>
                         )}
-                        <textarea
-                          value={knock}
-                          onChange={(e) => setKnock(e.target.value)}
-                          maxLength={200}
-                          rows={3}
-                          required
-                          placeholder="回答主辦的敲門問題…"
-                        />
-                      </label>
+                        <label className="gathering-form__field">
+                          <span>你的回答</span>
+                          <textarea
+                            value={knock}
+                            onChange={(e) => setKnock(e.target.value)}
+                            maxLength={200}
+                            rows={3}
+                            required
+                            placeholder="簡短回答主辦的問題…"
+                          />
+                        </label>
+                      </fieldset>
                     )}
-                    <button type="button" className="gatherings-hero__cta" disabled={busy || !email.trim() || !phone.trim()} onClick={apply}>
-                      申請加入
-                    </button>
-                  </>
+
+                    <div className="gathering-detail__apply-actions">
+                      <button
+                        type="submit"
+                        className="gatherings-hero__cta gathering-detail__apply-cta"
+                        disabled={busy || !email.trim() || !phone.trim()}
+                      >
+                        {busy ? '提交中…' : '申請加入'}
+                      </button>
+                    </div>
+                  </form>
                 ) : gathering.status === 'open' && !session ? (
-                  <p className="gathering-detail__login-hint">
-                    <Link href={`/login?redirect=${encodeURIComponent(`/gatherings/${id}`)}`}>登入</Link>
-                    {' '}後先可以申請。
-                  </p>
+                  <div className="gathering-detail__login-panel">
+                    <p className="gathering-detail__login-lead">想參加呢場聚會？</p>
+                    <p className="gathering-detail__login-hint">登入後先可以填聯絡資料同敲門答案。</p>
+                    <Link
+                      href={`/login?redirect=${encodeURIComponent(`/gatherings/${id}`)}`}
+                      className="gatherings-hero__cta"
+                    >
+                      登入後申請
+                    </Link>
+                  </div>
                 ) : (
                   <p className="gatherings-empty">此聚會目前無法報名。</p>
                 )}
