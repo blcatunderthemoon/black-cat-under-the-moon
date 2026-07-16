@@ -28,7 +28,6 @@ export default function GatheringCard({ gathering }) {
   return (
     <Link href={`/gatherings/${gathering.id}`} className="gathering-card">
       <div className="gathering-card__glow" aria-hidden="true" />
-      <div className="gathering-card__corners" aria-hidden="true" />
       <div className="gathering-card__top">
         <span className={`gathering-card__badge gathering-card__badge--${gathering.is_online ? 'online' : 'offline'}`}>
           {gathering.is_online ? '線上' : '線下'}
@@ -42,7 +41,6 @@ export default function GatheringCard({ gathering }) {
           </span>
         )}
       </div>
-      <p className="gathering-card__quest-label">QUEST</p>
       <h3 className="gathering-card__title">{gathering.title}</h3>
       <p className="gathering-card__meta">
         <span className="gathering-card__meta-item">{gathering.starts_at_hk || gathering.starts_at}</span>
