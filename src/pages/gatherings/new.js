@@ -60,7 +60,7 @@ export default function GatheringsNewPage() {
       <SeoHead title="發起聚會" description="發起一場月光聚會。" path="/gatherings/new" noindex />
       <GatheringShell title="發起聚會" redirectPath="/gatherings/new" maxWidth="640px">
         <header className="gatherings-hero gatherings-hero--create">
-          <p className="gatherings-hero__eyebrow">NEW QUEST · 發起聚會</p>
+          <p className="gatherings-hero__eyebrow">發起聚會</p>
           {chosenDateLabel && (
             <p className="gatherings-hero__chosen-date">
               <span className="gatherings-hero__chosen-date-icon" aria-hidden="true">📅</span>

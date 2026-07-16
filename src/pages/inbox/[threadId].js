@@ -465,12 +465,12 @@ function SystemNoticeItem({ msg, stackIndex = 0 }) {
   const cta = msg.payload?.kind === 'gathering_application' || msg.payload?.kind === 'gathering_joined'
     ? '查看申請 →'
     : msg.payload?.kind === 'gathering_approved'
+      || msg.payload?.kind === 'gathering_rejected'
+      || msg.payload?.kind === 'gathering_applied'
       ? '查看聚會 →'
-      : msg.payload?.kind === 'gathering_rejected'
-        ? '查看聚會 →'
-        : url
-          ? '查看詳情 →'
-          : null;
+      : url
+        ? '查看詳情 →'
+        : null;
 
   return (
     <div

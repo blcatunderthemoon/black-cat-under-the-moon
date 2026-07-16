@@ -73,7 +73,6 @@ export default function GatheringsMyPage() {
       <GatheringShell title="我的聚會" redirectPath="/gatherings/my">
         <header className="gatherings-hero gatherings-hero--compact">
           <div className="gatherings-hero__copy">
-            <p className="gatherings-hero__eyebrow">PARTY LOG</p>
             <h1 className="gatherings-hero__title">我的聚會</h1>
           </div>
           <div className="gatherings-hero__actions">
@@ -86,7 +85,7 @@ export default function GatheringsMyPage() {
 
         {error && <p className="gatherings-empty gatherings-empty--err">{error}</p>}
 
-        <h2 className="gatherings-section-title">⚔ 我發起的</h2>
+        <h2 className="gatherings-section-title">我發起的</h2>
         {loading ? (
           <LoadingText />
         ) : hosted.length === 0 ? (
@@ -97,7 +96,7 @@ export default function GatheringsMyPage() {
           </div>
         )}
 
-        <h2 className="gatherings-section-title">🛡 我參加的</h2>
+        <h2 className="gatherings-section-title">我參加的</h2>
         {loading ? (
           <LoadingText />
         ) : joined.length === 0 ? (

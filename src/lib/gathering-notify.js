@@ -37,17 +37,41 @@ async function findOrCreateGatheringSystemThread(admin, userId) {
     .single();
 
   if (error) {
-    console.error('[gathering-notify] thread create failed:', error.message, error.code, error.details);
+    console.error(
+      '[gathering-notify] thread create failed:',
+      error.message,
+      error.code,
+      error.details,
+      '— run migration 20260716005000_inbox_system_messages_fix.sql',
+    );
     return null;
   }
   return created.id;
 }
 
+async function insertInboxMessage(admin, row) {
+  const { error } = await admin.from('inbox_messages').insert(row);
+  if (!error) return { ok: true };
+
+  // sender_id NULL may be rejected before migration; retry without the column.
+  if (row.sender_id === null && /sender_id|null/i.test(String(error.message || ''))) {
+    const { sender_id: _omit, ...rest } = row;
+    const retry = await admin.from('inbox_messages').insert(rest);
+    if (!retry.error) return { ok: true };
+    console.error('[gathering-notify] message insert retry failed:', retry.error.message, retry.error.code);
+    return { ok: false, error: retry.error };
+  }
+
+  console.error('[gathering-notify] message insert failed:', error.message, error.code, error.details);
+  return { ok: false, error };
+}
+
 async function sendSystemMessage(admin, userId, content, payload) {
+  if (!userId) return false;
   const threadId = await findOrCreateGatheringSystemThread(admin, userId);
   if (!threadId) return false;
 
-  const { error } = await admin.from('inbox_messages').insert({
+  const result = await insertInboxMessage(admin, {
     thread_id: threadId,
     sender_id: null,
     recipient_id: userId,
@@ -56,10 +80,7 @@ async function sendSystemMessage(admin, userId, content, payload) {
     payload,
   });
 
-  if (error) {
-    console.error('[gathering-notify] message insert failed:', error.message, error.code, error.details);
-    return false;
-  }
+  if (!result.ok) return false;
 
   await admin.from('inbox_threads').update({ last_message_at: databaseNowIso() }).eq('id', threadId);
   return true;
@@ -87,6 +108,7 @@ async function hasGatheringSystemMessage(admin, userId, { kind, gatheringId, app
   return (data || []).length > 0;
 }
 
+/** Host: someone applied / auto-joined */
 export async function notifyGatheringApplication({
   hostId,
   gatheringId,
@@ -115,6 +137,32 @@ export async function notifyGatheringApplication({
   });
 }
 
+/** Applicant: application received (pending review) */
+export async function notifyGatheringApplicationReceived({
+  applicantId,
+  gatheringId,
+  gatheringTitle,
+  startsAt,
+}) {
+  if (!applicantId) return false;
+  const admin = getAdminClient();
+  if (await hasGatheringSystemMessage(admin, applicantId, {
+    kind: 'gathering_applied',
+    gatheringId,
+  })) {
+    return false;
+  }
+  const when = formatGatheringHkTime(startsAt);
+  const title = String(gatheringTitle || '月光聚會').slice(0, 40);
+  const content = `🌙 你已申請「${title}」${when ? `（${when}）` : ''}。等候主辦人審核，結果會喺呢度通知你。`;
+  return sendSystemMessage(admin, applicantId, content, {
+    kind: 'gathering_applied',
+    gathering_id: gatheringId,
+    gathering_url: `/gatherings/${gatheringId}`,
+  });
+}
+
+/** Applicant: approved or rejected */
 export async function notifyGatheringDecision({
   applicantId,
   gatheringId,
@@ -135,8 +183,7 @@ export async function notifyGatheringDecision({
 }
 
 /**
- * If approval/rejection notice never landed (e.g. source_type CHECK blocked insert),
- * send it once when the applicant next loads the gathering.
+ * If approval/rejection notice never landed, send it once.
  */
 export async function ensureGatheringDecisionNotified({
   applicantId,
@@ -148,7 +195,7 @@ export async function ensureGatheringDecisionNotified({
   const admin = getAdminClient();
   const kind = approved ? 'gathering_approved' : 'gathering_rejected';
   if (await hasGatheringSystemMessage(admin, applicantId, { kind, gatheringId })) {
-    return false;
+    return true; // already in Inbox
   }
   return notifyGatheringDecision({
     applicantId,
@@ -178,7 +225,6 @@ export async function ensureGatheringApplicationNotified({
     applicantId,
   });
   if (already) return false;
-  // Also treat auto-join notice as already notified for this applicant.
   const joined = await hasGatheringSystemMessage(admin, hostId, {
     kind: 'gathering_joined',
     gatheringId,

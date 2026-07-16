@@ -12,7 +12,7 @@ import {
   toPublicGathering,
   syncGatheringApprovedCount,
 } from '../../../../lib/gatherings.js';
-import { notifyGatheringApplication, notifyGatheringDecision } from '../../../../lib/gathering-notify.js';
+import { notifyGatheringApplication, notifyGatheringDecision, notifyGatheringApplicationReceived } from '../../../../lib/gathering-notify.js';
 import { databaseNowIso } from '../../../../lib/hong-kong-time.js';
 import { parseGatheringContact } from '../../../../lib/gathering-contact.js';
 
@@ -140,17 +140,25 @@ export default async function handler(req, res) {
     console.error('[gatherings/apply] host notify failed:', err?.message || err);
   }
 
-  if (autoApprove) {
-    try {
+  // Applicant Inbox: pending ack, or approved if auto-approve.
+  try {
+    if (autoApprove) {
       applicantNotified = await notifyGatheringDecision({
         applicantId: user.id,
         gatheringId: id,
         gatheringTitle: row.title,
         approved: true,
       });
-    } catch (err) {
-      console.error('[gatherings/apply] auto-approve notify failed:', err?.message || err);
+    } else {
+      applicantNotified = await notifyGatheringApplicationReceived({
+        applicantId: user.id,
+        gatheringId: id,
+        gatheringTitle: row.title,
+        startsAt: row.starts_at,
+      });
     }
+  } catch (err) {
+    console.error('[gatherings/apply] applicant notify failed:', err?.message || err);
   }
 
   if (attendance.status === 'approved') {

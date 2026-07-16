@@ -4,7 +4,7 @@
 
 import { requireUser, sendAuthError, getAdminClient } from '../../../../../../lib/server-auth.js';
 import { databaseNowIso } from '../../../../../../lib/hong-kong-time.js';
-import { notifyGatheringDecision } from '../../../../../../lib/gathering-notify.js';
+import { ensureGatheringDecisionNotified } from '../../../../../../lib/gathering-notify.js';
 import { syncGatheringApprovedCount } from '../../../../../../lib/gatherings.js';
 
 export default async function handler(req, res) {
@@ -35,10 +35,17 @@ export default async function handler(req, res) {
   if (!attendance) return res.status(404).json({ error: '找不到申請。' });
   if (attendance.status === 'rejected') {
     const synced = await syncGatheringApprovedCount(admin, id);
+    const notified = await ensureGatheringDecisionNotified({
+      applicantId: userId,
+      gatheringId: id,
+      gatheringTitle: row.title,
+      approved: false,
+    });
     return res.status(200).json({
       success: true,
       already: true,
       approved_count: synced?.approved_count ?? row.approved_count,
+      notified,
     });
   }
   if (attendance.status !== 'pending') {
@@ -62,8 +69,9 @@ export default async function handler(req, res) {
 
   const synced = await syncGatheringApprovedCount(admin, id);
 
+  let notified = false;
   try {
-    await notifyGatheringDecision({
+    notified = await ensureGatheringDecisionNotified({
       applicantId: userId,
       gatheringId: id,
       gatheringTitle: row.title,
@@ -77,5 +85,6 @@ export default async function handler(req, res) {
     success: true,
     status: 'rejected',
     approved_count: synced?.approved_count ?? row.approved_count,
+    notified,
   });
 }
