@@ -15,6 +15,13 @@ import {
 import { notifyGatheringApplication, notifyGatheringDecision, notifyGatheringApplicationReceived } from '../../../../lib/gathering-notify.js';
 import { databaseNowIso } from '../../../../lib/hong-kong-time.js';
 import { parseGatheringContact } from '../../../../lib/gathering-contact.js';
+import {
+  createRateLimiter,
+  rateLimitOrPass,
+  rateLimitResponse,
+} from '../../../../lib/rate-limit.js';
+
+const applyLimiter = createRateLimiter('gathering-apply', 15, '1 h');
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -28,6 +35,9 @@ export default async function handler(req, res) {
   } catch (err) {
     return sendAuthError(res, err);
   }
+
+  const limited = await rateLimitOrPass(applyLimiter, `gathering-apply:${user.id}`);
+  if (!limited.ok) return rateLimitResponse(res, limited.reason);
 
   await ensureProfile(user);
   const admin = getAdminClient();

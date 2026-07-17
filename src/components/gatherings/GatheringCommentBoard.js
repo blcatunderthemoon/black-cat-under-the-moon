@@ -25,6 +25,7 @@ export default function GatheringCommentBoard({ gatheringId }) {
   const [posting, setPosting] = useState(false);
   const [confirmId, setConfirmId] = useState(null);
   const [busyId, setBusyId] = useState(null);
+  const [reportedIds, setReportedIds] = useState({});
   const listRef = useRef(null);
 
   const load = useCallback(async () => {
@@ -109,6 +110,39 @@ export default function GatheringCommentBoard({ gatheringId }) {
     }
   }
 
+  async function report(comment) {
+    if (!session?.access_token) return;
+    if (typeof window !== 'undefined'
+      && !window.confirm('確定舉報呢則留言？守護者會收到通知。')) {
+      return;
+    }
+    setBusyId(comment.id);
+    setError('');
+    try {
+      const res = await fetch(`/api/gatherings/${gatheringId}/report`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ target_type: 'comment', target_id: comment.id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || '舉報失敗');
+        return;
+      }
+      setReportedIds((prev) => ({ ...prev, [comment.id]: true }));
+      if (data.auto_hidden) {
+        setComments((prev) => prev.filter((c) => c.id !== comment.id));
+      }
+    } catch {
+      setError('網絡錯誤');
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   return (
     <section className="gathering-board">
       <header className="gathering-board__head">
@@ -139,6 +173,7 @@ export default function GatheringCommentBoard({ gatheringId }) {
                 </time>
               </div>
               <p className="gathering-board__msg-body">{c.body}</p>
+              <div className="gathering-board__msg-actions">
               {c.can_delete && (
                 confirmId === c.id ? (
                   <div className="gathering-board__confirm">
@@ -169,6 +204,21 @@ export default function GatheringCommentBoard({ gatheringId }) {
                   </button>
                 )
               )}
+              {!c.is_mine && (
+                reportedIds[c.id] ? (
+                  <span className="gathering-board__reported">已舉報</span>
+                ) : (
+                  <button
+                    type="button"
+                    className="gathering-board__report"
+                    disabled={busyId === c.id}
+                    onClick={() => report(c)}
+                  >
+                    舉報
+                  </button>
+                )
+              )}
+              </div>
             </article>
           ))
         )}

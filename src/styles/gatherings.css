@@ -1273,6 +1273,38 @@
   border: 1px solid rgba(80, 200, 120, 0.22);
 }
 
+.gathering-detail__safety-actions {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: flex-end;
+  margin: -0.5rem 0 1rem;
+}
+
+.gathering-detail__safety-btn {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid rgba(160, 130, 220, 0.35);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--gathering-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.gathering-detail__safety-btn:hover:not(:disabled) {
+  color: #ff9aab;
+  border-color: rgba(255, 120, 140, 0.5);
+}
+
+.gathering-detail__safety-btn.is-block:hover:not(:disabled) {
+  color: #ff8fa3;
+  border-color: rgba(220, 90, 110, 0.7);
+}
+
+.gathering-detail__safety-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 .gathering-detail__host-panel,
 .gathering-detail__rsvp {
   margin-top: 1.35rem;
@@ -1775,6 +1807,34 @@
 .gathering-host-queue__actions button.is-ghost:hover:not(:disabled) {
   border-color: rgba(255, 120, 140, 0.7);
   background: rgba(255, 120, 140, 0.12);
+}
+
+.gathering-host-queue__actions button.is-danger {
+  flex: 0 0 auto;
+  border-color: rgba(220, 90, 110, 0.55);
+  background: rgba(160, 40, 60, 0.18);
+  color: #ff8fa3;
+  font-weight: 600;
+}
+
+.gathering-host-queue__actions button.is-danger:hover:not(:disabled) {
+  border-color: rgba(220, 90, 110, 0.85);
+  background: rgba(160, 40, 60, 0.3);
+}
+
+.gathering-host-queue__reveal {
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.5rem;
+  border: 1px solid rgba(196, 181, 253, 0.4);
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(196, 181, 253, 0.95);
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.gathering-host-queue__reveal:hover {
+  background: rgba(196, 181, 253, 0.12);
 }
 
 .gathering-host-queue__muted,
@@ -2973,7 +3033,7 @@
   padding: 0.75rem 0.85rem;
 }
 
-.gathering-host-queue__actions button:not(.is-ghost) {
+.gathering-host-queue__actions button:not(.is-ghost):not(.is-danger) {
   background: linear-gradient(135deg, #fff0b0, #ffe066 50%, #e6c84a);
   color: #12101a;
   border: 1px solid transparent;
@@ -3268,6 +3328,32 @@
 
 .gathering-board__del:hover {
   color: #ff9aab;
+}
+
+.gathering-board__msg-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.gathering-board__report {
+  margin-top: 0.4rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--gathering-muted);
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.gathering-board__report:hover:not(:disabled) {
+  color: #ff9aab;
+}
+
+.gathering-board__reported {
+  margin-top: 0.4rem;
+  color: var(--gathering-dim);
+  font-size: 0.72rem;
 }
 
 .gathering-board__confirm {

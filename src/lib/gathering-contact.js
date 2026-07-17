@@ -29,6 +29,31 @@ export function normalizeGatheringPhone(raw) {
 }
 
 /**
+ * Mask an email for at-a-glance display: keep first char + domain.
+ * e.g. "luna@gmail.com" -> "l****@gmail.com"
+ */
+export function maskEmail(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return '';
+  const at = s.indexOf('@');
+  if (at < 1) return '****';
+  const first = s.slice(0, 1);
+  const domain = s.slice(at);
+  return `${first}****${domain}`;
+}
+
+/**
+ * Mask a phone number: keep the last 4 digits.
+ * e.g. "91234567" -> "****4567"
+ */
+export function maskPhone(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return '';
+  if (s.length <= 4) return '****';
+  return `****${s.slice(-4)}`;
+}
+
+/**
  * @param {object} body
  * @param {{ emailKey?: string, phoneKey?: string, phoneRequired?: boolean }} [opts]
  *   phoneRequired defaults true (offline). Online gatherings may omit phone.

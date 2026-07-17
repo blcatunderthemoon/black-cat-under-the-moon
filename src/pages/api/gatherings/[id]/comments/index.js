@@ -7,8 +7,14 @@ import { requireUser, sendAuthError, getAdminClient } from '../../../../../lib/s
 import { filterContent } from '../../../../../lib/content-filter.js';
 import { getGatheringBoardAccess } from '../../../../../lib/gatherings.js';
 import { databaseNowIso } from '../../../../../lib/hong-kong-time.js';
+import {
+  createRateLimiter,
+  rateLimitOrPass,
+  rateLimitResponse,
+} from '../../../../../lib/rate-limit.js';
 
 const MAX_BODY = 500;
+const commentLimiter = createRateLimiter('gathering-comment', 20, '10 m');
 
 async function decorateComments(admin, rows, viewerId, isHost) {
   const userIds = [...new Set((rows || []).map((r) => r.user_id))];
@@ -58,6 +64,7 @@ export default async function handler(req, res) {
       .select('id, user_id, body, created_at')
       .eq('gathering_id', id)
       .is('deleted_at', null)
+      .eq('is_hidden', false)
       .order('created_at', { ascending: true })
       .limit(200);
     if (error) {
@@ -69,6 +76,9 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
+    const limited = await rateLimitOrPass(commentLimiter, `gathering-comment:${user.id}`);
+    if (!limited.ok) return rateLimitResponse(res, limited.reason);
+
     const body = typeof req.body?.body === 'string' ? req.body.body.trim() : '';
     if (!body) return res.status(400).json({ error: '請輸入留言內容。' });
     if (body.length > MAX_BODY) return res.status(400).json({ error: `留言最多 ${MAX_BODY} 字。` });

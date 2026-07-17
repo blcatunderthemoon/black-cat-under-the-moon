@@ -5,6 +5,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../lib/auth-context.js';
 import LoadingText from '../LoadingText.js';
+import { maskEmail, maskPhone } from '../../lib/gathering-contact.js';
 
 export default function GatheringHostQueue({ gatheringId, knockQuestion, onChanged }) {
   const { session } = useAuth();
@@ -12,6 +13,7 @@ export default function GatheringHostQueue({ gatheringId, knockQuestion, onChang
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState(null);
+  const [revealed, setRevealed] = useState({});
 
   const load = useCallback(async () => {
     if (!session?.access_token) return;
@@ -39,13 +41,17 @@ export default function GatheringHostQueue({ gatheringId, knockQuestion, onChang
     load();
   }, [load]);
 
-  async function decide(userId, action) {
+  async function decide(userId, action, extraBody) {
     if (!session?.access_token) return;
     setBusyId(userId);
     try {
       const res = await fetch(`/api/gatherings/${gatheringId}/attendees/${userId}/${action}`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${session.access_token}` },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: extraBody ? JSON.stringify(extraBody) : undefined,
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -59,6 +65,18 @@ export default function GatheringHostQueue({ gatheringId, knockQuestion, onChang
     } finally {
       setBusyId(null);
     }
+  }
+
+  async function blockApplicant(userId, name) {
+    if (typeof window !== 'undefined'
+      && !window.confirm(`確定要婉拒並封鎖 ${name || '此申請人'}？對方將無法再申請你的聚會。`)) {
+      return;
+    }
+    await decide(userId, 'reject', { block: true });
+  }
+
+  function toggleReveal(userId) {
+    setRevealed((prev) => ({ ...prev, [userId]: !prev[userId] }));
   }
 
   if (loading) return <LoadingText className="gathering-host-queue__muted" />;
@@ -75,9 +93,20 @@ export default function GatheringHostQueue({ gatheringId, knockQuestion, onChang
             <p className="gathering-host-queue__name">{a.display_name}</p>
             {(a.contact_email || a.contact_phone) && (
               <p className="gathering-host-queue__contact">
-                {a.contact_email && <span>{a.contact_email}</span>}
+                {a.contact_email && (
+                  <span>{revealed[a.user_id] ? a.contact_email : maskEmail(a.contact_email)}</span>
+                )}
                 {a.contact_email && a.contact_phone && <span aria-hidden="true"> · </span>}
-                {a.contact_phone && <span>{a.contact_phone}</span>}
+                {a.contact_phone && (
+                  <span>{revealed[a.user_id] ? a.contact_phone : maskPhone(a.contact_phone)}</span>
+                )}
+                <button
+                  type="button"
+                  className="gathering-host-queue__reveal"
+                  onClick={() => toggleReveal(a.user_id)}
+                >
+                  {revealed[a.user_id] ? '隱藏' : '顯示'}
+                </button>
               </p>
             )}
             {a.knock_message && (
@@ -98,6 +127,9 @@ export default function GatheringHostQueue({ gatheringId, knockQuestion, onChang
             </button>
             <button type="button" className="is-ghost" disabled={busyId === a.user_id} onClick={() => decide(a.user_id, 'reject')}>
               婉拒
+            </button>
+            <button type="button" className="is-danger" disabled={busyId === a.user_id} onClick={() => blockApplicant(a.user_id, a.display_name)}>
+              封鎖
             </button>
           </div>
         </li>

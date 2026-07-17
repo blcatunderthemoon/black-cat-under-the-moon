@@ -101,6 +101,9 @@ async function handleGet(req, res) {
   if (host === 'me') {
     if (!user) return res.status(401).json({ error: 'Authentication required' });
     query = query.eq('host_id', user.id);
+  } else {
+    // Hide reported-and-auto-hidden gatherings from the public calendar.
+    query = query.eq('is_hidden', false);
   }
 
   const { data, error } = await query;

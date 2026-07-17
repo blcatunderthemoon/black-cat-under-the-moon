@@ -23,6 +23,7 @@ export default function GatheringSafetyNotice({ defaultOpen = true }) {
         <li>詳細地址／語音連結只會喺獲批准後先顯示。</li>
         <li>線下見面請揀公眾地方，並讓可信朋友知悉行程。</li>
         <li>平台唔係活動主辦方；主辦人與參加者請自行評估風險。</li>
+        <li>遇到不當行為，可隨時舉報或封鎖對方；達到門檻會自動隱藏並通知守護者。</li>
       </ul>
     </details>
   );

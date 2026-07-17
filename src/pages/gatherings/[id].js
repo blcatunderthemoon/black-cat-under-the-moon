@@ -167,6 +167,68 @@ export default function GatheringDetailPage() {
     }
   }
 
+  async function reportGathering() {
+    if (!session?.access_token) {
+      router.push(`/login?redirect=${encodeURIComponent(`/gatherings/${id}`)}`);
+      return;
+    }
+    if (typeof window !== 'undefined'
+      && !window.confirm('確定舉報呢個聚會？守護者會收到通知。')) {
+      return;
+    }
+    setBusy(true);
+    setMsg('');
+    try {
+      const res = await fetch(`/api/gatherings/${id}/report`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ target_type: 'gathering', target_id: gathering.id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      setMsg(res.ok
+        ? (data.already_reported ? '你已舉報過呢個聚會。' : '已收到你的舉報，多謝你守護社群。')
+        : (data.error || '舉報失敗'));
+    } catch {
+      setMsg('網絡錯誤');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function blockHost() {
+    if (!session?.access_token) {
+      router.push(`/login?redirect=${encodeURIComponent(`/gatherings/${id}`)}`);
+      return;
+    }
+    const hostId = gathering?.host_id || gathering?.host?.id;
+    if (!hostId) return;
+    if (typeof window !== 'undefined'
+      && !window.confirm('封鎖主辦後，你將無法再申請對方的聚會，雙方亦不會互相收到訊息。確定？')) {
+      return;
+    }
+    setBusy(true);
+    setMsg('');
+    try {
+      const res = await fetch('/api/inbox/actions?action=block', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ action: 'block', blocked_id: hostId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      setMsg(res.ok ? '已封鎖主辦。' : (data.error || '封鎖失敗'));
+    } catch {
+      setMsg('網絡錯誤');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <>
       <SeoHead
@@ -285,6 +347,27 @@ export default function GatheringDetailPage() {
 
             <GatheringSafetyNotice />
 
+            {!isHost && session && (
+              <div className="gathering-detail__safety-actions">
+                <button
+                  type="button"
+                  className="gathering-detail__safety-btn"
+                  disabled={busy}
+                  onClick={reportGathering}
+                >
+                  舉報聚會
+                </button>
+                <button
+                  type="button"
+                  className="gathering-detail__safety-btn is-block"
+                  disabled={busy}
+                  onClick={blockHost}
+                >
+                  封鎖主辦
+                </button>
+              </div>
+            )}
+
             {msg && !gathering.my_attendance?.status && (
               <p className="gathering-detail__msg" role="status">{msg}</p>
             )}
@@ -391,8 +474,8 @@ export default function GatheringDetailPage() {
                     </div>
                     <p className="gathering-form__hint">
                       {gathering.is_online
-                        ? '僅主辦人可見；線上聚會電話可留空。'
-                        : '僅主辦人可見，唔會公開顯示。'}
+                        ? '🔒 電郵／電話只會喺主辦人批准後分享俾佢，僅用於聚會協調，唔會公開顯示；線上聚會電話可留空。'
+                        : '🔒 電郵／電話只會喺主辦人批准後分享俾佢，僅用於聚會協調，唔會公開顯示。若你撤回或取消參與，聯絡資料亦會失效。'}
                     </p>
 
                     {gathering.require_knock_message && (
