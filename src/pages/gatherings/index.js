@@ -147,8 +147,8 @@ export default function GatheringsIndexPage() {
   return (
     <>
       <SeoHead
-        title="月光聚會"
-        description="以月曆瀏覽與發起黑貓社群線上／線下聚會。"
+        title="香港 Les 活動月曆｜月光聚會"
+        description="香港 Les 活動月曆 — 以月曆瀏覽與發起香港女同志線上／線下聚會，認識同頻的她。"
         path="/gatherings"
       />
       <GatheringShell maxWidth="880px">

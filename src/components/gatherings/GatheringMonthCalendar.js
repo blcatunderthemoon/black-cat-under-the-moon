@@ -131,11 +131,11 @@ export default function GatheringMonthCalendar({
         ) : error ? (
           <p className="gatherings-empty gatherings-empty--err">{error}</p>
         ) : !selectedDate ? (
-          <p className="gatherings-empty">點日曆上面嘅日子，睇當日聚會或用上方「發起聚會」開新局。</p>
+          <p className="gatherings-empty">點日曆上面嘅日子，睇當日聚會或撳右下角「發起聚會」開新局。</p>
         ) : selectedList.length === 0 ? (
           <div className="gatherings-empty-panel gatherings-empty-panel--compact">
             <p className="gatherings-empty-panel__title">呢日仲好靜</p>
-            <p className="gatherings-empty-panel__lead">未有聚會 —— 撳上方「發起聚會」做召集人。</p>
+            <p className="gatherings-empty-panel__lead">未有聚會 —— 撳右下角「發起聚會」做召集人。</p>
           </div>
         ) : (
           <div className="gatherings-list">

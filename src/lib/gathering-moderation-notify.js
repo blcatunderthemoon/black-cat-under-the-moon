@@ -6,72 +6,9 @@
 
 import { REPORT_MODERATOR_NOTIFY_THRESHOLD } from './moderation.js';
 import { getAdminClient } from './server-auth.js';
-import { databaseNowIso } from './hong-kong-time.js';
-import { GATHERING_INBOX_SOURCE_ID } from './gathering-notify.js';
+import { sendSystemInboxMessage } from './system-inbox.js';
 
 const ALERT_DEDUP_MS = 24 * 60 * 60 * 1000;
-
-async function findOrCreateModeratorThread(admin, userId) {
-  const { data: existing } = await admin
-    .from('inbox_threads')
-    .select('id')
-    .eq('source_id', GATHERING_INBOX_SOURCE_ID)
-    .eq('participant_a', userId)
-    .eq('participant_b', userId)
-    .order('created_at', { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  if (existing?.id) return existing.id;
-
-  const { data: created, error } = await admin
-    .from('inbox_threads')
-    .insert({
-      participant_a: userId,
-      participant_b: userId,
-      source_type: 'system',
-      source_id: GATHERING_INBOX_SOURCE_ID,
-      last_message_at: databaseNowIso(),
-    })
-    .select('id')
-    .single();
-
-  if (!error && created?.id) return created.id;
-
-  // Fallback for older CHECK constraints (direct self-thread).
-  const { data: fallback, error: fallbackErr } = await admin
-    .from('inbox_threads')
-    .insert({
-      participant_a: userId,
-      participant_b: userId,
-      source_type: 'direct',
-      source_id: GATHERING_INBOX_SOURCE_ID,
-      last_message_at: databaseNowIso(),
-    })
-    .select('id')
-    .single();
-
-  if (fallbackErr) {
-    console.error('[gathering-moderation-notify] thread create failed:', fallbackErr.message);
-    return null;
-  }
-  return fallback.id;
-}
-
-async function insertModerationMessage(admin, row) {
-  const attempts = [
-    row,
-    { ...row, message_type: 'user_letter' },
-  ];
-  let lastError = null;
-  for (const attempt of attempts) {
-    const { error } = await admin.from('inbox_messages').insert(attempt);
-    if (!error) return true;
-    lastError = error;
-  }
-  console.error('[gathering-moderation-notify] message insert failed:', lastError?.message);
-  return false;
-}
 
 async function wasAlertSentRecently(admin, targetType, targetId) {
   const since = new Date(Date.now() - ALERT_DEDUP_MS).toISOString();
@@ -130,26 +67,16 @@ export async function notifyGatheringModerators({
     gathering_url: gatheringId ? `/gatherings/${gatheringId}` : null,
   };
 
-  const now = databaseNowIso();
   let sent = false;
 
   for (const mod of moderators) {
-    const threadId = await findOrCreateModeratorThread(admin, mod.id);
-    if (!threadId) continue;
-
-    const ok = await insertModerationMessage(admin, {
-      thread_id: threadId,
-      sender_id: null,
-      recipient_id: mod.id,
-      message_type: 'system',
+    const ok = await sendSystemInboxMessage({
+      channel: 'gathering',
+      userId: mod.id,
       content,
       payload,
     });
-
-    if (ok) {
-      sent = true;
-      await admin.from('inbox_threads').update({ last_message_at: now }).eq('id', threadId);
-    }
+    if (ok) sent = true;
   }
 
   return sent;

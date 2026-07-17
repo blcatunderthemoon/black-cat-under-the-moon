@@ -246,9 +246,7 @@ export default function ThreadPage() {
 
   const messages = data?.messages || [];
   const isPhotoExchangeThread = data?.thread?.source_type === 'photo_exchange';
-  const isSystemThread = data?.thread?.source_type === 'system'
-    || data?.thread?.source_id === 'gathering'
-    || data?.thread?.source_id === 'forum_moderation';
+  const isSystemThread = data?.thread?.source_type === 'system';
   const letterMessages = isPhotoExchangeThread
     ? []
     : messages.filter((m) => isLetterMessage(m));

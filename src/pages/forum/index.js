@@ -959,10 +959,10 @@ export default function ForumPage() {
   return (
     <>
       <SeoHead
-        title={matureTopicActive ? `${MATURE_FORUM_TOPIC} · ${FORUM_DISPLAY_NAME}` : FORUM_DISPLAY_NAME}
+        title={matureTopicActive ? `${MATURE_FORUM_TOPIC} · ${FORUM_DISPLAY_NAME}` : `${FORUM_DISPLAY_NAME}｜香港 Les 討論區`}
         description={matureTopicActive
           ? '黑貓樹洞成熟話題版 — 已登入會員的文字討論空間，分享親密關係、界線與同意。'
-          : '黑貓樹洞 — 在月光下匿名分享心情、認識同 Mirror 家族的朋友，參與 Black Cat Under The Moon 社群。'}
+          : '黑貓樹洞｜香港 Les 討論區 — 在月光下匿名分享心情、認識香港女同志朋友，參與 Black Cat Under The Moon 社群。'}
         path="/forum"
         noindex={matureTopicActive}
         jsonLd={[organizationJsonLd(), webSiteJsonLd()]}

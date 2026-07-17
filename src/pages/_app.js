@@ -2,6 +2,7 @@ import '../styles/globals.css';
 import '../styles/pixel-theme.css';
 import '../styles/mobile.css';
 import '../styles/gatherings.css';
+import '../styles/guides.css';
 import '../styles/dashboard/globals.css';
 import Head from 'next/head';
 import Script from 'next/script';

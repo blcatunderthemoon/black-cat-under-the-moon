@@ -1,123 +1,14 @@
 /**
  * Moonlight Gatherings — Inbox notifications for host + applicant.
- * Uses source_type=system when allowed; falls back to direct + gathering source_id
- * so notices still land even before the inbox system migration is applied.
+ * Delivered via the shared system-inbox channel (see lib/system-inbox.js).
  */
 
 import { getAdminClient } from './server-auth.js';
-import { databaseNowIso } from './hong-kong-time.js';
 import { formatGatheringHkTime } from './gatherings.js';
+import { sendSystemInboxMessage, isSystemInboxThread } from './system-inbox.js';
 
-export const GATHERING_INBOX_SOURCE_ID = 'gathering';
-
-async function findExistingGatheringThread(admin, userId) {
-  // Prefer true system threads, then legacy fallback.
-  const { data: systemThread } = await admin
-    .from('inbox_threads')
-    .select('id, source_type')
-    .eq('source_id', GATHERING_INBOX_SOURCE_ID)
-    .eq('participant_a', userId)
-    .eq('participant_b', userId)
-    .order('created_at', { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  if (systemThread?.id) return systemThread;
-  return null;
-}
-
-async function findOrCreateGatheringSystemThread(admin, userId) {
-  const existing = await findExistingGatheringThread(admin, userId);
-  if (existing?.id) return existing.id;
-
-  // Try system first (correct schema).
-  const { data: created, error } = await admin
-    .from('inbox_threads')
-    .insert({
-      participant_a: userId,
-      participant_b: userId,
-      source_type: 'system',
-      source_id: GATHERING_INBOX_SOURCE_ID,
-      last_message_at: databaseNowIso(),
-    })
-    .select('id')
-    .single();
-
-  if (!error && created?.id) return created.id;
-
-  console.warn(
-    '[gathering-notify] system thread blocked, falling back to direct:',
-    error?.message,
-    error?.code,
-  );
-
-  // Fallback: direct self-thread (works with older CHECK constraints).
-  const { data: fallback, error: fallbackErr } = await admin
-    .from('inbox_threads')
-    .insert({
-      participant_a: userId,
-      participant_b: userId,
-      source_type: 'direct',
-      source_id: GATHERING_INBOX_SOURCE_ID,
-      last_message_at: databaseNowIso(),
-    })
-    .select('id')
-    .single();
-
-  if (fallbackErr) {
-    console.error('[gathering-notify] fallback thread create failed:', fallbackErr.message, fallbackErr.code);
-    return null;
-  }
-  return fallback.id;
-}
-
-async function insertInboxMessage(admin, row) {
-  const attempts = [
-    row,
-    // message_type system may be blocked — use user_letter with same payload.
-    row.message_type === 'system'
-      ? { ...row, message_type: 'user_letter' }
-      : null,
-    // sender_id null may be blocked — omit field.
-    (() => {
-      const { sender_id: _s, ...rest } = row;
-      return rest;
-    })(),
-    (() => {
-      const { sender_id: _s, ...rest } = row;
-      return { ...rest, message_type: 'user_letter' };
-    })(),
-  ].filter(Boolean);
-
-  let lastError = null;
-  for (const attempt of attempts) {
-    const { error } = await admin.from('inbox_messages').insert(attempt);
-    if (!error) return { ok: true, message_type: attempt.message_type };
-    lastError = error;
-  }
-
-  console.error('[gathering-notify] message insert failed:', lastError?.message, lastError?.code, lastError?.details);
-  return { ok: false, error: lastError };
-}
-
-async function sendSystemMessage(admin, userId, content, payload) {
-  if (!userId) return false;
-  const threadId = await findOrCreateGatheringSystemThread(admin, userId);
-  if (!threadId) return false;
-
-  const result = await insertInboxMessage(admin, {
-    thread_id: threadId,
-    sender_id: null,
-    recipient_id: userId,
-    message_type: 'system',
-    content,
-    payload,
-  });
-
-  if (!result.ok) return false;
-
-  await admin.from('inbox_threads').update({ last_message_at: databaseNowIso() }).eq('id', threadId);
-  return true;
+async function sendSystemMessage(_admin, userId, content, payload) {
+  return sendSystemInboxMessage({ channel: 'gathering', userId, content, payload });
 }
 
 async function hasGatheringSystemMessage(admin, userId, { kind, gatheringId, applicantId }) {
@@ -297,7 +188,7 @@ export async function notifyGatheringCancelled({
   return any;
 }
 
-/** True when an inbox thread is a Moonlight Gathering notice thread. */
+/** True when an inbox thread is a system-notification thread. */
 export function isGatheringInboxThread(thread) {
-  return thread?.source_id === GATHERING_INBOX_SOURCE_ID;
+  return isSystemInboxThread(thread);
 }

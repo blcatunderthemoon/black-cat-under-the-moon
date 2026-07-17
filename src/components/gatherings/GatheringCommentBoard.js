@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../lib/auth-context.js';
 import LoadingText from '../LoadingText.js';
+import GatheringConfirmOverlay from './GatheringConfirmOverlay.js';
 
 const MAX_BODY = 500;
 
@@ -26,6 +27,8 @@ export default function GatheringCommentBoard({ gatheringId }) {
   const [confirmId, setConfirmId] = useState(null);
   const [busyId, setBusyId] = useState(null);
   const [reportedIds, setReportedIds] = useState({});
+  const [reportTarget, setReportTarget] = useState(null);
+  const [reportReason, setReportReason] = useState('');
   const listRef = useRef(null);
 
   const load = useCallback(async () => {
@@ -110,12 +113,15 @@ export default function GatheringCommentBoard({ gatheringId }) {
     }
   }
 
-  async function report(comment) {
-    if (!session?.access_token) return;
-    if (typeof window !== 'undefined'
-      && !window.confirm('確定舉報呢則留言？守護者會收到通知。')) {
-      return;
-    }
+  function openReport(comment) {
+    setReportReason('');
+    setError('');
+    setReportTarget(comment);
+  }
+
+  async function runReport() {
+    const comment = reportTarget;
+    if (!comment || !session?.access_token) return;
     setBusyId(comment.id);
     setError('');
     try {
@@ -125,7 +131,11 @@ export default function GatheringCommentBoard({ gatheringId }) {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ target_type: 'comment', target_id: comment.id }),
+        body: JSON.stringify({
+          target_type: 'comment',
+          target_id: comment.id,
+          reason: reportReason.trim() || null,
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -136,6 +146,8 @@ export default function GatheringCommentBoard({ gatheringId }) {
       if (data.auto_hidden) {
         setComments((prev) => prev.filter((c) => c.id !== comment.id));
       }
+      setReportTarget(null);
+      setReportReason('');
     } catch {
       setError('網絡錯誤');
     } finally {
@@ -212,7 +224,7 @@ export default function GatheringCommentBoard({ gatheringId }) {
                     type="button"
                     className="gathering-board__report"
                     disabled={busyId === c.id}
-                    onClick={() => report(c)}
+                    onClick={() => openReport(c)}
                   >
                     舉報
                   </button>
@@ -246,6 +258,25 @@ export default function GatheringCommentBoard({ gatheringId }) {
           </button>
         </div>
       </form>
+
+      <GatheringConfirmOverlay
+        open={!!reportTarget}
+        title="舉報呢則留言？"
+        sub="月光守護者會收到通知並跟進；達到門檻留言會自動隱藏。"
+        confirmLabel="送出舉報"
+        cancelLabel="返回"
+        variant="danger"
+        busy={busyId === reportTarget?.id}
+        showNote
+        note={reportReason}
+        onNoteChange={setReportReason}
+        noteLabel="舉報原因（選填）"
+        notePlaceholder="簡述問題，例如：騷擾、不當內容…"
+        onConfirm={runReport}
+        onCancel={() => {
+          if (busyId !== reportTarget?.id) { setReportTarget(null); setReportReason(''); }
+        }}
+      />
     </section>
   );
 }

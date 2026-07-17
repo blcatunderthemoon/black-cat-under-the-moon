@@ -13,7 +13,7 @@ import { INBOX_MESSAGE_MAX_LENGTH } from './inbox-limits.js';
 import { enrichThreadWithChannel, enrichPhotoExchangeThread } from './inbox-channel.js';
 import { getPhotoExchangesByIds } from './photo-exchange.js';
 import { normalizeLetterPrefs, validateLetterStyle } from './letter-gameplay.js';
-import { isGatheringInboxThread } from './gathering-notify.js';
+import { isSystemInboxThread } from './system-inbox.js';
 import {
   enrichMatchThreadListItem,
   indexMatchCardsByThread,
@@ -101,7 +101,7 @@ async function loadRecentChannelMessages(admin, threadIds) {
         .select('id, thread_id, sender_id, recipient_id, message_type, created_at, content')
         .eq('thread_id', threadId)
         .eq('is_hidden', false)
-        .in('message_type', ['user_letter', 'photo_exchange_request'])
+        .in('message_type', ['user_letter', 'photo_exchange_request', 'system'])
         .order('created_at', { ascending: false })
         .limit(LIST_CHANNEL_MESSAGE_LIMIT);
       return (data || []).reverse();
@@ -283,16 +283,15 @@ export async function listThreads(userId, { limit = 20, offset = 0 } = {}) {
     const threadMessages = messagesByThread[thread.id] || [];
     const latestMessage = threadMessages[threadMessages.length - 1] || null;
     const unreadCount = unreadByThread[thread.id] || 0;
-    const isSystem = thread.source_type === 'system' || isGatheringInboxThread(thread);
+    const isSystem = isSystemInboxThread(thread);
+    const systemChannelName = isSystem
+      ? (profileById[otherId]?.display_name || '系統通知')
+      : null;
 
     const channelMeta = isSystem
       ? {
-          mysterious_title: (latestMessage?.content || '系統通知').slice(0, 80),
-          list_meta: thread.source_id === 'gathering'
-            ? '月光聚會通知'
-            : thread.source_id === 'forum_moderation'
-              ? '論壇守護通知'
-              : '系統通知',
+          mysterious_title: (latestMessage?.content || systemChannelName).slice(0, 80),
+          list_meta: `${systemChannelName}通知`,
           can_reply: false,
           reply_opportunity: false,
         }
@@ -319,11 +318,7 @@ export async function listThreads(userId, { limit = 20, offset = 0 } = {}) {
     const otherProfile = soloPartner ? null : profileById[otherId];
     const matchCard = matchCardByThread[thread.id] || null;
 
-    const systemName = thread.source_id === 'gathering'
-      ? '月光聚會'
-      : thread.source_id === 'forum_moderation'
-        ? '論壇守護'
-        : '系統通知';
+    const systemName = systemChannelName || '系統通知';
 
     return {
       ...thread,
@@ -559,14 +554,14 @@ export async function getThread(threadId, userId) {
     };
   });
 
-  const channelMeta = (thread.source_type === 'system' || isGatheringInboxThread(thread))
+  const systemChannelName = isSystemInboxThread(thread)
+    ? (otherProfile?.display_name || '系統通知')
+    : null;
+
+  const channelMeta = isSystemInboxThread(thread)
     ? {
-        mysterious_title: '系統通知',
-        list_meta: thread.source_id === 'gathering'
-          ? '月光聚會通知'
-          : thread.source_id === 'forum_moderation'
-            ? '論壇守護通知'
-            : '系統通知',
+        mysterious_title: systemChannelName,
+        list_meta: `${systemChannelName}通知`,
         can_reply: false,
         reply_opportunity: false,
         compose_enabled: false,
@@ -597,12 +592,8 @@ export async function getThread(threadId, userId) {
     ? await getQuotaUsage(userId, 'active_letter_monthly')
     : null;
 
-  const isSystem = thread.source_type === 'system' || isGatheringInboxThread(thread);
-  const systemName = thread.source_id === 'gathering'
-    ? '月光聚會'
-    : thread.source_id === 'forum_moderation'
-      ? '論壇守護'
-      : '系統通知';
+  const isSystem = isSystemInboxThread(thread);
+  const systemName = systemChannelName || '系統通知';
 
   return {
     thread,

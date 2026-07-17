@@ -1,10 +1,24 @@
 import { getAdminClient } from '../lib/server-auth.js';
 import { getHongKongDateString } from '../lib/hong-kong-time.js';
+import { getAllGuides } from '../lib/guides.js';
 import {
   STATIC_SITEMAP_PATHS,
   absoluteUrl,
   formatSitemapDate,
 } from '../lib/site-seo.js';
+
+function loadGuideUrls() {
+  try {
+    return getAllGuides().map((guide) => ({
+      loc: absoluteUrl(`/guides/${guide.slug}`),
+      lastmod: formatSitemapDate(guide.updated || guide.date),
+      changefreq: 'monthly',
+      priority: '0.7',
+    }));
+  } catch {
+    return [];
+  }
+}
 
 function escapeXml(value) {
   return String(value)
@@ -28,7 +42,7 @@ async function loadDynamicUrls() {
   const entries = [];
   try {
     const admin = getAdminClient();
-    const [{ data: posts }, { data: cards }] = await Promise.all([
+    const [{ data: posts }, { data: cards }, { data: gatherings }] = await Promise.all([
       admin
         .from('forum_posts')
         .select('id, updated_at, visibility')
@@ -39,6 +53,13 @@ async function loadDynamicUrls() {
         .from('mirror_cards')
         .select('public_slug, updated_at')
         .not('public_slug', 'is', null)
+        .order('updated_at', { ascending: false })
+        .limit(300),
+      admin
+        .from('gatherings')
+        .select('id, updated_at, is_hidden, status')
+        .eq('is_hidden', false)
+        .neq('status', 'cancelled')
         .order('updated_at', { ascending: false })
         .limit(300),
     ]);
@@ -62,6 +83,16 @@ async function loadDynamicUrls() {
         priority: '0.5',
       });
     });
+
+    (gatherings || []).forEach((g) => {
+      if (!g?.id) return;
+      entries.push({
+        loc: absoluteUrl(`/gatherings/${g.id}`),
+        lastmod: formatSitemapDate(g.updated_at),
+        changefreq: 'weekly',
+        priority: '0.6',
+      });
+    });
   } catch {
     // Static routes still publish if DB is unavailable.
   }
@@ -82,10 +113,11 @@ export async function getServerSideProps({ res }) {
   }));
 
   const dynamicEntries = await loadDynamicUrls();
+  const guideEntries = loadGuideUrls();
   const xml = [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-    ...[...staticEntries, ...dynamicEntries].map(urlEntry),
+    ...[...staticEntries, ...guideEntries, ...dynamicEntries].map(urlEntry),
     '</urlset>',
   ].join('');
 

@@ -36,6 +36,8 @@
 /* Leave room so the floating 發起聚會 button never covers content */
 .app-page--gatherings > .app-main {
   padding-bottom: 5.5rem;
+  /* Sit above the footer so the fixed FAB (nested here) never hides behind it */
+  z-index: 2;
 }
 
 .app-page--gatherings .app-header--account,
@@ -228,14 +230,12 @@
 }
 
 @media (max-width: 480px) {
-  .gathering-fab__text {
-    display: none;
-  }
   .gathering-fab {
-    padding: 0.9rem;
+    padding: 0.75rem 1.05rem;
+    font-size: 0.9rem;
   }
   .gathering-fab__icon {
-    font-size: 1.4rem;
+    font-size: 1.2rem;
   }
 }
 
@@ -1303,6 +1303,17 @@
 .gathering-detail__safety-btn:disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+.gathering-detail__safety-msg {
+  margin: 0 0 1rem;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid rgba(124, 92, 252, 0.3);
+  border-radius: 8px;
+  background: rgba(124, 92, 252, 0.08);
+  color: var(--gathering-cream);
+  font-size: 0.82rem;
+  text-align: right;
 }
 
 .gathering-detail__host-panel,
@@ -2607,7 +2618,7 @@
 
 .gathering-detail--simple .gathering-detail__desc {
   margin: 1.1rem 0 1.25rem;
-  padding: 1rem 0;
+  padding: 1rem 1.05rem;
   border-top: 1px solid rgba(240, 235, 216, 0.1);
   border-bottom: 1px solid rgba(240, 235, 216, 0.1);
   background: none;

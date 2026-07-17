@@ -5,10 +5,10 @@
 
 export const SITE_NAME = 'Black Cat Under The Moon';
 
-export const DEFAULT_TITLE = 'Black Cat Under The Moon — 靈魂共鳴 · 靈魂鏡像 · 月光圍爐';
+export const DEFAULT_TITLE = 'Black Cat Under The Moon｜香港 Les 女同志社群｜配對・漂流瓶・討論區';
 
 export const DEFAULT_DESCRIPTION =
-  'Black Cat Under The Moon 是月下靈魂社群：Echo Mode 月下緣份、Mirror Mode 性格鏡像、月光漂流瓶與黑貓樹洞。探索你的貓家族人格，遇見共鳴的靈魂。';
+  'Black Cat Under The Moon 是香港 Les Community，提供月下緣份配對、Mirror Mode 性格分析、匿名漂流瓶、黑貓樹洞及活動平台，讓香港女同志認識朋友、交流及建立連結。';
 
 /** Static paths included in sitemap (public, indexable). */
 export const STATIC_SITEMAP_PATHS = [
@@ -19,6 +19,7 @@ export const STATIC_SITEMAP_PATHS = [
   { path: '/drift-bottle.html', changefreq: 'monthly', priority: '0.8' },
   { path: '/forum', changefreq: 'daily', priority: '0.9' },
   { path: '/gatherings', changefreq: 'daily', priority: '0.8' },
+  { path: '/guides', changefreq: 'weekly', priority: '0.8' },
   { path: '/moon-journey', changefreq: 'monthly', priority: '0.7' },
   { path: '/premium', changefreq: 'monthly', priority: '0.7' },
   { path: '/contact.html', changefreq: 'yearly', priority: '0.4' },

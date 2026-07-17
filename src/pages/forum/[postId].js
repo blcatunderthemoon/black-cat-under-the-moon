@@ -38,6 +38,7 @@ import {
   writeForumPostCache,
 } from '../../lib/forum-post-cache.js';
 import { absoluteUrl } from '../../lib/site-seo.js';
+import { breadcrumbJsonLd } from '../../lib/structured-data.js';
 
 function mergeStoryPostFields(prevPost, nextPost) {
   if (!prevPost || !nextPost) return nextPost || prevPost;
@@ -174,13 +175,28 @@ function seoExcerpt(text, max = 150) {
   return flat.length > max ? `${flat.slice(0, max)}…` : flat;
 }
 
+/** Cleaned, paragraph-preserving body for SSR crawlability (strips markdown/image/embeds). */
+function seoBody(text, max = 4000) {
+  if (!text) return '';
+  const cleaned = String(text)
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '') // images
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1') // links -> text
+    .replace(/^#{1,6}\s*/gm, '') // headings
+    .replace(/[*_`>]/g, '') // inline markers
+    .replace(/\r\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  return cleaned.length > max ? `${cleaned.slice(0, max)}…` : cleaned;
+}
+
 function buildPostJsonLd(seo) {
   if (!seo?.indexable) return null;
   return {
     '@context': 'https://schema.org',
     '@type': 'DiscussionForumPosting',
     headline: seo.title,
-    text: seo.excerpt || seo.title,
+    text: seo.body || seo.excerpt || seo.title,
+    articleBody: seo.body || undefined,
     url: absoluteUrl(`/forum/${seo.id}`),
     datePublished: seo.created_at || undefined,
     inLanguage: 'zh-Hant',
@@ -883,11 +899,29 @@ export default function ForumPostPage({ seo = null }) {
         path={postId ? `/forum/${postId}` : '/forum'}
         ogType="article"
         noindex={post?.visibility === 'members_only' || seo?.indexable === false}
-        jsonLd={buildPostJsonLd(seo)}
+        jsonLd={seo?.indexable
+          ? [
+              buildPostJsonLd(seo),
+              breadcrumbJsonLd([
+                { name: FORUM_DISPLAY_NAME, path: '/forum' },
+                { name: post?.title || seo?.title || '貼文', path: `/forum/${postId}` },
+              ]),
+            ].filter(Boolean)
+          : buildPostJsonLd(seo)}
       />
       <AppShell {...shellProps}>
         {!post ? (
-          <MoonLoading variant="hero" />
+          seo?.indexable && seo?.body ? (
+            <article className="forum-ssr-article" aria-busy="true">
+              <h1 className="forum-ssr-article__title">{post?.title || seo.title}</h1>
+              {seo.body.split('\n\n').map((para, i) => (
+                <p key={i} className="forum-ssr-article__p">{para}</p>
+              ))}
+              <MoonLoading variant="hero" />
+            </article>
+          ) : (
+            <MoonLoading variant="hero" />
+          )
         ) : (
           <ForumSectionErrorBoundary fallbackLabel="貼文">
           <>
@@ -1231,6 +1265,7 @@ export async function getServerSideProps({ params, res }) {
           title: post.title || '貼文',
           // Members-only/mature posts stay noindex and expose no content.
           excerpt: indexable ? seoExcerpt(post.content) : '',
+          body: indexable ? seoBody(post.content) : '',
           author_name: indexable && !post.hide_username ? (post.anonymous_name_snapshot || null) : null,
           like_count: post.like_count || 0,
           comment_count: post.comment_count || 0,

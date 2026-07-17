@@ -25,7 +25,7 @@ const STATUS_LABEL = {
   withdrawn: '已撤回',
 };
 
-export default function GatheringDetailPage() {
+export default function GatheringDetailPage({ seo = null }) {
   const router = useRouter();
   const { id } = router.query;
   const { session, loading: authLoading } = useAuth();
@@ -38,8 +38,10 @@ export default function GatheringDetailPage() {
   const [phone, setPhone] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
-  const [confirmKind, setConfirmKind] = useState(null); // 'withdraw' | 'cancel' | null
+  const [confirmKind, setConfirmKind] = useState(null); // 'withdraw' | 'cancel' | 'report' | 'block' | null
   const [cancelReason, setCancelReason] = useState('');
+  const [reportReason, setReportReason] = useState('');
+  const [safetyMsg, setSafetyMsg] = useState('');
 
   useEffect(() => {
     if (session?.user?.email && !email) setEmail(session.user.email);
@@ -167,17 +169,19 @@ export default function GatheringDetailPage() {
     }
   }
 
-  async function reportGathering() {
+  function reportGathering() {
     if (!session?.access_token) {
       router.push(`/login?redirect=${encodeURIComponent(`/gatherings/${id}`)}`);
       return;
     }
-    if (typeof window !== 'undefined'
-      && !window.confirm('確定舉報呢個聚會？守護者會收到通知。')) {
-      return;
-    }
+    setReportReason('');
+    setSafetyMsg('');
+    setConfirmKind('report');
+  }
+
+  async function runReportGathering() {
+    if (!session?.access_token || !gathering) return;
     setBusy(true);
-    setMsg('');
     try {
       const res = await fetch(`/api/gatherings/${id}/report`, {
         method: 'POST',
@@ -185,32 +189,39 @@ export default function GatheringDetailPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ target_type: 'gathering', target_id: gathering.id }),
+        body: JSON.stringify({
+          target_type: 'gathering',
+          target_id: gathering.id,
+          reason: reportReason.trim() || null,
+        }),
       });
       const data = await res.json().catch(() => ({}));
-      setMsg(res.ok
-        ? (data.already_reported ? '你已舉報過呢個聚會。' : '已收到你的舉報，多謝你守護社群。')
+      setConfirmKind(null);
+      setReportReason('');
+      setSafetyMsg(res.ok
+        ? (data.already_reported ? '你已舉報過呢個聚會。' : '已收到你的舉報，多謝你守護社群。🐈‍⬛')
         : (data.error || '舉報失敗'));
     } catch {
-      setMsg('網絡錯誤');
+      setSafetyMsg('網絡錯誤');
     } finally {
       setBusy(false);
     }
   }
 
-  async function blockHost() {
+  function blockHost() {
     if (!session?.access_token) {
       router.push(`/login?redirect=${encodeURIComponent(`/gatherings/${id}`)}`);
       return;
     }
+    if (!(gathering?.host_id || gathering?.host?.id)) return;
+    setSafetyMsg('');
+    setConfirmKind('block');
+  }
+
+  async function runBlockHost() {
     const hostId = gathering?.host_id || gathering?.host?.id;
-    if (!hostId) return;
-    if (typeof window !== 'undefined'
-      && !window.confirm('封鎖主辦後，你將無法再申請對方的聚會，雙方亦不會互相收到訊息。確定？')) {
-      return;
-    }
+    if (!session?.access_token || !hostId) return;
     setBusy(true);
-    setMsg('');
     try {
       const res = await fetch('/api/inbox/actions?action=block', {
         method: 'POST',
@@ -221,9 +232,10 @@ export default function GatheringDetailPage() {
         body: JSON.stringify({ action: 'block', blocked_id: hostId }),
       });
       const data = await res.json().catch(() => ({}));
-      setMsg(res.ok ? '已封鎖主辦。' : (data.error || '封鎖失敗'));
+      setConfirmKind(null);
+      setSafetyMsg(res.ok ? '已封鎖主辦，對方無法再與你互動。' : (data.error || '封鎖失敗'));
     } catch {
-      setMsg('網絡錯誤');
+      setSafetyMsg('網絡錯誤');
     } finally {
       setBusy(false);
     }
@@ -232,9 +244,11 @@ export default function GatheringDetailPage() {
   return (
     <>
       <SeoHead
-        title={gathering?.title || '聚會詳情'}
-        description={gathering?.description || '月光聚會詳情'}
+        title={gathering?.title || seo?.title || '聚會詳情'}
+        description={gathering?.description || seo?.description || '月光聚會詳情 — 香港 Les 活動。'}
         path={id ? `/gatherings/${id}` : '/gatherings'}
+        ogType="article"
+        noindex={seo ? seo.indexable === false : false}
       />
       <GatheringShell
         title="聚會詳情"
@@ -366,6 +380,10 @@ export default function GatheringDetailPage() {
                   封鎖主辦
                 </button>
               </div>
+            )}
+
+            {!isHost && session && safetyMsg && (
+              <p className="gathering-detail__safety-msg" role="status">{safetyMsg}</p>
             )}
 
             {msg && !gathering.my_attendance?.status && (
@@ -558,7 +576,79 @@ export default function GatheringDetailPage() {
           onConfirm={runCancelGathering}
           onCancel={() => { if (!busy) { setConfirmKind(null); setCancelReason(''); } }}
         />
+
+        <GatheringConfirmOverlay
+          open={confirmKind === 'report'}
+          title="舉報呢個聚會？"
+          sub="月光守護者會收到通知並跟進；達到門檻聚會會自動隱藏。如涉及即時危險，請先報警。"
+          confirmLabel="送出舉報"
+          cancelLabel="返回"
+          variant="danger"
+          busy={busy}
+          showNote
+          note={reportReason}
+          onNoteChange={setReportReason}
+          noteLabel="舉報原因（選填）"
+          notePlaceholder="簡述發生咩事，例如：不當內容、騷擾、資料造假…"
+          onConfirm={runReportGathering}
+          onCancel={() => { if (!busy) { setConfirmKind(null); setReportReason(''); } }}
+        />
+
+        <GatheringConfirmOverlay
+          open={confirmKind === 'block'}
+          title="封鎖主辦？"
+          sub="封鎖後你將無法再申請對方的聚會，雙方亦不會互相收到訊息。"
+          confirmLabel="封鎖"
+          cancelLabel="返回"
+          variant="danger"
+          busy={busy}
+          onConfirm={runBlockHost}
+          onCancel={() => { if (!busy) setConfirmKind(null); }}
+        />
       </GatheringShell>
     </>
   );
+}
+
+function gatheringSeoDescription(row) {
+  const base = (row.description || '').replace(/\s+/g, ' ').trim();
+  const mode = row.is_online ? '線上聚會' : '線下聚會';
+  const prefix = `香港 Les 月光聚會 · ${mode}`;
+  if (!base) return `${prefix} — 一齊參與 Black Cat Under The Moon 社群活動。`;
+  const body = base.length > 140 ? `${base.slice(0, 140)}…` : base;
+  return `${prefix}｜${body}`;
+}
+
+export async function getServerSideProps({ params, res }) {
+  const id = typeof params?.id === 'string' ? params.id : '';
+  if (!id) return { notFound: true };
+
+  try {
+    const { getAdminClient } = await import('../../lib/server-auth.js');
+    const admin = getAdminClient();
+    const { data: row } = await admin
+      .from('gatherings')
+      .select('id, title, description, status, is_online, is_hidden')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (!row) return { props: { seo: null } };
+
+    const indexable = !row.is_hidden && row.status !== 'cancelled';
+
+    res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=600');
+
+    return {
+      props: {
+        seo: {
+          title: row.title || '聚會詳情',
+          description: gatheringSeoDescription(row),
+          indexable,
+        },
+      },
+    };
+  } catch (err) {
+    console.error('[gatherings/id] SSR meta failed:', err?.message || err);
+    return { props: { seo: null } };
+  }
 }
