@@ -33,7 +33,7 @@ export default function GuidesIndexPage({ guides }) {
         jsonLd={[
           breadcrumbJsonLd([
             { name: '主頁', path: '/index.html' },
-            { name: '文章／指南', path: '/guides' },
+            { name: '文章', path: '/guides' },
           ]),
           organizationJsonLd(),
           webSiteJsonLd(),
@@ -42,7 +42,7 @@ export default function GuidesIndexPage({ guides }) {
       <AppShell
         headerBrand={<ForumHeaderLogo />}
         headerVariant="forum"
-        breadcrumbs={[{ label: '文章／指南' }]}
+        breadcrumbs={[{ label: '主頁', href: '/index.html' }, { label: '文章' }]}
         maxWidth="760px"
         warmBackground
         showStarfield={false}
@@ -74,6 +74,10 @@ export default function GuidesIndexPage({ guides }) {
             ))}
           </ul>
         )}
+
+        <nav className="guides-foot">
+          <a href="/index.html" className="guide-article__back">← 返回主頁</a>
+        </nav>
       </AppShell>
     </>
   );

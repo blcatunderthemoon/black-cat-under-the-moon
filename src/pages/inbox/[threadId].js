@@ -461,35 +461,78 @@ function stickyNoteTilt(seed) {
   return ((Math.abs(h) % 41) - 20) / 10;
 }
 
+const GATHERING_NOTICE_META = {
+  gathering_application: { icon: '🙋‍♀️', tone: 'apply', title: '有人申請加入你的聚會', cta: '查看申請 →' },
+  gathering_joined: { icon: '🎉', tone: 'ok', title: '有新成員加入聚會', cta: '查看申請 →' },
+  gathering_applied: { icon: '📨', tone: 'apply', title: '申請已送出', cta: '查看聚會 →' },
+  gathering_approved: { icon: '✅', tone: 'ok', title: '申請已獲批准', cta: '查看聚會 →' },
+  gathering_rejected: { icon: '🌙', tone: 'muted', title: '申請未獲批准', cta: '查看聚會 →' },
+  gathering_moderation_alert: { icon: '🛡️', tone: 'warn', title: '月光守護者通知', cta: '前往處理 →' },
+};
+
 function SystemNoticeItem({ msg, stackIndex = 0 }) {
-  const url = typeof msg.payload?.gathering_url === 'string'
-    ? msg.payload.gathering_url
-    : (typeof msg.payload?.forum_url === 'string' ? msg.payload.forum_url : null);
-  const cta = msg.payload?.kind === 'gathering_application' || msg.payload?.kind === 'gathering_joined'
-    ? '查看申請 →'
-    : msg.payload?.kind === 'gathering_approved'
-      || msg.payload?.kind === 'gathering_rejected'
-      || msg.payload?.kind === 'gathering_applied'
-      ? '查看聚會 →'
-      : url
-        ? '查看詳情 →'
-        : null;
+  const p = msg.payload || {};
+  const kind = typeof p.kind === 'string' ? p.kind : '';
+  const isGathering = kind.startsWith('gathering_');
+  const url = typeof p.gathering_url === 'string'
+    ? p.gathering_url
+    : (typeof p.forum_url === 'string' ? p.forum_url : null);
+
+  const meta = GATHERING_NOTICE_META[kind] || {
+    icon: isGathering ? '🌙' : '🔔',
+    tone: 'default',
+    title: isGathering ? '月光聚會通知' : '系統通知',
+    cta: url ? '查看詳情 →' : null,
+  };
+
+  const eyebrow = isGathering ? '月光聚會' : '系統通知';
+  const gTitle = typeof p.gathering_title === 'string' ? p.gathering_title : null;
+  const applicant = (kind === 'gathering_application' || kind === 'gathering_joined')
+    && typeof p.applicant_name === 'string' ? p.applicant_name : null;
+  const knock = typeof p.knock_message === 'string' && p.knock_message ? p.knock_message : null;
+  const whenLabel = typeof p.when_label === 'string' ? p.when_label : null;
+  const hasStructured = isGathering && (gTitle || applicant);
 
   return (
     <div
       className="letter-row letter-row--center inbox-system-notice-row"
       style={{ '--letter-z': stackIndex + 1 }}
     >
-      <article className="inbox-system-notice">
-        <p className="inbox-system-notice__eyebrow">
-          {typeof msg.payload?.kind === 'string' && msg.payload.kind.startsWith('gathering_')
-            ? '月光聚會'
-            : '系統通知'}
-        </p>
-        <p className="inbox-system-notice__body">{msg.content}</p>
-        {url && cta && (
-          <Link href={url} className="inbox-system-notice__link pixel-link">
-            {cta}
+      <article className={`inbox-system-notice inbox-system-notice--${meta.tone}`}>
+        <header className="inbox-system-notice__head">
+          <span className="inbox-system-notice__icon" aria-hidden="true">{meta.icon}</span>
+          <div className="inbox-system-notice__headings">
+            <p className="inbox-system-notice__eyebrow">{eyebrow}</p>
+            <p className="inbox-system-notice__title">{meta.title}</p>
+          </div>
+        </header>
+
+        {hasStructured ? (
+          <div className="inbox-system-notice__detail">
+            {gTitle && (
+              <p className="inbox-system-notice__gathering">
+                「{gTitle}」{whenLabel && <span className="inbox-system-notice__when">{whenLabel}</span>}
+              </p>
+            )}
+            {applicant && (
+              <p className="inbox-system-notice__meta-row">
+                <span className="inbox-system-notice__chip">申請人：{applicant}</span>
+              </p>
+            )}
+            {knock && (
+              <blockquote className="inbox-system-notice__knock">
+                <span className="inbox-system-notice__knock-label">🐾 敲門暗號</span>
+                {knock}
+              </blockquote>
+            )}
+          </div>
+        ) : (
+          <p className="inbox-system-notice__body">{msg.content}</p>
+        )}
+
+        {url && meta.cta && (
+          <Link href={url} className="inbox-system-notice__link">
+            {meta.cta}
           </Link>
         )}
         <time className="inbox-system-notice__time" dateTime={msg.created_at}>

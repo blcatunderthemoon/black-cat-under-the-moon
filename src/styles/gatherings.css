@@ -218,6 +218,12 @@
   transition: transform 0.18s ease, box-shadow 0.2s ease, filter 0.2s ease;
 }
 
+.gathering-fab:hover,
+.gathering-fab:focus,
+.gathering-fab:active {
+  color: #12101a;
+}
+
 .gathering-fab:hover {
   transform: translateY(-2px);
   filter: brightness(1.05);
@@ -911,6 +917,17 @@
   margin: 0.4rem 0 0;
   font-size: 0.78rem;
   color: rgba(232, 228, 240, 0.45);
+}
+
+.gathering-form__field-error {
+  display: block;
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  color: #ff8a8a;
+}
+
+.gathering-form__field input[aria-invalid='true'] {
+  border-color: rgba(255, 138, 138, 0.65);
 }
 
 .gathering-form__row {
@@ -3290,6 +3307,10 @@
   background:
     linear-gradient(165deg, rgba(255, 224, 102, 0.06) 0%, transparent 45%),
     rgba(8, 7, 16, 0.5);
+}
+
+.gathering-board__msg.is-pending {
+  opacity: 0.6;
 }
 
 .gathering-board__msg-top {

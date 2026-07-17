@@ -57,6 +57,11 @@ export async function notifyGatheringApplication({
     kind: autoApproved ? 'gathering_joined' : 'gathering_application',
     gathering_id: gatheringId,
     applicant_id: applicantId || null,
+    gathering_title: title,
+    applicant_name: name,
+    knock_message: knockMessage ? String(knockMessage).slice(0, 120) : null,
+    when_label: when || null,
+    auto_approved: autoApproved,
     gathering_url: `/gatherings/${gatheringId}`,
   });
 }
@@ -82,6 +87,8 @@ export async function notifyGatheringApplicationReceived({
   return sendSystemMessage(admin, applicantId, content, {
     kind: 'gathering_applied',
     gathering_id: gatheringId,
+    gathering_title: title,
+    when_label: when || null,
     gathering_url: `/gatherings/${gatheringId}`,
   });
 }
@@ -102,6 +109,8 @@ export async function notifyGatheringDecision({
   return sendSystemMessage(admin, applicantId, content, {
     kind: approved ? 'gathering_approved' : 'gathering_rejected',
     gathering_id: gatheringId,
+    gathering_title: title,
+    approved,
     gathering_url: `/gatherings/${gatheringId}`,
   });
 }

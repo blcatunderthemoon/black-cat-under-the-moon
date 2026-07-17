@@ -4,7 +4,7 @@
 
 const LEGAL_LINKS = [
   { href: '/about.html', label: '關於我們' },
-  { href: '/guides', label: '文章／指南' },
+  { href: '/guides', label: '文章' },
   { href: '/contact.html', label: '聯絡我們' },
   { href: '/tos.html', label: '使用條款' },
   { href: '/privacy.html', label: '私隱政策' },
@@ -37,7 +37,7 @@ export const STATIC_LEGAL_FOOTER_HTML = `
   <nav class="site-footer__nav site-footer__nav--legal" aria-label="法律與聯絡">
     <a class="site-legal-link" href="about.html">關於我們</a>
     <span class="site-legal-sep" aria-hidden="true">|</span>
-    <a class="site-legal-link" href="/guides">文章／指南</a>
+    <a class="site-legal-link" href="/guides">文章</a>
     <span class="site-legal-sep" aria-hidden="true">|</span>
     <a class="site-legal-link" href="contact.html">聯絡我們</a>
     <span class="site-legal-sep" aria-hidden="true">|</span>

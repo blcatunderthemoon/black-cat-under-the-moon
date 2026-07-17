@@ -18,7 +18,7 @@ function formatTime(dateStr) {
 }
 
 export default function GatheringCommentBoard({ gatheringId }) {
-  const { session } = useAuth();
+  const { session, profile, displayName } = useAuth();
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -63,6 +63,27 @@ export default function GatheringCommentBoard({ gatheringId }) {
     if (!body || posting || !session?.access_token) return;
     setPosting(true);
     setError('');
+
+    // Optimistic: show the comment instantly, then reconcile with the server.
+    const tempId = `temp-${Date.now()}`;
+    const optimistic = {
+      id: tempId,
+      user_id: session.user?.id,
+      body,
+      created_at: new Date().toISOString(),
+      display_name: displayName || '你',
+      avatar_style: profile?.avatar_style || null,
+      mirror_type: null,
+      is_mine: true,
+      can_delete: true,
+      pending: true,
+    };
+    setComments((prev) => [...prev, optimistic]);
+    setDraft('');
+    requestAnimationFrame(() => {
+      listRef.current?.scrollTo?.({ top: listRef.current.scrollHeight, behavior: 'smooth' });
+    });
+
     try {
       const res = await fetch(`/api/gatherings/${gatheringId}/comments`, {
         method: 'POST',
@@ -74,17 +95,18 @@ export default function GatheringCommentBoard({ gatheringId }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
+        // Roll back the optimistic comment and restore the draft.
+        setComments((prev) => prev.filter((c) => c.id !== tempId));
+        setDraft(body);
         setError(data.crisis ? '如果你正經歷困擾，請搵人傾傾。' : (data.error || '留言失敗'));
         return;
       }
       if (data.comment) {
-        setComments((prev) => [...prev, data.comment]);
-        setDraft('');
-        requestAnimationFrame(() => {
-          listRef.current?.scrollTo?.({ top: listRef.current.scrollHeight, behavior: 'smooth' });
-        });
+        setComments((prev) => prev.map((c) => (c.id === tempId ? data.comment : c)));
       }
     } catch {
+      setComments((prev) => prev.filter((c) => c.id !== tempId));
+      setDraft(body);
       setError('網絡錯誤');
     } finally {
       setPosting(false);
@@ -173,7 +195,7 @@ export default function GatheringCommentBoard({ gatheringId }) {
           comments.map((c) => (
             <article
               key={c.id}
-              className={`gathering-board__msg${c.is_mine ? ' is-mine' : ''}`}
+              className={`gathering-board__msg${c.is_mine ? ' is-mine' : ''}${c.pending ? ' is-pending' : ''}`}
             >
               <div className="gathering-board__msg-top">
                 <span className="gathering-board__msg-name">

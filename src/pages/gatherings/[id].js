@@ -25,6 +25,14 @@ const STATUS_LABEL = {
   withdrawn: '已撤回',
 };
 
+function normalizeHkPhone(raw) {
+  return String(raw || '').replace(/[\s()\-]/g, '').replace(/^\+?852/, '');
+}
+
+function isValidHkPhone(raw) {
+  return /^\d{8}$/.test(normalizeHkPhone(raw));
+}
+
 export default function GatheringDetailPage({ seo = null }) {
   const router = useRouter();
   const { id } = router.query;
@@ -240,6 +248,10 @@ export default function GatheringDetailPage({ seo = null }) {
       setBusy(false);
     }
   }
+
+  const phoneProvided = phone.trim() !== '';
+  const phoneValid = isValidHkPhone(phone);
+  const phoneError = phoneProvided && !phoneValid ? '電話號碼應為 8 位數字。' : '';
 
   return (
     <>
@@ -481,13 +493,18 @@ export default function GatheringDetailPage({ seo = null }) {
                         <span>{gathering.is_online ? '電話（選填）' : '電話 *'}</span>
                         <input
                           type="tel"
+                          inputMode="numeric"
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
                           maxLength={20}
                           required={!gathering.is_online}
                           autoComplete="tel"
                           placeholder="例如：91234567"
+                          aria-invalid={phoneError ? 'true' : 'false'}
                         />
+                        {phoneError && (
+                          <span className="gathering-form__field-error" role="alert">{phoneError}</span>
+                        )}
                       </label>
                     </div>
                     <p className="gathering-form__hint">
@@ -517,7 +534,7 @@ export default function GatheringDetailPage({ seo = null }) {
                       <button
                         type="submit"
                         className="gatherings-hero__cta gathering-detail__apply-cta"
-                        disabled={busy || !email.trim() || (!gathering.is_online && !phone.trim())}
+                        disabled={busy || !email.trim() || (!gathering.is_online && !phoneValid) || (phoneProvided && !phoneValid)}
                       >
                         {busy ? '提交中…' : '申請加入'}
                       </button>

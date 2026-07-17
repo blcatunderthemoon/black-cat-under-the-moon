@@ -59,7 +59,7 @@ export default function GuideDetailPage({ guide }) {
           }),
           breadcrumbJsonLd([
             { name: '主頁', path: '/index.html' },
-            { name: '文章／指南', path: '/guides' },
+            { name: '文章', path: '/guides' },
             { name: guide.title, path },
           ]),
           organizationJsonLd(),
@@ -69,7 +69,8 @@ export default function GuideDetailPage({ guide }) {
         headerBrand={<ForumHeaderLogo />}
         headerVariant="forum"
         breadcrumbs={[
-          { label: '文章／指南', href: '/guides' },
+          { label: '主頁', href: '/index.html' },
+          { label: '文章', href: '/guides' },
           { label: guide.title },
         ]}
         maxWidth="760px"
@@ -100,23 +101,25 @@ export default function GuideDetailPage({ guide }) {
           </div>
 
           <aside className="guide-article__cta">
+            <span className="guide-article__cta-icon" aria-hidden="true">🐈‍⬛</span>
             <p className="guide-article__cta-title">想認識更多香港 Les？</p>
             <p className="guide-article__cta-text">
               歡迎加入 Black Cat Under The Moon —— 香港 Les Community，
               用心理測驗認識自己，喺月光下遇見同頻的她。
             </p>
             <div className="guide-article__cta-actions">
-              <Link href="/signup" className="pixel-btn pixel-btn--primary">
+              <Link href="/signup" className="guide-cta-btn guide-cta-btn--primary">
                 免費加入 Black Cat
               </Link>
-              <Link href="/forum" className="pixel-btn">
-                去黑貓樹洞睇睇
+              <Link href="/forum" className="guide-cta-btn guide-cta-btn--ghost">
+                去黑貓樹洞睇睇 →
               </Link>
             </div>
           </aside>
 
           <nav className="guide-article__foot">
             <Link href="/guides" className="guide-article__back">← 返回所有文章</Link>
+            <a href="/index.html" className="guide-article__back">⌂ 返回主頁</a>
           </nav>
         </article>
       </AppShell>
