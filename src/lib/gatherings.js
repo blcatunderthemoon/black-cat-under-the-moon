@@ -390,6 +390,7 @@ export function toPublicGathering(row, {
     timezone: row.timezone || HK_TZ,
     location_public: row.location_public,
     location_private: includePrivate ? (row.location_private || null) : undefined,
+    has_private_location: !!row.location_private,
     // host_email / host_phone: never public — stored for ops / host–attendee coordination only
     max_participants: max,
     approved_count: approvedCount,
@@ -475,6 +476,34 @@ export async function canViewPrivateLocation(admin, gathering, userId) {
     .eq('user_id', userId)
     .maybeSingle();
   return data?.status === 'approved';
+}
+
+/**
+ * Resolve a viewer's access to a gathering's discussion board.
+ * Board is host + approved attendees only.
+ */
+export async function getGatheringBoardAccess(admin, gatheringId, userId) {
+  const { data: g } = await admin
+    .from('gatherings')
+    .select('id, host_id, title, status')
+    .eq('id', gatheringId)
+    .maybeSingle();
+  if (!g) return { ok: false, status: 404, error: '找不到此聚會。' };
+  if (g.host_id === userId) return { ok: true, gathering: g, isHost: true, isApproved: false };
+  const { data: a } = await admin
+    .from('gathering_attendees')
+    .select('status')
+    .eq('gathering_id', gatheringId)
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (a?.status === 'approved') return { ok: true, gathering: g, isHost: false, isApproved: true };
+  return {
+    ok: false,
+    status: 403,
+    error: '只有主辦人同已獲批准嘅參加者先可以睇留言板。',
+    code: 'not_participant',
+    gathering: g,
+  };
 }
 
 export async function assertNotBlockedWithHost(hostId, userId) {

@@ -75,12 +75,14 @@ export default function GatheringsMyPage() {
           <div className="gatherings-hero__copy">
             <h1 className="gatherings-hero__title">我的聚會</h1>
           </div>
-          <div className="gatherings-hero__actions">
-            <Link href="/gatherings" className="gatherings-hero__cta gatherings-hero__cta--ghost">
-              📅 月曆
+          <nav className="gathering-tabs" aria-label="聚會檢視">
+            <Link href="/gatherings" className="gathering-tab">
+              所有聚會
             </Link>
-            <Link href="/gatherings/new" className="gatherings-hero__cta">發起聚會</Link>
-          </div>
+            <Link href="/gatherings/my" className="gathering-tab is-active" aria-current="page">
+              我的聚會
+            </Link>
+          </nav>
         </header>
 
         {error && <p className="gatherings-empty gatherings-empty--err">{error}</p>}
@@ -106,6 +108,11 @@ export default function GatheringsMyPage() {
             {joined.map((g) => <GatheringCard key={g.id} gathering={g} />)}
           </div>
         )}
+
+        <Link href="/gatherings/new" className="gathering-fab" aria-label="發起聚會">
+          <span className="gathering-fab__icon" aria-hidden="true">🌙</span>
+          <span className="gathering-fab__text">發起聚會</span>
+        </Link>
       </GatheringShell>
     </>
   );

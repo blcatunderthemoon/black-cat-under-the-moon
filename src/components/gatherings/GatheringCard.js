@@ -20,10 +20,13 @@ const ATTENDANCE_LABEL = {
 
 export default function GatheringCard({ gathering }) {
   if (!gathering) return null;
-  const seats = `${gathering.approved_count || 0}/${gathering.max_participants || 0}`;
-  const pct = gathering.max_participants
-    ? Math.min(100, Math.round(((gathering.approved_count || 0) / gathering.max_participants) * 100))
+  const approved = gathering.approved_count || 0;
+  const max = gathering.max_participants || 0;
+  const remaining = Math.max(0, max - approved);
+  const pct = max
+    ? Math.min(100, Math.round((approved / max) * 100))
     : 0;
+  const seatsFull = max > 0 && remaining === 0;
 
   return (
     <Link href={`/gatherings/${gathering.id}`} className="gathering-card">
@@ -60,11 +63,18 @@ export default function GatheringCard({ gathering }) {
           ))}
         </div>
       )}
-      <div className="gathering-card__seats" aria-label={`人數 ${seats}`}>
+      <div className="gathering-card__seats" aria-label={`已報名 ${approved}，限額 ${max} 人`}>
+        <div className="gathering-card__seats-head">
+          <span className="gathering-card__seats-label">
+            已報名 <b>{approved}</b> / 限額 <b>{max}</b> 人
+          </span>
+          <span className={`gathering-card__seats-remain${seatsFull ? ' is-full' : ''}`}>
+            {seatsFull ? '已滿額' : `仲有 ${remaining} 個位`}
+          </span>
+        </div>
         <div className="gathering-card__seats-track">
           <div className="gathering-card__seats-fill" style={{ width: `${pct}%` }} />
         </div>
-        <span className="gathering-card__seats-label">{seats}</span>
       </div>
     </Link>
   );

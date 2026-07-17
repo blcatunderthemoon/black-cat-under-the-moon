@@ -9,6 +9,7 @@ import SeoHead from '../../components/SeoHead.js';
 import GatheringShell from '../../components/gatherings/GatheringShell.js';
 import GatheringSafetyNotice from '../../components/gatherings/GatheringSafetyNotice.js';
 import GatheringHostQueue from '../../components/gatherings/GatheringHostQueue.js';
+import GatheringCommentBoard from '../../components/gatherings/GatheringCommentBoard.js';
 import GatheringConfirmOverlay from '../../components/gatherings/GatheringConfirmOverlay.js';
 import MoonLoading from '../../components/MoonLoading.js';
 import { useAuth } from '../../lib/auth-context.js';
@@ -243,25 +244,43 @@ export default function GatheringDetailPage() {
                   <span>人數</span>
                   <strong>{gathering.approved_count}/{gathering.max_participants}</strong>
                 </div>
-                <div className="gathering-detail__seats-track">
-                  <div
-                    className="gathering-detail__seats-fill"
-                    style={{
-                      width: `${Math.min(
-                        100,
-                        Math.round(((gathering.approved_count || 0) / Math.max(1, gathering.max_participants || 1)) * 100),
-                      )}%`,
-                    }}
-                  />
+                <div
+                  className="gathering-detail__seats-cells"
+                  role="img"
+                  aria-label={`已報名 ${gathering.approved_count} 人，共 ${gathering.max_participants} 個位`}
+                >
+                  {Array.from({ length: Math.max(0, Math.min(30, gathering.max_participants || 0)) }).map((_, i) => (
+                    <span
+                      key={i}
+                      className={`gathering-detail__seat-cell${i < (gathering.approved_count || 0) ? ' is-filled' : ''}`}
+                    />
+                  ))}
                 </div>
               </div>
 
-              {gathering.location_private != null && gathering.location_private !== '' && (
-                <div className="gathering-detail__private">
+              {gathering.location_private != null && gathering.location_private !== '' ? (
+                <div className={`gathering-detail__private gathering-detail__private--unlocked${!isHost && gathering.my_attendance?.status === 'approved' ? ' gathering-detail__private--pass' : ''}`}>
+                  <span className="gathering-detail__private-badge">
+                    {!isHost && gathering.my_attendance?.status === 'approved' ? '🔓 已解鎖 · 專屬通行證' : '🔒 僅獲批准者可見'}
+                  </span>
                   <p className="gathering-detail__private-label">私密地點／連結</p>
-                  <p className="gathering-detail__private-value">{gathering.location_private}</p>
+                  <p className="gathering-detail__private-value">
+                    <span className="gathering-detail__private-pin" aria-hidden="true">📍</span>
+                    {gathering.location_private}
+                  </p>
                 </div>
-              )}
+              ) : gathering.has_private_location && !isHost ? (
+                <div className="gathering-detail__private gathering-detail__private--locked" aria-label="私密地點未解鎖">
+                  <p className="gathering-detail__private-label">
+                    <span className="gathering-detail__private-lock" aria-hidden="true">🔒</span>
+                    私密地點／連結
+                  </p>
+                  <div className="gathering-detail__private-locked-body">
+                    <p className="gathering-detail__private-blur" aria-hidden="true">████ ██████ ███ ██</p>
+                    <p className="gathering-detail__private-locked-note">🔒 詳細地址將於主辦人批准後解鎖 🐈‍⬛</p>
+                  </div>
+                </div>
+              ) : null}
             </div>
 
             <GatheringSafetyNotice />
@@ -295,15 +314,23 @@ export default function GatheringDetailPage() {
                         {STATUS_LABEL[gathering.my_attendance.status] || gathering.my_attendance.status}
                       </p>
                     </header>
-                    <p className="gathering-detail__attendance-copy">
-                      {gathering.my_attendance.status === 'pending' && '申請已送出，等候主辦人審核。批核後會喺 Inbox 收到通知。'}
-                      {gathering.my_attendance.status === 'approved' && '你已獲邀！私密地點／連結已顯示於上方。'}
-                      {gathering.my_attendance.status === 'rejected' && '今次未獲邀。可以睇其他月光聚會。'}
-                      {gathering.my_attendance.status === 'waitlist' && '你而家喺候補名單，有位會再通知你。'}
-                    </p>
-                    {msg ? (
-                      <p className="gathering-detail__attendance-flash" role="status">{msg}</p>
-                    ) : null}
+                    <div className="gathering-detail__attendance-copy-row">
+                      <span
+                        className={`gathering-detail__attendance-icon gathering-detail__attendance-icon--${gathering.my_attendance.status}`}
+                        aria-hidden="true"
+                      >
+                        {gathering.my_attendance.status === 'pending' && '⏳'}
+                        {gathering.my_attendance.status === 'approved' && '🐾'}
+                        {gathering.my_attendance.status === 'rejected' && '🌙'}
+                        {gathering.my_attendance.status === 'waitlist' && '⏳'}
+                      </span>
+                      <p className="gathering-detail__attendance-copy">
+                        {gathering.my_attendance.status === 'pending' && '申請已送出！小黑貓正幫你將靈魂信件叼去俾主辦人，批准後會喺 Inbox 收到通知喔 🐈‍⬛✨'}
+                        {gathering.my_attendance.status === 'approved' && '你已獲邀！私密地點／連結已喺上方解鎖，記得準時赴約 🐾'}
+                        {gathering.my_attendance.status === 'rejected' && '今次未獲邀。唔緊要，仲有好多月光聚會等緊你 🌙'}
+                        {gathering.my_attendance.status === 'waitlist' && '你而家喺候補名單，有位會第一時間通知你。'}
+                      </p>
+                    </div>
                     {gathering.my_attendance.knock_message && (
                       <div className="gathering-detail__attendance-knock">
                         <p className="gathering-detail__attendance-knock-label">你嘅敲門答案</p>
@@ -312,8 +339,13 @@ export default function GatheringDetailPage() {
                     )}
                     {(gathering.my_attendance.status === 'pending' || gathering.my_attendance.status === 'approved') && (
                       <div className="gathering-detail__attendance-actions">
-                        <button type="button" className="gathering-detail__rsvp-ghost" disabled={busy} onClick={withdraw}>
-                          {busy ? '處理中…' : '撤回申請'}
+                        <button
+                          type="button"
+                          className={`gathering-detail__rsvp-ghost${gathering.my_attendance.status === 'approved' ? ' gathering-detail__rsvp-ghost--quiet' : ''}`}
+                          disabled={busy}
+                          onClick={withdraw}
+                        >
+                          {busy ? '處理中…' : (gathering.my_attendance.status === 'approved' ? '取消參與' : '撤回申請')}
                         </button>
                       </div>
                     )}
@@ -406,14 +438,20 @@ export default function GatheringDetailPage() {
                 )}
               </section>
             )}
+
+            {(isHost || gathering.my_attendance?.status === 'approved') && (
+              <GatheringCommentBoard gatheringId={gathering.id} />
+            )}
           </article>
         )}
 
         <GatheringConfirmOverlay
           open={confirmKind === 'withdraw'}
-          title="確定撤回申請？"
-          sub="退出後若聚會仍喺招募，可以重新申請。"
-          confirmLabel="撤回申請"
+          title={gathering?.my_attendance?.status === 'approved' ? '確定取消參與？' : '確定撤回申請？'}
+          sub={gathering?.my_attendance?.status === 'approved'
+            ? '確定要放棄呢個聚會名額嗎？小黑貓會好傷心喔 🐈‍⬛'
+            : '退出後若聚會仍喺招募，可以重新申請。'}
+          confirmLabel={gathering?.my_attendance?.status === 'approved' ? '取消參與' : '撤回申請'}
           cancelLabel="繼續留下"
           variant="danger"
           busy={busy}

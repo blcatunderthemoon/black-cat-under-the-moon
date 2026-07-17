@@ -1,0 +1,201 @@
+/**
+ * Moonlight Gatherings — participant discussion board (圍爐房).
+ * Host + approved attendees only.
+ */
+
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useAuth } from '../../lib/auth-context.js';
+import LoadingText from '../LoadingText.js';
+
+const MAX_BODY = 500;
+
+function formatTime(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleString('zh-HK', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+export default function GatheringCommentBoard({ gatheringId }) {
+  const { session } = useAuth();
+  const [comments, setComments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [draft, setDraft] = useState('');
+  const [posting, setPosting] = useState(false);
+  const [confirmId, setConfirmId] = useState(null);
+  const [busyId, setBusyId] = useState(null);
+  const listRef = useRef(null);
+
+  const load = useCallback(async () => {
+    if (!session?.access_token) return;
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/gatherings/${gatheringId}/comments`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || '無法載入留言');
+        setComments([]);
+        return;
+      }
+      setComments(data.comments || []);
+    } catch {
+      setError('網絡錯誤');
+    } finally {
+      setLoading(false);
+    }
+  }, [gatheringId, session?.access_token]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  async function post(e) {
+    e.preventDefault();
+    const body = draft.trim();
+    if (!body || posting || !session?.access_token) return;
+    setPosting(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/gatherings/${gatheringId}/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ body }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.crisis ? '如果你正經歷困擾，請搵人傾傾。' : (data.error || '留言失敗'));
+        return;
+      }
+      if (data.comment) {
+        setComments((prev) => [...prev, data.comment]);
+        setDraft('');
+        requestAnimationFrame(() => {
+          listRef.current?.scrollTo?.({ top: listRef.current.scrollHeight, behavior: 'smooth' });
+        });
+      }
+    } catch {
+      setError('網絡錯誤');
+    } finally {
+      setPosting(false);
+    }
+  }
+
+  async function remove(commentId) {
+    if (!session?.access_token) return;
+    setBusyId(commentId);
+    try {
+      const res = await fetch(`/api/gatherings/${gatheringId}/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || '刪除失敗');
+        return;
+      }
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
+    } catch {
+      setError('網絡錯誤');
+    } finally {
+      setBusyId(null);
+      setConfirmId(null);
+    }
+  }
+
+  return (
+    <section className="gathering-board">
+      <header className="gathering-board__head">
+        <h2 className="gathering-board__title">🐾 聚會圍爐房</h2>
+        <p className="gathering-board__lead">
+          對呢個活動有問題？想同其他參加者相認？即刻喺下面留言傾吓！
+        </p>
+      </header>
+
+      <div className="gathering-board__list" ref={listRef}>
+        {loading ? (
+          <LoadingText className="gathering-board__muted" />
+        ) : comments.length === 0 ? (
+          <p className="gathering-board__muted">仲未有留言 —— 做第一個開火煲嘅人啦 🔥</p>
+        ) : (
+          comments.map((c) => (
+            <article
+              key={c.id}
+              className={`gathering-board__msg${c.is_mine ? ' is-mine' : ''}`}
+            >
+              <div className="gathering-board__msg-top">
+                <span className="gathering-board__msg-name">
+                  {c.display_name}
+                  {c.is_mine && <span className="gathering-board__you"> · 你</span>}
+                </span>
+                <time className="gathering-board__msg-time" dateTime={c.created_at}>
+                  {formatTime(c.created_at)}
+                </time>
+              </div>
+              <p className="gathering-board__msg-body">{c.body}</p>
+              {c.can_delete && (
+                confirmId === c.id ? (
+                  <div className="gathering-board__confirm">
+                    <span>確定刪除？</span>
+                    <button
+                      type="button"
+                      className="gathering-board__confirm-yes"
+                      disabled={busyId === c.id}
+                      onClick={() => remove(c.id)}
+                    >
+                      刪除
+                    </button>
+                    <button
+                      type="button"
+                      className="gathering-board__confirm-no"
+                      onClick={() => setConfirmId(null)}
+                    >
+                      取消
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="gathering-board__del"
+                    onClick={() => setConfirmId(c.id)}
+                  >
+                    刪除
+                  </button>
+                )
+              )}
+            </article>
+          ))
+        )}
+      </div>
+
+      {error && <p className="gathering-board__error" role="alert">{error}</p>}
+
+      <form className="gathering-board__compose" onSubmit={post}>
+        <textarea
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          maxLength={MAX_BODY}
+          rows={2}
+          placeholder="留言畀主辦人同其他參加者…（例如：使唔使自備嘢？）"
+          aria-label="留言內容"
+        />
+        <div className="gathering-board__compose-foot">
+          <span className="gathering-board__count">{draft.length}/{MAX_BODY}</span>
+          <button
+            type="submit"
+            className="gathering-board__send"
+            disabled={posting || !draft.trim()}
+          >
+            {posting ? '傳送中…' : '留言'}
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}

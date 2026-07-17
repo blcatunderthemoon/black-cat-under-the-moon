@@ -2,7 +2,7 @@
  * /gatherings/new — create gathering
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import SeoHead from '../../components/SeoHead.js';
@@ -24,9 +24,12 @@ export default function GatheringsNewPage() {
   const [meta, setMeta] = useState(null);
 
   const chosenDateKey = typeof router.query.date === 'string' ? router.query.date : '';
+  const [liveDateKey, setLiveDateKey] = useState('');
+  const handleDateChange = useCallback((key) => setLiveDateKey(key || ''), []);
+  const effectiveDateKey = liveDateKey || chosenDateKey;
   const chosenDateLabel = useMemo(
-    () => (router.isReady ? formatChosenDate(chosenDateKey) : null),
-    [router.isReady, chosenDateKey],
+    () => (router.isReady ? formatChosenDate(effectiveDateKey) : null),
+    [router.isReady, effectiveDateKey],
   );
 
   useEffect(() => {
@@ -51,8 +54,8 @@ export default function GatheringsNewPage() {
     );
   }
 
-  const calendarHref = chosenDateKey && /^\d{4}-\d{2}-\d{2}$/.test(chosenDateKey)
-    ? `/gatherings?date=${encodeURIComponent(chosenDateKey)}`
+  const calendarHref = effectiveDateKey && /^\d{4}-\d{2}-\d{2}$/.test(effectiveDateKey)
+    ? `/gatherings?date=${encodeURIComponent(effectiveDateKey)}`
     : '/gatherings';
 
   return (
@@ -73,7 +76,7 @@ export default function GatheringsNewPage() {
           </p>
           <Link href={calendarHref} className="gatherings-hero__back">← 返回月曆</Link>
         </header>
-        <GatheringCreateForm meta={meta} />
+        <GatheringCreateForm meta={meta} onDateChange={handleDateChange} />
       </GatheringShell>
     </>
   );

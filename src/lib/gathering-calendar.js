@@ -131,15 +131,14 @@ export function groupGatheringsByHkDate(gatherings) {
   return map;
 }
 
-/** Default create datetime-local value for a HK calendar date (19:00 HKT → local input). */
+/**
+ * Default create datetime-local value for a chosen calendar date.
+ * Returns the SAME date at the given wall-clock time (default 19:00) so the
+ * form's 開始時間 always matches the picked 選定日期 (no timezone drift).
+ */
 export function defaultStartsLocalForHkDate(dateKey, hour = 19, minute = 0) {
   const m = String(dateKey || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!m) return null;
-  const year = Number(m[1]);
-  const month = Number(m[2]);
-  const day = Number(m[3]);
-  // 19:00 HKT = 11:00 UTC that calendar day
-  const utc = new Date(Date.UTC(year, month - 1, day, hour - 8, minute, 0, 0));
   const pad = (n) => String(n).padStart(2, '0');
-  return `${utc.getFullYear()}-${pad(utc.getMonth() + 1)}-${pad(utc.getDate())}T${pad(utc.getHours())}:${pad(utc.getMinutes())}`;
+  return `${m[1]}-${m[2]}-${m[3]}T${pad(hour)}:${pad(minute)}`;
 }

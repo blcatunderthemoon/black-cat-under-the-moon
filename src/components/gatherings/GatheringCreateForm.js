@@ -25,7 +25,7 @@ function toLocalInputValue(date = new Date(Date.now() + 2 * 60 * 60 * 1000)) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-export default function GatheringCreateForm({ meta }) {
+export default function GatheringCreateForm({ meta, onDateChange }) {
   const router = useRouter();
   const { session } = useAuth();
   const [title, setTitle] = useState('');
@@ -76,6 +76,12 @@ export default function GatheringCreateForm({ meta }) {
     const local = defaultStartsLocalForHkDate(dateKey);
     if (local) setStartsAt(local);
   }, [router.isReady, router.query.date]);
+
+  // Keep the parent's "選定日期" label in sync with the actual start time.
+  useEffect(() => {
+    const dateKey = /^\d{4}-\d{2}-\d{2}/.test(startsAt) ? startsAt.slice(0, 10) : '';
+    onDateChange?.(dateKey);
+  }, [startsAt, onDateChange]);
 
   function toggleTag(id) {
     setTags((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : (
@@ -154,6 +160,9 @@ export default function GatheringCreateForm({ meta }) {
     <form className="gathering-form" onSubmit={onSubmit}>
       <GatheringSafetyNotice />
 
+      <div className="gathering-form__section">
+        <h2 className="gathering-form__section-title">基本資訊</h2>
+
       <fieldset className="gathering-form__field gathering-form__row gathering-form__mode">
         <legend className="gathering-form__mode-legend">聚會形式</legend>
         <div className="gathering-form__mode-options" role="radiogroup" aria-label="聚會形式">
@@ -230,6 +239,10 @@ export default function GatheringCreateForm({ meta }) {
         </div>
         <p className="gathering-form__hint">可揀預設標籤，或自己加一個（唔使加 #）。</p>
       </fieldset>
+      </div>
+
+      <div className="gathering-form__section">
+        <h2 className="gathering-form__section-title">時間與地點</h2>
 
       <label className="gathering-form__field">
         <span>開始時間 *</span>
@@ -265,6 +278,10 @@ export default function GatheringCreateForm({ meta }) {
           placeholder={isOnline ? 'Discord / Meet 連結' : '詳細地址'}
         />
       </label>
+      </div>
+
+      <div className="gathering-form__section">
+        <h2 className="gathering-form__section-title">隱私與審查</h2>
 
       <fieldset className="gathering-form__field gathering-form__contact">
         <legend>聯絡資料（僅批准參加者可見）*</legend>
@@ -322,6 +339,7 @@ export default function GatheringCreateForm({ meta }) {
           <p className="gathering-form__hint">參加者申請時要回答呢條問題，你先見到答案再決定批唔批准。</p>
         </label>
       )}
+      </div>
 
       {error && <p className="gathering-form__error" role="alert">{error}</p>}
 

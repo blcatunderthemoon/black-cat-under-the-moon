@@ -109,10 +109,9 @@ export default function GatheringMonthCalendar({
             >
               <span className="gathering-cal__day-num">{cell.day}</span>
               {count > 0 && (
-                <span className="gathering-cal__dots" aria-hidden="true">
-                  {Array.from({ length: Math.min(count, 3) }).map((_, i) => (
-                    <i key={i} />
-                  ))}
+                <span className="gathering-cal__marker" aria-hidden="true">
+                  <span className="gathering-cal__marker-moon">🌙</span>
+                  {count > 1 && <span className="gathering-cal__marker-count">{count}</span>}
                 </span>
               )}
             </button>

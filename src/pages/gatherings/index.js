@@ -163,17 +163,14 @@ export default function GatheringsIndexPage() {
               揀日子發起／參加聚會
             </p>
           </div>
-          <div className="gatherings-hero__actions">
-            <Link
-              href={selectedDate ? `/gatherings/new?date=${encodeURIComponent(selectedDate)}` : '/gatherings/new'}
-              className="gatherings-hero__cta"
-            >
-              發起聚會
+          <nav className="gathering-tabs" aria-label="聚會檢視">
+            <Link href="/gatherings" className="gathering-tab is-active" aria-current="page">
+              所有聚會
             </Link>
-            <Link href="/gatherings/my" className="gatherings-hero__cta gatherings-hero__cta--ghost">
+            <Link href="/gatherings/my" className="gathering-tab">
               我的聚會
             </Link>
-          </div>
+          </nav>
         </header>
 
         <GatheringMonthCalendar
@@ -188,6 +185,15 @@ export default function GatheringsIndexPage() {
         />
 
         <GatheringSafetyNotice />
+
+        <Link
+          href={selectedDate ? `/gatherings/new?date=${encodeURIComponent(selectedDate)}` : '/gatherings/new'}
+          className="gathering-fab"
+          aria-label="發起聚會"
+        >
+          <span className="gathering-fab__icon" aria-hidden="true">🌙</span>
+          <span className="gathering-fab__text">發起聚會</span>
+        </Link>
       </GatheringShell>
     </>
   );
