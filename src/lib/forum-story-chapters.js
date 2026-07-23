@@ -24,6 +24,57 @@ export function isBonusChapter(chapter) {
 }
 
 /**
+ * Renumber chapters to contiguous 1…N in the given id order.
+ * Uses a two-phase write to avoid UNIQUE(story_post_id, chapter_number) collisions.
+ * @returns {Promise<object[]>} refreshed chapters ordered by chapter_number
+ */
+export async function reorderStoryChapters(admin, storyPostId, orderedIds) {
+  const ids = (orderedIds || []).map(String).filter(Boolean);
+  if (!storyPostId || ids.length < 2) {
+    throw new Error('Need at least two chapters to reorder');
+  }
+
+  const TEMP_BASE = 100000;
+
+  // Phase 1: move to temporary high numbers
+  for (let i = 0; i < ids.length; i += 1) {
+    const { error } = await admin
+      .from('forum_story_chapters')
+      .update({ chapter_number: TEMP_BASE + i + 1 })
+      .eq('id', ids[i])
+      .eq('story_post_id', storyPostId);
+    if (error) throw error;
+  }
+
+  // Phase 2: assign final 1…N
+  for (let i = 0; i < ids.length; i += 1) {
+    const { error } = await admin
+      .from('forum_story_chapters')
+      .update({ chapter_number: i + 1 })
+      .eq('id', ids[i])
+      .eq('story_post_id', storyPostId);
+    if (error) throw error;
+  }
+
+  let { data, error } = await admin
+    .from('forum_story_chapters')
+    .select(CHAPTER_COLUMNS)
+    .eq('story_post_id', storyPostId)
+    .order('chapter_number', { ascending: true });
+
+  if (error?.code === '42703') {
+    ({ data, error } = await admin
+      .from('forum_story_chapters')
+      .select(CHAPTER_COLUMNS_BASE)
+      .eq('story_post_id', storyPostId)
+      .order('chapter_number', { ascending: true }));
+  }
+
+  if (error) throw error;
+  return data || [];
+}
+
+/**
  * Whether the current viewer has left at least one comment on this story
  * (comments can't be deleted here, so this is a stable unlock signal).
  */

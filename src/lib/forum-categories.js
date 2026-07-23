@@ -92,6 +92,7 @@ export const PRESET_TAGS_BY_TOPIC = {
   徵友: [
     { key: '徵友', label: '徵友' },
     { key: '介紹自己', label: '介紹自己' },
+    { key: '尋找同族', label: '尋找同族' },
     { key: '線下聚會', label: '線下聚會' },
   ],
   親密話題: [

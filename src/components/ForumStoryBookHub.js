@@ -81,9 +81,12 @@ export default function ForumStoryBookHub({
   const [editingSynopsis, setEditingSynopsis] = useState(false);
   const [editingChapter, setEditingChapter] = useState(null);
   const [togglingComplete, setTogglingComplete] = useState(false);
+  const [reordering, setReordering] = useState(false);
+  const [reorderError, setReorderError] = useState('');
 
   const canEdit = !!post.is_mine && loggedIn;
   const canSave = canEdit && !!accessToken;
+  const canReorder = canSave && (chapters?.length || 0) >= 2;
 
   function openSynopsisEdit() {
     if (!canSave) return;
@@ -104,6 +107,48 @@ export default function ForumStoryBookHub({
     setEditingSynopsis(false);
     setEditingChapter(null);
     setShowAddChapter(true);
+  }
+
+  async function moveChapter(chapterId, direction) {
+    if (!canReorder || reordering) return;
+    const list = [...(chapters || [])];
+    const idx = list.findIndex((ch) => String(ch.id) === String(chapterId));
+    if (idx < 0) return;
+    const swapWith = direction === 'up' ? idx - 1 : idx + 1;
+    if (swapWith < 0 || swapWith >= list.length) return;
+    if (!list[idx]?.id || list[idx].id === 'legacy-1' || !list[swapWith]?.id || list[swapWith].id === 'legacy-1') {
+      setReorderError('請先編輯並儲存舊版第一章，再調整順序。');
+      return;
+    }
+
+    const next = [...list];
+    const tmp = next[idx];
+    next[idx] = next[swapWith];
+    next[swapWith] = tmp;
+    const orderedIds = next.map((ch) => String(ch.id));
+
+    setReordering(true);
+    setReorderError('');
+    try {
+      const res = await fetch(`/api/forum/posts/${encodeURIComponent(post.id)}/chapters/reorder`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ ordered_ids: orderedIds }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setReorderError(payload.error || '調整順序失敗');
+        return;
+      }
+      onChaptersChange?.(payload.chapters || []);
+    } catch {
+      setReorderError('調整順序失敗，請稍後再試');
+    } finally {
+      setReordering(false);
+    }
   }
 
   async function toggleStoryCompleted() {
@@ -298,10 +343,18 @@ export default function ForumStoryBookHub({
                 </span>
               </div>
               <p className="forum-story-chapters__sub">
-                {loggedIn ? '點選章節，或從頭開始閱讀' : '訪客可免費閱讀前三章，登入後閱讀全部'}
+                {loggedIn
+                  ? (canReorder
+                    ? '點選章節閱讀；作者可用 ↑↓ 調整章節順序'
+                    : '點選章節，或從頭開始閱讀')
+                  : '訪客可免費閱讀前三章，登入後閱讀全部'}
               </p>
             </div>
           </div>
+
+          {reorderError && (
+            <p className="forum-story-chapters__reorder-error" role="alert">{reorderError}</p>
+          )}
 
           {chaptersLoading ? (
             <div className="forum-story-chapters__loading" aria-live="polite">
@@ -360,14 +413,40 @@ export default function ForumStoryBookHub({
                       )}
                     </button>
                     {canEdit && (
-                      <button
-                        type="button"
-                        className="forum-story-chapters__edit-btn"
-                        onClick={() => openChapterEdit(ch)}
-                        aria-label={`編輯 ${ch.display_title}`}
-                      >
-                        編輯
-                      </button>
+                      <div className="forum-story-chapters__author-actions">
+                        {canReorder && (
+                          <div className="forum-story-chapters__reorder" role="group" aria-label="調整章節順序">
+                            <button
+                              type="button"
+                              className="forum-story-chapters__reorder-btn"
+                              onClick={() => moveChapter(ch.id, 'up')}
+                              disabled={reordering || index === 0}
+                              aria-label={`上移 ${ch.display_title}`}
+                              title="上移"
+                            >
+                              ↑
+                            </button>
+                            <button
+                              type="button"
+                              className="forum-story-chapters__reorder-btn"
+                              onClick={() => moveChapter(ch.id, 'down')}
+                              disabled={reordering || index === chapters.length - 1}
+                              aria-label={`下移 ${ch.display_title}`}
+                              title="下移"
+                            >
+                              ↓
+                            </button>
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          className="forum-story-chapters__edit-btn"
+                          onClick={() => openChapterEdit(ch)}
+                          aria-label={`編輯 ${ch.display_title}`}
+                        >
+                          編輯
+                        </button>
+                      </div>
                     )}
                   </div>
                 </li>
