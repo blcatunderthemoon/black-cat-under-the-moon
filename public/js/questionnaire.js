@@ -4400,11 +4400,11 @@ function bindMatchForumPublishUi() {
     if (!btn || btn.dataset.bound === '1') return;
     btn.dataset.bound = '1';
     btn.addEventListener('click', function() {
-      publishMirrorClanToForum({ source: 'match' });
+      publishMirrorClanToForum({ source: 'mirror' });
     });
   }
-  bindBtn('match-forum-publish-btn');
-  bindBtn('echo-forum-publish-btn');
+  // Forum #尋找同族 is Mirror-only (shares Mirror card clan, not Echo answers)
+  bindBtn('mirror-forum-publish-btn');
 }
 
 function showMirrorResult(scores, mainType, shadowType, hiddenTags, skipAutoSave, v3Meta) {
@@ -4640,6 +4640,8 @@ function showMirrorResult(scores, mainType, shadowType, hiddenTags, skipAutoSave
   }, 120);
 
   document.getElementById('mirror-download-btn').onclick = downloadPersonalityCard;
+  var shareBtn = document.getElementById('mirror-share-btn');
+  if (shareBtn) shareBtn.onclick = sharePersonalityCard;
   initMirrorDownloadMetaToggle();
   preloadMirrorCaptureEngine();
   upgradeMirrorCatImage(pcard, catImgSrc);
@@ -5312,117 +5314,171 @@ function setMirrorDownloadBtnIdle(btn) {
   btn.disabled = false;
 }
 
+var MIRROR_SHARE_BTN_IDLE_HTML =
+  '<span class="mirror-share-btn__label">分享到 Threads／IG</span>' +
+  '<span class="mirror-share-btn__icon" aria-hidden="true">↗</span>';
+
+function setMirrorShareBtnIdle(btn) {
+  if (!btn) return;
+  btn.innerHTML = MIRROR_SHARE_BTN_IDLE_HTML;
+  btn.disabled = false;
+}
+
+function triggerBlobDownload(blob, filename) {
+  var objectUrl = URL.createObjectURL(blob);
+  var link = document.createElement('a');
+  link.download = filename;
+  link.href = objectUrl;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setTimeout(function() { URL.revokeObjectURL(objectUrl); }, 1000);
+}
+
+function getMirrorCardShareText() {
+  var label = '';
+  try {
+    var en = document.querySelector('.pcard-family-en');
+    var zh = document.querySelector('.pcard-family-zh');
+    if (zh && zh.textContent) label = zh.textContent.trim();
+    else if (en && en.textContent) label = en.textContent.trim();
+  } catch (e) {}
+  var clan = label ? (' #' + label.replace(/\s+/g, '')) : '';
+  return '我測出咗 Mirror 貓咪特質卡' + clan + ' 🐈‍⬛\nhttps://www.blackcatunderthemoon.com/mirror.html';
+}
+
+/** Capture personality card to PNG blob (shared by download + share). */
+async function buildPersonalityCardBlob() {
+  await ensureMirrorCaptureEngine();
+  const orig = document.getElementById('personality-card');
+  if (!orig) throw new Error('personality-card not found');
+  syncMirrorIdentityMetaVisibility();
+  if (orig.offsetWidth <= 0 || orig.offsetHeight <= 0) {
+    throw new Error('personality-card has invalid size');
+  }
+
+  const imgs = orig.querySelectorAll('img');
+  const imgPromises = Array.from(imgs).map(function(img) {
+    if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+    return new Promise(function(resolve) {
+      img.onload = resolve;
+      img.onerror = function() { resolve(); };
+      setTimeout(resolve, 5000);
+    });
+  });
+  await Promise.all(imgPromises);
+
+  var typeCol = getComputedStyle(orig).getPropertyValue('--type-col').trim() || '#bd93f9';
+  var rgb = hexToRgb(typeCol);
+
+  var clone = orig.cloneNode(true);
+  clone.removeAttribute('id');
+  var rect = orig.getBoundingClientRect();
+  var w = Math.round(rect.width);
+  clone.setAttribute('data-export', '1');
+  syncPcardExportShell(clone, orig);
+  clone.style.setProperty('--type-col', typeCol);
+  clone.style.position = 'relative';
+  clone.style.left = '0';
+  clone.style.top = '0';
+  clone.style.transform = 'none';
+  clone.style.width = w + 'px';
+  clone.style.maxWidth = w + 'px';
+  clone.style.height = 'auto';
+  clone.style.minHeight = '0';
+  clone.style.overflow = 'visible';
+  clone.style.margin = '0';
+
+  var exportRoot = getMirrorExportRoot();
+  exportRoot.textContent = '';
+  exportRoot.appendChild(clone);
+
+  var exportStyle = document.createElement('style');
+  exportStyle.setAttribute('data-export-style', '1');
+  exportStyle.textContent = buildPcardExportStyle(rgb);
+  document.head.appendChild(exportStyle);
+
+  try {
+    await embedCloneImages(orig, clone);
+    clone.querySelectorAll('.pcard-star').forEach(function(s) { s.remove(); });
+    clone.querySelectorAll('canvas').forEach(function(c) { c.remove(); });
+    var blob = await capturePcardToBlob(clone, w);
+    var filename = 'mirror-personality-' + mainTypeKey() + '.png';
+    return { blob: blob, filename: filename };
+  } finally {
+    exportRoot.textContent = '';
+    if (exportStyle.parentNode) exportStyle.parentNode.removeChild(exportStyle);
+  }
+}
+
+function alertMirrorCardExportError(e) {
+  console.error('Card export failed:', e);
+  if (e && e.message === 'EXPORT_NO_CAPTURE_ENGINE') {
+    alert('功能未能載入，請重新整理頁面後再試。');
+  } else if (e && e.message === 'EXPORT_TAINTED_CANVAS') {
+    alert('匯出失敗：圖像資源跨網域導致無法匯出。\n請改用 http://localhost 開啟頁面後再試。');
+  } else if (location.protocol === 'file:') {
+    alert('匯出失敗：file:// 容易觸發瀏覽器安全限制。\n請改用 http://localhost 開啟後再試。');
+  } else {
+    alert('匯出失敗，請重新整理後再試。');
+  }
+}
+
 async function downloadPersonalityCard() {
   const btn = document.getElementById('mirror-download-btn');
   const btnLabel = btn && btn.querySelector('.mirror-download-btn__label');
-  try {
-    await ensureMirrorCaptureEngine();
-  } catch (e) {
-    alert('下載功能未能載入，請重新整理頁面後再試。');
-    return;
-  }
   if (btnLabel) btnLabel.textContent = '生成中...';
   else if (btn) btn.textContent = '生成中...';
   if (btn) btn.disabled = true;
-  var clone = null;
-  var exportRoot = null;
   try {
-    const orig = document.getElementById('personality-card');
-    if (!orig) throw new Error('personality-card not found');
-    syncMirrorIdentityMetaVisibility();
-    if (orig.offsetWidth <= 0 || orig.offsetHeight <= 0) {
-      throw new Error('personality-card has invalid size');
-    }
-    
-    // ⚠️ 確保所有圖片都載入完成，避免 0 寬高錯誤
-    const imgs = orig.querySelectorAll('img');
-    const imgPromises = Array.from(imgs).map(function(img) {
-      if (img.complete && img.naturalWidth > 0) return Promise.resolve();
-      return new Promise(function(resolve) {
-        img.onload = resolve;
-        img.onerror = function() {
-          console.warn('Image failed to load:', img.src);
-          resolve(); // 即使失敗也繼續
-        };
-        // 設置超時，避免無限等待
-        setTimeout(resolve, 5000);
-      });
-    });
-    await Promise.all(imgPromises);
-    
-    // Convert original images to data URLs BEFORE cloning to avoid CORS taint on file://
-    var typeCol = getComputedStyle(orig).getPropertyValue('--type-col').trim() || '#bd93f9';
-    var rgb = hexToRgb(typeCol);
-
-    clone = orig.cloneNode(true);
-    clone.removeAttribute('id');
-    var rect = orig.getBoundingClientRect();
-    var w = Math.round(rect.width);
-    clone.setAttribute('data-export', '1');
-    syncPcardExportShell(clone, orig);
-    clone.style.setProperty('--type-col', typeCol);
-    clone.style.position = 'relative';
-    clone.style.left = '0';
-    clone.style.top = '0';
-    clone.style.transform = 'none';
-    clone.style.width = w + 'px';
-    clone.style.maxWidth = w + 'px';
-    clone.style.height = 'auto';
-    clone.style.minHeight = '0';
-    clone.style.overflow = 'visible';
-    clone.style.margin = '0';
-
-    exportRoot = getMirrorExportRoot();
-    exportRoot.textContent = '';
-    exportRoot.appendChild(clone);
-
-    // Inject scoped style targeting ONLY the clone (via data-export attribute).
-    var exportStyle = document.createElement('style');
-    exportStyle.setAttribute('data-export-style', '1');
-    exportStyle.textContent = buildPcardExportStyle(rgb);
-    document.head.appendChild(exportStyle);
-
-    await embedCloneImages(orig, clone);
-
-    // Remove background stars from the download version
-    clone.querySelectorAll('.pcard-star').forEach(function(s) {
-      s.remove();
-    });
-    
-    // ⚠️ 移除 clone 內所有 canvas 元素（性格卡片不應包含 canvas）
-    clone.querySelectorAll('canvas').forEach(function(c) {
-      c.remove();
-    });
-
-    var blob = await capturePcardToBlob(clone, w);
-
-    var objectUrl = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.download = 'mirror-personality-' + mainTypeKey() + '.png';
-    link.href = objectUrl;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    setTimeout(function() { URL.revokeObjectURL(objectUrl); }, 1000);
+    var result = await buildPersonalityCardBlob();
+    triggerBlobDownload(result.blob, result.filename);
   } catch (e) {
-    console.error('Card download failed:', e);
-    if (e && e.message === 'EXPORT_NO_CAPTURE_ENGINE') {
-      alert('下載功能未能載入，請重新整理頁面後再試。');
-    } else if (e && e.message === 'EXPORT_TAINTED_CANVAS') {
-      alert('\u4e0b\u8f09\u5931\u6557\uff1a\u5716\u50cf\u8cc7\u6e90\u8de8\u7db2\u57df\u5c0e\u81f4\u7121\u6cd5\u532f\u51fa\u3002\n\u8acb\u6539\u7528 http://localhost \u958b\u555f\u9801\u9762\uff08\u4e0d\u8981\u76f4\u63a5 file:// \u57f7\u884c\uff09\u5f8c\u518d\u8a66\u3002');
-    } else if (location.protocol === 'file:') {
-      alert('\u4e0b\u8f09\u5931\u6557\uff1afile:// \u76f4\u958b\u5bb9\u6613\u89f8\u767c\u700f\u89bd\u5668\u5b89\u5168\u9650\u5236\u8207\u8a18\u61b6\u9ad4\u554f\u984c\u3002\n\u8acb\u6539\u7528 http://localhost \u958b\u555f index.html \u5f8c\u518d\u8a66\u3002');
-    } else {
-      alert('\u4e0b\u8f09\u5931\u6557\uff0c\u8acb\u91cd\u65b0\u6574\u7406\u5f8c\u518d\u8a66\u3002');
-    }
+    alertMirrorCardExportError(e);
   } finally {
-    if (exportRoot) exportRoot.textContent = '';
-    // Remove the scoped export style injected into <head>
-    var exportStyle = document.querySelector('style[data-export-style]');
-    if (exportStyle && exportStyle.parentNode) {
-      exportStyle.parentNode.removeChild(exportStyle);
-    }
     setMirrorDownloadBtnIdle(btn);
+  }
+}
+
+async function sharePersonalityCard() {
+  const btn = document.getElementById('mirror-share-btn');
+  const btnLabel = btn && btn.querySelector('.mirror-share-btn__label');
+  if (btnLabel) btnLabel.textContent = '準備中...';
+  else if (btn) btn.textContent = '準備中...';
+  if (btn) btn.disabled = true;
+  try {
+    var result = await buildPersonalityCardBlob();
+    var file = new File([result.blob], result.filename, { type: 'image/png' });
+    var text = getMirrorCardShareText();
+    var shareData = { files: [file], title: 'Mirror Card', text: text };
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share(shareData);
+      return;
+    }
+
+    // No file share support: download image, then open Threads composer
+    triggerBlobDownload(result.blob, result.filename);
+    if (typeof navigator.share === 'function') {
+      try {
+        await navigator.share({
+          title: 'Mirror Card',
+          text: text,
+          url: 'https://www.blackcatunderthemoon.com/mirror.html',
+        });
+      } catch (shareErr) {
+        if (shareErr && shareErr.name === 'AbortError') return;
+      }
+    } else {
+      var threadsUrl = 'https://www.threads.net/intent/post?' + new URLSearchParams({ text: text }).toString();
+      window.open(threadsUrl, '_blank', 'noopener,noreferrer');
+    }
+    alert('已下載性格卡片。請喺 Threads／Instagram 發文時從相簿加入呢張圖。');
+  } catch (e) {
+    if (e && e.name === 'AbortError') return;
+    alertMirrorCardExportError(e);
+  } finally {
+    setMirrorShareBtnIdle(btn);
   }
 }
 

@@ -2141,7 +2141,7 @@ body:has(#already-screen.active) #site-footer {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
+  align-items: center;
   gap: 10px;
 }
 .my-answers-entry[hidden],
@@ -2154,16 +2154,15 @@ body:has(#already-screen.active) #site-footer {
 /* Shared Echo action buttons — kill iOS white default + unify palette */
 .echo-action-btn,
 .my-answers-view-btn,
-.my-answers-back-btn,
-.match-forum-publish-btn {
+.my-answers-back-btn {
   -webkit-appearance: none;
   appearance: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
+  width: auto;
   max-width: 100%;
-  margin: 0;
+  margin: 0 auto;
   box-sizing: border-box;
   font-family: 'Press Start 2P', monospace;
   font-size: 0.52rem;
@@ -2173,7 +2172,7 @@ body:has(#already-screen.active) #site-footer {
   text-decoration: none;
   cursor: pointer;
   border-radius: 10px;
-  padding: 13px 16px;
+  padding: 12px 18px;
   transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 .echo-action-btn--primary,
@@ -2188,24 +2187,6 @@ body:has(#already-screen.active) #site-footer {
   border-color: var(--yellow);
   color: var(--bg-deep);
   box-shadow: 0 0 16px rgba(255, 224, 102, 0.28);
-}
-.echo-action-btn--forum,
-.match-forum-publish-btn {
-  background: rgba(189, 147, 249, 0.08);
-  border: 1.5px solid rgba(189, 147, 249, 0.5);
-  color: #d4b8ff;
-}
-.echo-action-btn--forum:hover:not(:disabled),
-.match-forum-publish-btn:hover:not(:disabled) {
-  background: rgba(189, 147, 249, 0.9);
-  border-color: var(--purple-light, #bd93f9);
-  color: var(--bg-deep);
-  box-shadow: 0 0 16px rgba(189, 147, 249, 0.3);
-}
-.echo-action-btn--forum:disabled,
-.match-forum-publish-btn:disabled {
-  opacity: 0.55;
-  cursor: default;
 }
 
 .my-answers-back-btn {
@@ -2432,11 +2413,11 @@ body:has(#already-screen.active) #site-footer {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
+  align-items: center;
   gap: 10px;
 }
 .match-results-actions .echo-action-btn {
-  width: 100%;
+  width: auto;
   margin: 0;
 }
 .my-answers-loading {
@@ -5684,6 +5665,48 @@ body:has(.mode-select-screen.active) {
   box-shadow: 0 0 14px rgba(0,229,255,0.4);
 }
 .mirror-download-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.mirror-share-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  font-family: 'Zpix', 'Press Start 2P', monospace;
+  font-size: 8px;
+  line-height: 1.4;
+  background: transparent;
+  border: 1px solid rgba(189, 147, 249, 0.45);
+  border-radius: 10px;
+  color: var(--purple-light);
+  padding: 12px 10px;
+  cursor: pointer;
+  transition: all 0.25s;
+  letter-spacing: 0.04em;
+  box-sizing: border-box;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+}
+.mirror-share-btn__label {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+}
+.mirror-share-btn__icon {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.mirror-share-btn:hover:not(:disabled) {
+  background: var(--purple-light);
+  color: var(--bg-deep);
+  box-shadow: 0 0 14px rgba(189, 147, 249, 0.4);
+}
+.mirror-share-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 .mirror-download-meta-toggle {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
