@@ -2065,6 +2065,10 @@ body:has(#already-screen.active) #site-footer {
 #already-screen.overlay-screen--topbar.active {
   padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
 }
+#already-screen > .thankyou-content {
+  /* Avoid margin:auto flex gap that shoves the answers CTA to the bottom */
+  margin: 8px auto 0;
+}
 .already-submitted-title {
   font-size: 18px;
 }
@@ -2136,7 +2140,7 @@ body:has(#already-screen.active) #site-footer {
 .my-answers-entry {
   width: 100%;
   max-width: 420px;
-  margin: 22px auto 12px;
+  margin: 14px auto 12px;
   padding: 0 4px;
   box-sizing: border-box;
   display: flex;
@@ -2166,12 +2170,12 @@ body:has(#already-screen.active) #site-footer {
   font-family: 'Press Start 2P', monospace;
   font-size: 0.52rem;
   letter-spacing: 0.04em;
-  line-height: 1.55;
+  line-height: 1;
   text-align: center;
   text-decoration: none;
   cursor: pointer;
   border-radius: 10px;
-  padding: 12px 18px;
+  padding: 14px 18px 12px;
   transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 .echo-action-btn--primary,
@@ -5592,53 +5596,6 @@ body:has(.mode-select-screen.active) {
   background: var(--purple-light);
   color: var(--bg-deep);
   box-shadow: 0 0 14px rgba(189, 147, 249, 0.4);
-}
-.mirror-forum-publish-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  font-family: 'Press Start 2P', monospace;
-  font-size: 7px;
-  line-height: 1.55;
-  letter-spacing: 0.03em;
-  background: transparent;
-  border: 2px solid rgba(255, 184, 108, 0.75);
-  border-radius: 10px;
-  color: #ffb86c;
-  padding: 14px 12px;
-  cursor: pointer;
-  transition: all 0.25s;
-  text-align: center;
-  box-sizing: border-box;
-  text-shadow: 0 0 10px rgba(255, 184, 108, 0.25);
-}
-.mirror-forum-publish-btn:hover:not(:disabled) {
-  background: rgba(255, 184, 108, 0.92);
-  color: #0d0b1e;
-  box-shadow: 0 0 16px rgba(255, 184, 108, 0.4);
-  text-shadow: none;
-}
-.mirror-forum-publish-btn:disabled {
-  opacity: 0.55;
-  cursor: default;
-}
-.mirror-forum-publish-status {
-  margin: 0;
-  text-align: center;
-  font-family: 'Zpix', 'Press Start 2P', monospace;
-  font-size: 0.78rem;
-  line-height: 1.55;
-  color: var(--text-dim);
-  -webkit-font-smoothing: none;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: geometricPrecision;
-}
-.mirror-forum-publish-status--ok {
-  color: var(--cyan);
-}
-.mirror-forum-publish-status--err {
-  color: var(--pink);
 }
 .mirror-download-btn {
   display: flex;

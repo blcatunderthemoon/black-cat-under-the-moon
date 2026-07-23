@@ -592,8 +592,6 @@ let mirrorShuffleSeed = 0;
 let mirrorOptionOrderCache = {};
 let mirrorUsesV3 = false;
 let lastMirrorResultPayload = null;
-var mirrorForumPublishBusy = false;
-var mirrorForumPublishDone = false;
 const MIRROR_GUEST_SESSION_KEY = 'bcm_mirror_guest';
 const MIRROR_PENDING_RESULT_KEY = 'bcm_mirror_pending_result';
 const MIRROR_CARD_CACHE_KEY = 'bcutm_mirror_card_cache';
@@ -2003,7 +2001,6 @@ function bindMyAnswersUi() {
       restoreAlreadySubmittedMainView();
     });
   }
-  bindMatchForumPublishUi();
 }
 
 async function openMyAnswersPanel() {
@@ -4188,225 +4185,6 @@ function renderMirrorMoonlightHtml(narrative) {
   '</div>';
 }
 
-/** Fun share labels for one-click forum posts (#尋找同族). */
-var MIRROR_CLAN_SHARE_LABEL = {
-  solitary: '月光獨處貓',
-  sunny: '直球暖陽貓',
-  mystical: '高冷秘境貓',
-  sentinel: '穩定守護貓'
-};
-
-function getMirrorClanShareLabel(mainType) {
-  if (MIRROR_CLAN_SHARE_LABEL[mainType]) return MIRROR_CLAN_SHARE_LABEL[mainType];
-  var p = PERSONALITY_TYPES[mainType];
-  if (p && p.nameZh) return String(p.nameZh).replace(/家族$/, '');
-  return '月光黑貓';
-}
-
-function buildMirrorClanForumDraft(mainType) {
-  var p = PERSONALITY_TYPES[mainType] || {};
-  var shareLabel = getMirrorClanShareLabel(mainType);
-  var familyZh = p.nameZh || '貓咪家族';
-  var familyEn = p.nameEn || '';
-  var traitLine = Array.isArray(p.traits) && p.traits.length
-    ? '特質：' + p.traits.slice(0, 3).join(' · ')
-    : '';
-  var title = '我測出係 #' + shareLabel + '，有冇同類？';
-  var content = [
-    '剛完成 Mirror Mode 測驗，我係「' + familyZh + '」' + (familyEn ? '（' + familyEn + '）' : '') + ' 🐈‍⬛',
-    '',
-    '想喺圍爐搵同族傾下——有冇同樣頻率嘅貓咪？',
-    traitLine,
-    '',
-    '一鍵由結果頁發佈 · #尋找同族',
-    '了解四大貓家族：' + getPublicSiteOrigin() + '/cat-families'
-  ].filter(function(line, idx, arr) {
-    // keep blank lines between sections; drop trailing empties already handled
-    return line !== '' || (idx > 0 && arr[idx - 1] !== '');
-  }).join('\n');
-
-  // Ensure min length for forum API
-  if (content.replace(/\s/g, '').length < 10) {
-    content += '\n想認識同家族的貓咪～';
-  }
-
-  return {
-    title: title,
-    content: content,
-    topic: '徵友',
-    tags: ['尋找同族', '介紹自己'],
-    visibility: 'public',
-    hide_username: false
-  };
-}
-
-function setMirrorForumPublishStatus(message, kind) {
-  var el = document.getElementById('mirror-forum-publish-status');
-  if (!el) return;
-  if (!message) {
-    el.textContent = '';
-    el.setAttribute('hidden', '');
-    el.classList.remove('mirror-forum-publish-status--ok', 'mirror-forum-publish-status--err');
-    return;
-  }
-  el.textContent = message;
-  el.removeAttribute('hidden');
-  el.classList.toggle('mirror-forum-publish-status--ok', kind === 'ok');
-  el.classList.toggle('mirror-forum-publish-status--err', kind === 'err');
-}
-
-function setupMirrorForumPublishButton(opts) {
-  var btn = document.getElementById('mirror-forum-publish-btn');
-  if (!btn) return;
-  var guest = !!(opts && opts.guest);
-  btn.hidden = false;
-  btn.disabled = false;
-  mirrorForumPublishDone = false;
-  setMirrorForumPublishStatus('', '');
-  btn.textContent = guest
-    ? '登入後一鍵發佈到論壇 #尋找同族'
-    : '將貓咪特質卡一鍵發佈到論壇 #尋找同族';
-  btn.onclick = function() {
-    publishMirrorClanToForum({ mainType: opts && opts.mainType, source: 'mirror' });
-  };
-}
-
-async function resolveMirrorTypeForForumPublish(preferredType) {
-  if (preferredType && PERSONALITY_TYPES[preferredType]) return preferredType;
-  if (lastMirrorResultPayload && lastMirrorResultPayload.mainType) {
-    return lastMirrorResultPayload.mainType;
-  }
-  try {
-    var token = await ensureSupabaseAuthToken();
-    if (!token) return null;
-    var resp = await fetch('/api/mirror-card/me', {
-      headers: { Authorization: 'Bearer ' + token },
-      cache: 'no-store'
-    });
-    if (!resp.ok) return null;
-    var data = await resp.json().catch(function() { return {}; });
-    var card = data.card || data;
-    var t = card && card.mirror_type;
-    return t && PERSONALITY_TYPES[t] ? t : null;
-  } catch (e) {
-    return null;
-  }
-}
-
-async function publishMirrorClanToForum(options) {
-  var source = (options && options.source) || 'mirror';
-  var mirrorBtn = document.getElementById('mirror-forum-publish-btn');
-  var matchBtn = document.getElementById('match-forum-publish-btn');
-  var echoBtn = document.getElementById('echo-forum-publish-btn');
-  var activeBtn = source === 'match'
-    ? (matchBtn && matchBtn.offsetParent !== null ? matchBtn : echoBtn)
-    : mirrorBtn;
-
-  if (mirrorForumPublishBusy) return;
-  if (mirrorForumPublishDone && source === 'mirror') {
-    setMirrorForumPublishStatus('已經發佈過喇，去論壇睇下反應～', 'ok');
-    return;
-  }
-
-  var token = await ensureSupabaseAuthToken();
-  if (!token) {
-    try {
-      sessionStorage.setItem('bcm_forum_publish_after_login', '1');
-    } catch (e) {}
-    window.location.href = '/login?redirect=' + encodeURIComponent(
-      source === 'match' ? '/echo.html' : '/mirror.html'
-    );
-    return;
-  }
-
-  var mainType = await resolveMirrorTypeForForumPublish(options && options.mainType);
-  if (!mainType) {
-    var noCardMsg = '未找到你的 Mirror 貓咪特質卡——先完成測驗再發佈。';
-    if (source === 'match') {
-      if (window.confirm(noCardMsg + '\n要去測 Mirror Mode 嗎？')) {
-        window.location.href = '/mirror.html';
-      }
-    } else {
-      setMirrorForumPublishStatus(noCardMsg, 'err');
-    }
-    return;
-  }
-
-  var draft = buildMirrorClanForumDraft(mainType);
-  mirrorForumPublishBusy = true;
-  if (activeBtn) {
-    activeBtn.disabled = true;
-    activeBtn.textContent = '發佈中…';
-  }
-  if (source === 'mirror') setMirrorForumPublishStatus('正在發佈到論壇…', '');
-
-  try {
-    var resp = await fetch('/api/forum/posts', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + token
-      },
-      body: JSON.stringify(draft)
-    });
-    var data = await resp.json().catch(function() { return {}; });
-    if (!resp.ok) {
-      throw new Error(data.error || ('HTTP ' + resp.status));
-    }
-    mirrorForumPublishDone = true;
-    var postId = data.post && data.post.id;
-    if (source === 'mirror') {
-      setMirrorForumPublishStatus('已發佈！即將前往論壇…', 'ok');
-      if (mirrorBtn) {
-        mirrorBtn.textContent = '已發佈到論壇 #尋找同族 ✓';
-        mirrorBtn.disabled = true;
-      }
-    } else if (matchBtn || echoBtn) {
-      [matchBtn, echoBtn].forEach(function(b) {
-        if (!b) return;
-        b.textContent = '已發佈 ✓';
-        b.disabled = true;
-      });
-    }
-    trackPostHog('mirror_forum_clan_publish', {
-      mirror_type: mainType,
-      source: source,
-      topic: '徵友'
-    });
-    if (postId) {
-      setTimeout(function() {
-        window.location.href = '/forum/' + postId;
-      }, 700);
-    }
-  } catch (err) {
-    var errMsg = (err && err.message) ? err.message : '發佈失敗，請稍後再試';
-    if (source === 'mirror') setMirrorForumPublishStatus(errMsg, 'err');
-    else if (window.alert) window.alert(errMsg);
-    var resetLabel = source === 'match'
-      ? '發佈到論壇 · #尋找同族'
-      : '將貓咪特質卡一鍵發佈到論壇 #尋找同族';
-    if (activeBtn) {
-      activeBtn.disabled = false;
-      activeBtn.textContent = resetLabel;
-    }
-  } finally {
-    mirrorForumPublishBusy = false;
-  }
-}
-
-function bindMatchForumPublishUi() {
-  function bindBtn(id) {
-    var btn = document.getElementById(id);
-    if (!btn || btn.dataset.bound === '1') return;
-    btn.dataset.bound = '1';
-    btn.addEventListener('click', function() {
-      publishMirrorClanToForum({ source: 'mirror' });
-    });
-  }
-  // Forum #尋找同族 is Mirror-only (shares Mirror card clan, not Echo answers)
-  bindBtn('mirror-forum-publish-btn');
-}
-
 function showMirrorResult(scores, mainType, shadowType, hiddenTags, skipAutoSave, v3Meta) {
   const isGuest = mirrorGuestMode;
   lastMirrorResultPayload = { scores: scores, mainType: mainType, shadowType: shadowType, v3Meta: v3Meta || null };
@@ -4649,7 +4427,6 @@ function showMirrorResult(scores, mainType, shadowType, hiddenTags, skipAutoSave
   if (retryBtn) retryBtn.onclick = goBackToHome;
 
   setMirrorGuestUpsellVisible(isGuest);
-  setupMirrorForumPublishButton({ guest: isGuest, mainType: mainType });
 
   if (isGuest) {
     persistPendingMirrorResult(scores, mainType, shadowType, v3Meta);
@@ -5093,12 +4870,18 @@ function applyPcardExportFallbacks(clone) {
 }
 
 function getPcardExportPixelRatio(cardWidth) {
-  // Aim for ~1200px export width (360px card → 4×); cap to avoid canvas OOM on mobile.
-  var TARGET_EXPORT_WIDTH = 1200;
-  var MIN_RATIO = 3;
-  var MAX_RATIO = 4;
+  // Aim for ~1080px export width; keep lower on small phones to avoid canvas OOM.
+  var TARGET_EXPORT_WIDTH = 1080;
+  var MIN_RATIO = 2;
+  var MAX_RATIO = 3;
   var w = Math.max(1, Math.round(cardWidth || 360));
-  return Math.max(MIN_RATIO, Math.min(MAX_RATIO, Math.ceil(TARGET_EXPORT_WIDTH / w)));
+  var ratio = Math.ceil(TARGET_EXPORT_WIDTH / w);
+  try {
+    if (typeof navigator !== 'undefined' && navigator.deviceMemory && navigator.deviceMemory <= 4) {
+      MAX_RATIO = 2;
+    }
+  } catch (e) {}
+  return Math.max(MIN_RATIO, Math.min(MAX_RATIO, ratio));
 }
 
 async function capturePcardWithHtmlToImage(node, pixelRatio) {
@@ -5107,6 +4890,8 @@ async function capturePcardWithHtmlToImage(node, pixelRatio) {
     cacheBust: true,
     pixelRatio: pixelRatio,
     backgroundColor: '#07060e',
+    // Skip broken cross-origin font fetches that abort whole export on some mobile browsers.
+    skipFonts: true,
   });
 }
 
@@ -5440,43 +5225,97 @@ async function downloadPersonalityCard() {
   }
 }
 
+function openThreadsComposer(text) {
+  var threadsUrl = 'https://www.threads.net/intent/post?' + new URLSearchParams({ text: text }).toString();
+  window.open(threadsUrl, '_blank', 'noopener,noreferrer');
+}
+
+function canSharePayload(data) {
+  try {
+    return !!(navigator.canShare && navigator.canShare(data));
+  } catch (e) {
+    return false;
+  }
+}
+
+/** Share card image; fall back to download + Threads when Web Share cannot send files. */
+async function sharePersonalityCardViaSystem(blob, filename) {
+  var text = getMirrorCardShareText();
+  var file = null;
+  try {
+    file = new File([blob], filename, { type: 'image/png' });
+  } catch (fileErr) {
+    file = null;
+  }
+
+  // Prefer files-only first: many mobile browsers reject files + text together.
+  if (file && canSharePayload({ files: [file] })) {
+    var payloads = [
+      { files: [file] },
+      { files: [file], title: 'Mirror Card' },
+      { files: [file], title: 'Mirror Card', text: text },
+    ];
+    for (var i = 0; i < payloads.length; i += 1) {
+      if (!canSharePayload(payloads[i])) continue;
+      try {
+        await navigator.share(payloads[i]);
+        return 'shared';
+      } catch (shareErr) {
+        if (shareErr && shareErr.name === 'AbortError') return 'aborted';
+        // try next payload shape
+      }
+    }
+  }
+
+  triggerBlobDownload(blob, filename);
+
+  if (typeof navigator.share === 'function' && canSharePayload({ text: text })) {
+    try {
+      await navigator.share({
+        title: 'Mirror Card',
+        text: text,
+        url: 'https://www.blackcatunderthemoon.com/mirror.html',
+      });
+      return 'downloaded-shared-text';
+    } catch (shareErr) {
+      if (shareErr && shareErr.name === 'AbortError') return 'downloaded-aborted';
+    }
+  }
+
+  openThreadsComposer(text);
+  return 'downloaded-threads';
+}
+
 async function sharePersonalityCard() {
   const btn = document.getElementById('mirror-share-btn');
   const btnLabel = btn && btn.querySelector('.mirror-share-btn__label');
   if (btnLabel) btnLabel.textContent = '準備中...';
   else if (btn) btn.textContent = '準備中...';
   if (btn) btn.disabled = true;
+
+  var result = null;
   try {
-    var result = await buildPersonalityCardBlob();
-    var file = new File([result.blob], result.filename, { type: 'image/png' });
-    var text = getMirrorCardShareText();
-    var shareData = { files: [file], title: 'Mirror Card', text: text };
+    result = await buildPersonalityCardBlob();
+  } catch (e) {
+    alertMirrorCardExportError(e);
+    setMirrorShareBtnIdle(btn);
+    return;
+  }
 
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share(shareData);
-      return;
-    }
-
-    // No file share support: download image, then open Threads composer
-    triggerBlobDownload(result.blob, result.filename);
-    if (typeof navigator.share === 'function') {
-      try {
-        await navigator.share({
-          title: 'Mirror Card',
-          text: text,
-          url: 'https://www.blackcatunderthemoon.com/mirror.html',
-        });
-      } catch (shareErr) {
-        if (shareErr && shareErr.name === 'AbortError') return;
-      }
-    } else {
-      var threadsUrl = 'https://www.threads.net/intent/post?' + new URLSearchParams({ text: text }).toString();
-      window.open(threadsUrl, '_blank', 'noopener,noreferrer');
-    }
+  try {
+    var outcome = await sharePersonalityCardViaSystem(result.blob, result.filename);
+    if (outcome === 'shared' || outcome === 'aborted' || outcome === 'downloaded-aborted') return;
     alert('已下載性格卡片。請喺 Threads／Instagram 發文時從相簿加入呢張圖。');
   } catch (e) {
     if (e && e.name === 'AbortError') return;
-    alertMirrorCardExportError(e);
+    console.error('Card share failed:', e);
+    try {
+      triggerBlobDownload(result.blob, result.filename);
+      openThreadsComposer(getMirrorCardShareText());
+      alert('無法直接開啟分享選單，已改為下載卡片。請喺 Threads／IG 從相簿加入呢張圖。');
+    } catch (fallbackErr) {
+      alert('分享失敗，請改用「下載性格卡片」後再上傳到 Threads／IG。');
+    }
   } finally {
     setMirrorShareBtnIdle(btn);
   }
