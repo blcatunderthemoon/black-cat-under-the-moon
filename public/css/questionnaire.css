@@ -1318,69 +1318,19 @@ body[data-automode="mirror"] .part-label .part-label-en {
   text-rendering: geometricPrecision;
 }
 .welcome-sub {
-  font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
-  font-size: 13px;
+  font-family: 'Zpix', 'Press Start 2P', monospace;
+  font-size: 12px;
   color: var(--welcome-subtext);
   text-align: center;
-  line-height: 1.7;
-  letter-spacing: 0.02em;
+  line-height: 2.2;
+  letter-spacing: 0.06em;
   animation: fadeUp 1.2s ease-out;
-  font-weight: 500;
+  font-weight: normal;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: geometricPrecision;
   text-shadow: none;
   opacity: 0.92;
-  max-width: 22rem;
-  margin: 0 auto;
-}
-.welcome-seo {
-  width: 100%;
-  max-width: 420px;
-  margin: 0 auto 4px;
-  padding: 14px 14px 12px;
-  border: 1px solid rgba(255, 224, 102, 0.14);
-  border-radius: 12px;
-  background: rgba(12, 10, 24, 0.55);
-  text-align: left;
-  box-sizing: border-box;
-}
-.welcome-seo__title {
-  margin: 0 0 8px;
-  font-family: 'Noto Sans TC', 'PingFang TC', sans-serif;
-  font-size: 0.95rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--yellow);
-  line-height: 1.4;
-}
-.welcome-seo__lead {
-  margin: 0 0 10px;
-  font-family: 'Noto Sans TC', 'PingFang TC', sans-serif;
-  font-size: 0.8rem;
-  line-height: 1.65;
-  color: rgba(210, 200, 230, 0.78);
-}
-.welcome-seo__lead strong {
-  color: rgba(255, 233, 184, 0.95);
-  font-weight: 700;
-}
-.welcome-seo__links {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 6px;
-}
-.welcome-seo__links a {
-  display: block;
-  font-family: 'Noto Sans TC', 'PingFang TC', sans-serif;
-  font-size: 0.8rem;
-  line-height: 1.4;
-  color: #c4a6ff;
-  text-decoration: none;
-  border-bottom: 1px solid transparent;
-}
-.welcome-seo__links a:hover {
-  color: #e0ccff;
-  border-bottom-color: rgba(196, 166, 255, 0.45);
 }
 .welcome-cta-btn {
   position: relative;

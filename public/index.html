@@ -37,7 +37,7 @@
 <link rel="preload" href="js/zpix.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/questionnaire.css?v=20260723seo">
+<link rel="stylesheet" href="css/questionnaire.css?v=20260723seo-revert">
 <link rel="stylesheet" href="css/auth-nav.css?v=20260715calnoborder">
 <link rel="stylesheet" href="css/mobile-webview-scroll.css?v=20260713echo">
 <link rel="stylesheet" href="css/welcome-atmosphere.css?v=20260708presence2">
@@ -133,9 +133,9 @@
 <!-- Welcome Screen -->
 <div class="welcome-screen" id="welcome">
   <div class="welcome-hero">
-    <a href="about.html" class="welcome-cat" aria-label="關於我們"><img src="entrancelogo.png" alt="香港Les社群 Black Cat Under The Moon"></a>
-    <h1 class="welcome-title pixel-font">🌙 Black Cat<br>Under The Moon</h1>
-    <p class="welcome-sub">香港Les・香港女同志社群｜靈魂鏡像 · 月下緣份 · 月光漂流瓶 · 黑貓樹洞</p>
+    <a href="about.html" class="welcome-cat" aria-label="關於我們"><img src="entrancelogo.png" alt="Black Cat Under The Moon"></a>
+    <div class="welcome-title pixel-font">🌙 Black Cat<br>Under The Moon</div>
+    <div class="welcome-sub">靈魂鏡像 · 月下緣份 · 月光漂流瓶 · 黑貓樹洞</div>
     <button type="button" class="welcome-cta-btn" id="welcome-enter-btn">
       <span class="welcome-cta-btn__star" aria-hidden="true">✦</span>
       <span class="welcome-cta-btn__label">進入月下</span>
@@ -143,19 +143,6 @@
     </button>
   </div>
   <div class="welcome-bottom">
-  <section class="welcome-seo" aria-labelledby="welcome-seo-heading">
-    <h2 id="welcome-seo-heading" class="welcome-seo__title">香港 Les／香港女同志社群</h2>
-    <p class="welcome-seo__lead">
-      Black Cat Under The Moon 係專為<strong>香港Les</strong>同<strong>香港女同志</strong>而設嘅線上社群。
-      你可以做性格測驗、搵同頻配對、匿名漂流瓶傾訴，或者喺黑貓樹洞同人傾偈。
-    </p>
-    <ul class="welcome-seo__links">
-      <li><a href="/guides/hong-kong-les-guide">香港Les交友入門指南</a></li>
-      <li><a href="/guides/hong-kong-les-dating-apps-compare">香港女同志交友平台比較</a></li>
-      <li><a href="/forum">黑貓樹洞討論區</a></li>
-      <li><a href="/about.html">關於我們</a></li>
-    </ul>
-  </section>
   <div class="mode-select-socials welcome-socials">
     <a class="mode-social-link ig" href="https://www.instagram.com/blackcatunderthemoonhk/" target="_blank" rel="noopener noreferrer">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
@@ -172,8 +159,6 @@
   <footer class="site-footer site-footer--legal site-footer--embedded" aria-label="頁尾">
     <nav class="site-footer__nav site-footer__nav--legal" aria-label="法律與聯絡">
       <a class="site-legal-link" href="about.html">關於我們</a>
-      <span class="site-legal-sep" aria-hidden="true">|</span>
-      <a class="site-legal-link" href="/guides/hong-kong-les-guide">香港Les指南</a>
       <span class="site-legal-sep" aria-hidden="true">|</span>
       <a class="site-legal-link" href="/guides">文章</a>
       <span class="site-legal-sep" aria-hidden="true">|</span>
@@ -258,8 +243,6 @@
   <footer class="site-footer site-footer--legal site-footer--embedded" aria-label="頁尾">
     <nav class="site-footer__nav site-footer__nav--legal" aria-label="法律與聯絡">
       <a class="site-legal-link" href="about.html">關於我們</a>
-      <span class="site-legal-sep" aria-hidden="true">|</span>
-      <a class="site-legal-link" href="/guides/hong-kong-les-guide">香港Les指南</a>
       <span class="site-legal-sep" aria-hidden="true">|</span>
       <a class="site-legal-link" href="/guides">文章</a>
       <span class="site-legal-sep" aria-hidden="true">|</span>
