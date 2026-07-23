@@ -100,15 +100,11 @@ export default function ForumHeaderAuth({ extra = null, moonJourney = null, redi
           <Link
             href="/inbox"
             className={`app-header__nav-link app-header__nav-link--icon${unread > 0 ? ' app-header__nav-link--inbox-unread' : ''}`}
-            title="收件箱"
+            title={unread > 0 ? `收件箱（${unread > 99 ? '99+' : unread}）未讀` : '收件箱'}
           >
-            {unread > 0 ? (
-              <>
-                <span className="app-header__nav-icon" aria-hidden="true">✉</span>
-                <span className="forum-nav-unread">{unread > 99 ? '99+' : unread}</span>
-              </>
-            ) : (
-              <span className="app-header__nav-icon" aria-hidden="true">✉</span>
+            <span className="app-header__nav-icon" aria-hidden="true">✉</span>
+            {unread > 0 && (
+              <span data-unread className="auth-nav-badge__unread forum-nav-unread">{unread > 99 ? '99+' : unread}</span>
             )}
           </Link>
           <Link href="/account" className="app-header__nav-link app-header__nav-link--icon" title="設定">

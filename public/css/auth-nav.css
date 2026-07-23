@@ -755,11 +755,15 @@ html:has(.mode-top-bar--quiz) {
 }
 
 .auth-nav-badge__item--icon {
+  position: relative;
   width: 32px;
   min-width: 32px;
+  max-width: 32px;
   height: 32px;
   padding: 0;
   color: #8b86a8;
+  overflow: visible;
+  box-sizing: border-box;
 }
 
 .auth-nav-badge__icon {
@@ -814,54 +818,53 @@ html:has(.mode-top-bar--quiz) {
   background: rgba(189, 147, 249, 0.22);
 }
 
-.auth-nav-badge__unread {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  z-index: 2;
-  min-width: 14px;
-  height: 14px;
+/* Shared corner chip — used by static auth-nav + Next app/forum headers */
+.auth-nav-badge__unread,
+.forum-nav-unread {
+  position: absolute !important;
+  top: -2px;
+  right: -2px;
+  z-index: 3;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 12px;
+  width: auto;
+  height: 12px;
+  max-height: 12px;
+  margin: 0;
   padding: 0 3px;
-  border-radius: 7px;
-  background: #7c5cfc;
+  border-radius: 999px;
+  background: #ff5a6a;
   color: #fff;
   font-family: 'Press Start 2P', monospace;
-  font-size: 6px;
-  line-height: 14px;
+  font-size: 5px;
+  font-weight: normal;
+  line-height: 1;
+  letter-spacing: 0;
   text-align: center;
+  overflow: hidden;
   box-shadow:
-    0 0 0 1.5px rgba(18, 12, 32, 0.95),
-    0 0 8px rgba(124, 92, 252, 0.45);
+    0 0 0 1.5px rgba(12, 10, 24, 0.95),
+    0 0 6px rgba(255, 90, 106, 0.35);
   pointer-events: none;
+  flex: none !important;
+  transform: none;
 }
 
-.auth-nav-badge__item--inbox-unread {
+.auth-nav-badge__item--inbox-unread,
+.app-header__nav-link--inbox-unread {
   color: #c4b5fd;
-  background: transparent;
-  box-shadow: none;
+  background: transparent !important;
+  box-shadow: none !important;
+  gap: 0 !important;
 }
 
-.auth-nav-badge__item--inbox-unread:hover {
+.auth-nav-badge__item--inbox-unread:hover,
+.app-header__nav-link--inbox-unread:hover {
   color: #e9d5ff;
-  background: transparent;
-}
-
-.auth-nav-badge__item--inbox-unread .auth-nav-badge__unread {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  display: block;
-  width: auto;
-  height: 14px;
-  min-width: 14px;
-  padding: 0 3px;
-  font-size: 6px;
-  line-height: 14px;
-  border-radius: 7px;
-  box-shadow:
-    0 0 0 1.5px rgba(18, 12, 32, 0.95),
-    0 0 8px rgba(124, 92, 252, 0.45);
-  pointer-events: none;
+  background: transparent !important;
 }
 
 @media (max-width: 520px) {
@@ -921,7 +924,19 @@ html:has(.mode-top-bar--quiz) {
   .mode-top-bar--index.mode-top-bar--greeting .auth-nav-badge__item--icon {
     width: 26px;
     min-width: 26px;
+    max-width: 26px;
     height: 26px;
+  }
+
+  .mode-top-bar--index.mode-top-bar--greeting .auth-nav-badge__unread,
+  .mode-top-bar--index.mode-top-bar--greeting .forum-nav-unread {
+    top: -1px;
+    right: -1px;
+    min-width: 10px;
+    height: 10px;
+    max-height: 10px;
+    padding: 0 2px;
+    font-size: 5px;
   }
 
   .mode-top-bar--index.mode-top-bar--greeting .header-my-cat-link {
@@ -1004,9 +1019,24 @@ html:has(.mode-top-bar--quiz) {
   .auth-nav-badge__item--icon {
     width: 28px;
     min-width: 28px;
+    max-width: 28px;
     height: 28px;
     padding: 0;
     flex-shrink: 0;
+  }
+
+  .auth-nav-badge__unread,
+  .forum-nav-unread {
+    top: -1px;
+    right: -1px;
+    min-width: 10px;
+    height: 10px;
+    max-height: 10px;
+    padding: 0 2px;
+    font-size: 5px;
+    box-shadow:
+      0 0 0 1px rgba(12, 10, 24, 0.95),
+      0 0 5px rgba(255, 90, 106, 0.3);
   }
 
   .header-my-cat-link {

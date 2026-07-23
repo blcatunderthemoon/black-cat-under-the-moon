@@ -255,11 +255,15 @@
       var t = new Date(item.created_at).getTime();
       var isUnread = Number.isFinite(t) && t > seenAt;
       var isToastable = Number.isFinite(t) && t > Math.max(toastedAt, seenAt);
+      // New members stay in the feed only — no popup toast.
+      var canToast = item.type !== 'member';
 
-      if (opts.firstLoad) {
-        if (isToastable) toastables.push(item);
-      } else if (!knownIds[item.id] && isUnread) {
-        toastables.push(item);
+      if (canToast) {
+        if (opts.firstLoad) {
+          if (isToastable) toastables.push(item);
+        } else if (!knownIds[item.id] && isUnread) {
+          toastables.push(item);
+        }
       }
       knownIds[item.id] = true;
     });
