@@ -86,7 +86,8 @@ export default function ForumStoryBookHub({
 
   const canEdit = !!post.is_mine && loggedIn;
   const canSave = canEdit && !!accessToken;
-  const canReorder = canSave && (chapters?.length || 0) >= 2;
+  // Show reorder controls whenever the author can see Edit (don't hide behind token timing)
+  const canReorder = canEdit && (chapters?.length || 0) >= 2;
 
   function openSynopsisEdit() {
     if (!canSave) return;
@@ -111,6 +112,10 @@ export default function ForumStoryBookHub({
 
   async function moveChapter(chapterId, direction) {
     if (!canReorder || reordering) return;
+    if (!accessToken) {
+      setReorderError('登入狀態已過期，請重新登入後再調整順序。');
+      return;
+    }
     const list = [...(chapters || [])];
     const idx = list.findIndex((ch) => String(ch.id) === String(chapterId));
     if (idx < 0) return;
@@ -419,22 +424,28 @@ export default function ForumStoryBookHub({
                             <button
                               type="button"
                               className="forum-story-chapters__reorder-btn"
-                              onClick={() => moveChapter(ch.id, 'up')}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                moveChapter(ch.id, 'up');
+                              }}
                               disabled={reordering || index === 0}
                               aria-label={`上移 ${ch.display_title}`}
-                              title="上移"
+                              title="上移一章"
                             >
-                              ↑
+                              上移
                             </button>
                             <button
                               type="button"
                               className="forum-story-chapters__reorder-btn"
-                              onClick={() => moveChapter(ch.id, 'down')}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                moveChapter(ch.id, 'down');
+                              }}
                               disabled={reordering || index === chapters.length - 1}
                               aria-label={`下移 ${ch.display_title}`}
-                              title="下移"
+                              title="下移一章"
                             >
-                              ↓
+                              下移
                             </button>
                           </div>
                         )}
