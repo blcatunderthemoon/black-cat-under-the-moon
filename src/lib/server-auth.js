@@ -193,6 +193,8 @@ export function resolveSubscriptionTier(subscription) {
 /**
  * Get the subscription tier for a user.
  * Returns 'free' if no subscription row or expired.
+ * Falls back to profiles.subscription_tier when the subscriptions ledger has no active row
+ * (covers manual grants / sync lag so Passport UI is not stuck on free).
  */
 export async function getSubscriptionTier(userId) {
   const admin = getAdminClient();
@@ -205,9 +207,17 @@ export async function getSubscriptionTier(userId) {
     .limit(1)
     .maybeSingle();
 
-  if (!data) return 'free';
+  if (data) {
+    return resolveSubscriptionTier(data);
+  }
 
-  return resolveSubscriptionTier(data);
+  const { data: profile } = await admin
+    .from('profiles')
+    .select('subscription_tier')
+    .eq('id', userId)
+    .maybeSingle();
+
+  return profile?.subscription_tier === 'premium' ? 'premium' : 'free';
 }
 
 /** Batch lookup subscription tiers for multiple users (single DB round-trip). */

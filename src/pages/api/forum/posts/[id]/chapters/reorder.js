@@ -3,14 +3,14 @@
  * Body: { ordered_ids: string[] }  (all real chapter ids, new reading order)
  */
 
-import { requireUser, sendAuthError, getAdminClient } from '../../../../../lib/server-auth.js';
-import { isStoryPost } from '../../../../../lib/forum-story.js';
+import { requireUser, sendAuthError, getAdminClient } from '../../../../../../lib/server-auth.js';
+import { isStoryPost } from '../../../../../../lib/forum-story.js';
 import {
   ensureChapterOneMigrated,
   fetchStoryChapters,
   serializeStoryChapters,
   reorderStoryChapters,
-} from '../../../../../lib/forum-story-chapters.js';
+} from '../../../../../../lib/forum-story-chapters.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'PUT' && req.method !== 'POST') {

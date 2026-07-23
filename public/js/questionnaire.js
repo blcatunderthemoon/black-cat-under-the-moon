@@ -2029,6 +2029,81 @@ async function openMyAnswersPanel() {
   }
 }
 
+async function fetchEchoPremiumAndMatches(token) {
+  var result = { isPremium: false, matches: [], token: token || null };
+  if (!token) return result;
+
+  var authToken = token;
+
+  try {
+    var meResp = await fetch('/api/me', {
+      headers: { Authorization: 'Bearer ' + authToken },
+      cache: 'no-store',
+    });
+    if (meResp.status === 401) {
+      var refreshed = await refreshSupabaseAuthToken();
+      if (refreshed) {
+        authToken = refreshed;
+        result.token = refreshed;
+        meResp = await fetch('/api/me', {
+          headers: { Authorization: 'Bearer ' + authToken },
+          cache: 'no-store',
+        });
+      }
+    }
+    if (meResp.ok) {
+      var meData = await meResp.json().catch(function() { return {}; });
+      if (meData.profile && meData.profile.subscription_tier === 'premium') {
+        result.isPremium = true;
+      }
+      try {
+        var uid = meData.user && meData.user.id;
+        if (uid && window.BcutmMeCache) window.BcutmMeCache.write(uid, meData);
+      } catch (e) {}
+    }
+  } catch (e) {}
+
+  if (!result.isPremium) {
+    try {
+      var stored = getSupabaseAuthStorage();
+      var uid2 = stored && stored.session && stored.session.user && stored.session.user.id;
+      var cached = uid2 && window.BcutmMeCache ? window.BcutmMeCache.read(uid2) : null;
+      if (cached && cached.profile && cached.profile.subscription_tier === 'premium') {
+        result.isPremium = true;
+      }
+    } catch (e2) {}
+  }
+
+  if (result.isPremium) {
+    try {
+      var matchesResp = await fetch('/api/matches', {
+        headers: { Authorization: 'Bearer ' + authToken },
+        cache: 'no-store',
+      });
+      if (matchesResp.status === 401) {
+        var refreshed2 = await refreshSupabaseAuthToken();
+        if (refreshed2) {
+          authToken = refreshed2;
+          result.token = refreshed2;
+          matchesResp = await fetch('/api/matches', {
+            headers: { Authorization: 'Bearer ' + authToken },
+            cache: 'no-store',
+          });
+        }
+      }
+      if (matchesResp.ok) {
+        var matchesData = await matchesResp.json().catch(function() { return {}; });
+        result.matches = matchesData.matches || [];
+      } else if (matchesResp.status === 403) {
+        // /api/me said premium but matches gate disagreed — still show Passport UI
+        result.matches = [];
+      }
+    } catch (e3) {}
+  }
+
+  return result;
+}
+
 async function showMatchAlreadySubmitted(prefetchedMatches) {
   suppressHomeConfirm = true;
   setQuizViewport(false);
@@ -2071,23 +2146,19 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
     return;
   }
 
-  if (premiumBlock) premiumBlock.style.display = '';
-
-  if (prefetchedMatches && Array.isArray(prefetchedMatches.matches)) {
+  // Prefetch shape: either { matches } from /api/matches, or { isPremium, matches } from helper
+  if (prefetchedMatches && typeof prefetchedMatches.isPremium === 'boolean') {
+    isPremium = prefetchedMatches.isPremium;
+    matches = Array.isArray(prefetchedMatches.matches) ? prefetchedMatches.matches : [];
+  } else if (prefetchedMatches && Array.isArray(prefetchedMatches.matches)) {
+    // Legacy: successful /api/matches response implies Passport
     matches = prefetchedMatches.matches;
     isPremium = true;
-  } else if (token) {
-    try {
-      var matchesResp = await fetch('/api/matches', {
-        headers: { Authorization: 'Bearer ' + token },
-        cache: 'no-store',
-      });
-      if (matchesResp.ok) {
-        var matchesData = await matchesResp.json().catch(function() { return {}; });
-        matches = matchesData.matches || [];
-        isPremium = true;
-      }
-    } catch (e) {}
+  } else {
+    var status = await fetchEchoPremiumAndMatches(token);
+    isPremium = status.isPremium;
+    matches = status.matches || [];
+    if (status.token) token = status.token;
   }
 
   $progressWrap.style.display = 'block';
@@ -2098,7 +2169,8 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
     $progressText.classList.add('mode-top-bar__center--zh');
   }
 
-  if (isPremium && token) {
+  if (isPremium) {
+    if (premiumBlock) premiumBlock.style.display = 'none';
     if (staticView) staticView.style.display = 'none';
     if (resultsPanel) resultsPanel.style.display = '';
     renderMatchResultsOnMatchPage(matches);
@@ -2106,6 +2178,7 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
     myAnswersReturnMode = 'results';
     setMyAnswersEntryVisible(false);
   } else {
+    if (premiumBlock) premiumBlock.style.display = '';
     if (staticView) staticView.style.display = '';
     if (resultsPanel) resultsPanel.style.display = 'none';
     if ($already) $already.classList.remove('overlay-screen--match-results');
@@ -2134,12 +2207,7 @@ async function startMatchMode() {
 
     var matchesPrefetch = null;
     if (token) {
-      matchesPrefetch = fetchWithTimeout('/api/matches', {
-        headers: { Authorization: 'Bearer ' + token },
-        cache: 'no-store',
-      }, QUIZ_BOOT_FETCH_TIMEOUT_MS)
-        .then(function(r) { return r.ok ? r.json() : null; })
-        .catch(function() { return null; });
+      matchesPrefetch = fetchEchoPremiumAndMatches(token);
     }
 
     if (token && await userHasMatchSubmission()) {

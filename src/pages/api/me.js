@@ -51,7 +51,9 @@ async function handleGet(req, res) {
     admin.from('user_cats').select('skin_id').eq('user_id', user.id).maybeSingle(),
   ]);
 
-  const subscriptionTier = resolveSubscriptionTier(subscription);
+  const subscriptionTier = subscription
+    ? resolveSubscriptionTier(subscription)
+    : (profile.subscription_tier === 'premium' ? 'premium' : 'free');
 
   const [activeLetterQuota, photoExchangeQuota] = subscriptionTier === 'premium'
     ? await Promise.all([

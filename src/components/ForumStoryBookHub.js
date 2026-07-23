@@ -418,48 +418,40 @@ export default function ForumStoryBookHub({
                       )}
                     </button>
                     {canEdit && (
-                      <div className="forum-story-chapters__author-actions">
-                        {canReorder && (
-                          <div className="forum-story-chapters__reorder" role="group" aria-label="調整章節順序">
-                            <button
-                              type="button"
-                              className="forum-story-chapters__reorder-btn"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                moveChapter(ch.id, 'up');
-                              }}
-                              disabled={reordering || index === 0}
-                              aria-label={`上移 ${ch.display_title}`}
-                              title="上移一章"
-                            >
-                              上移
-                            </button>
-                            <button
-                              type="button"
-                              className="forum-story-chapters__reorder-btn"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                moveChapter(ch.id, 'down');
-                              }}
-                              disabled={reordering || index === chapters.length - 1}
-                              aria-label={`下移 ${ch.display_title}`}
-                              title="下移一章"
-                            >
-                              下移
-                            </button>
-                          </div>
-                        )}
-                        <button
-                          type="button"
-                          className="forum-story-chapters__edit-btn"
-                          onClick={() => openChapterEdit(ch)}
-                          aria-label={`編輯 ${ch.display_title}`}
-                        >
-                          編輯
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        className="forum-story-chapters__edit-btn"
+                        onClick={() => openChapterEdit(ch)}
+                        aria-label={`編輯 ${ch.display_title}`}
+                      >
+                        編輯
+                      </button>
                     )}
                   </div>
+                  {canReorder && (
+                    <div className="forum-story-chapters__reorder" role="group" aria-label="調整章節順序">
+                      <button
+                        type="button"
+                        className="forum-story-chapters__reorder-btn"
+                        onClick={() => moveChapter(ch.id, 'up')}
+                        disabled={reordering || index === 0}
+                        aria-label={`上移 ${ch.display_title}`}
+                        title="上移一章"
+                      >
+                        ↑ 上移
+                      </button>
+                      <button
+                        type="button"
+                        className="forum-story-chapters__reorder-btn"
+                        onClick={() => moveChapter(ch.id, 'down')}
+                        disabled={reordering || index === chapters.length - 1}
+                        aria-label={`下移 ${ch.display_title}`}
+                        title="下移一章"
+                      >
+                        下移 ↓
+                      </button>
+                    </div>
+                  )}
                 </li>
                 );
               })}

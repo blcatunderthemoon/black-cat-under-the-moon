@@ -21894,31 +21894,28 @@ button.forum-tag-chip:hover {
   min-width: 0;
 }
 
-.forum-story-chapters__author-actions {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  align-self: center;
-  gap: 6px;
-}
-
 .forum-story-chapters__reorder {
-  display: inline-flex;
-  flex-direction: row;
+  display: flex;
+  width: 100%;
   align-items: center;
-  gap: 4px;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 0 2px;
 }
 
 .forum-story-chapters__reorder-btn {
-  flex-shrink: 0;
-  padding: 8px 10px;
-  border: 1px solid rgba(0, 229, 255, 0.4);
+  flex: 1;
+  max-width: 140px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid rgba(0, 229, 255, 0.45);
   border-radius: 8px;
-  background: rgba(0, 229, 255, 0.1);
+  background: rgba(0, 229, 255, 0.12);
   color: #7ef0ff;
   font-family: 'Noto Sans TC', sans-serif;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
   line-height: 1.2;
   letter-spacing: 0.02em;
   cursor: pointer;
@@ -21927,8 +21924,8 @@ button.forum-tag-chip:hover {
 }
 
 .forum-story-chapters__reorder-btn:hover:not(:disabled) {
-  background: rgba(0, 229, 255, 0.22);
-  border-color: rgba(0, 229, 255, 0.65);
+  background: rgba(0, 229, 255, 0.24);
+  border-color: rgba(0, 229, 255, 0.7);
 }
 
 .forum-story-chapters__reorder-btn:disabled {
@@ -21945,24 +21942,6 @@ button.forum-tag-chip:hover {
   color: #ff9fbc;
   font-size: 12px;
   line-height: 1.45;
-}
-
-@media (max-width: 640px) {
-  .forum-story-chapters__row {
-    flex-wrap: wrap;
-  }
-
-  .forum-story-chapters__author-actions {
-    width: 100%;
-    justify-content: flex-end;
-    padding: 0 2px 2px;
-  }
-
-  .forum-story-chapters__reorder-btn,
-  .forum-story-chapters__edit-btn {
-    min-height: 36px;
-    padding: 8px 12px;
-  }
 }
 
 .forum-story-chapters__edit-btn {
