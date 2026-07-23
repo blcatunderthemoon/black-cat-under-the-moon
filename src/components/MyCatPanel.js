@@ -704,12 +704,7 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
             <p className="my-cat-away__title pixel-font">貓咪離家出走咗！</p>
             {cat.summon_pending ? (
               <p className="my-cat-away__text">
-                <span
-                  className="my-cat-away__bell my-cat-away__bell--ringing"
-                  aria-hidden="true"
-                >
-                  🔔
-                </span>
+                <span className="my-cat-away__bell" aria-hidden="true">🔔</span>
                 {' '}已召喚 · <strong>{formatCooldown(returnMs)}</strong> 後返嚟
               </p>
             ) : (

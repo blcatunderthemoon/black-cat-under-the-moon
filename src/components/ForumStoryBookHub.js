@@ -482,7 +482,7 @@ export default function ForumStoryBookHub({
                     <span className="forum-story-reader__enter-read-sub">{enterReadSub}</span>
                   )}
                 </span>
-                <span className="forum-story-reader__enter-read-arrow" aria-hidden="true">›</span>
+                <span className="forum-story-reader__enter-read-arrow" aria-hidden="true" />
               </button>
             </div>
           )}

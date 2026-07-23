@@ -4358,7 +4358,7 @@ async function publishMirrorClanToForum(options) {
     if (source === 'mirror') setMirrorForumPublishStatus(errMsg, 'err');
     else if (window.alert) window.alert(errMsg);
     var resetLabel = source === 'match'
-      ? '發佈貓咪特質卡到論壇 #尋找同族'
+      ? '發佈到論壇 · #尋找同族'
       : '將貓咪特質卡一鍵發佈到論壇 #尋找同族';
     if (activeBtn) {
       activeBtn.disabled = false;

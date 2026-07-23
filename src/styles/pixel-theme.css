@@ -21615,7 +21615,11 @@ button.forum-tag-chip:hover {
   .forum-story-reader__enter-read-arrow {
     width: 26px;
     height: 26px;
-    font-size: 18px;
+  }
+
+  .forum-story-reader__enter-read-arrow::before {
+    width: 6px;
+    height: 6px;
   }
 
   .forum-story-chapters__add-btn {
@@ -22380,13 +22384,23 @@ button.forum-tag-chip:hover {
   flex-shrink: 0;
   width: 28px;
   height: 28px;
-  border-radius: 999px;
+  padding: 0;
+  border-radius: 50%;
   background: rgba(26, 18, 8, 0.08);
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 1;
   color: rgba(26, 18, 8, 0.72);
   transition: transform 0.16s ease, background 0.16s ease;
+}
+
+/* Geometric chevron — optically centered (text › has uneven glyph metrics) */
+.forum-story-reader__enter-read-arrow::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  margin-left: -1px;
+  border-top: 2px solid currentColor;
+  border-right: 2px solid currentColor;
+  transform: rotate(45deg);
+  box-sizing: border-box;
 }
 
 .forum-story-chapters__author {
@@ -23846,7 +23860,7 @@ button.forum-tag-chip:hover {
   pointer-events: none;
 }
 
-/* 召喚搖鈴：鐘左右擺 + 輕微上下震 */
+/* 召喚搖鈴：只喺按「召喚」當下搖一次 */
 .my-cat-away__bell {
   display: inline-block;
   transform-origin: 50% 0%;
@@ -23854,11 +23868,7 @@ button.forum-tag-chip:hover {
 }
 
 .my-cat-away__bell--ringing {
-  animation: my-cat-bell-ring 0.55s ease-in-out infinite;
-}
-
-.my-cat-away__btn--summoning .my-cat-away__bell--ringing {
-  animation-duration: 0.35s;
+  animation: my-cat-bell-ring 0.7s ease-in-out 1;
 }
 
 @keyframes my-cat-bell-ring {
