@@ -694,6 +694,31 @@ export default function ForumPostPage({ seo = null }) {
     commentsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
+  useEffect(() => {
+    if (!router.isReady || !data?.post) return undefined;
+    const hash = typeof window !== 'undefined' ? window.location.hash : '';
+    if (!hash) return undefined;
+
+    const timer = setTimeout(() => {
+      if (hash === '#forum-comments' || hash === '#comments') {
+        commentsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+      if (hash.startsWith('#comment-')) {
+        const el = document.getElementById(hash.slice(1));
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.classList.add('forum-comment-item--flash');
+          setTimeout(() => el.classList.remove('forum-comment-item--flash'), 1600);
+        } else {
+          commentsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    }, 120);
+
+    return () => clearTimeout(timer);
+  }, [router.isReady, data?.post?.id, data?.comments?.length]);
+
   const post = data?.post;
   const storyChapters = data?.chapters;
   const isStoryReading = !!(post && isStoryPost(post) && router.query.read === '1');
@@ -1105,6 +1130,7 @@ export default function ForumPostPage({ seo = null }) {
                   {visibleComments.map((c) => (
                     <li
                       key={c.id}
+                      id={c._pending ? undefined : `comment-${c.id}`}
                       className={`pixel-comment-item forum-comment-item${c._pending ? ' forum-comment-item--pending' : ''}`}
                       aria-busy={c._pending ? true : undefined}
                     >

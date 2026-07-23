@@ -38,9 +38,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/questionnaire.css?v=20260723seo-revert">
-<link rel="stylesheet" href="css/auth-nav.css?v=20260715calnoborder">
+<link rel="stylesheet" href="css/auth-nav.css?v=20260723activity">
 <link rel="stylesheet" href="css/mobile-webview-scroll.css?v=20260713echo">
-<link rel="stylesheet" href="css/welcome-atmosphere.css?v=20260708presence2">
+<link rel="stylesheet" href="css/welcome-atmosphere.css?v=20260723card2">
 <script src="/js/posthog-page-context.js" defer></script>
 <script src="/js/posthog-init.js" defer></script>
 <style>
@@ -142,6 +142,24 @@
       <span class="welcome-cta-btn__star welcome-cta-btn__star--trail" aria-hidden="true">✦</span>
     </button>
   </div>
+
+  <section class="live-activity" id="live-activity" aria-label="最新動態" hidden>
+    <div class="live-activity__rail" id="live-activity-rail">
+      <div class="live-activity__head">
+        <span class="live-activity__eyebrow"><span aria-hidden="true">✦</span> 最新動態</span>
+        <div class="live-activity__meta" id="live-activity-meta" hidden>
+          <span class="live-activity__count" id="live-activity-count" aria-live="polite">1/1</span>
+          <span class="live-activity__nav">
+            <button type="button" class="live-activity__nav-btn" id="live-activity-prev" aria-label="上一則">▲</button>
+            <button type="button" class="live-activity__nav-btn" id="live-activity-next" aria-label="下一則">▼</button>
+          </span>
+        </div>
+      </div>
+      <div class="live-activity__flip" id="live-activity-flip" aria-live="polite"></div>
+    </div>
+    <p class="live-activity__empty" id="live-activity-empty" hidden>月下暫時好靜～</p>
+  </section>
+
   <div class="welcome-bottom">
   <div class="mode-select-socials welcome-socials">
     <a class="mode-social-link ig" href="https://www.instagram.com/blackcatunderthemoonhk/" target="_blank" rel="noopener noreferrer">
@@ -270,6 +288,8 @@
     </span>
   </span>
 </aside>
+
+<div class="live-activity-toasts" id="live-activity-toasts" aria-live="polite" aria-relevant="additions"></div>
 
 <button type="button" class="welcome-mascot" id="welcome-mascot" aria-label="黑貓夥伴">
   <span class="welcome-mascot__bubble" hidden></span>
@@ -436,6 +456,7 @@
 <script src="/js/welcome-mascot.js?v=20260708catmoon"></script>
 <script src="/js/site-presence-heartbeat.js?v=20260709a"></script>
 <script src="/js/site-presence.js?v=20260709a"></script>
+<script src="/js/live-activity.js?v=20260723e"></script>
 <script src="/js/me-cache.js?v=20260707perf"></script>
 <script src="/js/auth-nav.js?v=20260715caticon"></script>
 

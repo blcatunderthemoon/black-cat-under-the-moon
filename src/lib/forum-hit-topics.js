@@ -5,7 +5,7 @@
 
 import { getHongKongDateString } from './hong-kong-time.js';
 import { FORUM_TOPICS } from './forum-categories.js';
-import { newBannerMessageId } from './forum-banner.js';
+import { newBannerMessageId, normalizeBannerMessages } from './forum-banner.js';
 
 export const HIT_TOPIC_SOURCE = 'hit_topic_cron';
 export const HIT_TOPIC_DAILY_COUNT = 3;
@@ -21,8 +21,8 @@ export const HIT_TOPIC_DAILY_COUNT = 3;
  * }} ForumHitTopic
  */
 
-/** Lesbian / dating / community engagement prompts (Cantonese-friendly). */
-export const FORUM_HIT_TOPICS = [
+/** Built-in seed bank (used when DB empty / table missing). */
+export const DEFAULT_FORUM_HIT_TOPICS = [
   // 徵友
   {
     id: 'recruit-intro-1',
@@ -313,7 +313,60 @@ export const FORUM_HIT_TOPICS = [
   },
 ];
 
+/** @deprecated Prefer loadHitTopicConfig(); kept as seed alias. */
+export const FORUM_HIT_TOPICS = DEFAULT_FORUM_HIT_TOPICS;
+
 const VALID_TOPIC_SET = new Set(FORUM_TOPICS.filter((t) => t !== '全部'));
+
+export function newHitTopicId() {
+  return `hit-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+export function normalizeHitTopic(raw, index = 0) {
+  if (!raw || typeof raw !== 'object') return null;
+  const text = String(raw.text || '').trim().slice(0, 120);
+  if (!text) return null;
+  const topicRaw = String(raw.topic || '').trim();
+  const topic = VALID_TOPIC_SET.has(topicRaw) ? topicRaw : '';
+  const tag = String(raw.tag || '').trim().slice(0, 40);
+  const icon = String(raw.icon || '🔥').trim().slice(0, 8) || '🔥';
+  const id = String(raw.id || newHitTopicId()).trim().slice(0, 64) || newHitTopicId();
+  return {
+    id,
+    text,
+    icon,
+    topic: topic || null,
+    tag: tag || null,
+    compose: raw.compose === true || raw.compose === '1' || raw.compose === 1,
+    active: raw.active !== false,
+    sort_order: Number.isFinite(Number(raw.sort_order)) ? Number(raw.sort_order) : index,
+  };
+}
+
+export function normalizeHitTopics(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((t, i) => normalizeHitTopic(t, i))
+    .filter(Boolean)
+    .slice(0, 80);
+}
+
+export function normalizeHitTopicConfig(row) {
+  const topics = normalizeHitTopics(row?.topics);
+  const seeded = topics.length ? topics : normalizeHitTopics(DEFAULT_FORUM_HIT_TOPICS);
+  let dailyCount = Number(row?.daily_count);
+  if (!Number.isFinite(dailyCount)) dailyCount = HIT_TOPIC_DAILY_COUNT;
+  dailyCount = Math.max(1, Math.min(12, Math.floor(dailyCount)));
+  return {
+    id: 1,
+    enabled: row?.enabled !== false,
+    daily_count: dailyCount,
+    force_banner_active: row?.force_banner_active !== false,
+    topics: seeded,
+    updated_at: row?.updated_at || null,
+    _seededFromDefaults: !topics.length,
+  };
+}
 
 function hashString(input) {
   let h = 2166136261;
@@ -342,16 +395,19 @@ export function buildHitTopicHref(topic) {
  * Stable daily pick (HK calendar day). Same day → same topics.
  * @param {Date} [date]
  * @param {number} [count]
- * @returns {ForumHitTopic[]}
+ * @param {ForumHitTopic[]} [bank]
  */
-export function pickDailyHitTopics(date = new Date(), count = HIT_TOPIC_DAILY_COUNT) {
+export function pickDailyHitTopics(date = new Date(), count = HIT_TOPIC_DAILY_COUNT, bank = DEFAULT_FORUM_HIT_TOPICS) {
   const dayKey = getHongKongDateString(date);
-  const n = Math.max(1, Math.min(Number(count) || HIT_TOPIC_DAILY_COUNT, FORUM_HIT_TOPICS.length));
-  const start = hashString(`bcm-hit:${dayKey}`) % FORUM_HIT_TOPICS.length;
+  const activeBank = normalizeHitTopics(bank).filter((t) => t.active !== false);
+  const pool = activeBank.length ? activeBank : normalizeHitTopics(DEFAULT_FORUM_HIT_TOPICS);
+  if (!pool.length) return [];
+  const n = Math.max(1, Math.min(Number(count) || HIT_TOPIC_DAILY_COUNT, pool.length));
+  const start = hashString(`bcm-hit:${dayKey}`) % pool.length;
   const picked = [];
   const seen = new Set();
-  for (let i = 0; i < FORUM_HIT_TOPICS.length && picked.length < n; i += 1) {
-    const item = FORUM_HIT_TOPICS[(start + i) % FORUM_HIT_TOPICS.length];
+  for (let i = 0; i < pool.length && picked.length < n; i += 1) {
+    const item = pool[(start + i) % pool.length];
     if (!item || seen.has(item.id)) continue;
     seen.add(item.id);
     picked.push(item);
@@ -392,4 +448,119 @@ export function mergeHitTopicBannerMessages(existingMessages, hitMessages) {
     sort_order: i,
   }));
   return merged.slice(0, 12);
+}
+
+/** Load config from DB; seed defaults when empty. */
+export async function loadHitTopicConfig(admin) {
+  const emptyDefaults = normalizeHitTopicConfig({
+    enabled: true,
+    daily_count: HIT_TOPIC_DAILY_COUNT,
+    force_banner_active: true,
+    topics: DEFAULT_FORUM_HIT_TOPICS,
+  });
+
+  const { data, error } = await admin
+    .from('forum_hit_topics')
+    .select('*')
+    .eq('id', 1)
+    .maybeSingle();
+
+  if (error?.code === '42P01') {
+    return { ...emptyDefaults, _tableNotFound: true };
+  }
+  if (error) throw error;
+
+  if (!data) {
+    const seed = {
+      id: 1,
+      enabled: true,
+      daily_count: HIT_TOPIC_DAILY_COUNT,
+      force_banner_active: true,
+      topics: DEFAULT_FORUM_HIT_TOPICS,
+      updated_at: new Date().toISOString(),
+    };
+    const { data: inserted, error: insertErr } = await admin
+      .from('forum_hit_topics')
+      .upsert(seed, { onConflict: 'id' })
+      .select('*')
+      .single();
+    if (insertErr?.code === '42P01') {
+      return { ...emptyDefaults, _tableNotFound: true };
+    }
+    if (insertErr) throw insertErr;
+    return normalizeHitTopicConfig(inserted);
+  }
+
+  const cfg = normalizeHitTopicConfig(data);
+  if (cfg._seededFromDefaults) {
+    const { data: updated, error: upErr } = await admin
+      .from('forum_hit_topics')
+      .upsert({
+        id: 1,
+        enabled: cfg.enabled,
+        daily_count: cfg.daily_count,
+        force_banner_active: cfg.force_banner_active,
+        topics: cfg.topics,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'id' })
+      .select('*')
+      .single();
+    if (!upErr && updated) return normalizeHitTopicConfig(updated);
+  }
+  return cfg;
+}
+
+/** Apply today's pick into forum_banner. */
+export async function rotateHitTopicsIntoBanner(admin, config) {
+  const cfg = normalizeHitTopicConfig(config || {});
+  if (!cfg.enabled) {
+    return { skipped: true, reason: 'disabled', config: cfg };
+  }
+
+  const dayKey = getHongKongDateString();
+  const picked = pickDailyHitTopics(new Date(), cfg.daily_count, cfg.topics);
+  const hitMessages = hitTopicsToBannerMessages(picked, dayKey);
+
+  const { data: existing, error: readErr } = await admin
+    .from('forum_banner')
+    .select('id, active, messages')
+    .eq('id', 1)
+    .maybeSingle();
+
+  if (readErr?.code === '42P01') {
+    const err = new Error('forum_banner table missing');
+    err.code = '42P01';
+    throw err;
+  }
+  if (readErr) throw readErr;
+
+  const existingMessages = normalizeBannerMessages(existing?.messages);
+  const merged = normalizeBannerMessages(
+    mergeHitTopicBannerMessages(existingMessages, hitMessages),
+  );
+
+  const patch = {
+    id: 1,
+    messages: merged,
+    updated_at: new Date().toISOString(),
+  };
+  if (cfg.force_banner_active) patch.active = true;
+
+  const { data, error: writeErr } = await admin
+    .from('forum_banner')
+    .upsert(patch, { onConflict: 'id' })
+    .select('id, active, messages, updated_at')
+    .single();
+
+  if (writeErr) throw writeErr;
+
+  return {
+    skipped: false,
+    day: dayKey,
+    count: hitMessages.length,
+    topics: picked.map((t) => t.id),
+    banner_active: !!data?.active,
+    message_count: Array.isArray(data?.messages) ? data.messages.length : merged.length,
+    picked,
+  };
 }

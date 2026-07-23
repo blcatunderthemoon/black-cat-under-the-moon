@@ -5,11 +5,12 @@
 import { requireUser, sendAuthError, getAdminClient } from '../../../../lib/server-auth.js';
 import { isOptionalFeatureError } from '../../../../lib/forum-stats.js';
 import { awardMoonJourneyExp, MOON_JOURNEY_EXP } from '../../../../lib/moon-journey.js';
+import { notifyForumCommentLiked, resolveForumNotifyActorName } from '../../../../lib/forum-social-notify.js';
 
 async function fetchCommentForLike(admin, commentId) {
   const withCount = await admin
     .from('forum_comments')
-    .select('id, author_id, like_count, is_hidden')
+    .select('id, author_id, post_id, like_count, is_hidden')
     .eq('id', commentId)
     .maybeSingle();
 
@@ -22,7 +23,7 @@ async function fetchCommentForLike(admin, commentId) {
 
   const fallback = await admin
     .from('forum_comments')
-    .select('id, author_id, is_hidden')
+    .select('id, author_id, post_id, is_hidden')
     .eq('id', commentId)
     .maybeSingle();
 
@@ -90,6 +91,18 @@ export default async function handler(req, res) {
     amount: MOON_JOURNEY_EXP.comment_liked,
     skipDailyCommentLimit: true,
   }).catch(() => {});
+
+  if (comment.post_id) {
+    resolveForumNotifyActorName(admin, user.id)
+      .then((actorName) => notifyForumCommentLiked({
+        postId: comment.post_id,
+        commentId,
+        commentAuthorId: comment.author_id,
+        actorId: user.id,
+        actorName,
+      }))
+      .catch(() => {});
+  }
 
   return res.status(200).json({ success: true, like_count: nextCount, liked: true });
 }

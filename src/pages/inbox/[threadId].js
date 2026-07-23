@@ -35,7 +35,8 @@ function isLetterMessage(msg) {
 function isSystemMessage(msg) {
   if (msg?.message_type === 'system') return true;
   const kind = msg?.payload?.kind;
-  return typeof kind === 'string' && kind.startsWith('gathering_');
+  return typeof kind === 'string'
+    && (kind.startsWith('gathering_') || kind.startsWith('forum_'));
 }
 
 function formatTime(dateStr) {
@@ -468,24 +469,30 @@ const GATHERING_NOTICE_META = {
   gathering_approved: { icon: '✅', tone: 'ok', title: '申請已獲批准', cta: '查看聚會 →' },
   gathering_rejected: { icon: '🌙', tone: 'muted', title: '申請未獲批准', cta: '查看聚會 →' },
   gathering_moderation_alert: { icon: '🛡️', tone: 'warn', title: '月光守護者通知', cta: '前往處理 →' },
+  forum_post_liked: { icon: '💜', tone: 'ok', title: '有人對你的貼文按讚', cta: '查看貼文 →' },
+  forum_post_commented: { icon: '💬', tone: 'apply', title: '有人回應你的貼文', cta: '查看回覆 →' },
+  forum_comment_reply: { icon: '↩️', tone: 'apply', title: '有人回覆你的留言', cta: '查看回覆 →' },
+  forum_comment_liked: { icon: '✨', tone: 'ok', title: '有人對你的留言按讚', cta: '查看貼文 →' },
+  forum_moderation_alert: { icon: '🛡️', tone: 'warn', title: '月光守護者通知', cta: '前往處理 →' },
 };
 
 function SystemNoticeItem({ msg, stackIndex = 0 }) {
   const p = msg.payload || {};
   const kind = typeof p.kind === 'string' ? p.kind : '';
   const isGathering = kind.startsWith('gathering_');
+  const isForum = kind.startsWith('forum_');
   const url = typeof p.gathering_url === 'string'
     ? p.gathering_url
     : (typeof p.forum_url === 'string' ? p.forum_url : null);
 
   const meta = GATHERING_NOTICE_META[kind] || {
-    icon: isGathering ? '🌙' : '🔔',
+    icon: isGathering ? '🌙' : (isForum ? '🐈‍⬛' : '🔔'),
     tone: 'default',
-    title: isGathering ? '月光聚會通知' : '系統通知',
+    title: isGathering ? '月光聚會通知' : (isForum ? '黑貓樹洞通知' : '系統通知'),
     cta: url ? '查看詳情 →' : null,
   };
 
-  const eyebrow = isGathering ? '月光聚會' : '系統通知';
+  const eyebrow = isGathering ? '月光聚會' : (isForum ? '黑貓樹洞' : '系統通知');
   const gTitle = typeof p.gathering_title === 'string' ? p.gathering_title : null;
   const applicant = (kind === 'gathering_application' || kind === 'gathering_joined')
     && typeof p.applicant_name === 'string' ? p.applicant_name : null;

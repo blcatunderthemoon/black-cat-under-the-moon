@@ -6,6 +6,7 @@ import { requireUser, ensureProfile, sendAuthError, getAdminClient } from '../..
 import { filterContent } from '../../../../../lib/content-filter.js';
 import { dispatchForumMentions } from '../../../../../lib/forum-mention-notify.js';
 import { awardMoonJourneyExp, MOON_JOURNEY_EXP } from '../../../../../lib/moon-journey.js';
+import { notifyForumCommentCreated } from '../../../../../lib/forum-social-notify.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -48,7 +49,7 @@ export default async function handler(req, res) {
 
   const { data: post } = await admin
     .from('forum_posts')
-    .select('id, visibility, author_id, comment_count')
+    .select('id, visibility, author_id, comment_count, title')
     .eq('id', postId)
     .maybeSingle();
 
@@ -59,10 +60,11 @@ export default async function handler(req, res) {
     return res.status(403).json({ error: '請登入後才能留言。', code: 'members_only' });
   }
 
+  let parentAuthorId = null;
   if (parent_comment_id) {
     const { data: parent } = await admin
       .from('forum_comments')
-      .select('id, post_id, parent_comment_id')
+      .select('id, post_id, parent_comment_id, author_id')
       .eq('id', parent_comment_id)
       .maybeSingle();
 
@@ -75,6 +77,7 @@ export default async function handler(req, res) {
         code: 'max_thread_depth',
       });
     }
+    parentAuthorId = parent.author_id || null;
   }
 
   const { data: comment, error } = await admin
@@ -119,6 +122,18 @@ export default async function handler(req, res) {
     actorId: user.id,
     postId,
     commentId: comment.id,
+  }).catch(() => {});
+
+  notifyForumCommentCreated({
+    postId,
+    postAuthorId: post.author_id,
+    postTitle: post.title,
+    commentId: comment.id,
+    parentCommentId: parent_comment_id || null,
+    parentAuthorId,
+    actorId: user.id,
+    actorName: profile.display_name,
+    preview: content.trim(),
   }).catch(() => {});
 
   if (user.id !== post.author_id) {

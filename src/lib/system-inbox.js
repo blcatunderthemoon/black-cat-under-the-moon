@@ -20,6 +20,10 @@ export const SYSTEM_CHANNELS = {
     email: 'forum-guardian-inbox@internal.blackcatunderthemoon.com',
     name: '論壇守護',
   },
+  forum: {
+    email: 'forum-activity-inbox@internal.blackcatunderthemoon.com',
+    name: '黑貓樹洞',
+  },
 };
 
 const anchorIdCache = {};

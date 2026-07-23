@@ -56,6 +56,15 @@ html:has(.mode-top-bar--quiz) {
   min-height: 44px;
 }
 
+.mode-top-bar__start {
+  grid-column: 1;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
 .mode-top-bar__nav-slot {
   grid-column: 3;
   justify-self: end;
@@ -120,6 +129,10 @@ html:has(.mode-top-bar--quiz) {
 
 .mode-top-bar--index.mode-top-bar--greeting .mode-top-bar__gatherings-link {
   display: inline-flex;
+}
+
+.mode-top-bar--index.mode-top-bar--greeting .mode-top-bar__start {
+  grid-column: 1;
 }
 
 .mode-top-bar--index.mode-top-bar--greeting .mode-top-bar__header-end {

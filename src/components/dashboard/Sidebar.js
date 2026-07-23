@@ -15,6 +15,7 @@ const MAIN_NAV_ITEMS = [
   { href: '/dashboard/experiment-lab', icon: '◇', label: '實驗室' },
   { href: '/dashboard/topic-banner', icon: '📌', label: '漂流瓶橫幅' },
   { href: '/dashboard/forum-banner', icon: '📣', label: '論壇橫幅' },
+  { href: '/dashboard/forum-hit-topics', icon: '🔥', label: 'Hit Topics' },
 ];
 
 const MEMBER_NAV_ITEMS = [

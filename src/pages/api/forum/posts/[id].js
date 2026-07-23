@@ -27,6 +27,7 @@ import {
   serializeStoryChaptersForViewer,
   GUEST_FREE_CHAPTER_COUNT,
 } from '../../../../lib/forum-story-chapters.js';
+import { notifyForumPostLiked, resolveForumNotifyActorName } from '../../../../lib/forum-social-notify.js';
 
 const POST_DETAIL_CORE = `
   id, author_id, title, content, topic, mood_tag, anonymous_name_snapshot, hide_username,
@@ -304,11 +305,15 @@ async function handleLike(req, res, postId) {
 
   const { data: post } = await admin
     .from('forum_posts')
-    .select('like_count')
+    .select('like_count, author_id, title')
     .eq('id', postId)
     .maybeSingle();
 
   if (!post) return res.status(404).json({ error: 'Post not found' });
+
+  if (post.author_id === user.id) {
+    return res.status(400).json({ error: 'Cannot like your own post' });
+  }
 
   const { error: insertErr } = await admin
     .from('forum_likes')
@@ -336,6 +341,16 @@ async function handleLike(req, res, postId) {
     console.error('[forum/like] count update failed:', updateErr.message);
     return res.status(500).json({ error: 'Like failed' });
   }
+
+  resolveForumNotifyActorName(admin, user.id)
+    .then((actorName) => notifyForumPostLiked({
+      postId,
+      postAuthorId: post.author_id,
+      postTitle: post.title,
+      actorId: user.id,
+      actorName,
+    }))
+    .catch(() => {});
 
   return res.status(200).json({ success: true, like_count: nextCount, liked: true });
 }

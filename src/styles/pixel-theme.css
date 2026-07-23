@@ -14933,6 +14933,15 @@
   opacity: 0.72;
 }
 
+.forum-comment-item--flash {
+  animation: forumCommentFlash 1.4s ease;
+}
+
+@keyframes forumCommentFlash {
+  0%, 100% { background-color: transparent; }
+  25%, 55% { background-color: rgba(189, 147, 249, 0.16); }
+}
+
 .forum-comment-item__sending {
   display: inline-flex;
   align-items: center;
