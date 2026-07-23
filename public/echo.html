@@ -4,26 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#0a0a1a">
-<title>Echo Mode ?��?�?��｜�?�?Les ?��?｜Black Cat</title>
-<meta name="description" content="Echo Mode ?��?�?�� ??香港 Les ?��?平台，�??��??��??��?心�?契�?度�?尋找?�頻?�女?��??��??�己??>
+<title>Echo Mode 月下緣份｜香港 Les 配對｜Black Cat</title>
+<meta name="description" content="Echo Mode 月下緣份 — 香港 Les 配對平台，讓靈貓為你分析心靈契合度，尋找同頻的女同志靈魂知己。">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <link rel="canonical" href="https://www.blackcatunderthemoon.com/echo.html">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Black Cat Under The Moon">
-<meta property="og:title" content="Echo Mode ?��?�?��｜�?�?Les ?��?｜Black Cat">
-<meta property="og:description" content="香港 Les ?��?平台，�??��??��??��?心�?契�?度�?尋找?�頻?�女?��??��??�己??>
+<meta property="og:title" content="Echo Mode 月下緣份｜香港 Les 配對｜Black Cat">
+<meta property="og:description" content="香港 Les 配對平台，讓靈貓為你分析心靈契合度，尋找同頻的女同志靈魂知己。">
 <meta property="og:url" content="https://www.blackcatunderthemoon.com/echo.html">
 <meta property="og:locale" content="zh_Hant">
 <meta property="og:image" content="https://www.blackcatunderthemoon.com/blackcatunderthemoonlogo.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Echo Mode ?��?�?��｜�?�?Les ?��?｜Black Cat">
-<meta name="twitter:description" content="香港 Les ?��?平台，�??��??��??��?心�?契�?度�?尋找?�頻?�女?��??��??�己??>
+<meta name="twitter:title" content="Echo Mode 月下緣份｜香港 Les 配對｜Black Cat">
+<meta name="twitter:description" content="香港 Les 配對平台，讓靈貓為你分析心靈契合度，尋找同頻的女同志靈魂知己。">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preload" href="js/zpix.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/questionnaire.css?v=20260723echo-submit">
-<link rel="stylesheet" href="css/auth-nav.css?v=20260724inboxdot">
+<link rel="stylesheet" href="css/auth-nav.css?v=20260723echo-hdr">
 <link rel="stylesheet" href="css/mobile-webview-scroll.css?v=20260713echo">
 <link rel="stylesheet" href="css/moon-loading.css?v=20260711n">
 <script src="/js/posthog-page-context.js" defer></script>
@@ -64,7 +64,7 @@
     <div class="progress-fill" id="progress-fill" style="width:0%"></div>
   </div>
   <div class="progress-label mode-top-bar__row">
-    <button class="home-back-btn mode-header-chip" id="home-back-btn" type="button"><span class="home-back-btn__icon" aria-hidden="true">??/span><span class="home-back-btn__label">主�?</span></button>
+    <button class="home-back-btn mode-header-chip" id="home-back-btn" type="button"><span class="home-back-btn__icon" aria-hidden="true">⌂</span><span class="home-back-btn__label">主頁</span></button>
     <span id="progress-text" class="mode-top-bar__center">Q1 / 31</span>
     <div class="mode-top-bar__nav-slot"></div>
   </div>
@@ -73,11 +73,11 @@
 <!-- Home Confirm Modal -->
 <div id="home-confirm-overlay">
   <div class="home-confirm-box">
-    <div class="home-confirm-title">返�?主�?�?/div>
-    <div class="home-confirm-text">已填寫�?資�?將�??��??��?<br>確�?返�?主�?�?/div>
+    <div class="home-confirm-title">返回主頁？</div>
+    <div class="home-confirm-text">已填寫的資料將不會保留，<br>確認返回主頁？</div>
     <div class="home-confirm-btns">
-      <button class="home-confirm-yes" id="home-confirm-yes">確�?返�?</button>
-      <button class="home-confirm-no" id="home-confirm-no">繼�?填寫</button>
+      <button class="home-confirm-yes" id="home-confirm-yes">確認返回</button>
+      <button class="home-confirm-no" id="home-confirm-no">繼續填寫</button>
     </div>
   </div>
 </div>
@@ -87,7 +87,7 @@
   <div class="header-art">
     <canvas id="cat-canvas" width="90" height="36"></canvas>
     <div>
-      <div class="site-title pixel-font">?? Black Cat<br>Under The Moon</div>
+      <div class="site-title pixel-font">🌈 Black Cat<br>Under The Moon</div>
     </div>
   </div>
 </header>
@@ -100,8 +100,8 @@
     <div class="q-text" id="q-text"></div>
     <div id="q-answers"></div>
     <div class="btn-row" id="btn-row" style="display:none;">
-      <button class="back-btn pixel-font" id="back-btn" style="display:none;">??上�?�?/button>
-      <button class="next-btn pixel-font" id="next-btn" disabled>下�?�???/button>
+      <button class="back-btn pixel-font" id="back-btn" style="display:none;">◂ 上一題</button>
+      <button class="next-btn pixel-font" id="next-btn" disabled>下一題 ▸</button>
     </div>
   </div>
 </main>
@@ -112,7 +112,7 @@
     <div class="moon-loading moon-loading--send moon-loading--hero" role="status" aria-live="polite" style="--moon-mask-url: url('/loading/FirstQuarterloading.png')">
       <img class="moon-loading__img" src="/loading/FirstQuarterloading.png" alt="" width="56" height="56" decoding="async" draggable="false" />
     </div>
-    <div class="loading-text pixel-font">?�送中<span class="loading-dots"></span></div>
+    <div class="loading-text pixel-font">傳送中<span class="loading-dots"></span></div>
   </div>
 </div>
 
@@ -120,27 +120,27 @@
 <div class="overlay-screen scrollable" id="thankyou-screen">
   <div id="confetti-container" style="position:fixed;inset:0;pointer-events:none;z-index:10;"></div>
   <div class="thankyou-content">
-    <div class="level-up pixel-font" id="level-up-text">??LEVEL UP! ??/div>
-    <div class="thankyou-cat">???��???/div>
-    <div class="thankyou-msg">資�?已�??�傳?��?</div>
-    <div class="thankyou-msg thankyou-heart">多�?你�??��? ??/div>
-    <div class="thankyou-msg" style="margin-top:16px;color:var(--text-dim);">?��?你�??��??�己?�現 ??</div>
+    <div class="level-up pixel-font" id="level-up-text">✦ LEVEL UP! ✦</div>
+    <div class="thankyou-cat">🐈‍⬛✨</div>
+    <div class="thankyou-msg">資料已成功傳送！</div>
+    <div class="thankyou-msg thankyou-heart">多謝你嘅參與 ♡</div>
+    <div class="thankyou-msg" style="margin-top:16px;color:var(--text-dim);">期待你的靈魂知己出現 🌙</div>
     <!-- Share & Support -->
     <div class="support-section">
       <div class="support-stack">
         <div class="support-card">
-          <div class="support-card-title">?�享你�??��? ?��</div>
-          <a class="share-btn" id="share-threads-btn" href="#" target="_blank" rel="noopener noreferrer" aria-label="?�享??Threads">?�� <span>?�享??Threads</span></a>
+          <div class="support-card-title">分享你的故事 📲</div>
+          <a class="share-btn" id="share-threads-btn" href="#" target="_blank" rel="noopener noreferrer" aria-label="分享到 Threads">🧵 <span>分享到 Threads</span></a>
         </div>
         <div class="support-card">
-          <div class="support-card-title">?��?黑�? ??/div>
-          <a class="donate-btn" href="https://ko-fi.com/blackcatunderthemoon" target="_blank" rel="noopener noreferrer">??<span>SUPPORT ON KO-FI</span></a>
+          <div class="support-card-title">支持黑貓 ☕</div>
+          <a class="donate-btn" href="https://ko-fi.com/blackcatunderthemoon" target="_blank" rel="noopener noreferrer">☕ <span>SUPPORT ON KO-FI</span></a>
         </div>
         <div class="support-card contact-panel">
-          <div class="support-card-title">?�絡黑�? ?��?</div>
+          <div class="support-card-title">聯絡黑貓 ✉️</div>
           <div class="contact-links" id="social-handles">
             <a class="contact-link" href="mailto:blcatunderthemoon@gmail.com">
-              <span class="contact-link-icon email">??/span>
+              <span class="contact-link-icon email">✉</span>
               <span class="contact-link-copy">
                 <span class="contact-link-label">Email</span>
                 <span class="contact-link-value">blcatunderthemoon@gmail.com</span>
@@ -168,55 +168,55 @@
         </div>
       </div>
     </div>
-    <a href="index.html" class="home-btn pixel-font" style="display:inline-block;margin-top:28px;padding:12px 28px;background:transparent;border:1px solid rgba(255,255,255,.25);border-radius:8px;color:var(--text-dim);font-size:0.6rem;letter-spacing:.05em;text-decoration:none;">??返�?主�?</a>
+    <a href="index.html" class="home-btn pixel-font" style="display:inline-block;margin-top:28px;padding:12px 28px;background:transparent;border:1px solid rgba(255,255,255,.25);border-radius:8px;color:var(--text-dim);font-size:0.6rem;letter-spacing:.05em;text-decoration:none;">⌂ 返回主頁</a>
   </div>
 </div>
 
 <!-- Already Submitted Screen (non-premium) / Match Results (premium) -->
 <div class="overlay-screen scrollable overlay-screen--topbar" id="already-screen">
   <div class="thankyou-content" id="already-submitted-static">
-    <div class="level-up pixel-font already-submitted-title">??已�?�???/div>
-    <div class="thankyou-cat">???��???/div>
-    <div class="thankyou-msg">你�??�卷資�?已在系統�?/div>
-    <div class="thankyou-msg thankyou-heart">?��??��?填寫 ??/div>
-    <div class="thankyou-msg already-submitted-hint">?��?你�??��??�己?�現 ??</div>
+    <div class="level-up pixel-font already-submitted-title">✦ 已提交 ✦</div>
+    <div class="thankyou-cat">🐈‍⬛✨</div>
+    <div class="thankyou-msg">你的問卷資料已在系統中</div>
+    <div class="thankyou-msg thankyou-heart">無需重複填寫 ♡</div>
+    <div class="thankyou-msg already-submitted-hint">期待你的靈魂知己出現 🌙</div>
     <div class="my-answers-entry is-hidden" id="my-answers-entry" hidden>
-      <button type="button" class="echo-action-btn echo-action-btn--secondary pixel-font" id="view-my-answers-btn">?��??��?答�?</button>
+      <button type="button" class="echo-action-btn echo-action-btn--secondary pixel-font" id="view-my-answers-btn">查看我的答案</button>
     </div>
     <div class="already-submitted-premium support-card">
-      <div class="support-card-title">�?????詳�? ??</div>
-      <p class="already-submitted-premium-copy">?��? Moonlight Passport ?�可?��?????��??��??�、詳細共鳴�?要�??��???/p>
-      <a href="/premium" class="already-submitted-premium-cta already-submitted-premium-cta--primary pixel-font">了解 Moonlight Passport ??/a>
+      <div class="support-card-title">解鎖連線詳情 💎</div>
+      <p class="already-submitted-premium-copy">升級 Moonlight Passport 即可查看連線成功的成員、詳細共鳴摘要與鏡像卡</p>
+      <a href="/premium" class="already-submitted-premium-cta already-submitted-premium-cta--primary pixel-font">了解 Moonlight Passport ▸</a>
     </div>
   </div>
   <div class="match-results-panel" id="match-results-panel" style="display:none;">
     <div class="match-results-panel__header" id="match-results-panel-header">
-      <div class="level-up pixel-font match-results-panel__title">??你�???? ??/div>
-      <p class="match-results-panel__sub">Moonlight Passport · ?�鳴???紀??/p>
+      <div class="level-up pixel-font match-results-panel__title">✦ 你的連線 ✦</div>
+      <p class="match-results-panel__sub">Moonlight Passport · 共鳴連線紀錄</p>
     </div>
     <div class="match-results-table-head" id="match-results-table-head" style="display:none;" aria-hidden="true">
-      <span class="match-results-table-head__name">???對象</span>
-      <span class="match-results-table-head__score">?�步??/span>
-      <span class="match-results-table-head__email">?�郵?�知</span>
-      <span class="match-results-table-head__action">?�鳴?��???/span>
+      <span class="match-results-table-head__name">連線對象</span>
+      <span class="match-results-table-head__score">同步率</span>
+      <span class="match-results-table-head__email">電郵通知</span>
+      <span class="match-results-table-head__action">共鳴分析卡</span>
     </div>
     <div class="match-results-list" id="match-results-list"></div>
     <p class="match-results-count" id="match-results-count"></p>
     <div class="match-results-actions" id="match-results-actions">
-      <button type="button" class="echo-action-btn echo-action-btn--secondary pixel-font" id="view-my-answers-btn-match">?��??��?答�?</button>
+      <button type="button" class="echo-action-btn echo-action-btn--secondary pixel-font" id="view-my-answers-btn-match">查看我的答案</button>
     </div>
     <div class="match-results-empty" id="match-results-empty" style="display:none;">
-      <p class="thankyou-msg">?�無???記�?</p>
-      <p class="thankyou-msg already-submitted-hint">????�現後�?顯示?�此</p>
+      <p class="thankyou-msg">暫無連線記錄</p>
+      <p class="thankyou-msg already-submitted-hint">連線出現後會顯示於此</p>
     </div>
   </div>
   <div class="my-answers-panel is-hidden" id="my-answers-panel" hidden>
     <div class="my-answers-panel__header">
       <div class="my-answers-panel__topbar">
-        <button type="button" class="my-answers-back-btn" id="my-answers-back-btn">??返�?</button>
+        <button type="button" class="my-answers-back-btn" id="my-answers-back-btn">← 返回</button>
       </div>
       <div class="my-answers-panel__heading">
-        <h2 class="level-up pixel-font my-answers-panel__title">???��?答�? ??/h2>
+        <h2 class="level-up pixel-font my-answers-panel__title">✦ 我的答案 ✦</h2>
         <p class="my-answers-submitted-at" id="my-answers-submitted-at"></p>
       </div>
     </div>
@@ -228,10 +228,10 @@
 <!-- Error Screen -->
 <div class="overlay-screen" id="error-screen">
   <div class="error-content">
-    <div class="error-icon">??/div>
-    <div class="error-msg pixel-font">?��????失�?<br>請�?試�?�?/div>
+    <div class="error-icon">⚡</div>
+    <div class="error-msg pixel-font">月球連線失敗<br>請再試一次</div>
     <div class="error-detail" id="error-detail"></div>
-    <button class="retry-btn pixel-font" id="retry-btn">RETRY ??/button>
+    <button class="retry-btn pixel-font" id="retry-btn">RETRY ↻</button>
   </div>
 </div>
 
@@ -247,21 +247,21 @@
         </span>
         <span class="mirror-download-meta-toggle__copy">
           <span class="mirror-download-meta-toggle__lead">顯示標籤</span>
-          <span class="mirror-download-meta-toggle__hint">下�??��??��?併顯�?/span>
+          <span class="mirror-download-meta-toggle__hint">下載卡片時一併顯示</span>
         </span>
         <span class="mirror-download-meta-toggle__preview" aria-hidden="true">
           <span class="mirror-download-meta-toggle__tag mirror-download-meta-toggle__tag--label">標籤</span>
           <span class="mirror-download-meta-toggle__tag mirror-download-meta-toggle__tag--mbti">MBTI</span>
-          <span class="mirror-download-meta-toggle__tag mirror-download-meta-toggle__tag--zodiac">?�座</span>
+          <span class="mirror-download-meta-toggle__tag mirror-download-meta-toggle__tag--zodiac">星座</span>
         </span>
       </label>
       <div class="mirror-actions__btn-row">
         <button class="mirror-download-btn pixel-font" id="mirror-download-btn" type="button">
-          <span class="mirror-download-btn__label">下�??�格?��?</span>
-          <span class="mirror-download-btn__icon" aria-hidden="true">??/span>
+          <span class="mirror-download-btn__label">下載性格卡片</span>
+          <span class="mirror-download-btn__icon" aria-hidden="true">↓</span>
         </button>
       </div>
-      <button class="mirror-retry-btn pixel-font" id="mirror-retry-btn">?�測一�???/button>
+      <button class="mirror-retry-btn pixel-font" id="mirror-retry-btn">再測一次 ↩</button>
     </div>
   </div>
 </div>
@@ -271,8 +271,8 @@
   <div class="match-card-drawer__backdrop" id="match-card-drawer-backdrop"></div>
   <aside class="match-card-drawer__panel" role="dialog" aria-labelledby="match-card-drawer-title">
     <header class="match-card-drawer__header">
-      <h2 class="match-card-drawer__title pixel-font" id="match-card-drawer-title">?�鳴?��???/h2>
-      <button type="button" class="match-card-drawer__close" id="match-card-drawer-close" aria-label="?��?">??/button>
+      <h2 class="match-card-drawer__title pixel-font" id="match-card-drawer-title">共鳴分析卡</h2>
+      <button type="button" class="match-card-drawer__close" id="match-card-drawer-close" aria-label="關閉">✕</button>
     </header>
     <div class="match-card-drawer__body">
       <div class="match-card-drawer__loading" id="match-card-drawer-loading">
@@ -280,33 +280,33 @@
           <div class="moon-loading moon-loading--send" role="status" aria-live="polite" style="--moon-mask-url: url('/loading/FirstQuarterloading.png'); --moon-loading-size: 28px">
             <img class="moon-loading__img" src="/loading/FirstQuarterloading.png" alt="" width="28" height="28" decoding="async" draggable="false" />
           </div>
-          <p class="moon-loading__label loading-text">載入�?span class="loading-dots" aria-hidden="true"></span></p>
+          <p class="moon-loading__label loading-text">載入中<span class="loading-dots" aria-hidden="true"></span></p>
         </div>
       </div>
-      <iframe id="match-card-drawer-frame" class="match-card-drawer__frame" title="?�鳴?��??? sandbox="allow-scripts allow-same-origin allow-downloads" style="display:none;"></iframe>
+      <iframe id="match-card-drawer-frame" class="match-card-drawer__frame" title="共鳴分析卡" sandbox="allow-scripts allow-same-origin allow-downloads" style="display:none;"></iframe>
     </div>
   </aside>
 </div>
 
 <!-- Ko-fi Toast Nudge -->
 <div id="kofi-toast">
-  <span>???��?黑�?繼�??��? ??/span>
-  <a id="kofi-toast-link" href="https://ko-fi.com/blackcatunderthemoon" target="_blank" rel="noopener noreferrer">?�支??/a>
-  <button id="kofi-toast-close" aria-label="?��?">??/button>
+  <span>☕ 支持黑貓繼續運作 ♡</span>
+  <a id="kofi-toast-link" href="https://ko-fi.com/blackcatunderthemoon" target="_blank" rel="noopener noreferrer">去支持</a>
+  <button id="kofi-toast-close" aria-label="關閉">✕</button>
 </div>
 
 <!-- Global Footer -->
 <footer class="site-footer site-footer--legal" id="site-footer">
-  <nav class="site-footer__nav site-footer__nav--legal" aria-label="法�??�聯�?>
-    <a class="site-legal-link" href="about.html">?�於?��?/a>
+  <nav class="site-footer__nav site-footer__nav--legal" aria-label="法律與聯絡">
+    <a class="site-legal-link" href="about.html">關於我們</a>
     <span class="site-legal-sep" aria-hidden="true">|</span>
-    <a class="site-legal-link" href="contact.html">?�絡?��?/a>
+    <a class="site-legal-link" href="contact.html">聯絡我們</a>
     <span class="site-legal-sep" aria-hidden="true">|</span>
     <a class="site-legal-link" href="tos.html">使用條款</a>
     <span class="site-legal-sep" aria-hidden="true">|</span>
-    <a class="site-legal-link" href="privacy.html">私隱?��?</a>
+    <a class="site-legal-link" href="privacy.html">私隱政策</a>
     <span class="site-legal-sep" aria-hidden="true">|</span>
-    <a class="site-legal-link" href="refund.html">?�款�??��??��?</a>
+    <a class="site-legal-link" href="refund.html">退款與取消政策</a>
   </nav>
   <p class="site-footer__copy site-footer__copy--legal">© 2026 Black Cat Under The Moon. All rights reserved.</p>
 </footer>
@@ -316,6 +316,6 @@
 <script src="js/mobile-document-scroll.js"></script>
 <script src="js/questionnaire.js?v=20260723share-fix"></script>
 <script src="js/me-cache.js?v=20260706name"></script>
-<script src="js/auth-nav.js?v=20260724inboxsync"></script>
+<script src="js/auth-nav.js?v=20260715caticon"></script>
 </body>
 </html>

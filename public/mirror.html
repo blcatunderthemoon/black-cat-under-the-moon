@@ -4,27 +4,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#0a0a1a">
-<title>Mirror Mode ?�格測�?｜�?�?��己�?尋找?��??�人｜Black Cat</title>
-<meta name="description" content="Mirror Mode ?�格測�? ??15 題�?�?��己�??�索你�?貓家?�人?��??��?專屬?�格?��?，幫香港 Les 尋找?��??�人??>
+<title>Mirror Mode 性格測驗｜了解自己，尋找適合的人｜Black Cat</title>
+<meta name="description" content="Mirror Mode 性格測驗 — 15 題了解自己，探索你的貓家族人格，生成專屬性格卡片，幫香港 Les 尋找適合的人。">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <link rel="canonical" href="https://www.blackcatunderthemoon.com/mirror.html">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Black Cat Under The Moon">
-<meta property="og:title" content="Mirror Mode ?�格測�?｜�?�?��己�?尋找?��??�人｜Black Cat">
-<meta property="og:description" content="15 題�?�?��己�??�索你�?貓家?�人?��??��?專屬 Mirror Card ?�格?��?，幫香港 Les 尋找?��??�人??>
+<meta property="og:title" content="Mirror Mode 性格測驗｜了解自己，尋找適合的人｜Black Cat">
+<meta property="og:description" content="15 題了解自己，探索你的貓家族人格，生成專屬 Mirror Card 性格卡片，幫香港 Les 尋找適合的人。">
 <meta property="og:url" content="https://www.blackcatunderthemoon.com/mirror.html">
 <meta property="og:locale" content="zh_Hant">
 <meta property="og:image" content="https://www.blackcatunderthemoon.com/blackcatunderthemoonlogo.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Mirror Mode ?�格測�?｜�?�?��己�?尋找?��??�人｜Black Cat">
-<meta name="twitter:description" content="15 題�?�?��己�??�索你�?貓家?�人?��??��?專屬 Mirror Card ?�格?��?，幫香港 Les 尋找?��??�人??>
+<meta name="twitter:title" content="Mirror Mode 性格測驗｜了解自己，尋找適合的人｜Black Cat">
+<meta name="twitter:description" content="15 題了解自己，探索你的貓家族人格，生成專屬 Mirror Card 性格卡片，幫香港 Les 尋找適合的人。">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
 <script src="/js/vendor/html-to-image.min.js"></script>
 <script src="/js/vendor/html2canvas.min.js"></script>
 <link rel="stylesheet" href="css/questionnaire.css?v=20260723noforum">
-<link rel="stylesheet" href="css/auth-nav.css?v=20260724inboxdot">
+<link rel="stylesheet" href="css/auth-nav.css?v=20260723hdr-center">
 <link rel="stylesheet" href="css/mobile-webview-scroll.css?v=20260713echo">
 <link rel="stylesheet" href="css/moon-loading.css?v=20260711n">
 <script src="/js/posthog-page-context.js" defer></script>
@@ -64,7 +64,7 @@
     <div class="progress-fill" id="progress-fill" style="width:0%"></div>
   </div>
   <div class="progress-label mode-top-bar__row">
-    <button class="home-back-btn mode-header-chip" id="home-back-btn" type="button"><span class="home-back-btn__icon" aria-hidden="true">??/span><span class="home-back-btn__label">主�?</span></button>
+    <button class="home-back-btn mode-header-chip" id="home-back-btn" type="button"><span class="home-back-btn__icon" aria-hidden="true">⌂</span><span class="home-back-btn__label">主頁</span></button>
     <span id="progress-text" class="mode-top-bar__center">Q1 / 15</span>
     <div class="mode-top-bar__nav-slot"></div>
   </div>
@@ -73,11 +73,11 @@
 <!-- Home Confirm Modal -->
 <div id="home-confirm-overlay">
   <div class="home-confirm-box">
-    <div class="home-confirm-title">返�?主�?�?/div>
-    <div class="home-confirm-text">已填寫�?資�?將�??��??��?<br>確�?返�?主�?�?/div>
+    <div class="home-confirm-title">返回主頁？</div>
+    <div class="home-confirm-text">已填寫的資料將不會保留，<br>確認返回主頁？</div>
     <div class="home-confirm-btns">
-      <button class="home-confirm-yes" id="home-confirm-yes">確�?返�?</button>
-      <button class="home-confirm-no" id="home-confirm-no">繼�?填寫</button>
+      <button class="home-confirm-yes" id="home-confirm-yes">確認返回</button>
+      <button class="home-confirm-no" id="home-confirm-no">繼續填寫</button>
     </div>
   </div>
 </div>
@@ -102,43 +102,43 @@
       />
     </div>
     <div class="pcard-mode-badge mirror-auth-modal__badge">
-      <span class="pcard-zh">?��??��?</span><span class="pcard-en"> · MIRROR MODE</span>
+      <span class="pcard-zh">靈魂鏡像</span><span class="pcard-en"> · MIRROR MODE</span>
     </div>
-    <h2 class="pcard-family-name mirror-auth-modal__title" id="mirror-auth-title">?��?你�??��?測�?</h2>
+    <h2 class="pcard-family-name mirror-auth-modal__title" id="mirror-auth-title">開始你的鏡像測驗</h2>
     <p class="mirror-auth-modal__lead">
-      <span class="pcard-zh">?�入?�解?��???/span>
+      <span class="pcard-zh">登入可解鎖完整</span>
       <span class="pcard-en">Mirror Card</span>
-      <span class="pcard-zh">結�?並儲存到帳�???/span>
+      <span class="pcard-zh">結果並儲存到帳號。</span>
     </p>
 
     <div class="mirror-auth-tiers">
       <div class="mirror-auth-tier mirror-auth-tier--full">
         <div class="mirror-auth-tier__head">
-          <span class="mirror-auth-tier__icon" aria-hidden="true">??/span>
-          <span class="mirror-auth-tier__label pcard-zh">?�入?�戶</span>
+          <span class="mirror-auth-tier__icon" aria-hidden="true">✨</span>
+          <span class="mirror-auth-tier__label pcard-zh">登入用戶</span>
         </div>
         <ul class="mirror-auth-tier__list">
           <li><span class="pcard-zh">完整 </span><span class="pcard-en">Mirror Card</span></li>
-          <li><span class="pcard-zh">?��??�帳??/span></li>
-          <li><span class="pcard-zh">?��??�享???</span></li>
+          <li><span class="pcard-zh">儲存到帳號</span></li>
+          <li><span class="pcard-zh">公開分享連結</span></li>
         </ul>
       </div>
       <div class="mirror-auth-tier mirror-auth-tier--guest">
         <div class="mirror-auth-tier__head">
-          <span class="mirror-auth-tier__icon" aria-hidden="true">??</span>
+          <span class="mirror-auth-tier__icon" aria-hidden="true">🌙</span>
           <span class="mirror-auth-tier__label pcard-zh">訪客</span>
         </div>
         <ul class="mirror-auth-tier__list">
-          <li><span class="pcard-zh">簡�?結�???/span></li>
-          <li><span class="pcard-zh">?��?�?</span><span class="pcard-en">PNG</span></li>
-          <li><span class="pcard-zh">不儲存�???/span></li>
+          <li><span class="pcard-zh">簡易結果卡</span></li>
+          <li><span class="pcard-zh">可下載 </span><span class="pcard-en">PNG</span></li>
+          <li><span class="pcard-zh">不儲存記錄</span></li>
         </ul>
       </div>
     </div>
 
     <div class="mirror-auth-actions">
-      <a class="mirror-auth-btn mirror-auth-btn--primary pixel-font" id="mirror-auth-login" href="/login?redirect=%2Fmirror.html"><span class="pcard-zh">?�入 / 註�?</span></a>
-      <button class="mirror-auth-btn mirror-auth-btn--ghost pixel-font" id="mirror-auth-guest" type="button"><span class="pcard-zh">以訪客繼�?/span></button>
+      <a class="mirror-auth-btn mirror-auth-btn--primary pixel-font" id="mirror-auth-login" href="/login?redirect=%2Fmirror.html"><span class="pcard-zh">登入 / 註冊</span></a>
+      <button class="mirror-auth-btn mirror-auth-btn--ghost pixel-font" id="mirror-auth-guest" type="button"><span class="pcard-zh">以訪客繼續</span></button>
     </div>
   </div>
 </div>
@@ -148,7 +148,7 @@
   <div class="header-art">
     <canvas id="cat-canvas" width="90" height="36"></canvas>
     <div>
-      <div class="site-title pixel-font">?? Black Cat<br>Under The Moon</div>
+      <div class="site-title pixel-font">🌈 Black Cat<br>Under The Moon</div>
     </div>
   </div>
 </header>
@@ -161,8 +161,8 @@
     <div class="q-text" id="q-text"></div>
     <div id="q-answers"></div>
     <div class="btn-row" id="btn-row" style="display:none;">
-      <button class="back-btn pixel-font" id="back-btn" style="display:none;">??上�?�?/button>
-      <button class="next-btn pixel-font" id="next-btn" disabled>下�?�???/button>
+      <button class="back-btn pixel-font" id="back-btn" style="display:none;">◂ 上一題</button>
+      <button class="next-btn pixel-font" id="next-btn" disabled>下一題 ▸</button>
     </div>
   </div>
 </main>
@@ -173,7 +173,7 @@
     <div class="moon-loading moon-loading--send moon-loading--hero" role="status" aria-live="polite" style="--moon-mask-url: url('/loading/FirstQuarterloading.png')">
       <img class="moon-loading__img" src="/loading/FirstQuarterloading.png" alt="" width="56" height="56" decoding="async" draggable="false" />
     </div>
-    <div class="loading-text pixel-font">?�送中<span class="loading-dots"></span></div>
+    <div class="loading-text pixel-font">傳送中<span class="loading-dots"></span></div>
   </div>
 </div>
 
@@ -181,26 +181,26 @@
 <div class="overlay-screen scrollable" id="thankyou-screen">
   <div id="confetti-container" style="position:fixed;inset:0;pointer-events:none;z-index:10;"></div>
   <div class="thankyou-content">
-    <div class="level-up pixel-font" id="level-up-text">??LEVEL UP! ??/div>
-    <div class="thankyou-cat">???��???/div>
-    <div class="thankyou-msg">資�?已�??�傳?��?</div>
-    <div class="thankyou-msg thankyou-heart">多�?你�??��? ??/div>
-    <div class="thankyou-msg" style="margin-top:16px;color:var(--text-dim);">?��?你�??��??�己?�現 ??</div>
+    <div class="level-up pixel-font" id="level-up-text">✦ LEVEL UP! ✦</div>
+    <div class="thankyou-cat">🐈‍⬛✨</div>
+    <div class="thankyou-msg">資料已成功傳送！</div>
+    <div class="thankyou-msg thankyou-heart">多謝你嘅參與 ♡</div>
+    <div class="thankyou-msg" style="margin-top:16px;color:var(--text-dim);">期待你的靈魂知己出現 🌙</div>
     <div class="support-section">
       <div class="support-stack">
         <div class="support-card">
-          <div class="support-card-title">?�享你�??��? ?��</div>
-          <a class="share-btn" id="share-threads-btn" href="#" target="_blank" rel="noopener noreferrer" aria-label="?�享??Threads">?�� <span>?�享??Threads</span></a>
+          <div class="support-card-title">分享你的故事 📲</div>
+          <a class="share-btn" id="share-threads-btn" href="#" target="_blank" rel="noopener noreferrer" aria-label="分享到 Threads">🧵 <span>分享到 Threads</span></a>
         </div>
         <div class="support-card">
-          <div class="support-card-title">?��?黑�? ??/div>
-          <a class="donate-btn" href="https://ko-fi.com/blackcatunderthemoon" target="_blank" rel="noopener noreferrer">??<span>SUPPORT ON KO-FI</span></a>
+          <div class="support-card-title">支持黑貓 ☕</div>
+          <a class="donate-btn" href="https://ko-fi.com/blackcatunderthemoon" target="_blank" rel="noopener noreferrer">☕ <span>SUPPORT ON KO-FI</span></a>
         </div>
         <div class="support-card contact-panel">
-          <div class="support-card-title">?�絡黑�? ?��?</div>
+          <div class="support-card-title">聯絡黑貓 ✉️</div>
           <div class="contact-links" id="social-handles">
             <a class="contact-link" href="mailto:blcatunderthemoon@gmail.com">
-              <span class="contact-link-icon email">??/span>
+              <span class="contact-link-icon email">✉</span>
               <span class="contact-link-copy">
                 <span class="contact-link-label">Email</span>
                 <span class="contact-link-value">blcatunderthemoon@gmail.com</span>
@@ -228,17 +228,17 @@
         </div>
       </div>
     </div>
-    <a href="index.html" class="home-btn pixel-font" style="display:inline-block;margin-top:28px;padding:12px 28px;background:transparent;border:1px solid rgba(255,255,255,.25);border-radius:8px;color:var(--text-dim);font-size:0.6rem;letter-spacing:.05em;text-decoration:none;">??返�?主�?</a>
+    <a href="index.html" class="home-btn pixel-font" style="display:inline-block;margin-top:28px;padding:12px 28px;background:transparent;border:1px solid rgba(255,255,255,.25);border-radius:8px;color:var(--text-dim);font-size:0.6rem;letter-spacing:.05em;text-decoration:none;">⌂ 返回主頁</a>
   </div>
 </div>
 
 <!-- Error Screen -->
 <div class="overlay-screen" id="error-screen">
   <div class="error-content">
-    <div class="error-icon">??/div>
-    <div class="error-msg pixel-font">?��????失�?<br>請�?試�?�?/div>
+    <div class="error-icon">⚡</div>
+    <div class="error-msg pixel-font">月球連線失敗<br>請再試一次</div>
     <div class="error-detail" id="error-detail"></div>
-    <button class="retry-btn pixel-font" id="retry-btn">RETRY ??/button>
+    <button class="retry-btn pixel-font" id="retry-btn">RETRY ↻</button>
   </div>
 </div>
 
@@ -248,8 +248,8 @@
     <div id="personality-card"></div>
     <div class="mirror-actions">
       <div id="mirror-guest-upsell" class="mirror-guest-upsell" hidden>
-        <p class="mirror-guest-upsell__text">?�入以解?��???Mirror Card，並?��??��??�帳?��?/p>
-        <a class="mirror-guest-upsell__btn pixel-font" href="/login?redirect=/mirror.html">?�入 / 註�? ??/a>
+        <p class="mirror-guest-upsell__text">登入以解鎖完整 Mirror Card，並儲存到你的帳號。</p>
+        <a class="mirror-guest-upsell__btn pixel-font" href="/login?redirect=/mirror.html">登入 / 註冊 →</a>
       </div>
       <label class="mirror-download-meta-toggle" id="mirror-download-meta-toggle-wrap" hidden>
         <input type="checkbox" id="mirror-download-meta-toggle" class="mirror-download-meta-toggle__input" checked>
@@ -258,39 +258,39 @@
         </span>
         <span class="mirror-download-meta-toggle__copy">
           <span class="mirror-download-meta-toggle__lead">顯示標籤</span>
-          <span class="mirror-download-meta-toggle__hint">下�??��??��?併顯�?/span>
+          <span class="mirror-download-meta-toggle__hint">下載卡片時一併顯示</span>
         </span>
         <span class="mirror-download-meta-toggle__preview" aria-hidden="true">
           <span class="mirror-download-meta-toggle__tag mirror-download-meta-toggle__tag--label">標籤</span>
           <span class="mirror-download-meta-toggle__tag mirror-download-meta-toggle__tag--mbti">MBTI</span>
-          <span class="mirror-download-meta-toggle__tag mirror-download-meta-toggle__tag--zodiac">?�座</span>
+          <span class="mirror-download-meta-toggle__tag mirror-download-meta-toggle__tag--zodiac">星座</span>
         </span>
       </label>
       <div class="mirror-actions__btn-row">
-        <a href="/cat-families" class="mirror-families-btn pixel-font">了解?�大貓家????/a>
+        <a href="/cat-families" class="mirror-families-btn pixel-font">了解四大貓家族 →</a>
         <button class="mirror-download-btn pixel-font" id="mirror-download-btn" type="button">
-          <span class="mirror-download-btn__label">下�??�格?��?</span>
-          <span class="mirror-download-btn__icon" aria-hidden="true">??/span>
+          <span class="mirror-download-btn__label">下載性格卡片</span>
+          <span class="mirror-download-btn__icon" aria-hidden="true">↓</span>
         </button>
       </div>
       <div class="mirror-actions__btn-row mirror-actions__btn-row--share">
         <button class="mirror-share-btn pixel-font" id="mirror-share-btn" type="button">
-          <span class="mirror-share-btn__label">?�享??Threads／IG</span>
-          <span class="mirror-share-btn__icon" aria-hidden="true">??/span>
+          <span class="mirror-share-btn__label">分享到 Threads／IG</span>
+          <span class="mirror-share-btn__icon" aria-hidden="true">↗</span>
         </button>
       </div>
     </div>
-    <footer class="site-footer site-footer--legal site-footer--embedded mirror-result-footer" aria-label="?�尾">
-      <nav class="site-footer__nav site-footer__nav--legal" aria-label="法�??�聯�?>
-        <a class="site-legal-link" href="about.html">?�於?��?/a>
+    <footer class="site-footer site-footer--legal site-footer--embedded mirror-result-footer" aria-label="頁尾">
+      <nav class="site-footer__nav site-footer__nav--legal" aria-label="法律與聯絡">
+        <a class="site-legal-link" href="about.html">關於我們</a>
         <span class="site-legal-sep" aria-hidden="true">|</span>
-        <a class="site-legal-link" href="contact.html">?�絡?��?/a>
+        <a class="site-legal-link" href="contact.html">聯絡我們</a>
         <span class="site-legal-sep" aria-hidden="true">|</span>
         <a class="site-legal-link" href="tos.html">使用條款</a>
         <span class="site-legal-sep" aria-hidden="true">|</span>
-        <a class="site-legal-link" href="privacy.html">私隱?��?</a>
+        <a class="site-legal-link" href="privacy.html">私隱政策</a>
         <span class="site-legal-sep" aria-hidden="true">|</span>
-        <a class="site-legal-link" href="refund.html">?�款�??��??��?</a>
+        <a class="site-legal-link" href="refund.html">退款與取消政策</a>
       </nav>
       <p class="site-footer__copy site-footer__copy--legal">© 2026 Black Cat Under The Moon. All rights reserved.</p>
     </footer>
@@ -299,23 +299,23 @@
 
 <!-- Ko-fi Toast Nudge -->
 <div id="kofi-toast">
-  <span>???��?黑�?繼�??��? ??/span>
-  <a id="kofi-toast-link" href="https://ko-fi.com/blackcatunderthemoon" target="_blank" rel="noopener noreferrer">?�支??/a>
-  <button id="kofi-toast-close" aria-label="?��?">??/button>
+  <span>☕ 支持黑貓繼續運作 ♡</span>
+  <a id="kofi-toast-link" href="https://ko-fi.com/blackcatunderthemoon" target="_blank" rel="noopener noreferrer">去支持</a>
+  <button id="kofi-toast-close" aria-label="關閉">✕</button>
 </div>
 
 <!-- Global Footer -->
 <footer class="site-footer site-footer--legal" id="site-footer">
-  <nav class="site-footer__nav site-footer__nav--legal" aria-label="法�??�聯�?>
-    <a class="site-legal-link" href="about.html">?�於?��?/a>
+  <nav class="site-footer__nav site-footer__nav--legal" aria-label="法律與聯絡">
+    <a class="site-legal-link" href="about.html">關於我們</a>
     <span class="site-legal-sep" aria-hidden="true">|</span>
-    <a class="site-legal-link" href="contact.html">?�絡?��?/a>
+    <a class="site-legal-link" href="contact.html">聯絡我們</a>
     <span class="site-legal-sep" aria-hidden="true">|</span>
     <a class="site-legal-link" href="tos.html">使用條款</a>
     <span class="site-legal-sep" aria-hidden="true">|</span>
-    <a class="site-legal-link" href="privacy.html">私隱?��?</a>
+    <a class="site-legal-link" href="privacy.html">私隱政策</a>
     <span class="site-legal-sep" aria-hidden="true">|</span>
-    <a class="site-legal-link" href="refund.html">?�款�??��??��?</a>
+    <a class="site-legal-link" href="refund.html">退款與取消政策</a>
   </nav>
   <p class="site-footer__copy site-footer__copy--legal">© 2026 Black Cat Under The Moon. All rights reserved.</p>
 </footer>
@@ -327,6 +327,6 @@
 <script src="js/mirror-narratives.js?v=20260706c"></script>
   <script src="js/questionnaire.js?v=20260723share-fix"></script>
 <script src="js/me-cache.js?v=20260706name"></script>
-<script src="js/auth-nav.js?v=20260724inboxsync"></script>
+<script src="js/auth-nav.js?v=20260715caticon"></script>
 </body>
 </html>
