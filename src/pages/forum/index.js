@@ -157,7 +157,38 @@ function EmptyState({ topic, onCompose, canCompose, sort, viewerClanType }) {
   );
 }
 
-function GatheringPanel({ count }) {
+function formatMembersDisplay(total) {
+  const n = Number(total) || 0;
+  if (n < 1) return null;
+  if (n < 10) return String(n);
+  const step = n >= 100 ? 10 : 5;
+  return `${Math.floor(n / step) * step}+`;
+}
+
+function GatheringPanel({ count, membersTotal }) {
+  const active = typeof count === 'number' ? count : null;
+  const useCumulative = active === 0;
+  const membersLabel = formatMembersDisplay(membersTotal);
+
+  if (useCumulative) {
+    return (
+      <aside className="forum-panel forum-panel--stat">
+        <div className="forum-panel__head">
+          <h3 className="forum-panel__title">圍爐黑貓</h3>
+          <p className="forum-panel__hint forum-panel__hint--hot">累積已加入</p>
+        </div>
+        <div className="forum-gathering-count forum-gathering-count--body">
+          {membersLabel || '—'}
+          <span>
+            {membersLabel
+              ? '隻黑貓已加入圍爐'
+              : '歡迎成為第一批圍爐黑貓'}
+          </span>
+        </div>
+      </aside>
+    );
+  }
+
   return (
     <aside className="forum-panel forum-panel--stat">
       <div className="forum-panel__head">
@@ -165,8 +196,8 @@ function GatheringPanel({ count }) {
         <p className="forum-panel__hint forum-panel__hint--hot">近 24 小時活躍</p>
       </div>
       <div className="forum-gathering-count forum-gathering-count--body">
-        {count ?? '—'}
-        <span>目前有 {count ?? '…'} 隻黑貓正在圍爐取暖</span>
+        {active ?? '—'}
+        <span>目前有 {active ?? '…'} 隻黑貓正在圍爐取暖</span>
       </div>
     </aside>
   );
@@ -203,44 +234,58 @@ function FeaturedPostsPanel({ featuredPosts }) {
   );
 }
 
-function HotTopicsPanel({ hotPosts }) {
+function HotTopicsPanel({ hotPosts, sparksMode }) {
   const trophies = ['🥇', '🥈', '🥉'];
   const rankMods = ['forum-hot-item--gold', 'forum-hot-item--silver', 'forum-hot-item--bronze'];
+  const curated = sparksMode === 'curated';
+  const title = curated ? '✨ 週度精選' : '🔥 活躍火種';
+  const hint = curated ? '官方推薦 · 值得一讀' : '本週最活躍 TOP 3';
+
+  if (!hotPosts?.length) {
+    // Last-resort UI: still never announce a dead week
+    return (
+      <aside className="forum-panel forum-panel--hot">
+        <div className="forum-panel__head">
+          <h3 className="forum-panel__title">✨ 週度精選</h3>
+          <p className="forum-panel__hint forum-panel__hint--hot">官方推薦 · 值得一讀</p>
+        </div>
+        <p className="forum-hot-empty forum-hot-empty--soft">
+          圍爐正暖著爐火——去發一篇，成為下一顆火種吧。
+        </p>
+      </aside>
+    );
+  }
 
   return (
     <aside className="forum-panel forum-panel--hot">
       <div className="forum-panel__head">
-        <h3 className="forum-panel__title">🔥 活躍火種</h3>
-        <p className="forum-panel__hint forum-panel__hint--hot">本週最活躍 TOP 3</p>
+        <h3 className="forum-panel__title">{title}</h3>
+        <p className="forum-panel__hint forum-panel__hint--hot">{hint}</p>
       </div>
-      {(!hotPosts || hotPosts.length === 0) ? (
-        <p className="forum-hot-empty">本週還沒有火種，來點第一把火吧。</p>
-      ) : (
-        <ol className="forum-hot-list">
-          {hotPosts.map((p, index) => (
-            <li key={p.id}>
-              <Link
-                href={`/forum/${p.id}`}
-                className={`forum-hot-item${rankMods[index] ? ` ${rankMods[index]}` : ''}`}
-              >
-                <span className="forum-hot-item__rank" aria-label={`第 ${index + 1} 名`}>
-                  {trophies[index]}
-                </span>
-                <div className="forum-hot-item__body">
-                  <p className="forum-hot-item__title">{p.title || p.topic}</p>
-                  <span className="forum-hot-item__meta">
-                    <span className="forum-hot-item__topic">{p.topic}</span>
-                    <span className="forum-hot-item__stats">
-                      <span>💗 {p.like_count}</span>
-                      <span>💬 {p.comment_count}</span>
-                    </span>
+      <ol className="forum-hot-list">
+        {hotPosts.map((p, index) => (
+          <li key={p.id}>
+            <Link
+              href={`/forum/${p.id}`}
+              className={`forum-hot-item${rankMods[index] ? ` ${rankMods[index]}` : ''}${curated ? ' forum-hot-item--curated' : ''}`}
+            >
+              <span className="forum-hot-item__rank" aria-label={`第 ${index + 1} 名`}>
+                {curated ? (['📌', '✨', '🌙'][index] || '✦') : trophies[index]}
+              </span>
+              <div className="forum-hot-item__body">
+                <p className="forum-hot-item__title">{p.title || p.topic}</p>
+                <span className="forum-hot-item__meta">
+                  <span className="forum-hot-item__topic">{forumTopicLabel(p.topic) || p.topic}</span>
+                  <span className="forum-hot-item__stats">
+                    <span>💗 {p.like_count}</span>
+                    <span>💬 {p.comment_count}</span>
                   </span>
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ol>
-      )}
+                </span>
+              </div>
+            </Link>
+          </li>
+        ))}
+      </ol>
     </aside>
   );
 }
@@ -991,7 +1036,7 @@ export default function ForumPage() {
       >
         <div className="forum-layout">
           <div className="forum-sidebar forum-sidebar--left">
-            <GatheringPanel count={meta?.gathering_count} />
+            <GatheringPanel count={meta?.gathering_count} membersTotal={meta?.members_total} />
           </div>
 
           <div className="forum-main">
@@ -1121,9 +1166,9 @@ export default function ForumPage() {
 
             {topic === '全部' && (
               <div className="forum-treehole-panels forum-treehole-panels--mobile">
-                <GatheringPanel count={meta?.gathering_count} />
+                <GatheringPanel count={meta?.gathering_count} membersTotal={meta?.members_total} />
                 <FeaturedPostsPanel featuredPosts={featuredPosts} />
-                <HotTopicsPanel hotPosts={meta?.hot_posts} />
+                <HotTopicsPanel hotPosts={meta?.hot_posts} sparksMode={meta?.sparks_mode} />
               </div>
             )}
 
@@ -1331,7 +1376,7 @@ export default function ForumPage() {
 
           <div className="forum-sidebar forum-sidebar--right">
             <FeaturedPostsPanel featuredPosts={featuredPosts} />
-            <HotTopicsPanel hotPosts={meta?.hot_posts} />
+            <HotTopicsPanel hotPosts={meta?.hot_posts} sparksMode={meta?.sparks_mode} />
           </div>
           <div className="forum-scroll-end" data-scroll-end aria-hidden="true" />
         </div>

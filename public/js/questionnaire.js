@@ -1847,44 +1847,37 @@ function buildMyAnswersSections(answers) {
   });
 }
 
+function splitMyAnswersPartTitle(title) {
+  var raw = String(title || '').trim();
+  var m = raw.match(/^(.+?)\s+([A-Za-z].*)$/);
+  if (m) return { zh: m[1].trim(), en: m[2].trim() };
+  return { zh: raw, en: '' };
+}
+
+function isMyAnswersWideItem(value) {
+  var s = String(value || '');
+  return s.length > 18 || s.indexOf('、') !== -1 || s.indexOf('　') !== -1;
+}
+
 function formatMyAnswersSubmittedAt(iso) {
   if (!iso) return '';
   try {
     var d = new Date(iso);
     if (isNaN(d.getTime())) return '';
-    return '提交於 ' + d.toLocaleString('zh-HK', { timeZone: 'Asia/Hong_Kong' });
+    var datePart = d.toLocaleDateString('zh-HK', {
+      timeZone: 'Asia/Hong_Kong',
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric'
+    });
+    var timePart = d.toLocaleTimeString('zh-HK', {
+      timeZone: 'Asia/Hong_Kong',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    return '提交於 ' + datePart + ' · ' + timePart;
   } catch (e) {
     return '';
-  }
-}
-
-function setMyAnswersEntryVisible(visible) {
-  var entry = document.getElementById('my-answers-entry');
-  if (!entry) return;
-  if (visible) entry.removeAttribute('hidden');
-  else entry.setAttribute('hidden', '');
-}
-
-function hideMyAnswersPanel() {
-  var panel = document.getElementById('my-answers-panel');
-  if (panel) panel.setAttribute('hidden', '');
-}
-
-function restoreAlreadySubmittedMainView() {
-  var staticView = document.getElementById('already-submitted-static');
-  var resultsPanel = document.getElementById('match-results-panel');
-  var $already = document.getElementById('already-screen');
-  hideMyAnswersPanel();
-  setMyAnswersEntryVisible(true);
-
-  if (myAnswersReturnMode === 'results') {
-    if (staticView) staticView.style.display = 'none';
-    if (resultsPanel) resultsPanel.style.display = '';
-    if ($already) $already.classList.add('overlay-screen--match-results');
-  } else {
-    if (staticView) staticView.style.display = '';
-    if (resultsPanel) resultsPanel.style.display = 'none';
-    if ($already) $already.classList.remove('overlay-screen--match-results');
   }
 }
 
@@ -1905,22 +1898,88 @@ function renderMyAnswersPanel(data) {
     return;
   }
 
-  list.innerHTML = sections.map(function(section) {
+  list.innerHTML = sections.map(function(section, idx) {
+    var titles = splitMyAnswersPartTitle(section.title);
+    var num = String(idx + 1).padStart(2, '0');
     var items = section.items.map(function(item) {
+      var wide = isMyAnswersWideItem(item.value);
       return (
-        '<div class="my-answers-item">' +
+        '<div class="my-answers-item' + (wide ? ' my-answers-item--wide' : '') + '">' +
           '<p class="my-answers-item__q">' + escHtml(item.text) + '</p>' +
           '<p class="my-answers-item__a">' + escHtml(item.value) + '</p>' +
         '</div>'
       );
     }).join('');
     return (
-      '<section class="my-answers-part">' +
-        '<h3 class="my-answers-part__title">' + escHtml(section.title) + '</h3>' +
-        items +
+      '<section class="my-answers-part" style="--part-i:' + idx + '">' +
+        '<header class="my-answers-part__head">' +
+          '<span class="my-answers-part__num" aria-hidden="true">' + num + '</span>' +
+          '<div class="my-answers-part__titles">' +
+            '<span class="my-answers-part__zh">' + escHtml(titles.zh) + '</span>' +
+            (titles.en
+              ? '<span class="my-answers-part__en">' + escHtml(titles.en) + '</span>'
+              : '') +
+          '</div>' +
+        '</header>' +
+        '<div class="my-answers-part__body">' + items + '</div>' +
       '</section>'
     );
   }).join('');
+}
+
+function setMyAnswersEntryVisible(visible) {
+  var entry = document.getElementById('my-answers-entry');
+  if (!entry) return;
+  if (visible) entry.removeAttribute('hidden');
+  else entry.setAttribute('hidden', '');
+}
+
+function updateMyAnswersBackLabel() {
+  var backBtn = document.getElementById('my-answers-back-btn');
+  if (!backBtn) return;
+  backBtn.textContent = myAnswersReturnMode === 'results' ? '← 返回連線' : '← 返回';
+}
+
+function hideMyAnswersPanel() {
+  var panel = document.getElementById('my-answers-panel');
+  if (panel) panel.setAttribute('hidden', '');
+}
+
+function restoreAlreadySubmittedMainView() {
+  var staticView = document.getElementById('already-submitted-static');
+  var resultsPanel = document.getElementById('match-results-panel');
+  var $already = document.getElementById('already-screen');
+  hideMyAnswersPanel();
+
+  if (myAnswersReturnMode === 'results') {
+    if (staticView) staticView.style.display = 'none';
+    if (resultsPanel) resultsPanel.style.display = '';
+    if ($already) $already.classList.add('overlay-screen--match-results');
+    setMyAnswersEntryVisible(false);
+  } else {
+    if (staticView) staticView.style.display = '';
+    if (resultsPanel) resultsPanel.style.display = 'none';
+    if ($already) $already.classList.remove('overlay-screen--match-results');
+    setMyAnswersEntryVisible(true);
+  }
+}
+
+function bindMyAnswersUi() {
+  if (myAnswersUiBound) return;
+  myAnswersUiBound = true;
+  function onViewAnswers() {
+    openMyAnswersPanel();
+  }
+  var viewBtn = document.getElementById('view-my-answers-btn');
+  var viewBtnMatch = document.getElementById('view-my-answers-btn-match');
+  var backBtn = document.getElementById('my-answers-back-btn');
+  if (viewBtn) viewBtn.addEventListener('click', onViewAnswers);
+  if (viewBtnMatch) viewBtnMatch.addEventListener('click', onViewAnswers);
+  if (backBtn) {
+    backBtn.addEventListener('click', function() {
+      restoreAlreadySubmittedMainView();
+    });
+  }
 }
 
 async function openMyAnswersPanel() {
@@ -1935,6 +1994,7 @@ async function openMyAnswersPanel() {
   var $already = document.getElementById('already-screen');
 
   myAnswersReturnMode = (resultsPanel && resultsPanel.style.display !== 'none') ? 'results' : 'static';
+  updateMyAnswersBackLabel();
 
   if (staticView) staticView.style.display = 'none';
   if (resultsPanel) resultsPanel.style.display = 'none';
@@ -1963,23 +2023,6 @@ async function openMyAnswersPanel() {
       errEl.textContent = '無法載入答案，請稍後再試';
       errEl.removeAttribute('hidden');
     }
-  }
-}
-
-function bindMyAnswersUi() {
-  if (myAnswersUiBound) return;
-  myAnswersUiBound = true;
-  var viewBtn = document.getElementById('view-my-answers-btn');
-  var backBtn = document.getElementById('my-answers-back-btn');
-  if (viewBtn) {
-    viewBtn.addEventListener('click', function() {
-      openMyAnswersPanel();
-    });
-  }
-  if (backBtn) {
-    backBtn.addEventListener('click', function() {
-      restoreAlreadySubmittedMainView();
-    });
   }
 }
 
@@ -2058,14 +2101,15 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
     renderMatchResultsOnMatchPage(matches);
     if ($already) $already.classList.add('overlay-screen--match-results');
     myAnswersReturnMode = 'results';
+    setMyAnswersEntryVisible(false);
   } else {
     if (staticView) staticView.style.display = '';
     if (resultsPanel) resultsPanel.style.display = 'none';
     if ($already) $already.classList.remove('overlay-screen--match-results');
     myAnswersReturnMode = 'static';
+    setMyAnswersEntryVisible(true);
   }
 
-  setMyAnswersEntryVisible(true);
   if ($already) $already.classList.add('active');
   $loading.classList.remove('active');
   finishQuizPageBoot();
