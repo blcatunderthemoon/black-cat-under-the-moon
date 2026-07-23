@@ -751,10 +751,11 @@ body.landing-document-scroll.welcome-active .site-presence__dot {
 
 .live-activity__eyebrow {
   flex-shrink: 0;
-  font-family: 'Press Start 2P', monospace;
-  font-size: 7px;
-  letter-spacing: 0.04em;
-  color: #dcc8ff;
+  font-family: 'Zpix', 'Press Start 2P', monospace;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+  color: #e4d4ff;
   text-shadow: 0 0 10px rgba(189, 147, 249, 0.35);
   white-space: nowrap;
 }
@@ -964,7 +965,7 @@ body.landing-document-scroll.welcome-active .site-presence__dot {
     border-radius: 12px;
   }
   .live-activity__eyebrow {
-    font-size: 6px;
+    font-size: 10px;
   }
   .live-activity__text {
     font-size: 12px;

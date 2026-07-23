@@ -103,7 +103,10 @@ export default function ForumHeaderAuth({ extra = null, moonJourney = null, redi
             title="收件箱"
           >
             {unread > 0 ? (
-              <span className="forum-nav-unread forum-nav-unread--full">{unread}</span>
+              <>
+                <span className="app-header__nav-icon" aria-hidden="true">✉</span>
+                <span className="forum-nav-unread">{unread > 99 ? '99+' : unread}</span>
+              </>
             ) : (
               <span className="app-header__nav-icon" aria-hidden="true">✉</span>
             )}

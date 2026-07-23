@@ -183,8 +183,10 @@
 
   function inboxLinkHtml(unreadCount) {
     if (unreadCount > 0) {
-      return '<a href="/inbox" class="auth-nav-badge__item auth-nav-badge__item--icon auth-nav-badge__item--inbox-unread" title="收件箱">' +
-        '<span data-unread class="auth-nav-badge__unread">' + unreadCount + '</span>' +
+      var n = Number(unreadCount) > 99 ? '99+' : String(unreadCount);
+      return '<a href="/inbox" class="auth-nav-badge__item auth-nav-badge__item--icon auth-nav-badge__item--inbox-unread" title="收件箱（' + n + '）未讀">' +
+        '<span class="auth-nav-badge__icon" aria-hidden="true">✉</span>' +
+        '<span data-unread class="auth-nav-badge__unread">' + n + '</span>' +
       '</a>';
     }
     return '<a href="/inbox" class="auth-nav-badge__item auth-nav-badge__item--icon" title="收件箱">' +
@@ -680,9 +682,11 @@
     var inbox = el.querySelector('a[href="/inbox"]');
     if (!inbox) return;
     if (count > 0) {
+      var n = Number(count) > 99 ? '99+' : String(count);
       inbox.className = 'auth-nav-badge__item auth-nav-badge__item--icon auth-nav-badge__item--inbox-unread';
-      inbox.title = '收件箱';
-      inbox.innerHTML = '<span data-unread class="auth-nav-badge__unread">' + count + '</span>';
+      inbox.title = '收件箱（' + n + '）未讀';
+      inbox.innerHTML = '<span class="auth-nav-badge__icon" aria-hidden="true">✉</span>' +
+        '<span data-unread class="auth-nav-badge__unread">' + n + '</span>';
     } else {
       inbox.className = 'auth-nav-badge__item auth-nav-badge__item--icon';
       inbox.title = '收件箱';

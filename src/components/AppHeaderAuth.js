@@ -81,7 +81,10 @@ export default function AppHeaderAuth({ redirectPath, hideInbox: hideInboxProp, 
                 title="收件箱"
               >
                 {unread > 0 ? (
-                  <span data-unread className="auth-nav-badge__unread">{unread}</span>
+                  <>
+                    <span className="auth-nav-badge__icon" aria-hidden="true">✉</span>
+                    <span data-unread className="auth-nav-badge__unread">{unread > 99 ? '99+' : unread}</span>
+                  </>
                 ) : (
                   <span className="auth-nav-badge__icon" aria-hidden="true">✉</span>
                 )}

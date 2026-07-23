@@ -816,45 +816,52 @@ html:has(.mode-top-bar--quiz) {
 
 .auth-nav-badge__unread {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 2px;
+  right: 2px;
+  z-index: 2;
   min-width: 14px;
   height: 14px;
   padding: 0 3px;
-  border-radius: 2px;
+  border-radius: 7px;
   background: #7c5cfc;
   color: #fff;
   font-family: 'Press Start 2P', monospace;
   font-size: 6px;
   line-height: 14px;
   text-align: center;
-  box-shadow: 0 0 8px rgba(124, 92, 252, 0.55);
+  box-shadow:
+    0 0 0 1.5px rgba(18, 12, 32, 0.95),
+    0 0 8px rgba(124, 92, 252, 0.45);
   pointer-events: none;
 }
 
 .auth-nav-badge__item--inbox-unread {
-  background: rgba(124, 92, 252, 0.14);
-  box-shadow: inset 0 0 0 1px rgba(124, 92, 252, 0.35);
+  color: #c4b5fd;
+  background: transparent;
+  box-shadow: none;
+}
+
+.auth-nav-badge__item--inbox-unread:hover {
+  color: #e9d5ff;
+  background: transparent;
 }
 
 .auth-nav-badge__item--inbox-unread .auth-nav-badge__unread {
-  position: static;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-  padding: 0;
-  font-size: 8px;
-  line-height: 1;
-  border-radius: 6px;
-  box-shadow: none;
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: block;
+  width: auto;
+  height: 14px;
+  min-width: 14px;
+  padding: 0 3px;
+  font-size: 6px;
+  line-height: 14px;
+  border-radius: 7px;
+  box-shadow:
+    0 0 0 1.5px rgba(18, 12, 32, 0.95),
+    0 0 8px rgba(124, 92, 252, 0.45);
   pointer-events: none;
-}
-
-.auth-nav-badge__item--inbox-unread {
-  border-radius: 6px;
 }
 
 @media (max-width: 520px) {
