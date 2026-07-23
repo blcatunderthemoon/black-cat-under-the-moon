@@ -1932,8 +1932,14 @@ function renderMyAnswersPanel(data) {
 function setMyAnswersEntryVisible(visible) {
   var entry = document.getElementById('my-answers-entry');
   if (!entry) return;
-  if (visible) entry.removeAttribute('hidden');
-  else entry.setAttribute('hidden', '');
+  // Author `display:flex` overrides the UA [hidden] rule — keep both attr + class.
+  if (visible) {
+    entry.removeAttribute('hidden');
+    entry.classList.remove('is-hidden');
+  } else {
+    entry.setAttribute('hidden', '');
+    entry.classList.add('is-hidden');
+  }
 }
 
 function updateMyAnswersBackLabel() {
@@ -1944,7 +1950,17 @@ function updateMyAnswersBackLabel() {
 
 function hideMyAnswersPanel() {
   var panel = document.getElementById('my-answers-panel');
-  if (panel) panel.setAttribute('hidden', '');
+  if (panel) {
+    panel.setAttribute('hidden', '');
+    panel.classList.add('is-hidden');
+  }
+}
+
+function showMyAnswersPanelEl() {
+  var panel = document.getElementById('my-answers-panel');
+  if (!panel) return;
+  panel.removeAttribute('hidden');
+  panel.classList.remove('is-hidden');
 }
 
 function restoreAlreadySubmittedMainView() {
@@ -1969,7 +1985,11 @@ function restoreAlreadySubmittedMainView() {
 function bindMyAnswersUi() {
   if (myAnswersUiBound) return;
   myAnswersUiBound = true;
-  function onViewAnswers() {
+  function onViewAnswers(e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     openMyAnswersPanel();
   }
   var viewBtn = document.getElementById('view-my-answers-btn');
@@ -1978,7 +1998,8 @@ function bindMyAnswersUi() {
   if (viewBtn) viewBtn.addEventListener('click', onViewAnswers);
   if (viewBtnMatch) viewBtnMatch.addEventListener('click', onViewAnswers);
   if (backBtn) {
-    backBtn.addEventListener('click', function() {
+    backBtn.addEventListener('click', function(e) {
+      e.preventDefault();
       restoreAlreadySubmittedMainView();
     });
   }
@@ -1986,8 +2007,12 @@ function bindMyAnswersUi() {
 }
 
 async function openMyAnswersPanel() {
-  var token = getSupabaseAuthToken();
-  if (!token) return;
+  var token = await ensureSupabaseAuthToken();
+  if (!token) {
+    if (window.alert) window.alert('請先登入後再查看答案');
+    window.location.href = '/login?redirect=' + encodeURIComponent('/echo.html');
+    return;
+  }
 
   var staticView = document.getElementById('already-submitted-static');
   var resultsPanel = document.getElementById('match-results-panel');
@@ -2003,8 +2028,8 @@ async function openMyAnswersPanel() {
   if (resultsPanel) resultsPanel.style.display = 'none';
   setMyAnswersEntryVisible(false);
   if ($already) $already.classList.remove('overlay-screen--match-results');
-  if (panel) panel.removeAttribute('hidden');
-  if (list) list.innerHTML = '<p class="my-answers-submitted-at">載入中…</p>';
+  showMyAnswersPanelEl();
+  if (list) list.innerHTML = '<p class="my-answers-loading">載入中…</p>';
   if (errEl) {
     errEl.textContent = '';
     errEl.setAttribute('hidden', '');

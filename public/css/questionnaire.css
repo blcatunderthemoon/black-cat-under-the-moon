@@ -2063,7 +2063,7 @@ body:has(#already-screen.active) #site-footer {
 }
 
 #already-screen.overlay-screen--topbar.active {
-  padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
 }
 .already-submitted-title {
   font-size: 18px;
@@ -2144,7 +2144,10 @@ body:has(#already-screen.active) #site-footer {
   align-items: stretch;
   gap: 10px;
 }
-.my-answers-entry[hidden] {
+.my-answers-entry[hidden],
+.my-answers-entry.is-hidden,
+.my-answers-panel[hidden],
+.my-answers-panel.is-hidden {
   display: none !important;
 }
 
@@ -2403,47 +2406,56 @@ body:has(#already-screen.active) #site-footer {
 .match-results-panel__header {
   text-align: center;
   margin-bottom: 18px;
-  padding: 4px 0 16px;
+  padding: 4px 0 14px;
   border-bottom: 1px solid rgba(255, 224, 102, 0.14);
   background:
     radial-gradient(ellipse 70% 90% at 50% 0%, rgba(255, 224, 102, 0.08) 0%, transparent 72%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
 }
 .match-results-panel__title {
   font-size: 16px;
   letter-spacing: 0.08em;
-  margin: 0;
+  margin: 0 0 8px;
   text-shadow: 0 0 16px rgba(255, 224, 102, 0.3);
 }
 .match-results-panel__sub {
-  margin: 0 0 2px;
+  margin: 0;
   font-family: 'Noto Sans TC', 'PingFang TC', sans-serif;
   font-size: 0.8rem;
   line-height: 1.4;
   color: rgba(200, 190, 220, 0.65);
 }
-.match-results-panel__header .echo-action-btn,
-.match-results-panel__header .my-answers-view-btn,
-.match-results-panel__header .match-forum-publish-btn {
-  width: min(100%, 360px);
+.match-results-actions {
+  width: 100%;
+  max-width: 360px;
+  margin: 20px auto 8px;
+  padding: 0 4px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+.match-results-actions .echo-action-btn {
+  width: 100%;
   margin: 0;
+}
+.my-answers-loading {
+  margin: 24px 0;
+  text-align: center;
+  font-family: 'Noto Sans TC', 'PingFang TC', sans-serif;
+  font-size: 0.88rem;
+  color: rgba(200, 190, 220, 0.7);
 }
 .match-results-count {
   text-align: center;
   margin: 0;
-  padding-top: 28px;
-  font-family: 'Zpix', 'Press Start 2P', monospace;
-  font-size: 12px;
-  line-height: 1.6;
+  padding-top: 22px;
+  padding-bottom: 4px;
+  font-family: 'Noto Sans TC', 'PingFang TC', sans-serif;
+  font-size: 0.85rem;
+  line-height: 1.5;
   color: var(--yellow);
-  letter-spacing: 0.04em;
-  text-shadow: 0 0 8px rgba(255, 224, 102, 0.3);
-  -webkit-font-smoothing: none;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: geometricPrecision;
+  letter-spacing: 0.02em;
 }
 .match-results-list {
   display: flex;

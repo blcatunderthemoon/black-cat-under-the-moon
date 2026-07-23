@@ -22,7 +22,7 @@
 <link rel="preload" href="js/zpix.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/questionnaire.css?v=20260723echo-ui">
+<link rel="stylesheet" href="css/questionnaire.css?v=20260723echo-ui2">
 <link rel="stylesheet" href="css/auth-nav.css?v=20260715caticon">
 <link rel="stylesheet" href="css/mobile-webview-scroll.css?v=20260713echo">
 <link rel="stylesheet" href="css/moon-loading.css?v=20260711n">
@@ -190,10 +190,6 @@
     <div class="match-results-panel__header" id="match-results-panel-header">
       <div class="level-up pixel-font match-results-panel__title">✦ 你的連線 ✦</div>
       <p class="match-results-panel__sub">Moonlight Passport · 共鳴連線紀錄</p>
-      <button type="button" class="echo-action-btn echo-action-btn--primary pixel-font" id="view-my-answers-btn-match">查看我的答案</button>
-      <button type="button" class="echo-action-btn echo-action-btn--forum pixel-font" id="match-forum-publish-btn">
-        發佈到論壇 · #尋找同族
-      </button>
     </div>
     <div class="match-results-table-head" id="match-results-table-head" style="display:none;" aria-hidden="true">
       <span class="match-results-table-head__name">連線對象</span>
@@ -203,18 +199,24 @@
     </div>
     <div class="match-results-list" id="match-results-list"></div>
     <p class="match-results-count" id="match-results-count"></p>
+    <div class="match-results-actions" id="match-results-actions">
+      <button type="button" class="echo-action-btn echo-action-btn--primary pixel-font" id="view-my-answers-btn-match">查看我的答案</button>
+      <button type="button" class="echo-action-btn echo-action-btn--forum pixel-font" id="match-forum-publish-btn">
+        發佈到論壇 · #尋找同族
+      </button>
+    </div>
     <div class="match-results-empty" id="match-results-empty" style="display:none;">
       <p class="thankyou-msg">暫無連線記錄</p>
       <p class="thankyou-msg already-submitted-hint">連線出現後會顯示於此</p>
     </div>
   </div>
-  <div class="my-answers-entry" id="my-answers-entry" hidden>
+  <div class="my-answers-entry is-hidden" id="my-answers-entry" hidden>
     <button type="button" class="echo-action-btn echo-action-btn--primary pixel-font" id="view-my-answers-btn">查看我的答案</button>
     <button type="button" class="echo-action-btn echo-action-btn--forum pixel-font" id="echo-forum-publish-btn">
       發佈到論壇 · #尋找同族
     </button>
   </div>
-  <div class="my-answers-panel" id="my-answers-panel" hidden>
+  <div class="my-answers-panel is-hidden" id="my-answers-panel" hidden>
     <div class="my-answers-panel__header">
       <button type="button" class="my-answers-back-btn pixel-font" id="my-answers-back-btn">← 返回</button>
       <div class="level-up pixel-font my-answers-panel__title">✦ 我的答案 ✦</div>
@@ -314,7 +316,7 @@
 <script src="js/site-config.js"></script>
 <script src="js/moon-loading.js?v=20260711n"></script>
 <script src="js/mobile-document-scroll.js"></script>
-<script src="js/questionnaire.js?v=20260723echo-ui"></script>
+<script src="js/questionnaire.js?v=20260723echo-ui2"></script>
 <script src="js/me-cache.js?v=20260706name"></script>
 <script src="js/auth-nav.js?v=20260715caticon"></script>
 </body>
