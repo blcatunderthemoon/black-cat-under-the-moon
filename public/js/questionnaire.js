@@ -1716,11 +1716,280 @@ function renderMatchResultsOnMatchPage(matches) {
   });
 }
 
+/** DB column → QUESTIONS field (Echo submit payload mapping, reversed). */
+var MY_ANSWERS_DB_TO_FIELD = {
+  name: 'name',
+  age: 'age',
+  height: 'height',
+  body_type: 'body_type',
+  identity: 'attribute',
+  hair_style: 'hair_style',
+  fashion_styles: 'fashion_style',
+  bed_role: 'bed_position',
+  social_energy: 'social_energy',
+  weekend_mode: 'ideal_weekend',
+  interests: 'interests',
+  exercise_habits: 'exercise',
+  travel_mode: 'travel_mode',
+  relationship_goal: 'relationship_goal',
+  time_commitment: 'time_investment',
+  deal_breakers: 'deal_breaker',
+  love_languages: 'love_language',
+  security_needs: 'security_need',
+  daily_love_ritual: 'ritual_sense',
+  decision_making: 'decision_style',
+  communication_style: 'conflict_style',
+  expense_splitting: 'money_view',
+  living_together: 'cohabitation',
+  preferred_attribute: 'preferred_attribute',
+  ideal_appearance: 'ideal_appearance',
+  ideal_height_gap: 'ideal_height_gap',
+  ideal_age_gap: 'ideal_age_gap',
+  gap_moe: 'gap_moe',
+  personal_traits: 'three_traits',
+  email: 'email',
+  feedback: 'feedback'
+};
+
+var myAnswersUiBound = false;
+var myAnswersReturnMode = 'static'; // 'static' | 'results'
+
+function formatMyAnswerValue(raw, question) {
+  if (raw == null || raw === '') return '';
+  var unit = (question && question.unit) || '';
+
+  if (question && question.type === 'dual_range') {
+    var range = raw;
+    if (typeof raw === 'string') {
+      try { range = JSON.parse(raw); } catch (e) { range = null; }
+    }
+    if (Array.isArray(range) && range.length >= 2) {
+      return range[0] + ' ~ ' + range[1] + (unit ? ' ' + unit : '');
+    }
+    if (raw === null || raw === 'null') return '冇所謂';
+    return String(raw);
+  }
+
+  if (typeof raw === 'string') {
+    var trimmed = raw.trim();
+    if (trimmed.charAt(0) === '[' || trimmed.charAt(0) === '{') {
+      try {
+        var parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(Boolean).join('、');
+        }
+      } catch (e) {}
+    }
+    return trimmed;
+  }
+
+  if (Array.isArray(raw)) {
+    return raw.filter(Boolean).join('、');
+  }
+
+  return String(raw);
+}
+
+function partTitleForMyAnswers(part) {
+  for (var i = 0; i < QUESTIONS.length; i++) {
+    if (QUESTIONS[i].part === part && QUESTIONS[i].partTitle) {
+      return QUESTIONS[i].partTitle;
+    }
+  }
+  return 'Part ' + part;
+}
+
+function buildMyAnswersSections(answers) {
+  var byPart = {};
+  var partOrder = [];
+  var fieldToQuestion = {};
+  QUESTIONS.forEach(function(q) {
+    if (q.field) fieldToQuestion[q.field] = q;
+  });
+
+  Object.keys(MY_ANSWERS_DB_TO_FIELD).forEach(function(dbKey) {
+    if (answers[dbKey] == null || answers[dbKey] === '') return;
+    var field = MY_ANSWERS_DB_TO_FIELD[dbKey];
+    var q = fieldToQuestion[field];
+    if (!q) return;
+    var part = q.part || 0;
+    if (!byPart[part]) {
+      byPart[part] = {
+        title: partTitleForMyAnswers(part),
+        items: []
+      };
+      partOrder.push(part);
+    }
+    var display = formatMyAnswerValue(answers[dbKey], q);
+    if (!display) return;
+    byPart[part].items.push({ text: q.text, value: display });
+  });
+
+  // Contact handles (contact_options question has no single field)
+  var contactBits = [];
+  if (answers.ig_username) contactBits.push('IG：@' + String(answers.ig_username).replace(/^@+/, ''));
+  if (answers.tg_username) contactBits.push('TG：@' + String(answers.tg_username).replace(/^@+/, ''));
+  if (contactBits.length) {
+    var contactPart = 7;
+    if (!byPart[contactPart]) {
+      byPart[contactPart] = { title: partTitleForMyAnswers(contactPart), items: [] };
+      partOrder.push(contactPart);
+    }
+    byPart[contactPart].items.unshift({
+      text: '聯絡方式',
+      value: contactBits.join('　')
+    });
+  }
+
+  partOrder.sort(function(a, b) { return a - b; });
+  return partOrder.map(function(p) { return byPart[p]; }).filter(function(s) {
+    return s && s.items && s.items.length;
+  });
+}
+
+function formatMyAnswersSubmittedAt(iso) {
+  if (!iso) return '';
+  try {
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return '提交於 ' + d.toLocaleString('zh-HK', { timeZone: 'Asia/Hong_Kong' });
+  } catch (e) {
+    return '';
+  }
+}
+
+function setMyAnswersEntryVisible(visible) {
+  var entry = document.getElementById('my-answers-entry');
+  if (!entry) return;
+  if (visible) entry.removeAttribute('hidden');
+  else entry.setAttribute('hidden', '');
+}
+
+function hideMyAnswersPanel() {
+  var panel = document.getElementById('my-answers-panel');
+  if (panel) panel.setAttribute('hidden', '');
+}
+
+function restoreAlreadySubmittedMainView() {
+  var staticView = document.getElementById('already-submitted-static');
+  var resultsPanel = document.getElementById('match-results-panel');
+  var $already = document.getElementById('already-screen');
+  hideMyAnswersPanel();
+  setMyAnswersEntryVisible(true);
+
+  if (myAnswersReturnMode === 'results') {
+    if (staticView) staticView.style.display = 'none';
+    if (resultsPanel) resultsPanel.style.display = '';
+    if ($already) $already.classList.add('overlay-screen--match-results');
+  } else {
+    if (staticView) staticView.style.display = '';
+    if (resultsPanel) resultsPanel.style.display = 'none';
+    if ($already) $already.classList.remove('overlay-screen--match-results');
+  }
+}
+
+function renderMyAnswersPanel(data) {
+  var list = document.getElementById('my-answers-list');
+  var whenEl = document.getElementById('my-answers-submitted-at');
+  var errEl = document.getElementById('my-answers-error');
+  if (errEl) {
+    errEl.textContent = '';
+    errEl.setAttribute('hidden', '');
+  }
+  if (whenEl) whenEl.textContent = formatMyAnswersSubmittedAt(data && data.submitted_at);
+  if (!list) return;
+
+  var sections = buildMyAnswersSections((data && data.answers) || {});
+  if (!sections.length) {
+    list.innerHTML = '<p class="my-answers-error">暫無答案可顯示</p>';
+    return;
+  }
+
+  list.innerHTML = sections.map(function(section) {
+    var items = section.items.map(function(item) {
+      return (
+        '<div class="my-answers-item">' +
+          '<p class="my-answers-item__q">' + escHtml(item.text) + '</p>' +
+          '<p class="my-answers-item__a">' + escHtml(item.value) + '</p>' +
+        '</div>'
+      );
+    }).join('');
+    return (
+      '<section class="my-answers-part">' +
+        '<h3 class="my-answers-part__title">' + escHtml(section.title) + '</h3>' +
+        items +
+      '</section>'
+    );
+  }).join('');
+}
+
+async function openMyAnswersPanel() {
+  var token = getSupabaseAuthToken();
+  if (!token) return;
+
+  var staticView = document.getElementById('already-submitted-static');
+  var resultsPanel = document.getElementById('match-results-panel');
+  var panel = document.getElementById('my-answers-panel');
+  var list = document.getElementById('my-answers-list');
+  var errEl = document.getElementById('my-answers-error');
+  var $already = document.getElementById('already-screen');
+
+  myAnswersReturnMode = (resultsPanel && resultsPanel.style.display !== 'none') ? 'results' : 'static';
+
+  if (staticView) staticView.style.display = 'none';
+  if (resultsPanel) resultsPanel.style.display = 'none';
+  setMyAnswersEntryVisible(false);
+  if ($already) $already.classList.remove('overlay-screen--match-results');
+  if (panel) panel.removeAttribute('hidden');
+  if (list) list.innerHTML = '<p class="my-answers-submitted-at">載入中…</p>';
+  if (errEl) {
+    errEl.textContent = '';
+    errEl.setAttribute('hidden', '');
+  }
+
+  try {
+    var resp = await fetch('/api/match/my-answers', {
+      headers: { Authorization: 'Bearer ' + token },
+      cache: 'no-store'
+    });
+    var data = await resp.json().catch(function() { return {}; });
+    if (!resp.ok) {
+      throw new Error(data.error || ('HTTP ' + resp.status));
+    }
+    renderMyAnswersPanel(data);
+  } catch (e) {
+    if (list) list.innerHTML = '';
+    if (errEl) {
+      errEl.textContent = '無法載入答案，請稍後再試';
+      errEl.removeAttribute('hidden');
+    }
+  }
+}
+
+function bindMyAnswersUi() {
+  if (myAnswersUiBound) return;
+  myAnswersUiBound = true;
+  var viewBtn = document.getElementById('view-my-answers-btn');
+  var backBtn = document.getElementById('my-answers-back-btn');
+  if (viewBtn) {
+    viewBtn.addEventListener('click', function() {
+      openMyAnswersPanel();
+    });
+  }
+  if (backBtn) {
+    backBtn.addEventListener('click', function() {
+      restoreAlreadySubmittedMainView();
+    });
+  }
+}
+
 async function showMatchAlreadySubmitted(prefetchedMatches) {
   suppressHomeConfirm = true;
   setQuizViewport(false);
   hideQuizQuestionnaireUi({ keepTopBar: true });
   $loading.classList.add('active');
+  bindMyAnswersUi();
+  hideMyAnswersPanel();
 
   var staticView = document.getElementById('already-submitted-static');
   var resultsPanel = document.getElementById('match-results-panel');
@@ -1728,6 +1997,7 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
   var $already = document.getElementById('already-screen');
   if (staticView) staticView.style.display = 'none';
   if (resultsPanel) resultsPanel.style.display = 'none';
+  setMyAnswersEntryVisible(false);
   if ($already) $already.classList.remove('active');
 
   var token = getSupabaseAuthToken();
@@ -1745,6 +2015,7 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
     if (staticView) staticView.style.display = '';
     if (premiumBlock) premiumBlock.style.display = 'none';
     if (resultsPanel) resultsPanel.style.display = 'none';
+    setMyAnswersEntryVisible(false);
     if ($already) {
       $already.classList.remove('overlay-screen--match-results');
       $already.classList.add('active');
@@ -1786,12 +2057,15 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
     if (resultsPanel) resultsPanel.style.display = '';
     renderMatchResultsOnMatchPage(matches);
     if ($already) $already.classList.add('overlay-screen--match-results');
+    myAnswersReturnMode = 'results';
   } else {
     if (staticView) staticView.style.display = '';
     if (resultsPanel) resultsPanel.style.display = 'none';
     if ($already) $already.classList.remove('overlay-screen--match-results');
+    myAnswersReturnMode = 'static';
   }
 
+  setMyAnswersEntryVisible(true);
   if ($already) $already.classList.add('active');
   $loading.classList.remove('active');
   finishQuizPageBoot();

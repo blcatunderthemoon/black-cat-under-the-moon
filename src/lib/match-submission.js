@@ -18,11 +18,53 @@ function collectEmails({ email, emails, profileEmail } = {}) {
   return [...out];
 }
 
-async function findResponseByUserId(admin, userId) {
+const RESPONSE_ANSWER_SELECT = [
+  'id',
+  'created_at',
+  'user_id',
+  'email',
+  'normalized_email',
+  'name',
+  'age',
+  'height',
+  'body_type',
+  'identity',
+  'hair_style',
+  'fashion_styles',
+  'bed_role',
+  'social_energy',
+  'weekend_mode',
+  'interests',
+  'exercise_habits',
+  'travel_mode',
+  'relationship_goal',
+  'time_commitment',
+  'deal_breakers',
+  'love_languages',
+  'security_needs',
+  'daily_love_ritual',
+  'decision_making',
+  'communication_style',
+  'expense_splitting',
+  'living_together',
+  'ideal_identity',
+  'ideal_body_type',
+  'ideal_height_gap',
+  'ideal_age_gap',
+  'gap_moe',
+  'preferred_attribute',
+  'ideal_appearance',
+  'personal_traits',
+  'ig_username',
+  'tg_username',
+  'feedback',
+].join(', ');
+
+async function findResponseByUserId(admin, userId, { full = false } = {}) {
   if (!userId) return null;
   const { data } = await admin
     .from('responses')
-    .select('id')
+    .select(full ? RESPONSE_ANSWER_SELECT : 'id')
     .eq('user_id', userId)
     .or(ACTIVE_CLAIM_OR)
     .order('created_at', { ascending: false })
@@ -31,17 +73,32 @@ async function findResponseByUserId(admin, userId) {
   return data;
 }
 
-async function findResponseByEmail(admin, normalized) {
+async function findResponseByEmail(admin, normalized, { full = false } = {}) {
   if (!normalized) return null;
   const { data } = await admin
     .from('responses')
-    .select('id')
+    .select(full ? RESPONSE_ANSWER_SELECT : 'id')
     .or(`normalized_email.eq.${normalized},email.ilike.${normalized}`)
     .or(ACTIVE_CLAIM_OR)
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
   return data;
+}
+
+/**
+ * Latest active Echo response owned by this account (user_id and/or matching email).
+ * Prefer user-linked row; fall back to email match for legacy submissions.
+ */
+export async function findLatestMatchResponse(admin, { userId, email, emails, profileEmail } = {}) {
+  const byUser = await findResponseByUserId(admin, userId, { full: true });
+  if (byUser) return byUser;
+
+  for (const normalized of collectEmails({ email, emails, profileEmail })) {
+    const byEmail = await findResponseByEmail(admin, normalized, { full: true });
+    if (byEmail) return byEmail;
+  }
+  return null;
 }
 
 /** Whether a non-duplicate match-mode response exists for this user and/or email(s). */

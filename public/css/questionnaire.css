@@ -2132,6 +2132,116 @@ body:has(#already-screen.active) #site-footer {
   box-shadow: 0 0 14px rgba(189, 147, 249, 0.4);
 }
 
+/* Read-only Echo answers (logged-in revisit) */
+.my-answers-entry {
+  width: 100%;
+  max-width: 680px;
+  margin: 20px auto 8px;
+  padding: 0 16px;
+  box-sizing: border-box;
+  text-align: center;
+}
+.my-answers-view-btn,
+.my-answers-back-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.04em;
+  background: transparent;
+  border: 2px solid var(--cyan);
+  color: var(--cyan);
+  padding: 12px 20px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.25s;
+}
+.my-answers-view-btn:hover,
+.my-answers-back-btn:hover {
+  background: var(--cyan);
+  color: var(--bg-deep);
+  box-shadow: 0 0 14px rgba(0, 229, 255, 0.35);
+}
+.my-answers-panel {
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 8px 16px 40px;
+  box-sizing: border-box;
+  align-self: stretch;
+}
+.my-answers-panel__header {
+  text-align: center;
+  margin-bottom: 18px;
+}
+.my-answers-panel__header .my-answers-back-btn {
+  margin-bottom: 16px;
+}
+.my-answers-panel__title {
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+.my-answers-submitted-at {
+  margin: 0;
+  font-family: 'Zpix', 'Press Start 2P', monospace;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--text-dim);
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: geometricPrecision;
+}
+.my-answers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.my-answers-part {
+  text-align: left;
+}
+.my-answers-part__title {
+  margin: 0 0 10px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.04em;
+  color: var(--yellow);
+  line-height: 1.7;
+}
+.my-answers-item {
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border: 1px solid var(--border-glow);
+  background: rgba(26, 24, 48, 0.45);
+  border-radius: 8px;
+}
+.my-answers-item__q {
+  margin: 0 0 6px;
+  font-family: 'Zpix', 'Press Start 2P', monospace;
+  font-size: 0.82rem;
+  line-height: 1.65;
+  color: var(--cream-dim);
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: geometricPrecision;
+}
+.my-answers-item__a {
+  margin: 0;
+  font-family: 'Zpix', 'Press Start 2P', monospace;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--cream);
+  word-break: break-word;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: geometricPrecision;
+}
+.my-answers-error {
+  margin: 16px 0 0;
+  text-align: center;
+  font-family: 'Zpix', 'Press Start 2P', monospace;
+  font-size: 0.85rem;
+  color: var(--pink);
+  line-height: 1.7;
+}
+
 /* Premium match results on echo.html (already submitted) */
 .match-results-panel {
   width: 100%;

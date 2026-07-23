@@ -7695,15 +7695,6 @@
   opacity: 0.88;
 }
 
-.inbox-letter-row__new-badge--match {
-  background: linear-gradient(135deg, #ffe066 0%, #00e5ff 100%);
-  color: #1a1028;
-  border-color: rgba(255, 255, 255, 0.85);
-  box-shadow: 2px 2px 0 0 rgba(0, 0, 0, 0.5), 0 0 14px rgba(0, 229, 255, 0.45);
-  font-size: 6px;
-  padding: 4px 5px 3px;
-}
-
 .letter-icon--photo-glow {
   filter: drop-shadow(0 0 8px rgba(155, 124, 255, 0.55));
   animation: letter-seal-glow 2.8s ease-in-out infinite;
@@ -7730,6 +7721,65 @@
   pointer-events: none;
 }
 
+/* Match「連線」badge — after base so it wins cascade; cyan/gold 共鳴色 */
+.inbox-letter-row__new-badge.inbox-letter-row__new-badge--match {
+  top: -8px;
+  right: -8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 2.6em;
+  padding: 5px 8px 4px;
+  font-size: 7px;
+  letter-spacing: 0.1em;
+  color: #0d0b1e;
+  background:
+    linear-gradient(145deg, #ffe066 0%, #7ef0ff 48%, #00e5ff 100%);
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  box-shadow:
+    2px 2px 0 0 rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(0, 229, 255, 0.35),
+    0 0 16px rgba(0, 229, 255, 0.55),
+    0 0 28px rgba(255, 224, 102, 0.28);
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.35);
+  animation: inbox-match-badge-pulse 2.4s ease-in-out infinite;
+}
+
+.inbox-letter-row__new-badge.inbox-letter-row__new-badge--match::before {
+  content: '✦';
+  font-size: 0.85em;
+  line-height: 1;
+  color: #1a1028;
+  opacity: 0.9;
+}
+
+@keyframes inbox-match-badge-pulse {
+  0%,
+  100% {
+    box-shadow:
+      2px 2px 0 0 rgba(0, 0, 0, 0.55),
+      0 0 0 1px rgba(0, 229, 255, 0.35),
+      0 0 14px rgba(0, 229, 255, 0.45),
+      0 0 22px rgba(255, 224, 102, 0.2);
+    filter: brightness(1);
+  }
+  50% {
+    box-shadow:
+      2px 2px 0 0 rgba(0, 0, 0, 0.55),
+      0 0 0 1px rgba(255, 224, 102, 0.55),
+      0 0 20px rgba(0, 229, 255, 0.7),
+      0 0 34px rgba(255, 224, 102, 0.4);
+    filter: brightness(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inbox-letter-row__new-badge.inbox-letter-row__new-badge--match {
+    animation: none;
+  }
+}
+
 .inbox-letter-row--closed {
   align-items: flex-start;
 }
@@ -7750,6 +7800,10 @@
 
 .inbox-letter-row:has(.inbox-letter-row__new-badge) .inbox-letter-row__stack {
   padding-right: 28px;
+}
+
+.inbox-letter-row:has(.inbox-letter-row__new-badge--match) .inbox-letter-row__stack {
+  padding-right: 48px;
 }
 
 .inbox-letter-row__top {
@@ -23459,12 +23513,12 @@ button.forum-tag-chip:hover {
 
 /* ── 三個字（主頁／標題／登出）視覺同大：Noto 用基準 px，像素字加大補償 ──
    Noto Sans（主頁）字面較滿，像素字（Zpix）同 px 下睇落細，
-   故像素字統一比 Noto 大 3px；登出強制用同一 Zpix 令右側同標題完全一致。 */
+   故像素字統一比 Noto 大 2px；登出強制用同一 Zpix 令右側同標題完全一致。 */
 .app-page--my-cat > .app-header > .app-header__back {
   grid-column: 1;
   justify-self: start;
   font-family: var(--font-zh);
-  font-size: 14px;
+  font-size: 12px;
   line-height: 1.4;
 }
 
@@ -23473,8 +23527,8 @@ button.forum-tag-chip:hover {
   justify-self: center;
   flex: unset;
   font-family: 'Zpix', 'Press Start 2P', monospace;
-  font-size: 17px;
-  letter-spacing: 0.06em;
+  font-size: 14px;
+  letter-spacing: 0.04em;
   line-height: 1.4;
   color: var(--purple-light);
   -webkit-font-smoothing: none;
@@ -23488,8 +23542,8 @@ button.forum-tag-chip:hover {
 
 .app-page--my-cat > .app-header .app-header-logout-btn {
   font-family: 'Zpix', 'Press Start 2P', monospace;
-  font-size: 17px;
-  letter-spacing: 0.06em;
+  font-size: 14px;
+  letter-spacing: 0.04em;
   line-height: 1.4;
   -webkit-font-smoothing: none;
   text-rendering: geometricPrecision;
@@ -23729,6 +23783,53 @@ button.forum-tag-chip:hover {
 .my-cat-away__btn:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+.my-cat-away__btn--summoning {
+  pointer-events: none;
+}
+
+/* 召喚搖鈴：鐘左右擺 + 輕微上下震 */
+.my-cat-away__bell {
+  display: inline-block;
+  transform-origin: 50% 0%;
+  vertical-align: -0.05em;
+}
+
+.my-cat-away__bell--ringing {
+  animation: my-cat-bell-ring 0.55s ease-in-out infinite;
+}
+
+.my-cat-away__btn--summoning .my-cat-away__bell--ringing {
+  animation-duration: 0.35s;
+}
+
+@keyframes my-cat-bell-ring {
+  0%,
+  100% {
+    transform: rotate(0deg) translateY(0);
+  }
+  15% {
+    transform: rotate(18deg) translateY(1px);
+  }
+  30% {
+    transform: rotate(-16deg) translateY(0);
+  }
+  45% {
+    transform: rotate(14deg) translateY(1px);
+  }
+  60% {
+    transform: rotate(-10deg) translateY(0);
+  }
+  75% {
+    transform: rotate(6deg) translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .my-cat-away__bell--ringing {
+    animation: none;
+  }
 }
 
 /* 太餓（飽腹 < 20）— 冇心機郁，成隻貓灰灰哋 */

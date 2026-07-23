@@ -704,18 +704,34 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
             <p className="my-cat-away__title pixel-font">貓咪離家出走咗！</p>
             {cat.summon_pending ? (
               <p className="my-cat-away__text">
-                🔔 已召喚 · <strong>{formatCooldown(returnMs)}</strong> 後返嚟
+                <span
+                  className="my-cat-away__bell my-cat-away__bell--ringing"
+                  aria-hidden="true"
+                >
+                  🔔
+                </span>
+                {' '}已召喚 · <strong>{formatCooldown(returnMs)}</strong> 後返嚟
               </p>
             ) : (
               <>
                 <p className="my-cat-away__text">肚餓到頂唔順，走咗去搵嘢食……</p>
                 <button
                   type="button"
-                  className="my-cat-away__btn pixel-font"
+                  className={`my-cat-away__btn pixel-font${summoning ? ' my-cat-away__btn--summoning' : ''}`}
                   onClick={handleSummon}
                   disabled={summoning}
                 >
-                  {summoning ? '召喚中…' : '🔔 召喚貓咪'}
+                  {summoning ? (
+                    <>
+                      <span className="my-cat-away__bell my-cat-away__bell--ringing" aria-hidden="true">🔔</span>
+                      {' '}召喚中…
+                    </>
+                  ) : (
+                    <>
+                      <span className="my-cat-away__bell" aria-hidden="true">🔔</span>
+                      {' '}召喚貓咪
+                    </>
+                  )}
                 </button>
               </>
             )}
