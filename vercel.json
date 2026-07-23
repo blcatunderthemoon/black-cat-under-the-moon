@@ -3,6 +3,12 @@
   "installCommand": "npm install",
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
+  "crons": [
+    {
+      "path": "/api/cron/forum-hit-topics",
+      "schedule": "0 1 * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",

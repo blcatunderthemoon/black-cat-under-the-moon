@@ -239,7 +239,7 @@ function HotTopicsPanel({ hotPosts, sparksMode }) {
   const rankMods = ['forum-hot-item--gold', 'forum-hot-item--silver', 'forum-hot-item--bronze'];
   const curated = sparksMode === 'curated';
   const title = curated ? '✨ 週度精選' : '🔥 活躍火種';
-  const hint = curated ? '官方推薦 · 值得一讀' : '本週最活躍 TOP 3';
+  const hint = curated ? '官方推薦' : '本週最活躍 TOP 3';
 
   if (!hotPosts?.length) {
     // Last-resort UI: still never announce a dead week
@@ -247,7 +247,7 @@ function HotTopicsPanel({ hotPosts, sparksMode }) {
       <aside className="forum-panel forum-panel--hot">
         <div className="forum-panel__head">
           <h3 className="forum-panel__title">✨ 週度精選</h3>
-          <p className="forum-panel__hint forum-panel__hint--hot">官方推薦 · 值得一讀</p>
+          <p className="forum-panel__hint forum-panel__hint--hot">官方推薦</p>
         </div>
         <p className="forum-hot-empty forum-hot-empty--soft">
           圍爐正暖著爐火——去發一篇，成為下一顆火種吧。
@@ -344,6 +344,7 @@ export default function ForumPage() {
   const topicRef = useRef(topic);
   const topicsRowRef = useRef(null);
   const initialLoadDoneRef = useRef(false);
+  const deepLinkAppliedRef = useRef(false);
   const filterSnapshotRef = useRef({ topic, sort, activeTag, storySearchDebounced });
 
   const defaultTopic = topic === '全部' ? '社群' : topic;
@@ -803,6 +804,42 @@ export default function ForumPage() {
     const timer = setTimeout(() => setBookmarkToast(''), 2800);
     return () => clearTimeout(timer);
   }, [bookmarkToast]);
+
+  /* Deep links from banner hit topics: /forum?topic=徵友&tag=…&compose=1 */
+  useEffect(() => {
+    if (!router.isReady || deepLinkAppliedRef.current) return;
+    deepLinkAppliedRef.current = true;
+
+    const qTopic = typeof router.query.topic === 'string' ? router.query.topic.trim() : '';
+    const qTag = typeof router.query.tag === 'string' ? router.query.tag.trim() : '';
+    const wantCompose = router.query.compose === '1' || router.query.compose === 'true';
+    const resolvedTopic = FORUM_TOPICS.includes(qTopic) && qTopic !== '全部' ? qTopic : null;
+    const tagKey = qTag ? canonicalForumTagKey(qTag) : null;
+
+    if (resolvedTopic) {
+      setTopic(resolvedTopic);
+      topicRef.current = resolvedTopic;
+    }
+    if (tagKey) setActiveTag(tagKey);
+
+    if (!wantCompose) return;
+
+    const nextTopic = resolvedTopic || '社群';
+    setForm({
+      title: '',
+      content: '',
+      topic: nextTopic,
+      tags: tagKey ? [tagKey] : [],
+      visibility: isMatureForumTopic(nextTopic) ? 'members_only' : 'public',
+      hide_username: false,
+      polls: [],
+      cover_image_url: '',
+      synopsis: '',
+      chapter_one_title: '',
+    });
+    setDraftNotice('');
+    setShowCompose(true);
+  }, [router.isReady, router.query]);
 
   function openCompose() {
     const draft = readForumDraft(FORUM_POST_DRAFT_KEY);

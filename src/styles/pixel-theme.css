@@ -4607,7 +4607,8 @@
 }
 
 .app-header--account .mode-top-bar__row {
-  grid-template-columns: 1fr auto 1fr;
+  position: relative;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
@@ -4617,6 +4618,8 @@
 .app-header--account .app-header__back.mode-header-chip {
   grid-column: 1;
   justify-self: start;
+  position: relative;
+  z-index: 2;
   text-decoration: none;
   color: #f0ebd8;
 }
@@ -4636,7 +4639,12 @@
 }
 
 .app-header--account .app-header__title.mode-top-bar__mode-tag {
-  grid-column: 2;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  grid-column: auto;
   justify-self: center;
   margin: 0;
   font-family: 'Zpix', 'Press Start 2P', monospace;
@@ -4649,9 +4657,13 @@
   box-shadow: none;
   padding: 0 8px;
   min-height: 32px;
-  max-width: min(240px, 46vw);
+  max-width: min(46vw, 168px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   gap: 0.12em;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  pointer-events: none;
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: geometricPrecision;
@@ -4669,11 +4681,14 @@
 .app-header--account .app-header__nav.mode-top-bar__nav-slot {
   grid-column: 3;
   justify-self: end;
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-shrink: 0;
+  flex-shrink: 1;
   min-width: 0;
+  max-width: 100%;
 }
 
 .app-header--account .app-header__action {

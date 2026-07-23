@@ -31,6 +31,17 @@ export function sanitizeBannerIcon(icon, type) {
   return [...raw].slice(0, 4).join('') || fallback;
 }
 
+/** Same-origin path only (optional query/hash). Blocks protocol-relative & schemes. */
+export function sanitizeBannerHref(href) {
+  const raw = String(href || '').trim();
+  if (!raw) return null;
+  if (!raw.startsWith('/')) return null;
+  if (raw.startsWith('//')) return null;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(raw)) return null;
+  if (raw.length > 300) return null;
+  return raw;
+}
+
 export function normalizeBannerMessage(raw, index = 0) {
   if (!raw || typeof raw !== 'object') return null;
   const text = String(raw.text || '').trim().slice(0, FORUM_BANNER_TEXT_MAX);
@@ -40,6 +51,8 @@ export function normalizeBannerMessage(raw, index = 0) {
   const postId = type === 'post' && raw.post_id
     ? String(raw.post_id).trim().slice(0, 64)
     : null;
+  const href = sanitizeBannerHref(raw.href);
+  const source = raw.source ? String(raw.source).trim().slice(0, 40) : null;
 
   return {
     id: String(raw.id || newBannerMessageId()),
@@ -47,8 +60,10 @@ export function normalizeBannerMessage(raw, index = 0) {
     text,
     type,
     post_id: postId || null,
+    href: href || null,
     icon: sanitizeBannerIcon(raw.icon, type),
     sort_order: Number.isFinite(Number(raw.sort_order)) ? Number(raw.sort_order) : index,
+    source: source || null,
   };
 }
 
@@ -66,14 +81,19 @@ export function serializePublicForumBanner(row) {
   if (!row?.active) return { active: false, messages: [] };
   const messages = normalizeBannerMessages(row.messages)
     .filter((m) => m.active)
-    .map((m) => ({
-      id: m.id,
-      text: m.text,
-      type: m.type,
-      post_id: m.post_id,
-      icon: m.icon,
-      href: m.type === 'post' && m.post_id ? `/forum/${m.post_id}` : null,
-    }));
+    .map((m) => {
+      let href = null;
+      if (m.type === 'post' && m.post_id) href = `/forum/${m.post_id}`;
+      else if (m.href) href = m.href;
+      return {
+        id: m.id,
+        text: m.text,
+        type: m.type,
+        post_id: m.post_id,
+        icon: m.icon,
+        href,
+      };
+    });
   if (!messages.length) return { active: false, messages: [] };
   return { active: true, messages };
 }

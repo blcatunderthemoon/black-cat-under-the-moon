@@ -22,8 +22,8 @@
 <link rel="preload" href="js/zpix.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/questionnaire.css?v=20260723noforum">
-<link rel="stylesheet" href="css/auth-nav.css?v=20260715caticon">
+<link rel="stylesheet" href="css/questionnaire.css?v=20260723echo-submit">
+<link rel="stylesheet" href="css/auth-nav.css?v=20260723echo-hdr">
 <link rel="stylesheet" href="css/mobile-webview-scroll.css?v=20260713echo">
 <link rel="stylesheet" href="css/moon-loading.css?v=20260711n">
 <script src="/js/posthog-page-context.js" defer></script>
@@ -180,10 +180,13 @@
     <div class="thankyou-msg">你的問卷資料已在系統中</div>
     <div class="thankyou-msg thankyou-heart">無需重複填寫 ♡</div>
     <div class="thankyou-msg already-submitted-hint">期待你的靈魂知己出現 🌙</div>
+    <div class="my-answers-entry is-hidden" id="my-answers-entry" hidden>
+      <button type="button" class="echo-action-btn echo-action-btn--secondary pixel-font" id="view-my-answers-btn">查看我的答案</button>
+    </div>
     <div class="already-submitted-premium support-card">
       <div class="support-card-title">解鎖連線詳情 💎</div>
       <p class="already-submitted-premium-copy">升級 Moonlight Passport 即可查看連線成功的成員、詳細共鳴摘要與鏡像卡</p>
-      <a href="/premium" class="already-submitted-premium-cta pixel-font">了解 Moonlight Passport ▸</a>
+      <a href="/premium" class="already-submitted-premium-cta already-submitted-premium-cta--primary pixel-font">了解 Moonlight Passport ▸</a>
     </div>
   </div>
   <div class="match-results-panel" id="match-results-panel" style="display:none;">
@@ -200,15 +203,12 @@
     <div class="match-results-list" id="match-results-list"></div>
     <p class="match-results-count" id="match-results-count"></p>
     <div class="match-results-actions" id="match-results-actions">
-      <button type="button" class="echo-action-btn echo-action-btn--primary pixel-font" id="view-my-answers-btn-match">查看我的答案</button>
+      <button type="button" class="echo-action-btn echo-action-btn--secondary pixel-font" id="view-my-answers-btn-match">查看我的答案</button>
     </div>
     <div class="match-results-empty" id="match-results-empty" style="display:none;">
       <p class="thankyou-msg">暫無連線記錄</p>
       <p class="thankyou-msg already-submitted-hint">連線出現後會顯示於此</p>
     </div>
-  </div>
-  <div class="my-answers-entry is-hidden" id="my-answers-entry" hidden>
-    <button type="button" class="echo-action-btn echo-action-btn--primary pixel-font" id="view-my-answers-btn">查看我的答案</button>
   </div>
   <div class="my-answers-panel is-hidden" id="my-answers-panel" hidden>
     <div class="my-answers-panel__header">
