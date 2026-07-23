@@ -22,7 +22,7 @@
 <link rel="preload" href="js/zpix.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/questionnaire.css?v=20260723mirror-share">
+<link rel="stylesheet" href="css/questionnaire.css?v=20260723answers-hdr">
 <link rel="stylesheet" href="css/auth-nav.css?v=20260715caticon">
 <link rel="stylesheet" href="css/mobile-webview-scroll.css?v=20260713echo">
 <link rel="stylesheet" href="css/moon-loading.css?v=20260711n">
@@ -212,9 +212,13 @@
   </div>
   <div class="my-answers-panel is-hidden" id="my-answers-panel" hidden>
     <div class="my-answers-panel__header">
-      <button type="button" class="my-answers-back-btn pixel-font" id="my-answers-back-btn">← 返回</button>
-      <div class="level-up pixel-font my-answers-panel__title">✦ 我的答案 ✦</div>
-      <p class="my-answers-submitted-at" id="my-answers-submitted-at"></p>
+      <div class="my-answers-panel__topbar">
+        <button type="button" class="my-answers-back-btn" id="my-answers-back-btn">← 返回</button>
+      </div>
+      <div class="my-answers-panel__heading">
+        <h2 class="level-up pixel-font my-answers-panel__title">✦ 我的答案 ✦</h2>
+        <p class="my-answers-submitted-at" id="my-answers-submitted-at"></p>
+      </div>
     </div>
     <div class="my-answers-list" id="my-answers-list"></div>
     <p class="my-answers-error" id="my-answers-error" hidden></p>
