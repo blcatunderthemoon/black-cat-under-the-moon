@@ -10,7 +10,7 @@ import AppHeaderAuth from '../../components/AppHeaderAuth.js';
 import ForumHeaderLogo from '../../components/ForumHeaderLogo.js';
 import SeoHead from '../../components/SeoHead.js';
 import { getAllGuideSlugs, getGuideBySlug } from '../../lib/guides.js';
-import { articleJsonLd, breadcrumbJsonLd, organizationJsonLd } from '../../lib/structured-data.js';
+import { articleJsonLd, breadcrumbJsonLd, faqPageJsonLd, organizationJsonLd } from '../../lib/structured-data.js';
 
 function GuideMarkdownLink({ href, children }) {
   const safeHref = String(href || '');
@@ -37,9 +37,44 @@ function formatDate(iso) {
   }
 }
 
+const GUIDE_FAQS = {
+  'hong-kong-les-guide': [
+    {
+      question: '香港Les同香港女同志有分別嗎？',
+      answer: '日常溝通多數互通。「Les」係口語常用叫法，「女同志」比較正式；Black Cat Under The Moon 兩個都會用。',
+    },
+    {
+      question: '新手點樣加入香港Les社群？',
+      answer: '可以由低壓方式開始：做性格測驗、睇指南、喺討論區觀察，或者用匿名漂流瓶傾訴，唔使一開始就公開身份。',
+    },
+    {
+      question: 'Black Cat Under The Moon 係咪只係交友 app？',
+      answer: '唔止。除咗配對，仲有性格測驗、匿名漂流瓶同討論區，重點係幫香港女同志認識自己同連結同路人。',
+    },
+  ],
+};
+
 export default function GuideDetailPage({ guide }) {
   if (!guide) return null;
   const path = `/guides/${guide.slug}`;
+  const faqLd = faqPageJsonLd(GUIDE_FAQS[guide.slug]);
+  const jsonLd = [
+    articleJsonLd({
+      title: guide.title,
+      description: guide.description,
+      path,
+      datePublished: guide.date,
+      dateModified: guide.updated,
+      image: guide.cover,
+    }),
+    breadcrumbJsonLd([
+      { name: '主頁', path: '/index.html' },
+      { name: '文章', path: '/guides' },
+      { name: guide.title, path },
+    ]),
+    organizationJsonLd(),
+  ];
+  if (faqLd) jsonLd.push(faqLd);
 
   return (
     <>
@@ -48,22 +83,7 @@ export default function GuideDetailPage({ guide }) {
         description={guide.description}
         path={path}
         ogType="article"
-        jsonLd={[
-          articleJsonLd({
-            title: guide.title,
-            description: guide.description,
-            path,
-            datePublished: guide.date,
-            dateModified: guide.updated,
-            image: guide.cover,
-          }),
-          breadcrumbJsonLd([
-            { name: '主頁', path: '/index.html' },
-            { name: '文章', path: '/guides' },
-            { name: guide.title, path },
-          ]),
-          organizationJsonLd(),
-        ]}
+        jsonLd={jsonLd}
       />
       <AppShell
         headerBrand={<ForumHeaderLogo />}

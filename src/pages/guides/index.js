@@ -10,9 +10,9 @@ import SeoHead from '../../components/SeoHead.js';
 import { getAllGuides } from '../../lib/guides.js';
 import { breadcrumbJsonLd, organizationJsonLd, webSiteJsonLd } from '../../lib/structured-data.js';
 
-const PAGE_TITLE = '香港 Les 文章與指南';
+const PAGE_TITLE = '香港Les・香港女同志文章與指南';
 const PAGE_DESCRIPTION =
-  '香港 Les 交友、約會、出櫃與社群生活指南 — 由 Black Cat Under The Moon 整理，幫香港女同志認識自己、認識彼此。';
+  '香港Les／香港女同志交友、約會、出櫃與社群生活指南 — 由 Black Cat Under The Moon 整理，幫香港女同志認識自己、認識彼此。';
 
 function formatDate(iso) {
   if (!iso) return null;
@@ -50,9 +50,9 @@ export default function GuidesIndexPage({ guides }) {
         nav={<AppHeaderAuth redirectPath="/guides" />}
       >
         <header className="guides-intro">
-          <h1 className="guides-intro__title">香港 Les 文章與指南</h1>
+          <h1 className="guides-intro__title">香港Les・香港女同志文章與指南</h1>
           <p className="guides-intro__lead">
-            交友、約會、出櫃、相處 —— 由 Black Cat Under The Moon 為香港女同志整理嘅實用指南。
+            交友、約會、出櫃、相處 —— 由 Black Cat Under The Moon 為香港Les／香港女同志整理嘅實用指南。
           </p>
         </header>
 

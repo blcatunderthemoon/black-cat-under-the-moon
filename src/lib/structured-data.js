@@ -22,10 +22,31 @@ export function webSiteJsonLd() {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: SITE_NAME,
+    alternateName: ['香港Les社群', '香港女同志社群', 'Black Cat Under The Moon'],
     url,
     description: DEFAULT_DESCRIPTION,
     inLanguage: 'zh-Hant',
     publisher: { '@type': 'Organization', name: SITE_NAME, url },
+  };
+}
+
+/** FAQPage schema — helps rich results for informational queries. */
+export function faqPageJsonLd(faqs) {
+  const items = (faqs || [])
+    .filter((f) => f && f.question && f.answer)
+    .map((f) => ({
+      '@type': 'Question',
+      name: String(f.question),
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: String(f.answer),
+      },
+    }));
+  if (!items.length) return null;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: items,
   };
 }
 

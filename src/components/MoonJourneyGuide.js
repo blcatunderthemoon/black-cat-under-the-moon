@@ -122,29 +122,10 @@ export default function MoonJourneyGuide({ showCta = true }) {
         </ul>
       </section>
 
-      <section className="moon-journey-guide__section" aria-labelledby="mj-gatherings-heading">
-        <h2 id="mj-gatherings-heading" className="moon-journey-guide__heading">月光聚會</h2>
-        <p className="moon-journey-guide__lead">
-          網站會員即可發起或申請線上／線下聚會（審批制 RSVP）。私密地址只會在獲批准後顯示。
-        </p>
-        <div className="moon-journey-guide__callout">
-          <p>
-            桌遊、讀書會、塔羅夜、微醺傾計、行山睇戲——把線上緣分帶到月下見面。
-            私密地址只會在獲批准後顯示。
-          </p>
-          <p>
-            <Link href="/gatherings">瀏覽／發起月光聚會</Link>
-          </p>
-        </div>
-      </section>
-
       {showCta && (
         <div className="moon-journey-guide__cta">
           <Link href="/forum" className="pixel-btn pixel-btn--primary moon-journey-guide__cta-btn">
             前往黑貓樹洞
-          </Link>
-          <Link href="/gatherings" className="moon-journey-guide__cta-secondary">
-            月光聚會
           </Link>
           <Link href="/account" className="moon-journey-guide__cta-secondary">
             在帳戶頁查看我的進度

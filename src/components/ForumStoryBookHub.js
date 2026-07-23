@@ -350,7 +350,7 @@ export default function ForumStoryBookHub({
               <p className="forum-story-chapters__sub">
                 {loggedIn
                   ? (canReorder
-                    ? '點選章節閱讀；作者可用 ↑↓ 調整章節順序'
+                    ? '點選章節閱讀；右側 ↑↓ 可調順序'
                     : '點選章節，或從頭開始閱讀')
                   : '訪客可免費閱讀前三章，登入後閱讀全部'}
               </p>
@@ -418,40 +418,48 @@ export default function ForumStoryBookHub({
                       )}
                     </button>
                     {canEdit && (
-                      <button
-                        type="button"
-                        className="forum-story-chapters__edit-btn"
-                        onClick={() => openChapterEdit(ch)}
-                        aria-label={`編輯 ${ch.display_title}`}
-                      >
-                        編輯
-                      </button>
+                      <div className="forum-story-chapters__author-actions">
+                        {canReorder && (
+                          <div className="forum-story-chapters__reorder" role="group" aria-label="調整章節順序">
+                            <button
+                              type="button"
+                              className="forum-story-chapters__reorder-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                moveChapter(ch.id, 'up');
+                              }}
+                              disabled={reordering || index === 0}
+                              aria-label={`上移 ${ch.display_title}`}
+                              title="上移"
+                            >
+                              <span aria-hidden="true">↑</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="forum-story-chapters__reorder-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                moveChapter(ch.id, 'down');
+                              }}
+                              disabled={reordering || index === chapters.length - 1}
+                              aria-label={`下移 ${ch.display_title}`}
+                              title="下移"
+                            >
+                              <span aria-hidden="true">↓</span>
+                            </button>
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          className="forum-story-chapters__edit-btn"
+                          onClick={() => openChapterEdit(ch)}
+                          aria-label={`編輯 ${ch.display_title}`}
+                        >
+                          編輯
+                        </button>
+                      </div>
                     )}
                   </div>
-                  {canReorder && (
-                    <div className="forum-story-chapters__reorder" role="group" aria-label="調整章節順序">
-                      <button
-                        type="button"
-                        className="forum-story-chapters__reorder-btn"
-                        onClick={() => moveChapter(ch.id, 'up')}
-                        disabled={reordering || index === 0}
-                        aria-label={`上移 ${ch.display_title}`}
-                        title="上移一章"
-                      >
-                        ↑ 上移
-                      </button>
-                      <button
-                        type="button"
-                        className="forum-story-chapters__reorder-btn"
-                        onClick={() => moveChapter(ch.id, 'down')}
-                        disabled={reordering || index === chapters.length - 1}
-                        aria-label={`下移 ${ch.display_title}`}
-                        title="下移一章"
-                      >
-                        下移 ↓
-                      </button>
-                    </div>
-                  )}
                 </li>
                 );
               })}

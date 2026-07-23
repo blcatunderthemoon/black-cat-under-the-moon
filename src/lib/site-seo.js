@@ -5,10 +5,10 @@
 
 export const SITE_NAME = 'Black Cat Under The Moon';
 
-export const DEFAULT_TITLE = 'Black Cat Under The Moon｜香港 Les 女同志社群｜配對・漂流瓶・討論區';
+export const DEFAULT_TITLE = '香港Les・香港女同志社群｜Black Cat Under The Moon｜配對・漂流瓶・討論區';
 
 export const DEFAULT_DESCRIPTION =
-  'Black Cat Under The Moon 是香港 Les Community，提供月下緣份配對、Mirror Mode 性格分析、匿名漂流瓶、黑貓樹洞及活動平台，讓香港女同志認識朋友、交流及建立連結。';
+  '香港Les／香港女同志社群 Black Cat Under The Moon：月下緣份配對、Mirror Mode 性格分析、匿名漂流瓶與黑貓樹洞，幫香港女同志認識朋友、交流同建立連結。';
 
 /** Static paths included in sitemap (public, indexable). */
 export const STATIC_SITEMAP_PATHS = [
