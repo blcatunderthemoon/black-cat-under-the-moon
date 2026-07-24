@@ -2483,6 +2483,43 @@
   text-shadow: 0 0 18px rgba(255, 224, 102, 0.2);
 }
 
+/* Mobile two-row header: keep page title on row 1 center (not absolute mid-stack) */
+@media (max-width: 720px) {
+  .app-page--gatherings .app-header--account .app-header__title.mode-top-bar__mode-tag {
+    position: static;
+    left: auto;
+    top: auto;
+    transform: none;
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: center;
+    align-self: center;
+    max-width: min(100%, calc(100vw - 148px));
+    min-height: 30px;
+    height: 30px;
+    color: rgba(255, 224, 102, 0.92);
+  }
+
+  .app-page--gatherings .app-header--account .app-header__back.mode-header-chip,
+  .app-page--gatherings .app-header--account .app-header-logout-btn {
+    min-height: 30px;
+    height: 30px;
+    padding: 0 10px;
+    border-radius: 7px;
+    box-sizing: border-box;
+  }
+
+  .app-page--gatherings .app-header--account .mode-top-bar__row {
+    row-gap: 4px;
+    padding: 8px 10px 6px;
+  }
+
+  .app-page--gatherings .app-header--account .auth-nav-badge {
+    margin-top: 2px;
+    padding: 2px 4px;
+  }
+}
+
 .gatherings-hero__eyebrow {
   font-family: 'Zpix', 'Press Start 2P', monospace;
   font-size: 0.68rem;

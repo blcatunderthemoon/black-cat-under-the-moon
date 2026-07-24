@@ -1362,6 +1362,11 @@
   }
 
   .app-header--account .app-header__title.mode-top-bar__mode-tag {
+    /* Desktop centers via absolute; on two-row mobile that lands mid-toolbar — use grid instead */
+    position: static;
+    left: auto;
+    top: auto;
+    transform: none;
     grid-column: 2;
     grid-row: 1;
     justify-self: center;
@@ -1369,10 +1374,13 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    max-width: min(100%, calc(100vw - 140px));
+    z-index: 1;
+    max-width: min(100%, calc(100vw - 148px));
     min-height: 30px;
-    font-size: 10px;
+    height: 30px;
+    font-size: 11px;
     padding: 0 6px;
+    pointer-events: none;
   }
 
   .app-header--account .inbox-thread-title-link {

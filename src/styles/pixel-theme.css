@@ -4639,12 +4639,8 @@
 }
 
 .app-header--account .app-header__title.mode-top-bar__mode-tag {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
   z-index: 1;
-  grid-column: auto;
+  grid-column: 2;
   justify-self: center;
   margin: 0;
   font-family: 'Zpix', 'Press Start 2P', monospace;
@@ -4667,6 +4663,17 @@
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: geometricPrecision;
+}
+
+/* Single-row desktop: optically center title between back + nav */
+@media (min-width: 721px) {
+  .app-header--account .app-header__title.mode-top-bar__mode-tag {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    grid-column: auto;
+  }
 }
 
 .app-header--account .app-header__text-zh--title,
