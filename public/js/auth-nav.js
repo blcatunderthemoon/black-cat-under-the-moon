@@ -694,9 +694,99 @@
     }
   }
 
+  var meFetchInFlight = null;
+  var meFetchTimer = null;
+
+  function fetchMeAndPaint(options) {
+    options = options || {};
+    var loggedInOnly = document.body.hasAttribute('data-auth-nav-logged-in-only');
+    var token = getToken();
+    if (!token) {
+      if (!loggedInOnly && !options.silent) showLoggedOut();
+      return Promise.resolve(null);
+    }
+    var payload = decodeJwt(token);
+    var userId = payload && payload.sub;
+    var immediateName = (payload && (
+      (payload.user_metadata && payload.user_metadata.display_name) ||
+      payload.email
+    )) || null;
+    var cached = userId ? readMeCache(userId) : null;
+    var unread = (cached && cached.unread_inbox_count) || 0;
+    var isPremium = !!(cached && cached.profile && cached.profile.subscription_tier === 'premium');
+
+    if (meFetchInFlight) return meFetchInFlight;
+
+    meFetchInFlight = fetch('/api/me', {
+      headers: { Authorization: 'Bearer ' + token },
+      cache: 'no-store',
+    })
+      .then(function (r) {
+        if (r.status === 401) {
+          var sbKey = getStorageKey();
+          if (sbKey) { try { localStorage.removeItem(sbKey); } catch (e) {} }
+          clearMeCache();
+          clearAuthNav();
+          if (!loggedInOnly) showLoggedOut();
+          return null;
+        }
+        return r.ok ? r.json() : null;
+      })
+      .then(function (data) {
+        if (!data) {
+          if (!(meCacheApi.isFresh && meCacheApi.isFresh(userId))) {
+            showLoggedIn(immediateName, unread, isPremium, cached);
+          }
+          return null;
+        }
+        meCache = data;
+        if (userId) writeMeCache(userId, data);
+        var serverName = data.profile && data.profile.display_name;
+        showLoggedIn(
+          serverName || immediateName,
+          data.unread_inbox_count || 0,
+          !!(data.profile && data.profile.subscription_tier === 'premium'),
+          data
+        );
+        if (!options.skipFeedReminder) maybeShowFeedReminder(data);
+        return data;
+      })
+      .catch(function () {
+        if (!(meCacheApi.isFresh && meCacheApi.isFresh(userId))) {
+          showLoggedIn(immediateName, unread, isPremium, cached);
+        }
+        return null;
+      })
+      .then(function (data) {
+        meFetchInFlight = null;
+        return data;
+      });
+
+    return meFetchInFlight;
+  }
+
+  function scheduleMeRefresh() {
+    if (meFetchTimer) clearTimeout(meFetchTimer);
+    meFetchTimer = setTimeout(function () {
+      meFetchTimer = null;
+      fetchMeAndPaint({ silent: true, skipFeedReminder: true });
+    }, 120);
+  }
+
+  function bindUnreadRefresh() {
+    if (document.documentElement.dataset.authNavUnreadRefresh) return;
+    document.documentElement.dataset.authNavUnreadRefresh = '1';
+    window.addEventListener('focus', scheduleMeRefresh);
+    window.addEventListener('pageshow', scheduleMeRefresh);
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible') scheduleMeRefresh();
+    });
+  }
+
   function init() {
     bindPremiumMoonInteractions();
     bindProfileSync();
+    bindUnreadRefresh();
     if (document.body.hasAttribute('data-no-auth-nav')) return;
     var loggedInOnly = document.body.hasAttribute('data-auth-nav-logged-in-only');
 
@@ -727,45 +817,9 @@
     var unread = (cached && cached.unread_inbox_count) || 0;
     showLoggedIn(cachedName || immediateName, unread, isPremium, cached, { profilePending: !cached });
 
-    if (meCacheApi.isFresh && meCacheApi.isFresh(userId)) {
-      maybeShowFeedReminder(cached);
-      return;
-    }
-
-    fetch('/api/me', {
-      headers: { Authorization: 'Bearer ' + token },
-      cache: 'no-store',
-    })
-      .then(function (r) {
-        if (r.status === 401) {
-          var sbKey = getStorageKey();
-          if (sbKey) { try { localStorage.removeItem(sbKey); } catch (e) {} }
-          clearMeCache();
-          clearAuthNav();
-          if (!loggedInOnly) showLoggedOut();
-          return null;
-        }
-        return r.ok ? r.json() : null;
-      })
-      .then(function (data) {
-        if (!data) {
-          showLoggedIn(immediateName, unread, isPremium, cached);
-          return;
-        }
-        meCache = data;
-        if (userId) writeMeCache(userId, data);
-        var serverName = data.profile && data.profile.display_name;
-        showLoggedIn(
-          serverName || immediateName,
-          data.unread_inbox_count || 0,
-          !!(data.profile && data.profile.subscription_tier === 'premium'),
-          data
-        );
-        maybeShowFeedReminder(data);
-      })
-      .catch(function () {
-        showLoggedIn(immediateName, unread, isPremium, cached);
-      });
+    // Always revalidate /api/me so unread badges (e.g. 月光聚會) stay correct even when
+    // the session cache is still "fresh". Instant UI comes from cache above.
+    fetchMeAndPaint();
   }
 
   if (document.readyState === 'loading') {

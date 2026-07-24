@@ -411,7 +411,7 @@ export default function GatheringDetailPage({ seo = null }) {
                   onChanged={() => load()}
                 />
                 {gathering.status !== 'cancelled' && gathering.status !== 'completed' && (
-                  <button type="button" className="gathering-detail__danger" disabled={busy} onClick={cancelGathering}>
+                  <button type="button" className="gathering-detail__cancel" disabled={busy} onClick={cancelGathering}>
                     取消聚會
                   </button>
                 )}

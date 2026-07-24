@@ -122,13 +122,29 @@ export default function GatheringHostQueue({ gatheringId, knockQuestion, onChang
             )}
           </div>
           <div className="gathering-host-queue__actions">
-            <button type="button" disabled={busyId === a.user_id} onClick={() => decide(a.user_id, 'approve')}>
+            <button
+              type="button"
+              className="gathering-host-queue__btn gathering-host-queue__btn--approve"
+              disabled={busyId === a.user_id}
+              onClick={() => decide(a.user_id, 'approve')}
+            >
               批准
             </button>
-            <button type="button" className="is-ghost" disabled={busyId === a.user_id} onClick={() => decide(a.user_id, 'reject')}>
+            <button
+              type="button"
+              className="gathering-host-queue__btn gathering-host-queue__btn--reject"
+              disabled={busyId === a.user_id}
+              onClick={() => decide(a.user_id, 'reject')}
+            >
               婉拒
             </button>
-            <button type="button" className="is-danger" disabled={busyId === a.user_id} onClick={() => blockApplicant(a.user_id, a.display_name)}>
+            <button
+              type="button"
+              className="gathering-host-queue__btn gathering-host-queue__btn--block"
+              disabled={busyId === a.user_id}
+              onClick={() => blockApplicant(a.user_id, a.display_name)}
+              title="婉拒並封鎖此人"
+            >
               封鎖
             </button>
           </div>

@@ -692,7 +692,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.4rem 1rem 0.5rem;
+  padding: 0.3rem 1rem 0.45rem;
   cursor: pointer;
   list-style: none;
 }
@@ -1531,6 +1531,33 @@
   border-radius: 2px;
 }
 
+/* Host cancel — quiet secondary, not competing with applicant actions */
+.gathering-detail__cancel {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 1rem;
+  padding: 0.4rem 0.15rem;
+  border: none;
+  border-bottom: 1px dashed rgba(186, 178, 210, 0.35);
+  border-radius: 0;
+  background: transparent;
+  color: rgba(186, 178, 210, 0.62);
+  cursor: pointer;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.gathering-detail__cancel:hover:not(:disabled) {
+  color: #ff9aab;
+  border-bottom-color: rgba(255, 154, 171, 0.55);
+}
+
+.gathering-detail__cancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .gathering-detail__rsvp-ghost {
   margin-top: 0;
   border-color: rgba(243, 230, 210, 0.32);
@@ -1809,45 +1836,94 @@
 
 .gathering-host-queue__actions {
   display: flex;
-  gap: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.55rem;
   align-items: center;
-  padding-top: 0.15rem;
+  padding-top: 0.35rem;
 }
 
-.gathering-host-queue__actions button {
-  flex: 1 1 0;
+.gathering-host-queue__btn {
   min-height: 40px;
-  padding: 0.45rem 0.7rem;
-  border: 1px solid rgba(80, 200, 120, 0.4);
-  background: rgba(80, 200, 120, 0.1);
-  color: #7ddea0;
-  cursor: pointer;
+  padding: 0.45rem 0.85rem;
   border-radius: 4px;
   font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
 }
 
-.gathering-host-queue__actions button.is-ghost {
-  border-color: rgba(255, 120, 140, 0.45);
-  background: rgba(255, 120, 140, 0.06);
+.gathering-host-queue__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.gathering-host-queue__btn--approve {
+  flex: 1 1 7rem;
+  border: 1px solid transparent;
+  background: linear-gradient(135deg, #fff0b0, #ffe066 50%, #e6c84a);
+  color: #12101a;
+  font-weight: 700;
+  box-shadow: 0 0 14px rgba(255, 224, 102, 0.18);
+}
+
+.gathering-host-queue__btn--approve:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.gathering-host-queue__btn--reject {
+  flex: 1 1 5.5rem;
+  border: 1px solid rgba(240, 235, 216, 0.28);
+  background: rgba(240, 235, 216, 0.04);
+  color: rgba(240, 235, 216, 0.82);
+  font-weight: 500;
+}
+
+.gathering-host-queue__btn--reject:hover:not(:disabled) {
+  border-color: rgba(240, 235, 216, 0.48);
+  background: rgba(240, 235, 216, 0.09);
+  color: #f5ecd8;
+}
+
+.gathering-host-queue__btn--block {
+  flex: 0 0 auto;
+  min-height: 0;
+  margin-left: auto;
+  padding: 0.35rem 0.45rem;
+  border: none;
+  background: transparent;
+  color: rgba(186, 178, 210, 0.55);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-decoration: underline;
+  text-decoration-color: rgba(186, 178, 210, 0.28);
+  text-underline-offset: 3px;
+}
+
+.gathering-host-queue__btn--block:hover:not(:disabled) {
   color: #ff9aab;
+  text-decoration-color: rgba(255, 154, 171, 0.55);
+}
+
+/* Legacy class hooks (if any leftover markup) */
+.gathering-host-queue__actions button.is-ghost {
+  border-color: rgba(240, 235, 216, 0.28);
+  background: rgba(240, 235, 216, 0.04);
+  color: rgba(240, 235, 216, 0.82);
 }
 
 .gathering-host-queue__actions button.is-ghost:hover:not(:disabled) {
-  border-color: rgba(255, 120, 140, 0.7);
-  background: rgba(255, 120, 140, 0.12);
+  border-color: rgba(240, 235, 216, 0.48);
+  background: rgba(240, 235, 216, 0.09);
 }
 
 .gathering-host-queue__actions button.is-danger {
   flex: 0 0 auto;
-  border-color: rgba(220, 90, 110, 0.55);
-  background: rgba(160, 40, 60, 0.18);
-  color: #ff8fa3;
-  font-weight: 600;
-}
-
-.gathering-host-queue__actions button.is-danger:hover:not(:disabled) {
-  border-color: rgba(220, 90, 110, 0.85);
-  background: rgba(160, 40, 60, 0.3);
+  border: none;
+  background: transparent;
+  color: rgba(186, 178, 210, 0.55);
+  font-weight: 500;
 }
 
 .gathering-host-queue__reveal {
@@ -1937,7 +2013,7 @@
 }
 
 .gathering-cal {
-  margin: 0 0 1.5rem;
+  margin: 0 0 0.75rem;
   animation: gatherings-fade-rise 0.65s ease both;
 }
 
@@ -2101,7 +2177,7 @@
 }
 
 .gathering-cal__panel {
-  padding: 1.35rem 0.85rem 0;
+  padding: 1.35rem 0.85rem 1.15rem;
   border-top: 1px solid rgba(240, 235, 216, 0.12);
 }
 
@@ -2251,7 +2327,7 @@
   }
 
   .gathering-cal__panel {
-    padding: 1.15rem 0.6rem 0;
+    padding: 1.15rem 0.6rem 1rem;
   }
 
   .gathering-cal__panel-head {
@@ -2283,10 +2359,11 @@
 
   .gathering-safety {
     margin-bottom: 0.75rem;
+    margin-top: 0;
   }
 
   .gathering-safety__summary {
-    padding: 0.35rem 0.85rem 0.45rem;
+    padding: 0.25rem 0.85rem 0.4rem;
     min-height: 0;
   }
 
@@ -3103,11 +3180,8 @@
   padding: 0.75rem 0.85rem;
 }
 
-.gathering-host-queue__actions button:not(.is-ghost):not(.is-danger) {
-  background: linear-gradient(135deg, #fff0b0, #ffe066 50%, #e6c84a);
-  color: #12101a;
-  border: 1px solid transparent;
-  font-weight: 700;
+.gathering-host-queue__btn--approve {
+  font-family: 'Zpix', 'Noto Sans TC', sans-serif;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -470,7 +470,7 @@ html:has(.mode-top-bar--quiz) {
   .mode-top-bar__nav-slot {
     max-width: 100%;
     overflow-x: auto;
-    overflow-y: hidden;
+    overflow-y: visible;
     flex-wrap: nowrap;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
@@ -818,28 +818,29 @@ html:has(.mode-top-bar--quiz) {
   background: rgba(189, 147, 249, 0.22);
 }
 
-/* Shared corner chip — used by static auth-nav + Next app/forum headers */
+/* Shared corner chip — used by static auth-nav + Next app/forum headers.
+   Keep inset (not negative top/right) so overflow-y:hidden parents cannot clip it. */
 .auth-nav-badge__unread,
 .forum-nav-unread {
   position: absolute !important;
-  top: -2px;
-  right: -2px;
+  top: 0;
+  right: 0;
   z-index: 3;
   display: inline-flex !important;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  min-width: 12px;
+  min-width: 14px;
   width: auto;
-  height: 12px;
-  max-height: 12px;
+  height: 14px;
+  max-height: 14px;
   margin: 0;
   padding: 0 3px;
   border-radius: 999px;
   background: #ff5a6a;
   color: #fff;
   font-family: 'Press Start 2P', monospace;
-  font-size: 5px;
+  font-size: 7px;
   font-weight: normal;
   line-height: 1;
   letter-spacing: 0;
@@ -930,13 +931,14 @@ html:has(.mode-top-bar--quiz) {
 
   .mode-top-bar--index.mode-top-bar--greeting .auth-nav-badge__unread,
   .mode-top-bar--index.mode-top-bar--greeting .forum-nav-unread {
-    top: -1px;
-    right: -1px;
-    min-width: 10px;
-    height: 10px;
-    max-height: 10px;
-    padding: 0 2px;
-    font-size: 5px;
+    top: 0;
+    right: 0;
+    min-width: 12px;
+    height: 12px;
+    max-height: 12px;
+    padding: 0 3px;
+    font-size: 7px;
+    line-height: 12px;
   }
 
   .mode-top-bar--index.mode-top-bar--greeting .header-my-cat-link {
@@ -974,7 +976,7 @@ html:has(.mode-top-bar--quiz) {
   .mode-top-bar__nav-slot {
     max-width: 100%;
     overflow-x: auto;
-    overflow-y: hidden;
+    overflow-y: visible;
     flex-wrap: nowrap;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
@@ -1027,15 +1029,15 @@ html:has(.mode-top-bar--quiz) {
 
   .auth-nav-badge__unread,
   .forum-nav-unread {
-    top: -1px;
-    right: -1px;
-    min-width: 10px;
-    height: 10px;
-    max-height: 10px;
-    padding: 0 2px;
-    font-size: 5px;
+    top: 0;
+    right: 0;
+    min-width: 12px;
+    height: 12px;
+    max-height: 12px;
+    padding: 0 3px;
+    font-size: 6px;
     box-shadow:
-      0 0 0 1px rgba(12, 10, 24, 0.95),
+      0 0 0 1.5px rgba(12, 10, 24, 0.95),
       0 0 5px rgba(255, 90, 106, 0.3);
   }
 

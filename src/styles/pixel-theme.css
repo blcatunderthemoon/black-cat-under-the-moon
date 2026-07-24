@@ -1811,9 +1811,17 @@
 }
 
 .inbox-letter-row--system .inbox-letter-row__new-badge--system {
-  background: rgba(255, 224, 102, 0.2);
-  color: #ffe066;
-  border-color: rgba(255, 224, 102, 0.45);
+  top: 6px;
+  right: 6px;
+  padding: 3px 5px 2px;
+  font-size: 6px;
+  letter-spacing: 0.08em;
+  color: #1a1408;
+  background: linear-gradient(145deg, #ffe066 0%, #f0c14a 100%);
+  border: 2px solid rgba(255, 244, 200, 0.95);
+  box-shadow:
+    2px 2px 0 0 rgba(0, 0, 0, 0.5),
+    0 0 12px rgba(255, 224, 102, 0.35);
 }
 
 .inbox-match-card-row {
@@ -5302,8 +5310,12 @@
 
   .inbox-letter-row__en--name,
   .inbox-letter-row__name .inbox-letter-row__zh,
+  .inbox-letter-list .inbox-letter-row__zh {
+    font-size: 9px;
+    line-height: 1;
+  }
+
   .inbox-letter-row__title,
-  .inbox-letter-list .inbox-letter-row__zh,
   .inbox-letter-row__opportunity,
   .inbox-letter-row__time,
   .inbox-letter-row__closed-hint-text {
@@ -5312,10 +5324,13 @@
   }
 
   .inbox-letter-row__name .inbox-letter-row__en,
-  .inbox-letter-row__name .inbox-letter-row__zh,
-  .inbox-letter-row__title {
-    min-height: 1.5em;
+  .inbox-letter-row__name .inbox-letter-row__zh {
+    min-height: 0;
     height: auto;
+  }
+
+  .inbox-letter-list .inbox-letter-row__en--name {
+    transform: translateY(1px);
   }
 
   .inbox-user-search {
@@ -7725,17 +7740,20 @@
 
 .inbox-letter-row__new-badge {
   position: absolute;
-  top: -7px;
-  right: -7px;
+  top: 6px;
+  right: 6px;
   z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-family: 'Press Start 2P', monospace;
-  font-size: 7px;
+  font-size: 6px;
   letter-spacing: 0.06em;
   line-height: 1;
   color: #fff;
   background: linear-gradient(135deg, #ff6b9d 0%, #c44d8a 100%);
   border: 2px solid rgba(255, 224, 240, 0.9);
-  padding: 4px 6px 3px;
+  padding: 3px 5px 2px;
   box-shadow: 2px 2px 0 0 rgba(0, 0, 0, 0.5), 0 0 12px rgba(255, 107, 157, 0.5);
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: grayscale;
@@ -7745,15 +7763,15 @@
 
 /* Match「連線」badge — after base so it wins cascade; cyan/gold 共鳴色 */
 .inbox-letter-row__new-badge.inbox-letter-row__new-badge--match {
-  top: -8px;
-  right: -8px;
+  top: 5px;
+  right: 5px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 3px;
   min-width: 2.6em;
-  padding: 5px 8px 4px;
-  font-size: 7px;
+  padding: 4px 7px 3px;
+  font-size: 6px;
   letter-spacing: 0.1em;
   color: #0d0b1e;
   background:
@@ -7820,12 +7838,14 @@
   padding-top: 1px;
 }
 
-.inbox-letter-row:has(.inbox-letter-row__new-badge) .inbox-letter-row__stack {
-  padding-right: 28px;
+/* Keep corner badge clear of the name row only — never pad the whole stack
+   (that shoved meta/time out of place). */
+.inbox-letter-row:has(.inbox-letter-row__new-badge) .inbox-letter-row__top {
+  padding-right: 2.75em;
 }
 
-.inbox-letter-row:has(.inbox-letter-row__new-badge--match) .inbox-letter-row__stack {
-  padding-right: 48px;
+.inbox-letter-row:has(.inbox-letter-row__new-badge--match) .inbox-letter-row__top {
+  padding-right: 3.75em;
 }
 
 .inbox-letter-row__top {
@@ -7874,28 +7894,30 @@
 .inbox-letter-list .inbox-letter-row__zh {
   font-size: 10px;
   letter-spacing: 0.02em;
-  line-height: 1.5;
+  line-height: 1;
 }
 
 .inbox-letter-list .inbox-letter-row__en {
   font-family: 'Press Start 2P', monospace;
   font-size: 10px;
   letter-spacing: 0.04em;
-  line-height: 1.5;
+  line-height: 1;
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: grayscale;
 }
 
 .inbox-letter-list .inbox-letter-row__en--name {
   font-size: 10px;
-  line-height: 1.5;
+  line-height: 1;
+  /* Press Start 2P sits optically higher than Zpix — nudge onto the same midline */
+  transform: translateY(1px);
 }
 
 .inbox-letter-row__name {
   flex: 1;
   min-width: 0;
   display: flex;
-  align-items: baseline;
+  align-items: center;
   flex-wrap: wrap;
   column-gap: 0.35em;
   row-gap: 0.1em;
@@ -7904,12 +7926,24 @@
   word-break: break-word;
 }
 
+.inbox-letter-row__name .pixel-mixed-label {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  column-gap: 0;
+  max-width: 100%;
+  vertical-align: middle;
+  line-height: 1;
+}
+
 .inbox-letter-row__name .inbox-letter-row__en,
 .inbox-letter-row__name .inbox-letter-row__zh {
   display: inline-flex;
   align-items: center;
-  height: 1.5em;
-  line-height: 1.5;
+  height: auto;
+  min-height: 0;
+  line-height: 1;
+  vertical-align: middle;
 }
 
 .inbox-letter-row__title {

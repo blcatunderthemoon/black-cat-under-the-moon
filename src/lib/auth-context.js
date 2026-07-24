@@ -200,7 +200,8 @@ export function AuthProvider({ children }) {
     let refreshTimer = null;
     const scheduleRefresh = () => {
       if (refreshTimer) clearTimeout(refreshTimer);
-      refreshTimer = setTimeout(() => { refreshProfile(); }, 120);
+      // Force refresh so unread_inbox_count picks up new system notices (月光聚會 etc.).
+      refreshTimer = setTimeout(() => { refreshProfile({ force: true }); }, 120);
     };
     const onRoute = () => { scheduleRefresh(); };
     const onVisible = () => {
