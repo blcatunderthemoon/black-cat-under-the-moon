@@ -1,8 +1,21 @@
 /**
- * Index landing — pixel black cat mascot (bottom patrol + idle).
+ * Index landing — pixel black cat mascot.
+ * Rare short visits: walk in → brief stay → walk off. Not always on screen.
  */
 (function () {
   'use strict';
+
+  /* ~12% chance on load; later retries even rarer */
+  var APPEAR_CHANCE_FIRST = 0.12;
+  var APPEAR_CHANCE_RETRY = 0.06;
+  /* Visible on-screen window (ms) before exit starts */
+  var STAY_MIN_MS = 4500;
+  var STAY_MAX_MS = 8000;
+  /* Delay before first appear attempt / between visits */
+  var FIRST_DELAY_MIN_MS = 4000;
+  var FIRST_DELAY_MAX_MS = 14000;
+  var RETRY_DELAY_MIN_MS = 90000;
+  var RETRY_DELAY_MAX_MS = 180000;
 
   var MEOW_LINES = [
     '喵~',
@@ -30,8 +43,14 @@
   ];
   var lastLineIndex = -1;
   var bubbleTimer = null;
-  var wanderTimer = null;
+  var visitTimer = null;
+  var retryTimer = null;
   var pos = { x: 0, y: 0 };
+  var visiting = false;
+
+  function randBetween(min, max) {
+    return min + Math.random() * (max - min);
+  }
 
   function init() {
     var btn = document.getElementById('welcome-mascot');
@@ -41,11 +60,13 @@
     var bubble = btn.querySelector('.welcome-mascot__bubble');
     var figure = btn.querySelector('.welcome-mascot__figure');
     var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var pauseUntil = 0;
     var walking = false;
     var margin = 36;
     var bottomPad = 64;
     var mobileMq = window.matchMedia('(max-width: 768px)');
+    var exitSide = 'right';
+
+    btn.hidden = true;
 
     function isHomeLanding() {
       return !!document.getElementById('home-landing');
@@ -65,7 +86,6 @@
       var size = catSize();
       var totalH = size.h;
       var halfW = size.w * 0.5;
-      /* On home carousel, keep the cat in the bottom strip so it never sits on CTAs */
       var pad = isHomeLanding() ? (isMobile() ? 108 : 96) : bottomPad;
       var feetY = window.innerHeight - pad;
       var minX = margin + halfW;
@@ -83,7 +103,6 @@
       if (carousel) {
         var cr = carousel.getBoundingClientRect();
         if (cr.width && cr.height && cr.bottom > catTop - 8 && cr.top < feetY + 20) {
-          /* Prefer left side near presence chip */
           maxX = Math.min(maxX, Math.max(minX, cr.left + halfW + 8));
         }
       }
@@ -103,36 +122,6 @@
       };
     }
 
-    function resolveFooterOverlap() {
-      var size = catSize();
-      var halfW = size.w * 0.5;
-      var h = size.h;
-      document.querySelectorAll('.site-footer--legal').forEach(function (footer) {
-        var r = footer.getBoundingClientRect();
-        if (!r.width || !r.height) return;
-        var left = pos.x - halfW;
-        var right = pos.x + halfW;
-        var top = pos.y - h;
-        var bottom = pos.y;
-        if (right <= r.left + 4 || left >= r.right - 4 || bottom <= r.top + 4 || top >= r.bottom - 4) return;
-        var liftY = r.top - 8;
-        if (liftY < pos.y) pos.y = liftY;
-        var slideX = r.left - halfW - 12;
-        var b = bounds();
-        if (slideX >= b.minX) pos.x = Math.min(pos.x, slideX);
-      });
-    }
-
-    function clampPos() {
-      var b = bounds();
-      pos.x = Math.min(b.maxX, Math.max(b.minX, pos.x));
-      pos.y = Math.min(b.maxFeetY, Math.max(b.minFeetY, pos.y));
-      resolveFooterOverlap();
-      b = bounds();
-      pos.x = Math.min(b.maxX, Math.max(b.minX, pos.x));
-      pos.y = Math.min(b.maxFeetY, Math.max(b.minFeetY, pos.y));
-    }
-
     function applyPos(animate, durationMs) {
       var b = bounds();
       btn.style.setProperty('--mascot-x', (pos.x - b.halfW) + 'px');
@@ -149,101 +138,31 @@
       }
     }
 
-    function setStartPos() {
+    function offscreenX(side) {
+      var size = catSize();
+      var halfW = size.w * 0.5;
+      if (side === 'left') return -halfW - 24;
+      return window.innerWidth + halfW + 24;
+    }
+
+    function onstageX() {
       var b = bounds();
-      if (isHomeLanding()) {
-        pos.x = b.minX + Math.min(48, (b.maxX - b.minX) * 0.35);
-      } else {
-        pos.x = b.minX + (b.maxX - b.minX) * (isMobile() ? 0.22 : 0.78);
-      }
-      pos.y = b.feetY;
-      clampPos();
-      applyPos(false);
+      var span = Math.max(1, b.maxX - b.minX);
+      return b.minX + span * (0.18 + Math.random() * 0.35);
     }
 
-    setStartPos();
-
-    function pickHop() {
-      var b = bounds();
-      var hop = 28 + Math.random() * 44;
-      var dir = Math.random() < 0.5 ? -1 : 1;
-      var nextX = pos.x + dir * hop;
-
-      if (nextX < b.minX || nextX > b.maxX) {
-        nextX = pos.x - dir * hop;
-      }
-      nextX = Math.min(b.maxX, Math.max(b.minX, nextX));
-
-      if (Math.abs(nextX - pos.x) < 24) {
-        return null;
-      }
-
-      return {
-        x: nextX,
-        y: b.feetY - Math.floor(Math.random() * 4),
-      };
+    function walkDuration(fromX, toX) {
+      var dist = Math.abs(toX - fromX);
+      return Math.min(2800, Math.max(900, Math.round(dist * 14)));
     }
 
-    function wanderDuration(from, to) {
-      var dx = Math.abs(to.x - from.x);
-      var dy = Math.abs(to.y - from.y);
-      var dist = Math.sqrt(dx * dx + dy * dy);
-      return Math.min(3200, Math.max(1000, Math.round(dist * 22)));
+    function hideBubble() {
+      if (!bubble) return;
+      if (bubbleTimer) clearTimeout(bubbleTimer);
+      bubbleTimer = null;
+      bubble.classList.remove('welcome-mascot__bubble--visible', 'welcome-mascot__bubble--edge-left', 'welcome-mascot__bubble--edge-right');
+      bubble.hidden = true;
     }
-
-    function wander() {
-      if (reducedMotion) return;
-      if (walking) return;
-      if (Date.now() < pauseUntil) return;
-      if (bubble && bubble.classList.contains('welcome-mascot__bubble--visible')) return;
-
-      var next = pickHop();
-      if (!next) return;
-
-      var durationMs = wanderDuration(pos, next);
-      btn.classList.toggle('welcome-mascot--face-left', next.x < pos.x - 4);
-
-      btn.style.transitionDuration = '0ms';
-      btn.classList.remove('welcome-mascot--walk');
-      applyPos(false);
-
-      requestAnimationFrame(function () {
-        pos.x = next.x;
-        pos.y = next.y;
-        applyPos(true, durationMs);
-      });
-    }
-
-    btn.addEventListener('transitionend', function (e) {
-      if (e.propertyName !== 'transform') return;
-      if (!btn.classList.contains('welcome-mascot--walk')) return;
-      btn.classList.remove('welcome-mascot--walk');
-      walking = false;
-    });
-
-    function scheduleWander(delay) {
-      if (wanderTimer) clearTimeout(wanderTimer);
-      wanderTimer = setTimeout(function () {
-        wander();
-        scheduleWander(14000 + Math.random() * 9000);
-      }, delay);
-    }
-
-    if (!reducedMotion) {
-      scheduleWander(12000 + Math.random() * 6000);
-    }
-
-    function onLayoutChange() {
-      clampPos();
-      applyPos(false);
-    }
-
-    window.addEventListener('resize', onLayoutChange, { passive: true });
-    window.addEventListener('scroll', onLayoutChange, { passive: true });
-
-    btn.addEventListener('mouseenter', function () {
-      pauseUntil = Date.now() + 5000;
-    });
 
     function alignBubble() {
       if (!bubble || bubble.hidden) return;
@@ -256,59 +175,6 @@
       }
     }
 
-    function randomIdle() {
-      if (reducedMotion) return;
-      if (walking) return;
-      var roll = Math.random();
-      btn.classList.remove('welcome-mascot--tail', 'welcome-mascot--blink', 'welcome-mascot--moon', 'welcome-mascot--sparkle', 'welcome-mascot--whiskers');
-      if (roll < 0.18) {
-        btn.classList.add('welcome-mascot--tail');
-        setTimeout(function () { btn.classList.remove('welcome-mascot--tail'); }, 1400);
-      } else if (roll < 0.42) {
-        btn.classList.add('welcome-mascot--blink');
-        setTimeout(function () { btn.classList.remove('welcome-mascot--blink'); }, 180);
-      } else if (roll < 0.58) {
-        btn.classList.add('welcome-mascot--moon');
-        setTimeout(function () { btn.classList.remove('welcome-mascot--moon'); }, 2200);
-      } else if (roll < 0.74) {
-        btn.classList.add('welcome-mascot--sparkle');
-        setTimeout(function () { btn.classList.remove('welcome-mascot--sparkle'); }, 900);
-      } else if (roll < 0.88) {
-        btn.classList.add('welcome-mascot--whiskers');
-        setTimeout(function () { btn.classList.remove('welcome-mascot--whiskers'); }, 400);
-      }
-    }
-
-    if (!reducedMotion) {
-      setInterval(randomIdle, 9000 + Math.random() * 7000);
-      setTimeout(randomIdle, 6000 + Math.random() * 4000);
-    }
-
-    function setPupilLook(dx, dy) {
-      var len = Math.sqrt(dx * dx + dy * dy) || 1;
-      var max = 1;
-      var nx = (dx / len) * max;
-      var ny = (dy / len) * max;
-      var faceLeft = btn.classList.contains('welcome-mascot--face-left');
-      if (faceLeft) nx = -nx;
-      pupils.forEach(function (p) {
-        p.style.setProperty('--pupil-x', nx + 'px');
-        p.style.setProperty('--pupil-y', ny + 'px');
-        p.style.transform = 'translate(' + nx + 'px,' + ny + 'px)';
-      });
-    }
-
-    function onPointerMove(e) {
-      if (walking) return;
-      var rect = btn.getBoundingClientRect();
-      var cx = rect.left + rect.width * 0.5;
-      var cy = rect.top + rect.height * 0.42;
-      setPupilLook(e.clientX - cx, e.clientY - cy);
-      btn.classList.remove('welcome-mascot--moon');
-    }
-
-    window.addEventListener('mousemove', onPointerMove, { passive: true });
-
     function pickLine() {
       if (MEOW_LINES.length <= 1) return MEOW_LINES[0] || '喵~';
       var idx;
@@ -319,9 +185,8 @@
       return MEOW_LINES[idx];
     }
 
-    btn.addEventListener('click', function () {
-      if (!bubble) return;
-      pauseUntil = Date.now() + 4000;
+    function maybeMeow() {
+      if (!bubble || Math.random() > 0.45) return;
       bubble.textContent = pickLine();
       bubble.hidden = false;
       bubble.classList.remove('welcome-mascot__bubble--edge-left', 'welcome-mascot__bubble--edge-right');
@@ -336,13 +201,170 @@
         bubbleTimer = setTimeout(function () {
           bubble.hidden = true;
           bubble.classList.remove('welcome-mascot__bubble--edge-left', 'welcome-mascot__bubble--edge-right');
-        }, 280);
-      }, 2600);
+        }, 240);
+      }, 1800);
+    }
+
+    function finishVisit() {
+      visiting = false;
+      walking = false;
+      hideBubble();
+      btn.classList.remove('welcome-mascot--walk', 'welcome-mascot--tail', 'welcome-mascot--blink', 'welcome-mascot--moon', 'welcome-mascot--sparkle', 'welcome-mascot--whiskers');
+      btn.hidden = true;
+      btn.style.transitionDuration = '0ms';
+      scheduleRetry();
+    }
+
+    function exitVisit() {
+      if (!visiting || btn.hidden) return;
+      hideBubble();
+      var leaveX = offscreenX(exitSide);
+      btn.classList.toggle('welcome-mascot--face-left', leaveX < pos.x - 4);
+      var durationMs = reducedMotion ? 0 : walkDuration(pos.x, leaveX);
+
+      function afterExit() {
+        finishVisit();
+      }
+
+      if (reducedMotion || durationMs <= 0) {
+        pos.x = leaveX;
+        applyPos(false);
+        afterExit();
+        return;
+      }
+
+      requestAnimationFrame(function () {
+        pos.x = leaveX;
+        applyPos(true, durationMs);
+        if (visitTimer) clearTimeout(visitTimer);
+        visitTimer = setTimeout(afterExit, durationMs + 80);
+      });
+    }
+
+    function beginVisit() {
+      if (visiting) return;
+      visiting = true;
+      exitSide = Math.random() < 0.5 ? 'left' : 'right';
+      var enterSide = exitSide === 'left' ? 'right' : 'left';
+      var b = bounds();
+      var targetX = onstageX();
+      var startX = offscreenX(enterSide);
+
+      pos.x = startX;
+      pos.y = b.feetY;
+      btn.hidden = false;
+      btn.classList.toggle('welcome-mascot--face-left', targetX < startX - 4);
+      applyPos(false);
+
+      var enterMs = reducedMotion ? 0 : walkDuration(startX, targetX);
+
+      function onStage() {
+        walking = false;
+        btn.classList.remove('welcome-mascot--walk');
+        maybeMeow();
+        if (visitTimer) clearTimeout(visitTimer);
+        visitTimer = setTimeout(exitVisit, randBetween(STAY_MIN_MS, STAY_MAX_MS));
+      }
+
+      if (reducedMotion || enterMs <= 0) {
+        pos.x = targetX;
+        applyPos(false);
+        onStage();
+        return;
+      }
+
+      requestAnimationFrame(function () {
+        pos.x = targetX;
+        pos.y = b.feetY;
+        applyPos(true, enterMs);
+        if (visitTimer) clearTimeout(visitTimer);
+        visitTimer = setTimeout(onStage, enterMs + 60);
+      });
+    }
+
+    function tryAppear(chance) {
+      if (visiting) return;
+      if (document.hidden) {
+        scheduleRetry();
+        return;
+      }
+      if (Math.random() < chance) {
+        beginVisit();
+      } else {
+        scheduleRetry();
+      }
+    }
+
+    function scheduleRetry() {
+      if (retryTimer) clearTimeout(retryTimer);
+      retryTimer = setTimeout(function () {
+        tryAppear(APPEAR_CHANCE_RETRY);
+      }, randBetween(RETRY_DELAY_MIN_MS, RETRY_DELAY_MAX_MS));
+    }
+
+    function scheduleFirst() {
+      if (retryTimer) clearTimeout(retryTimer);
+      retryTimer = setTimeout(function () {
+        tryAppear(APPEAR_CHANCE_FIRST);
+      }, randBetween(FIRST_DELAY_MIN_MS, FIRST_DELAY_MAX_MS));
+    }
+
+    btn.addEventListener('transitionend', function (e) {
+      if (e.propertyName !== 'transform') return;
+      if (!btn.classList.contains('welcome-mascot--walk')) return;
+      btn.classList.remove('welcome-mascot--walk');
+      walking = false;
+    });
+
+    function setPupilLook(dx, dy) {
+      if (btn.hidden || walking) return;
+      var len = Math.sqrt(dx * dx + dy * dy) || 1;
+      var max = 1;
+      var nx = (dx / len) * max;
+      var ny = (dy / len) * max;
+      var faceLeft = btn.classList.contains('welcome-mascot--face-left');
+      if (faceLeft) nx = -nx;
+      pupils.forEach(function (p) {
+        p.style.setProperty('--pupil-x', nx + 'px');
+        p.style.setProperty('--pupil-y', ny + 'px');
+        p.style.transform = 'translate(' + nx + 'px,' + ny + 'px)';
+      });
+    }
+
+    window.addEventListener('mousemove', function (e) {
+      if (btn.hidden || walking) return;
+      var rect = btn.getBoundingClientRect();
+      var cx = rect.left + rect.width * 0.5;
+      var cy = rect.top + rect.height * 0.42;
+      setPupilLook(e.clientX - cx, e.clientY - cy);
+    }, { passive: true });
+
+    btn.addEventListener('click', function () {
+      if (btn.hidden || !bubble) return;
+      bubble.textContent = pickLine();
+      bubble.hidden = false;
+      bubble.classList.remove('welcome-mascot__bubble--edge-left', 'welcome-mascot__bubble--edge-right');
+      bubble.classList.add('welcome-mascot__bubble--visible');
+      requestAnimationFrame(function () {
+        alignBubble();
+        requestAnimationFrame(alignBubble);
+      });
+      if (bubbleTimer) clearTimeout(bubbleTimer);
+      bubbleTimer = setTimeout(function () {
+        bubble.classList.remove('welcome-mascot__bubble--visible');
+        bubbleTimer = setTimeout(function () {
+          bubble.hidden = true;
+          bubble.classList.remove('welcome-mascot__bubble--edge-left', 'welcome-mascot__bubble--edge-right');
+        }, 240);
+      }, 1600);
     });
 
     window.addEventListener('resize', function () {
+      if (btn.hidden || visiting) return;
       if (bubble && !bubble.hidden) alignBubble();
     }, { passive: true });
+
+    scheduleFirst();
   }
 
   if (document.readyState === 'loading') {
