@@ -41,7 +41,7 @@
 <link rel="stylesheet" href="css/auth-nav.css?v=20260724unread3">
 <link rel="stylesheet" href="css/mobile-webview-scroll.css?v=20260725authfs">
 <link rel="stylesheet" href="css/welcome-atmosphere.css?v=20260725bubble">
-<link rel="stylesheet" href="css/home-carousel.css?v=20260725ctasoft">
+<link rel="stylesheet" href="css/home-carousel.css?v=20260725arrows">
 <script src="/js/posthog-page-context.js" defer></script>
 <script src="/js/posthog-init.js" defer></script>
 </head>
@@ -102,7 +102,11 @@
     aria-label="模式導覽"
   >
     <div class="home-carousel__viewport">
-      <button type="button" class="home-carousel__arrow home-carousel__arrow--prev" aria-label="上一個模式">‹</button>
+      <button type="button" class="home-carousel__arrow home-carousel__arrow--prev" aria-label="上一個模式">
+        <svg class="home-carousel__arrow-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M14.5 6.5 9 12l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
       <div class="home-carousel__track is-booting" role="list">
         <a
           class="home-carousel__slide"
@@ -219,7 +223,11 @@
           track.scrollLeft = Math.max(0, slide.offsetLeft + slide.offsetWidth / 2 - track.clientWidth / 2);
         })();
       </script>
-      <button type="button" class="home-carousel__arrow home-carousel__arrow--next" aria-label="下一個模式">›</button>
+      <button type="button" class="home-carousel__arrow home-carousel__arrow--next" aria-label="下一個模式">
+        <svg class="home-carousel__arrow-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M9.5 6.5 15 12l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
     </div>
 
     <div class="home-carousel__dots" role="tablist" aria-label="選擇模式">

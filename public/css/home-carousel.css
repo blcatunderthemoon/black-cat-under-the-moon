@@ -482,16 +482,27 @@ body.home-landing-active:has(#live-activity:not([hidden])) {
   border-radius: 50%;
   background: rgba(12, 10, 22, 0.55);
   color: rgba(240, 235, 216, 0.88);
-  font-size: 22px;
-  line-height: 1;
+  font-size: 0;
+  line-height: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
   cursor: pointer;
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
   transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+}
+
+.home-carousel__arrow-icon {
+  display: block;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
 }
 
 .home-carousel__arrow--prev {
