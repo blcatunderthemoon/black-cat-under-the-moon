@@ -1,10 +1,10 @@
 ---
 title: 香港Les・香港女同志交友入門指南
-description: 香港Les／香港女同志交友入門 — 由自我認識、交友途徑到安全約會，一篇睇晒香港女同志（lesbian）交友重點，幫你踏出第一步。
+description: 香港Les交友／香港女同志交友入門 — 自我認識、香港Les配對途徑、香港Les討論區同匿名交友安全重點，一篇睇晒。
 slug: hong-kong-les-guide
 date: 2026-07-15
-updated: 2026-07-23
-keywords: [香港Les, 香港女同志, 香港 les, les 交友, lesbian 香港]
+updated: 2026-07-25
+keywords: [香港Les交友, 香港女同志交友, 香港Les配對, 香港Les討論區, 香港Les匿名交友, 香港Les, 香港女同志]
 excerpt: 香港Les／香港女同志交友入門：自我認識、交友途徑同安全約會重點。
 ---
 

@@ -644,9 +644,23 @@
       border-color: rgba(255,215,0,.28);
       border-top-color: rgba(255,215,0,.42);
     }
+    .card-type-row {
+      display: none;
+      align-items: center;
+      flex-wrap: nowrap;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .bottle-card.mission .card-type-row,
+    .card-type-row:has(.moonlight-badge.show) {
+      display: flex;
+    }
     .card-tag-row {
-      display: flex; align-items: center; flex-wrap: nowrap;
-      gap: 6px; margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      flex-wrap: nowrap;
+      gap: 6px;
+      margin-bottom: 12px;
     }
     .btn-report-inline {
       margin-left: auto; flex-shrink: 0;
@@ -659,23 +673,39 @@
     .mission-card-badge {
       display: none; align-items: center; gap: 6px;
       background: rgba(255,215,0,.14); border: 1px solid rgba(255,215,0,.4);
-      border-radius: 20px; padding: 4px 12px; font-size: 11px;
+      border-radius: 20px; padding: 3px 12px; font-size: 11px;
       color: #ffd700; width: fit-content; white-space: nowrap; flex-shrink: 0;
     }
     .bottle-card.mission .mission-card-badge { display: inline-flex; }
-    /* Phase 7: Moonlight badge */
+    /* Moonlight type — same pill language as mood tags, own section above */
     .moonlight-badge {
-      display: none; align-items: center; gap: 6px;
-      background: rgba(255,215,0,.08); border: 1px solid rgba(255,215,0,.3);
-      border-radius: 20px; padding: 4px 12px; font-size: 11px;
-      color: #ffd700; width: fit-content; white-space: nowrap; flex-shrink: 0;
+      display: none;
+      align-items: center;
+      background: rgba(255,107,157,.18);
+      border: 1px solid rgba(255,107,157,.55);
+      border-radius: 20px;
+      padding: 3px 12px;
+      font-size: 11px;
+      color: #ffb3d0;
+      text-shadow: 0 0 10px rgba(255,107,157,.35);
+      width: fit-content;
+      white-space: nowrap;
+      flex-shrink: 0;
+      box-sizing: border-box;
     }
     .moonlight-badge.show { display: inline-flex; }
     .expires-hint { font-size: 11px; color: rgba(175,190,215,.80); margin-top: 10px; opacity: 1; font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif; }
     .mood-badge {
-      display: flex; flex-wrap: wrap; gap: 6px;
-      flex-shrink: 1; min-width: 0;
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 6px;
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
     }
+    .mood-badge::-webkit-scrollbar { display: none; }
     .mood-pill {
       display: inline-flex; align-items: center;
       background: rgba(255,107,157,.18);
@@ -685,6 +715,7 @@
       white-space: nowrap; max-width: 160px;
       overflow: hidden; text-overflow: ellipsis;
       box-sizing: border-box;
+      flex-shrink: 0;
     }
     .bottle-body { font-size: 17px; line-height: 2.0; color: #ffffff; font-style: normal; font-family: 'M PLUS Rounded 1c', 'Noto Sans TC', sans-serif; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; padding: 6px 0; }
     .oracle-answer-shell {

@@ -10,9 +10,9 @@ import SeoHead from '../../components/SeoHead.js';
 import { getAllGuides } from '../../lib/guides.js';
 import { breadcrumbJsonLd, organizationJsonLd, webSiteJsonLd } from '../../lib/structured-data.js';
 
-const PAGE_TITLE = '香港Les・香港女同志文章與指南';
+const PAGE_TITLE = '香港Les交友・香港女同志交友指南';
 const PAGE_DESCRIPTION =
-  '香港Les／香港女同志交友、約會、出櫃與社群生活指南 — 由 Black Cat Under The Moon 整理，幫香港女同志認識自己、認識彼此。';
+  '香港Les交友／香港女同志交友、香港Les配對、香港Les討論區同匿名交友指南 — 由 Black Cat Under The Moon 整理，幫香港女同志認識自己、認識彼此。';
 
 function formatDate(iso) {
   if (!iso) return null;

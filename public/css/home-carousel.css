@@ -753,20 +753,20 @@ body.home-landing-active:has(#live-activity:not([hidden])) {
   transition: filter 0.25s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Moonlight logo has more empty margin — enlarge + sit closer to badge */
+/* Moonlight icon — slightly larger than default (PNG has empty margin), softer scale */
 .home-carousel__slide[data-mode="gathering"] .home-carousel__icon {
-  width: 118px;
-  height: 118px;
-  margin-bottom: 2px;
+  width: 104px;
+  height: 104px;
+  margin-bottom: 4px;
 }
 
 .home-carousel__slide[data-mode="gathering"] .home-carousel__icon img {
-  width: 118px;
-  height: 118px;
-  transform: scale(1.12);
+  width: 104px;
+  height: 104px;
+  transform: scale(1.04);
   filter:
     drop-shadow(0 6px 12px rgba(0, 0, 0, 0.45))
-    drop-shadow(0 0 10px rgba(110, 184, 196, 0.28));
+    drop-shadow(0 0 10px rgba(110, 184, 196, 0.4));
 }
 
 /* Selected: slight lift only — no continuous bob */
@@ -781,9 +781,10 @@ body.home-landing-active:has(#live-activity:not([hidden])) {
     drop-shadow(0 10px 14px rgba(0, 0, 0, 0.4));
 }
 .home-carousel__slide[data-mode="gathering"].is-active .home-carousel__icon img {
-  transform: translateY(-4px) scale(1.16);
+  transform: translateY(-4px) scale(1.06);
   filter:
-    drop-shadow(0 0 14px rgba(110, 184, 196, 0.32))
+    drop-shadow(0 0 10px rgba(110, 184, 196, 0.5))
+    drop-shadow(0 0 18px rgba(142, 202, 212, 0.35))
     drop-shadow(0 10px 14px rgba(0, 0, 0, 0.4));
 }
 .home-carousel__slide[data-mode="drift"].is-active .home-carousel__icon img {
@@ -1590,14 +1591,14 @@ body.home-landing-active:has(#live-activity:not([hidden])) {
   }
 
   .home-carousel__slide[data-mode="gathering"] .home-carousel__icon {
-    width: 96px;
-    height: 96px;
+    width: 88px;
+    height: 88px;
     margin-bottom: 2px;
   }
 
   .home-carousel__slide[data-mode="gathering"] .home-carousel__icon img {
-    width: 96px;
-    height: 96px;
+    width: 88px;
+    height: 88px;
   }
 
   .home-carousel__name {
@@ -1660,14 +1661,14 @@ body.home-landing-active:has(#live-activity:not([hidden])) {
   }
 
   .home-carousel__slide[data-mode="gathering"] .home-carousel__icon {
-    width: 92px;
-    height: 92px;
+    width: 84px;
+    height: 84px;
     margin-bottom: 2px;
   }
 
   .home-carousel__slide[data-mode="gathering"] .home-carousel__icon img {
-    width: 92px;
-    height: 92px;
+    width: 84px;
+    height: 84px;
   }
 }
 

@@ -165,39 +165,22 @@ function formatMembersDisplay(total) {
   return `${Math.floor(n / step) * step}+`;
 }
 
-function GatheringPanel({ count, membersTotal }) {
-  const active = typeof count === 'number' ? count : null;
-  const useCumulative = active === 0;
+function GatheringPanel({ membersTotal }) {
   const membersLabel = formatMembersDisplay(membersTotal);
-
-  if (useCumulative) {
-    return (
-      <aside className="forum-panel forum-panel--stat">
-        <div className="forum-panel__head">
-          <h3 className="forum-panel__title">圍爐黑貓</h3>
-          <p className="forum-panel__hint forum-panel__hint--hot">累積已加入</p>
-        </div>
-        <div className="forum-gathering-count forum-gathering-count--body">
-          {membersLabel || '—'}
-          <span>
-            {membersLabel
-              ? '隻黑貓已加入圍爐'
-              : '歡迎成為第一批圍爐黑貓'}
-          </span>
-        </div>
-      </aside>
-    );
-  }
 
   return (
     <aside className="forum-panel forum-panel--stat">
       <div className="forum-panel__head">
-        <h3 className="forum-panel__title">圍爐人數</h3>
-        <p className="forum-panel__hint forum-panel__hint--hot">近 24 小時活躍</p>
+        <h3 className="forum-panel__title">圍爐黑貓</h3>
+        <p className="forum-panel__hint forum-panel__hint--hot">累積已加入</p>
       </div>
       <div className="forum-gathering-count forum-gathering-count--body">
-        {active ?? '—'}
-        <span>目前有 {active ?? '…'} 隻黑貓正在圍爐取暖</span>
+        {membersLabel || '—'}
+        <span>
+          {membersLabel
+            ? '隻黑貓已加入圍爐'
+            : '歡迎成為第一批圍爐黑貓'}
+        </span>
       </div>
     </aside>
   );
@@ -1014,7 +997,7 @@ export default function ForumPage() {
       <>
         <SeoHead
           title={FORUM_DISPLAY_NAME}
-          description="黑貓樹洞 — 在月光下匿名分享心情、認識同 Mirror 家族的朋友，參與 Black Cat Under The Moon 社群。"
+          description="香港Les討論區・黑貓樹洞 — 香港女同志匿名分享同交流，認識同路朋友。"
           path="/forum"
           jsonLd={[organizationJsonLd(), webSiteJsonLd()]}
         />
@@ -1041,10 +1024,10 @@ export default function ForumPage() {
   return (
     <>
       <SeoHead
-        title={matureTopicActive ? `${MATURE_FORUM_TOPIC} · ${FORUM_DISPLAY_NAME}` : `${FORUM_DISPLAY_NAME}｜香港 Les 討論區`}
+        title={matureTopicActive ? `${MATURE_FORUM_TOPIC} · ${FORUM_DISPLAY_NAME}` : `${FORUM_DISPLAY_NAME}｜香港Les討論區`}
         description={matureTopicActive
           ? '黑貓樹洞成熟話題版 — 已登入會員的文字討論空間，分享親密關係、界線與同意。'
-          : '黑貓樹洞｜香港 Les 討論區 — 在月光下匿名分享心情、認識香港女同志朋友，參與 Black Cat Under The Moon 社群。'}
+          : '香港Les討論區｜黑貓樹洞 — 香港女同志匿名分享心情、交流同認識同路朋友。'}
         path="/forum"
         noindex={matureTopicActive}
         jsonLd={[organizationJsonLd(), webSiteJsonLd()]}
@@ -1073,7 +1056,7 @@ export default function ForumPage() {
       >
         <div className="forum-layout">
           <div className="forum-sidebar forum-sidebar--left">
-            <GatheringPanel count={meta?.gathering_count} membersTotal={meta?.members_total} />
+            <GatheringPanel membersTotal={meta?.members_total} />
           </div>
 
           <div className="forum-main">
@@ -1203,7 +1186,7 @@ export default function ForumPage() {
 
             {topic === '全部' && (
               <div className="forum-treehole-panels forum-treehole-panels--mobile">
-                <GatheringPanel count={meta?.gathering_count} membersTotal={meta?.members_total} />
+                <GatheringPanel membersTotal={meta?.members_total} />
                 <FeaturedPostsPanel featuredPosts={featuredPosts} />
                 <HotTopicsPanel hotPosts={meta?.hot_posts} sparksMode={meta?.sparks_mode} />
               </div>

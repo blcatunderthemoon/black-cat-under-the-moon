@@ -1,10 +1,10 @@
 ---
 title: 香港女同志交友平台比較：點揀最啱自己嘅一個？
-description: 香港女同志交友平台比較 — 由安全機制、匿名度到社群氛圍，教你點樣揀啱自己嘅 les 交友 app 同平台。
+description: 香港Les app／香港Les配對平台比較 — 由安全機制、匿名度到社群氛圍，教你點樣揀啱自己嘅香港Les交友方式。
 slug: hong-kong-les-dating-apps-compare
 date: 2026-07-13
-updated: 2026-07-13
-keywords: [香港女同志交友平台, les 交友 app, 香港 les app, lesbian dating hong kong]
+updated: 2026-07-25
+keywords: [香港Les app, 香港Les配對, 香港Les交友, 香港女同志交友平台, les 交友 app]
 excerpt: 由安全機制、匿名度到社群氛圍，教你點揀啱自己嘅 les 交友平台。
 ---
 
