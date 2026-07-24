@@ -374,15 +374,15 @@ body.landing-document-scroll.welcome-active .site-presence__dot {
   box-sizing: border-box;
   display: inline-block;
   width: max-content;
-  min-width: 10.5em;
-  max-width: min(232px, calc(100vw - 28px));
-  padding: 8px 13px;
+  min-width: 8.5em;
+  max-width: min(300px, calc(100vw - 28px));
+  padding: 10px 14px;
   border: 2px solid rgba(255, 224, 102, 0.42);
   background: rgba(14, 10, 24, 0.94);
   color: var(--welcome-moon-cream, #f5e6c8);
   font-family: 'Zpix', 'Press Start 2P', monospace;
-  font-size: 8px;
-  line-height: 1.7;
+  font-size: 12px;
+  line-height: 1.55;
   letter-spacing: 0.02em;
   text-align: center;
   box-shadow:
@@ -396,6 +396,7 @@ body.landing-document-scroll.welcome-active .site-presence__dot {
   word-break: keep-all;
   overflow-wrap: anywhere;
   hyphens: none;
+  -webkit-font-smoothing: none;
 }
 
 .welcome-mascot__bubble::after {
@@ -643,6 +644,12 @@ body.landing-document-scroll.welcome-active .site-presence__dot {
   .welcome-mascot__figure::before {
     width: 26px;
     height: 8px;
+  }
+
+  .welcome-mascot__bubble {
+    font-size: 10px;
+    max-width: min(260px, calc(100vw - 24px));
+    padding: 8px 12px;
   }
 }
 

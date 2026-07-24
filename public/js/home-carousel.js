@@ -67,12 +67,16 @@
     index = clamp(index, 0, slides.length - 1);
     var slide = slides[index];
     if (!slide || !track) return;
-    var target =
-      slideCenterOffset(slide) - track.clientWidth / 2;
-    track.scrollTo({
-      left: Math.max(0, target),
-      behavior: behavior || 'smooth',
-    });
+    var target = Math.max(0, slideCenterOffset(slide) - track.clientWidth / 2);
+    if (behavior === 'auto' || behavior === 'instant') {
+      /* Direct assignment — never animates, even if CSS smooth sneaks back */
+      track.scrollLeft = target;
+    } else {
+      track.scrollTo({
+        left: target,
+        behavior: 'smooth',
+      });
+    }
     updateFocus(index, { announce: true });
   }
 
@@ -175,10 +179,19 @@
     var startX = 0;
     var startY = 0;
     var startScroll = 0;
+    var startIndex = 0;
+    var lastX = 0;
+    var lastT = 0;
+    var velocityX = 0;
     var dragged = false;
     var downSlide = null;
     var listening = false;
     var DRAG_THRESHOLD = 8;
+    /* Commit next/prev if swipe clears this fraction of slide width, or a flick */
+    var COMMIT_RATIO = 0.18;
+    var COMMIT_MIN_PX = 36;
+    var COMMIT_MAX_PX = 88;
+    var FLICK_VX = 0.4; /* px/ms */
 
     function clearDragClasses() {
       root.classList.remove('is-dragging');
@@ -193,10 +206,30 @@
       global.removeEventListener('pointercancel', onPointerUp);
     }
 
+    function commitIndexAfterDrag(endX) {
+      var dx = endX - startX;
+      var slide = slides[startIndex] || slides[activeIndex];
+      var slideW = slide ? slide.offsetWidth : track.clientWidth * 0.6;
+      var commitPx = clamp(slideW * COMMIT_RATIO, COMMIT_MIN_PX, COMMIT_MAX_PX);
+      var next = startIndex;
+      /* Finger left → next card; finger right → previous (same as native carousels) */
+      if (dx <= -commitPx || velocityX <= -FLICK_VX) next = startIndex + 1;
+      else if (dx >= commitPx || velocityX >= FLICK_VX) next = startIndex - 1;
+      return clamp(next, 0, slides.length - 1);
+    }
+
     function onPointerMove(e) {
       if (pointerId === null || e.pointerId !== pointerId) return;
       var dx = e.clientX - startX;
       var dy = e.clientY - startY;
+      var now = e.timeStamp || Date.now();
+      var dt = now - lastT;
+      if (dt > 0 && dt < 80) {
+        velocityX = (e.clientX - lastX) / dt;
+      }
+      lastX = e.clientX;
+      lastT = now;
+
       if (!dragged) {
         var adx = Math.abs(dx);
         var ady = Math.abs(dy);
@@ -220,6 +253,7 @@
       if (pointerId === null || (e && e.pointerId !== pointerId)) return;
       var wasDrag = dragged;
       var slide = downSlide;
+      var endX = e && typeof e.clientX === 'number' ? e.clientX : lastX;
       unbindWindow();
       clearDragClasses();
       pointerId = null;
@@ -228,7 +262,9 @@
 
       if (wasDrag) {
         suppressClickUntil = Date.now() + 450;
-        scrollToIndex(nearestIndex(), 'smooth');
+        /* Direction + magnitude from drag start — same rule L/R; short swipe snaps home */
+        scrollToIndex(commitIndexAfterDrag(endX), 'smooth');
+        velocityX = 0;
         return;
       }
 
@@ -240,6 +276,7 @@
           scrollToIndex(index, 'smooth');
         }
       }
+      velocityX = 0;
     }
 
     track.addEventListener('pointerdown', function (e) {
@@ -249,6 +286,10 @@
       startX = e.clientX;
       startY = e.clientY;
       startScroll = track.scrollLeft;
+      startIndex = activeIndex;
+      lastX = e.clientX;
+      lastT = e.timeStamp || Date.now();
+      velocityX = 0;
       dragged = false;
       downSlide =
         e.target.closest && e.target.closest('.home-carousel__slide')
@@ -286,11 +327,11 @@
       })
       .then(function (data) {
         var n = typeof data.total === 'number' ? data.total : (data.gatherings || []).length;
-        meta.textContent = '正在進行中 (' + n + ')';
+        meta.textContent = '進行中 (' + n + ')';
         meta.hidden = false;
       })
       .catch(function () {
-        meta.textContent = '正在進行中 (—)';
+        meta.textContent = '進行中 (—)';
         meta.hidden = false;
       });
   }
@@ -314,13 +355,14 @@
     });
 
     var start = initialIndex();
-    /* Instant snap before paint settles */
+    track.classList.add('is-booting');
+    updateFocus(start, { announce: false });
+    /* Instant jump to Treehole before first paint — no scroll animation */
+    scrollToIndex(start, 'auto');
     requestAnimationFrame(function () {
       scrollToIndex(start, 'auto');
-      requestAnimationFrame(function () {
-        scrollToIndex(start, 'auto');
-        updateFocus(start, { announce: true });
-      });
+      track.classList.remove('is-booting');
+      updateFocus(start, { announce: true });
     });
 
     fetchGatheringCount();

@@ -4192,22 +4192,30 @@
   display: inline-flex;
   align-items: center;
   gap: 0 2px;
-  line-height: 1.25;
+  line-height: 1;
 }
 
 .account-mirror-family__badge-zh {
+  display: inline-flex;
+  align-items: center;
   font-family: 'Zpix', 'Press Start 2P', monospace;
   font-size: 8px;
   letter-spacing: 0.04em;
+  line-height: 1;
   color: color-mix(in srgb, var(--family-glow) 35%, var(--cream));
   -webkit-font-smoothing: none;
 }
 
 .account-mirror-family__badge-en {
+  display: inline-flex;
+  align-items: center;
   font-family: 'Press Start 2P', monospace;
   font-size: 6px;
   letter-spacing: 0.06em;
+  line-height: 1;
   color: color-mix(in srgb, var(--family-glow) 45%, var(--text-dim));
+  /* Press Start 2P sits optically higher than Zpix — nudge onto the same midline */
+  transform: translateY(1px);
 }
 
 .account-mirror-family__main {
@@ -4359,37 +4367,44 @@
 
 .account-mirror-family__username {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: 1px;
   margin: 0;
   padding: 8px 0;
   width: 100%;
   max-width: 100%;
-  line-height: 1.35;
+  line-height: 1;
   border-top: 1px solid color-mix(in srgb, var(--family-glow) 10%, transparent);
   box-sizing: border-box;
 }
 
 .account-mirror-family__username-prefix {
+  display: inline-flex;
+  align-items: center;
   font-family: 'Press Start 2P', monospace;
-  font-size: 10px;
+  font-size: 11px;
+  line-height: 1;
   color: color-mix(in srgb, var(--family-glow) 55%, var(--text-dim));
   opacity: 0.85;
+  /* Same optical nudge as badge-en / inbox Press Start glyphs */
+  transform: translateY(1px);
 }
 
 .account-mirror-family__username .pixel-mixed-label {
   display: inline-flex;
-  align-items: baseline;
-  line-height: 1.35;
+  align-items: center;
+  line-height: 1;
 }
 
 .account-mirror-family__username-zh,
 .account-mirror-family__username-en {
+  display: inline-flex;
+  align-items: center;
   font-family: 'Zpix', 'Press Start 2P', monospace;
   font-size: 11px;
   letter-spacing: 0.03em;
   color: color-mix(in srgb, var(--family-glow) 40%, var(--cream));
-  line-height: 1.35;
+  line-height: 1;
   -webkit-font-smoothing: none;
 }
 
@@ -5256,6 +5271,10 @@
 
   .account-mirror-family__username-zh,
   .account-mirror-family__username-en {
+    font-size: 10px;
+  }
+
+  .account-mirror-family__username-prefix {
     font-size: 10px;
   }
 

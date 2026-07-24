@@ -57,7 +57,7 @@ export default function PhotoExchangePanel({
           交換相
         </h3>
         <p className="photo-exchange-panel__hint pixel-subtitle">
-          {MOONLIGHT_PASSPORT_BRAND} 訪客可向你發起真人相片交換。對方回傳時你才會被扣配額；成功後雙方可查看 7 日。
+          {MOONLIGHT_PASSPORT_BRAND} 會員可向你發起真人相片交換。對方回傳時你才會被扣配額；成功後雙方可查看 7 日。
         </p>
         <Link
           href={exchangePhotoHref}
