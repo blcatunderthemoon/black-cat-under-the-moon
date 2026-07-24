@@ -286,10 +286,15 @@
     return fetch('/api/public/activity', { credentials: 'same-origin' })
       .then(function (res) { return res.ok ? res.json() : null; })
       .then(function (data) {
-        if (!data || !Array.isArray(data.items)) return;
+        if (!data || !Array.isArray(data.items)) {
+          if (firstLoad) applyItems([], { firstLoad: true });
+          return;
+        }
         applyItems(data.items, { firstLoad: !!firstLoad });
       })
-      .catch(function () {});
+      .catch(function () {
+        if (firstLoad) applyItems([], { firstLoad: true });
+      });
   }
 
   function bindRail() {
@@ -368,6 +373,11 @@
     toastHost = global.document.getElementById('live-activity-toasts');
 
     if (!root) return;
+
+    /* Visible with the page — do not wait for fetch to unhide */
+    root.hidden = false;
+    if (rail) rail.hidden = false;
+    if (emptyEl) emptyEl.hidden = true;
 
     bindRail();
     fetchFeed(true);

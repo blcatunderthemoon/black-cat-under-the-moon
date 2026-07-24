@@ -7774,56 +7774,58 @@
   pointer-events: none;
 }
 
-/* Match「連線」badge — after base so it wins cascade; cyan/gold 共鳴色 */
+/* Match「連線」badge — clear solid chip, no glow haze on text */
 .inbox-letter-row__new-badge.inbox-letter-row__new-badge--match {
-  top: 5px;
-  right: 5px;
+  top: 6px;
+  right: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  min-width: 2.6em;
-  padding: 4px 7px 3px;
-  font-size: 6px;
-  letter-spacing: 0.1em;
-  color: #0d0b1e;
-  background:
-    linear-gradient(145deg, #ffe066 0%, #7ef0ff 48%, #00e5ff 100%);
-  border: 2px solid rgba(255, 255, 255, 0.92);
+  gap: 4px;
+  min-width: 0;
+  padding: 4px 8px;
+  font-family: var(--font-zh, "Noto Sans TC", "PingFang HK", sans-serif);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  color: #061820;
+  background: #00e5ff;
+  border: 1px solid rgba(170, 245, 255, 0.95);
   box-shadow:
-    2px 2px 0 0 rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(0, 229, 255, 0.35),
-    0 0 16px rgba(0, 229, 255, 0.55),
-    0 0 28px rgba(255, 224, 102, 0.28);
-  text-shadow: 0 0 6px rgba(255, 255, 255, 0.35);
-  animation: inbox-match-badge-pulse 2.4s ease-in-out infinite;
+    0 1px 0 rgba(255, 255, 255, 0.35) inset,
+    0 0 0 1px rgba(0, 40, 50, 0.35),
+    0 0 10px rgba(0, 229, 255, 0.28);
+  text-shadow: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  animation: none;
 }
 
 .inbox-letter-row__new-badge.inbox-letter-row__new-badge--match::before {
-  content: '✦';
-  font-size: 0.85em;
-  line-height: 1;
-  color: #1a1028;
-  opacity: 0.9;
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #061820;
+  opacity: 0.85;
+  flex-shrink: 0;
 }
 
 @keyframes inbox-match-badge-pulse {
   0%,
   100% {
     box-shadow:
-      2px 2px 0 0 rgba(0, 0, 0, 0.55),
-      0 0 0 1px rgba(0, 229, 255, 0.35),
-      0 0 14px rgba(0, 229, 255, 0.45),
-      0 0 22px rgba(255, 224, 102, 0.2);
-    filter: brightness(1);
+      0 1px 0 rgba(255, 255, 255, 0.35) inset,
+      0 0 0 1px rgba(0, 40, 50, 0.35),
+      0 0 10px rgba(0, 229, 255, 0.28);
   }
   50% {
     box-shadow:
-      2px 2px 0 0 rgba(0, 0, 0, 0.55),
-      0 0 0 1px rgba(255, 224, 102, 0.55),
-      0 0 20px rgba(0, 229, 255, 0.7),
-      0 0 34px rgba(255, 224, 102, 0.4);
-    filter: brightness(1.08);
+      0 1px 0 rgba(255, 255, 255, 0.35) inset,
+      0 0 0 1px rgba(0, 40, 50, 0.35),
+      0 0 14px rgba(0, 229, 255, 0.4);
   }
 }
 

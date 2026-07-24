@@ -1,0 +1,352 @@
+/**
+ * Home focus carousel — scroll-snap + focus state + gatherings open count.
+ */
+(function (global) {
+  var DEFAULT_INDEX = 2; /* Treehole */
+  var root;
+  var track;
+  var slides;
+  var dots;
+  var activeIndex = DEFAULT_INDEX;
+  var scrollRaf = 0;
+  var suppressClickUntil = 0;
+
+  function clamp(n, min, max) {
+    return Math.max(min, Math.min(max, n));
+  }
+
+  function slideCenterOffset(slide) {
+    return slide.offsetLeft + slide.offsetWidth / 2;
+  }
+
+  function nearestIndex() {
+    if (!track || !slides.length) return DEFAULT_INDEX;
+    var mid = track.scrollLeft + track.clientWidth / 2;
+    var best = 0;
+    var bestDist = Infinity;
+    for (var i = 0; i < slides.length; i++) {
+      var d = Math.abs(slideCenterOffset(slides[i]) - mid);
+      if (d < bestDist) {
+        bestDist = d;
+        best = i;
+      }
+    }
+    return best;
+  }
+
+  function updateFocus(index, opts) {
+    opts = opts || {};
+    activeIndex = clamp(index, 0, slides.length - 1);
+    for (var i = 0; i < slides.length; i++) {
+      var slide = slides[i];
+      var dist = Math.abs(i - activeIndex);
+      slide.classList.toggle('is-active', i === activeIndex);
+      slide.classList.toggle('is-near', dist === 1);
+      if (i === activeIndex) {
+        slide.setAttribute('aria-current', 'true');
+        slide.tabIndex = 0;
+      } else {
+        slide.removeAttribute('aria-current');
+        slide.tabIndex = -1;
+      }
+    }
+    if (dots) {
+      for (var d = 0; d < dots.length; d++) {
+        if (d === activeIndex) dots[d].setAttribute('aria-current', 'true');
+        else dots[d].removeAttribute('aria-current');
+      }
+    }
+    if (opts.announce && root) {
+      var label = slides[activeIndex].getAttribute('data-label') || '';
+      root.setAttribute('aria-label', '模式導覽，目前：' + label);
+    }
+    syncArrows();
+  }
+
+  function scrollToIndex(index, behavior) {
+    index = clamp(index, 0, slides.length - 1);
+    var slide = slides[index];
+    if (!slide || !track) return;
+    var target =
+      slideCenterOffset(slide) - track.clientWidth / 2;
+    track.scrollTo({
+      left: Math.max(0, target),
+      behavior: behavior || 'smooth',
+    });
+    updateFocus(index, { announce: true });
+  }
+
+  function onScroll() {
+    if (scrollRaf) return;
+    scrollRaf = requestAnimationFrame(function () {
+      scrollRaf = 0;
+      updateFocus(nearestIndex());
+    });
+  }
+
+  function onSlideActivate(e, index) {
+    if (Date.now() < suppressClickUntil) {
+      e.preventDefault();
+      return;
+    }
+    if (index !== activeIndex) {
+      e.preventDefault();
+      scrollToIndex(index, 'smooth');
+      return;
+    }
+    /* Active slide: let the <a> navigate normally */
+  }
+
+  function bindSlides() {
+    slides.forEach(function (slide, index) {
+      slide.addEventListener('click', function (e) {
+        onSlideActivate(e, index);
+      });
+      slide.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          if (index !== activeIndex) {
+            e.preventDefault();
+            scrollToIndex(index, 'smooth');
+          }
+        }
+      });
+    });
+  }
+
+  function bindDots() {
+    if (!dots) return;
+    dots.forEach(function (dot, index) {
+      dot.addEventListener('click', function () {
+        scrollToIndex(index, 'smooth');
+      });
+    });
+  }
+
+  function bindArrows() {
+    if (!root) return;
+    var prev = root.querySelector('.home-carousel__arrow--prev');
+    var next = root.querySelector('.home-carousel__arrow--next');
+    if (prev) {
+      prev.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        scrollToIndex(activeIndex - 1, 'smooth');
+      });
+    }
+    if (next) {
+      next.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        scrollToIndex(activeIndex + 1, 'smooth');
+      });
+    }
+  }
+
+  function syncArrows() {
+    if (!root) return;
+    var prev = root.querySelector('.home-carousel__arrow--prev');
+    var next = root.querySelector('.home-carousel__arrow--next');
+    if (prev) prev.disabled = activeIndex <= 0;
+    if (next) next.disabled = activeIndex >= slides.length - 1;
+  }
+
+  function bindKeyboard() {
+    if (!root) return;
+    root.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        scrollToIndex(activeIndex - 1, 'smooth');
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        scrollToIndex(activeIndex + 1, 'smooth');
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        scrollToIndex(0, 'smooth');
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        scrollToIndex(slides.length - 1, 'smooth');
+      }
+    });
+  }
+
+  function bindPointerDrag() {
+    if (!track) return;
+    var pointerId = null;
+    var startX = 0;
+    var startY = 0;
+    var startScroll = 0;
+    var dragged = false;
+    var downSlide = null;
+    var listening = false;
+    var DRAG_THRESHOLD = 8;
+
+    function clearDragClasses() {
+      root.classList.remove('is-dragging');
+      track.classList.remove('is-dragging');
+    }
+
+    function unbindWindow() {
+      if (!listening) return;
+      listening = false;
+      global.removeEventListener('pointermove', onPointerMove);
+      global.removeEventListener('pointerup', onPointerUp);
+      global.removeEventListener('pointercancel', onPointerUp);
+    }
+
+    function onPointerMove(e) {
+      if (pointerId === null || e.pointerId !== pointerId) return;
+      var dx = e.clientX - startX;
+      var dy = e.clientY - startY;
+      if (!dragged) {
+        var adx = Math.abs(dx);
+        var ady = Math.abs(dy);
+        if (ady > adx && ady >= DRAG_THRESHOLD) {
+          /* Vertical page scroll — abandon */
+          unbindWindow();
+          pointerId = null;
+          downSlide = null;
+          return;
+        }
+        if (adx < DRAG_THRESHOLD || adx < ady) return;
+        dragged = true;
+        root.classList.add('is-dragging');
+        track.classList.add('is-dragging');
+      }
+      track.scrollLeft = startScroll - dx;
+      e.preventDefault();
+    }
+
+    function onPointerUp(e) {
+      if (pointerId === null || (e && e.pointerId !== pointerId)) return;
+      var wasDrag = dragged;
+      var slide = downSlide;
+      unbindWindow();
+      clearDragClasses();
+      pointerId = null;
+      dragged = false;
+      downSlide = null;
+
+      if (wasDrag) {
+        suppressClickUntil = Date.now() + 450;
+        scrollToIndex(nearestIndex(), 'smooth');
+        return;
+      }
+
+      /* Click previous / next card → focus that mode */
+      if (slide) {
+        var index = slides.indexOf(slide);
+        if (index >= 0 && index !== activeIndex) {
+          suppressClickUntil = Date.now() + 450;
+          scrollToIndex(index, 'smooth');
+        }
+      }
+    }
+
+    track.addEventListener('pointerdown', function (e) {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      if (e.target.closest && e.target.closest('.home-carousel__arrow')) return;
+      pointerId = e.pointerId;
+      startX = e.clientX;
+      startY = e.clientY;
+      startScroll = track.scrollLeft;
+      dragged = false;
+      downSlide =
+        e.target.closest && e.target.closest('.home-carousel__slide')
+          ? e.target.closest('.home-carousel__slide')
+          : null;
+      if (!listening) {
+        listening = true;
+        global.addEventListener('pointermove', onPointerMove, { passive: false });
+        global.addEventListener('pointerup', onPointerUp);
+        global.addEventListener('pointercancel', onPointerUp);
+      }
+    });
+
+    /* Stop native link/image drag from eating the gesture */
+    track.addEventListener('dragstart', function (e) {
+      e.preventDefault();
+    });
+  }
+
+  function initialIndex() {
+    if (global.location && global.location.hash === '#mode') return DEFAULT_INDEX;
+    return DEFAULT_INDEX;
+  }
+
+  function fetchGatheringCount() {
+    var meta = root && root.querySelector('[data-gathering-count]');
+    if (!meta) return;
+    fetch('/api/gatherings?open_only=1&limit=40', {
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' },
+    })
+      .then(function (res) {
+        if (!res.ok) throw new Error('gatherings ' + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        var n = typeof data.total === 'number' ? data.total : (data.gatherings || []).length;
+        meta.textContent = '正在進行中 (' + n + ')';
+        meta.hidden = false;
+      })
+      .catch(function () {
+        meta.textContent = '正在進行中 (—)';
+        meta.hidden = false;
+      });
+  }
+
+  function init() {
+    root = document.getElementById('home-carousel');
+    if (!root) return;
+    track = root.querySelector('.home-carousel__track');
+    slides = Array.prototype.slice.call(root.querySelectorAll('.home-carousel__slide'));
+    dots = Array.prototype.slice.call(root.querySelectorAll('.home-carousel__dot'));
+    if (!track || !slides.length) return;
+
+    bindSlides();
+    bindDots();
+    bindArrows();
+    bindKeyboard();
+    bindPointerDrag();
+    track.addEventListener('scroll', onScroll, { passive: true });
+    global.addEventListener('resize', function () {
+      scrollToIndex(activeIndex, 'auto');
+    });
+
+    var start = initialIndex();
+    /* Instant snap before paint settles */
+    requestAnimationFrame(function () {
+      scrollToIndex(start, 'auto');
+      requestAnimationFrame(function () {
+        scrollToIndex(start, 'auto');
+        updateFocus(start, { announce: true });
+      });
+    });
+
+    fetchGatheringCount();
+
+    if (global.MobileDocumentScroll) {
+      if (MobileDocumentScroll.setLandingScrollScreen) {
+        MobileDocumentScroll.setLandingScrollScreen('home');
+      }
+      if (MobileDocumentScroll.refreshLandingScrollExtent) {
+        MobileDocumentScroll.refreshLandingScrollExtent();
+      }
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  global.HomeCarousel = {
+    scrollToIndex: function (i) {
+      scrollToIndex(i, 'smooth');
+    },
+    getActiveIndex: function () {
+      return activeIndex;
+    },
+  };
+})(typeof window !== 'undefined' ? window : this);

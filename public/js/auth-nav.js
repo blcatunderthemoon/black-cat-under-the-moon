@@ -652,12 +652,26 @@
   function showLoggedOut() {
     unmountIndexGreetingFromNav();
     updateWelcomeGreeting('');
-    var html =
-      shellStart() +
-      '<a href="' + loginHref() + '" class="auth-nav-badge__item auth-nav-badge__item--name">' + renderAuthNavNameHtml('登入') + '</a>' +
-      sep() +
-      '<a href="' + signupHref() + '" class="auth-nav-badge__item auth-nav-badge__item--signup">註冊</a>' +
-      shellEnd();
+    var html;
+    if (isIndexLandingPage()) {
+      /* Compact user icon — less competition with the logo */
+      html =
+        shellStart() +
+        '<a href="' + loginHref() + '" class="auth-nav-badge__item auth-nav-badge__item--icon auth-nav-badge__item--guest-user" title="登入 / 註冊" aria-label="登入或註冊">' +
+          '<svg class="auth-nav-badge__guest-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+            '<circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.75"/>' +
+            '<path d="M5.5 19.2c1.4-3.1 3.7-4.7 6.5-4.7s5.1 1.6 6.5 4.7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>' +
+          '</svg>' +
+        '</a>' +
+        shellEnd();
+    } else {
+      html =
+        shellStart() +
+        '<a href="' + loginHref() + '" class="auth-nav-badge__item auth-nav-badge__item--name">登入</a>' +
+        sep() +
+        '<a href="' + signupHref() + '" class="auth-nav-badge__item auth-nav-badge__item--signup">註冊</a>' +
+        shellEnd();
+    }
 
     injectNav(html, null);
   }

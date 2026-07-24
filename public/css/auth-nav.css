@@ -1668,7 +1668,8 @@ body.lang-en .mode-top-bar--legal .home-back-btn .en {
 
   body.landing-document-scroll:not(.body-scroll-locked),
   body.welcome-active:not(.body-scroll-locked),
-  body.mode-select-active:not(.body-scroll-locked) {
+  body.mode-select-active:not(.body-scroll-locked),
+  body.home-landing-active:not(.body-scroll-locked) {
     height: auto;
     max-height: none;
     min-height: 100dvh;
@@ -1676,7 +1677,8 @@ body.lang-en .mode-top-bar--legal .home-back-btn .en {
 
   html.landing-document-scroll,
   html.welcome-active,
-  html.mode-select-active {
+  html.mode-select-active,
+  html.home-landing-active {
     overflow-x: clip;
     overflow-y: visible;
     height: auto;
@@ -1685,7 +1687,8 @@ body.lang-en .mode-top-bar--legal .home-back-btn .en {
   }
 
   .welcome-screen:not(.hiding),
-  .mode-select-screen.active {
+  .mode-select-screen.active,
+  .home-landing {
     position: relative !important;
     top: auto !important;
     left: auto !important;
@@ -1717,7 +1720,8 @@ body.lang-en .mode-top-bar--legal .home-back-btn .en {
   }
 
   .welcome-screen .site-footer--embedded,
-  .mode-select-screen.active .site-footer--embedded {
+  .mode-select-screen.active .site-footer--embedded,
+  .home-landing .site-footer--embedded {
     display: flex;
     flex-direction: column;
     align-items: center;

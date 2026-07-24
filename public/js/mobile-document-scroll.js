@@ -3,12 +3,13 @@
  *
  * Strategy: natural document scroll on mobile — html/body stay at overflow-y: visible
  * and height: auto so the viewport scrolls the full document. Landing panels
- * (#welcome / #mode-select) must be in document flow (position: relative).
+ * (#welcome / #mode-select / #home-landing) must be in document flow (position: relative).
  *
  * Do NOT measure scroll height or add spacers — see docs/MOBILE-WEBVIEW-SCROLL.md.
  */
 (function (global) {
-  var SCREENS = ['welcome-active', 'mode-select-active'];
+  var SCREENS = ['welcome-active', 'mode-select-active', 'home-landing-active'];
+  var LANDING_PANEL_IDS = ['welcome', 'mode-select', 'home-landing'];
   var MOBILE_MQ = '(max-width: 768px), (hover: none) and (pointer: coarse)';
 
   function isMobileCoarse() {
@@ -80,11 +81,11 @@
     removeLegacyScrollArtifacts();
   }
 
-  /* Force the welcome / mode-select panels into normal document flow on mobile
+  /* Force landing panels into normal document flow on mobile
      so the scrolling <body> grows to include them (and their footer). */
   function applyMobileLandingInFlow() {
     if (!isMobileCoarse()) return;
-    ['welcome', 'mode-select'].forEach(function (id) {
+    LANDING_PANEL_IDS.forEach(function (id) {
       var el = document.getElementById(id);
       if (!el || el.style.display === 'none' || el.classList.contains('hiding')) return;
       if (id === 'mode-select' && !el.classList.contains('active')) return;
@@ -135,6 +136,10 @@
         welcome.style.display = 'none';
         welcome.style.pointerEvents = 'none';
       }
+      applyMobileLandingInFlow();
+    } else if (screen === 'home' || screen === 'home-landing') {
+      document.documentElement.classList.add('home-landing-active');
+      document.body.classList.add('home-landing-active');
       applyMobileLandingInFlow();
     }
     if (isMobileCoarse()) window.scrollTo(0, 0);
@@ -337,6 +342,10 @@
   };
 
   function syncLandingScrollFromDom() {
+    if (document.getElementById('home-landing')) {
+      setLandingScrollScreen('home');
+      return;
+    }
     if (document.querySelector('.mode-select-screen.active')) {
       setLandingScrollScreen('mode-select');
       return;
@@ -388,6 +397,7 @@
   function observeLandingPanels() {
     var welcome = document.getElementById('welcome');
     var modeSelect = document.getElementById('mode-select');
+    var homeLanding = document.getElementById('home-landing');
     if (welcome && !welcome.__landingPanelObserved) {
       welcome.__landingPanelObserved = true;
       if (typeof ResizeObserver !== 'undefined') {
@@ -402,6 +412,13 @@
           if (modeSelect.classList.contains('active')) applyMobileLandingInFlow();
         });
         roMode.observe(modeSelect);
+      }
+    }
+    if (homeLanding && !homeLanding.__landingPanelObserved) {
+      homeLanding.__landingPanelObserved = true;
+      if (typeof ResizeObserver !== 'undefined') {
+        var roHome = new ResizeObserver(applyMobileLandingInFlow);
+        roHome.observe(homeLanding);
       }
     }
     observeLandingScreens();

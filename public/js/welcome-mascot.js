@@ -47,6 +47,10 @@
     var bottomPad = 64;
     var mobileMq = window.matchMedia('(max-width: 768px)');
 
+    function isHomeLanding() {
+      return !!document.getElementById('home-landing');
+    }
+
     function isMobile() {
       return mobileMq.matches;
     }
@@ -61,7 +65,9 @@
       var size = catSize();
       var totalH = size.h;
       var halfW = size.w * 0.5;
-      var feetY = window.innerHeight - bottomPad;
+      /* On home carousel, keep the cat in the bottom strip so it never sits on CTAs */
+      var pad = isHomeLanding() ? (isMobile() ? 108 : 96) : bottomPad;
+      var feetY = window.innerHeight - pad;
       var minX = margin + halfW;
       var maxX = Math.max(minX + 1, window.innerWidth - margin - halfW);
       var catTop = feetY - totalH;
@@ -72,6 +78,15 @@
         if (r.bottom <= catTop + 4 || r.top >= feetY + 6) return;
         maxX = Math.min(maxX, Math.max(minX, r.left - halfW - 12));
       });
+
+      var carousel = document.getElementById('home-carousel');
+      if (carousel) {
+        var cr = carousel.getBoundingClientRect();
+        if (cr.width && cr.height && cr.bottom > catTop - 8 && cr.top < feetY + 20) {
+          /* Prefer left side near presence chip */
+          maxX = Math.min(maxX, Math.max(minX, cr.left + halfW + 8));
+        }
+      }
 
       if (isMobile()) {
         maxX = Math.min(maxX, window.innerWidth - margin - halfW - 56);
@@ -136,7 +151,11 @@
 
     function setStartPos() {
       var b = bounds();
-      pos.x = b.minX + (b.maxX - b.minX) * (isMobile() ? 0.22 : 0.78);
+      if (isHomeLanding()) {
+        pos.x = b.minX + Math.min(48, (b.maxX - b.minX) * 0.35);
+      } else {
+        pos.x = b.minX + (b.maxX - b.minX) * (isMobile() ? 0.22 : 0.78);
+      }
       pos.y = b.feetY;
       clampPos();
       applyPos(false);

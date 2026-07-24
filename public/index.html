@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
@@ -20,7 +20,7 @@
 <meta name="twitter:description" content="香港Les／香港女同志社群：月下緣份配對、Mirror Mode 性格分析、匿名漂流瓶與黑貓樹洞，幫香港女同志認識朋友、交流同建立連結。">
 <meta name="twitter:image" content="https://www.blackcatunderthemoon.com/blackcatunderthemoonlogo.png">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebSite","name":"Black Cat Under The Moon","alternateName":["香港Les社群","香港女同志社群","Black Cat Under The Moon"],"url":"https://www.blackcatunderthemoon.com/","description":"香港Les／香港女同志社群 Black Cat Under The Moon：月下緣份配對、Mirror Mode 性格分析、匿名漂流瓶與黑貓樹洞，幫香港女同志認識朋友、交流同建立連結。","inLanguage":"zh-Hant","publisher":{"@type":"Organization","name":"Black Cat Under The Moon","url":"https://www.blackcatunderthemoon.com/"}}
+{"@context":"https://schema.org","@type":"WebSite","name":"Black Cat Under The Moon","alternateName":["香港Les社群","香港女同志社群","Black Cat Under The Moon"],"url":"https://www.blackcatunderthemoon.com/","description":"香港Les／香港女同志社群 Black Cat Under The Moon：月下緣份配對、Mirror Mode 性格分析、匿名漂流瓶同黑貓樹洞，幫你認識朋友同建立連結。","inLanguage":"zh-Hant","publisher":{"@type":"Organization","name":"Black Cat Under The Moon","url":"https://www.blackcatunderthemoon.com/"}}
 </script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
@@ -39,79 +39,28 @@
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/questionnaire.css?v=20260723seo-revert">
 <link rel="stylesheet" href="css/auth-nav.css?v=20260724unread3">
-<link rel="stylesheet" href="css/mobile-webview-scroll.css?v=20260713echo">
+<link rel="stylesheet" href="css/mobile-webview-scroll.css?v=20260725authfs">
 <link rel="stylesheet" href="css/welcome-atmosphere.css?v=20260723eyebrowsize">
+<link rel="stylesheet" href="css/home-carousel.css?v=20260725norule">
 <script src="/js/posthog-page-context.js" defer></script>
 <script src="/js/posthog-init.js" defer></script>
-<style>
-@keyframes logoHover {
-  0%,100% { transform: translateY(0px) scale(1); }
-  40%      { transform: translateY(-8px) scale(1.06); }
-  70%      { transform: translateY(-3px) scale(1.03); }
-}
-.welcome-cat { font-size: unset; animation: none; display: inline-block; text-decoration: none; line-height: 0; }
-.welcome-cat img {
-  width: 160px;
-  height: 160px;
-  object-fit: contain;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 0 18px rgba(189,147,249,.45));
-  transition: filter 0.35s ease, transform 0.35s ease;
-}
-.welcome-cat:hover img,
-.welcome-cat:focus-visible img {
-  animation: logoHover 0.7s ease-in-out;
-  filter:
-    drop-shadow(0 0 28px rgba(189,147,249,.88))
-    drop-shadow(0 0 14px rgba(255,215,120,.42))
-    brightness(1.08);
-  transform: translateY(-4px) scale(1.04);
-  cursor: pointer;
-}
-
-/* Index mode-select icons only (public/icon/*.png) */
-.mode-select-screen .mode-card-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 58px;
-  margin-bottom: 10px;
-  font-size: 0;
-  line-height: 0;
-}
-.mode-select-screen .mode-card-icon__img {
-  width: 54px;
-  height: 54px;
-  object-fit: contain;
-  display: block;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.45));
-}
-.mode-select-screen .mode-card.mode-b:hover .mode-card-icon__img {
-  filter: drop-shadow(0 0 14px rgba(189, 147, 249, 0.55)) drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
-}
-.mode-select-screen .mode-card.mode-c:hover .mode-card-icon__img {
-  filter: drop-shadow(0 0 14px rgba(0, 229, 255, 0.5)) drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
-}
-.mode-select-screen .mode-card.mode-a:hover .mode-card-icon__img {
-  filter: drop-shadow(0 0 14px rgba(255, 107, 157, 0.5)) drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
-}
-.mode-select-screen .mode-card.mode-d:hover .mode-card-icon__img {
-  filter: drop-shadow(0 0 14px rgba(255, 159, 67, 0.55)) drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
-}
-</style>
 </head>
 <body data-analytics-surface="static" data-analytics-page="home">
 
-<!-- Unified mode top bar -->
+<!-- Unified home top bar: presence (left) + auth (right) -->
 <div class="mode-top-bar mode-top-bar--index">
-  <div class="mode-top-bar__row">
-    <a href="/gatherings" class="mode-header-chip mode-top-bar__gatherings-link" title="月光聚會" aria-label="月光聚會">
-      <span class="home-back-btn__icon" aria-hidden="true">📅</span>
-      <span class="home-back-btn__label mode-top-bar__gatherings-label">月光聚會</span>
-    </a>
-    <span class="mode-top-bar__center mode-top-bar__mode-tag" id="mode-top-bar-label"></span>
+  <div class="mode-top-bar__row mode-top-bar__row--home">
+    <aside class="site-presence site-presence--header" id="site-presence" hidden aria-live="polite" aria-label="月下在線人數">
+      <span class="site-presence__sigil" aria-hidden="true">🌙</span>
+      <span class="site-presence__content">
+        <span class="site-presence__eyebrow">月下同在</span>
+        <span class="site-presence__line">
+          <span class="site-presence__count" data-presence-count>0</span>
+          <span class="site-presence__label">位旅人在線上</span>
+          <span class="site-presence__dot" aria-hidden="true"></span>
+        </span>
+      </span>
+    </aside>
     <div class="mode-top-bar__header-end">
       <p class="welcome-greeting" id="welcome-greeting" hidden aria-live="polite"></p>
       <div class="mode-top-bar__nav-slot"></div>
@@ -121,7 +70,6 @@
 <script src="/js/me-cache.js?v=20260707perf"></script>
 <script src="/js/auth-greeting-bootstrap.js?v=20260706name"></script>
 
-
 <!-- Background layers -->
 <div class="bg-atmosphere" aria-hidden="true">
   <div class="bg-atmosphere__gradient"></div>
@@ -130,20 +78,147 @@
 </div>
 <canvas id="bg-canvas"></canvas>
 
-<!-- Welcome Screen -->
-<div class="welcome-screen" id="welcome">
-  <div class="welcome-hero">
-    <a href="about.html" class="welcome-cat" aria-label="關於我們"><img src="entrancelogo.png" alt="Black Cat Under The Moon"></a>
-    <div class="welcome-title pixel-font">🌙 Black Cat<br>Under The Moon</div>
-    <div class="welcome-sub">靈魂鏡像 · 月下緣份 · 月光漂流瓶 · 黑貓樹洞</div>
-    <button type="button" class="welcome-cta-btn" id="welcome-enter-btn">
-      <span class="welcome-cta-btn__star" aria-hidden="true">✦</span>
-      <span class="welcome-cta-btn__label">進入月下</span>
-      <span class="welcome-cta-btn__star welcome-cta-btn__star--trail" aria-hidden="true">✦</span>
-    </button>
-  </div>
+<!-- Landing: centered brand hero + focus carousel -->
+<div class="home-landing" id="home-landing">
+  <header class="home-landing__brand">
+    <a class="home-landing__logo" href="about.html" aria-label="關於我們">
+      <img src="BlackCatPixLogo.png" alt="" width="120" height="120" decoding="async">
+    </a>
+    <h1 class="home-landing__wordmark pixel-font">
+      <span class="home-landing__wordmark-line home-landing__wordmark-line--top">Black Cat</span>
+      <span class="home-landing__wordmark-line home-landing__wordmark-line--bottom">
+        Under <span class="home-landing__moon">The Moon</span>
+      </span>
+    </h1>
+    <p class="home-landing__headline">選擇你的模式</p>
+    <p class="home-landing__sub" role="doc-subtitle">靈魂鏡像 · 月光聚會 · 黑貓樹洞 · 月光漂流瓶 · 月下緣份</p>
+  </header>
 
-  <section class="live-activity" id="live-activity" aria-label="最新動態" hidden>
+  <section
+    class="home-carousel"
+    id="home-carousel"
+    tabindex="0"
+    aria-roledescription="carousel"
+    aria-label="模式導覽"
+  >
+    <div class="home-carousel__viewport">
+      <button type="button" class="home-carousel__arrow home-carousel__arrow--prev" aria-label="上一個模式">‹</button>
+      <div class="home-carousel__track" role="list">
+        <a
+          class="home-carousel__slide"
+          role="listitem"
+          data-mode="mirror"
+          data-label="靈魂鏡像"
+          href="/mirror.html"
+          aria-label="靈魂鏡像 Mirror Mode"
+        >
+          <div class="home-carousel__card">
+            <div class="home-carousel__icon">
+              <img src="icon/mirroricon.png" alt="" width="88" height="88" aria-hidden="true">
+            </div>
+            <div class="home-carousel__badge pixel-font">MIRROR MODE</div>
+            <div class="home-carousel__name pixel-font">【靈魂鏡像】</div>
+            <p class="home-carousel__desc pixel-font">測驗探索性格鏡像<br>── 這是起點</p>
+            <div class="home-carousel__extra" aria-hidden="true"></div>
+            <span class="home-carousel__cta pixel-font">開始測驗 ▸</span>
+          </div>
+        </a>
+
+        <a
+          class="home-carousel__slide"
+          role="listitem"
+          data-mode="gathering"
+          data-label="月光聚會"
+          href="/gatherings"
+          aria-label="月光聚會 Moonlight Gathering"
+        >
+          <div class="home-carousel__card">
+            <p class="home-carousel__label home-carousel__label--live" data-gathering-count hidden>正在進行中 (—)</p>
+            <div class="home-carousel__icon">
+              <img src="moonlightlogo.png?v=20260725alpha2" alt="" width="88" height="88" aria-hidden="true">
+            </div>
+            <div class="home-carousel__badge pixel-font">MOONLIGHT MODE</div>
+            <div class="home-carousel__name pixel-font">【月光聚會】</div>
+            <p class="home-carousel__desc pixel-font">真人見面 · 線上聚會<br>── 月下約見同路人</p>
+            <div class="home-carousel__extra" aria-hidden="true"></div>
+            <span class="home-carousel__cta pixel-font">查看聚會 ▸</span>
+          </div>
+        </a>
+
+        <a
+          class="home-carousel__slide is-active"
+          role="listitem"
+          data-mode="treehole"
+          data-label="黑貓樹洞"
+          href="/forum"
+          aria-label="黑貓樹洞 Treehole Mode"
+          aria-current="true"
+        >
+          <div class="home-carousel__card">
+            <div class="home-carousel__icon">
+              <img src="icon/treeholeicon.png" alt="" width="88" height="88" aria-hidden="true">
+            </div>
+            <div class="home-carousel__badge pixel-font">TREEHOLE MODE</div>
+            <div class="home-carousel__name pixel-font">【黑貓樹洞】</div>
+            <p class="home-carousel__desc pixel-font">圍爐傾訴 · 認識同頻的她<br>── 在樹洞裡說說心事</p>
+            <div class="home-carousel__extra" aria-hidden="true"></div>
+            <span class="home-carousel__cta pixel-font">走進樹洞 ▸</span>
+          </div>
+        </a>
+
+        <a
+          class="home-carousel__slide"
+          role="listitem"
+          data-mode="drift"
+          data-label="月光漂流瓶"
+          href="drift-bottle.html"
+          aria-label="月光漂流瓶 Drift Mode"
+        >
+          <div class="home-carousel__card">
+            <div class="home-carousel__icon">
+              <img src="icon/driftbottleicon.png" alt="" width="88" height="88" aria-hidden="true">
+            </div>
+            <div class="home-carousel__badge pixel-font">DRIFT MODE</div>
+            <div class="home-carousel__name pixel-font">【月光漂流瓶】</div>
+            <p class="home-carousel__desc pixel-font">匿名傾訴 · 搵同路隊友<br>── 把心事丟進大海</p>
+            <div class="home-carousel__extra" aria-hidden="true"></div>
+            <span class="home-carousel__cta pixel-font">投瓶入海 ▸</span>
+          </div>
+        </a>
+
+        <a
+          class="home-carousel__slide"
+          role="listitem"
+          data-mode="echo"
+          data-label="月下緣份"
+          href="/echo.html"
+          aria-label="月下緣份 Echo Mode"
+        >
+          <div class="home-carousel__card">
+            <div class="home-carousel__icon">
+              <img src="icon/echoicon.png" alt="" width="88" height="88" aria-hidden="true">
+            </div>
+            <div class="home-carousel__badge pixel-font">ECHO MODE</div>
+            <div class="home-carousel__name pixel-font">【月下緣份】</div>
+            <p class="home-carousel__desc pixel-font">問卷分析心靈契合度<br>── 尋找靈魂同頻者</p>
+            <div class="home-carousel__extra" aria-hidden="true"></div>
+            <span class="home-carousel__cta pixel-font">開始配對 ▸</span>
+          </div>
+        </a>
+      </div>
+      <button type="button" class="home-carousel__arrow home-carousel__arrow--next" aria-label="下一個模式">›</button>
+    </div>
+
+    <div class="home-carousel__dots" role="tablist" aria-label="選擇模式">
+      <button type="button" class="home-carousel__dot" aria-label="靈魂鏡像"></button>
+      <button type="button" class="home-carousel__dot" aria-label="月光聚會"></button>
+      <button type="button" class="home-carousel__dot" aria-label="黑貓樹洞" aria-current="true"></button>
+      <button type="button" class="home-carousel__dot" aria-label="月光漂流瓶"></button>
+      <button type="button" class="home-carousel__dot" aria-label="月下緣份"></button>
+    </div>
+  </section>
+
+  <section class="live-activity home-landing__live" id="live-activity" aria-label="最新動態">
     <div class="live-activity__rail" id="live-activity-rail">
       <div class="live-activity__head">
         <span class="live-activity__eyebrow"><span aria-hidden="true">✦</span> 最新動態</span>
@@ -155,137 +230,48 @@
           </span>
         </div>
       </div>
-      <div class="live-activity__flip" id="live-activity-flip" aria-live="polite"></div>
+      <div class="live-activity__flip" id="live-activity-flip" aria-live="polite">
+        <div class="live-activity__row live-activity__flip-item">
+          <span class="live-activity__row-inner">
+            <span class="live-activity__text">載入動態中…</span>
+          </span>
+        </div>
+      </div>
     </div>
     <p class="live-activity__empty" id="live-activity-empty" hidden>月下暫時好靜～</p>
   </section>
 
-  <div class="welcome-bottom">
-  <div class="mode-select-socials welcome-socials">
-    <a class="mode-social-link ig" href="https://www.instagram.com/blackcatunderthemoonhk/" target="_blank" rel="noopener noreferrer">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
-      Instagram
-    </a>
-    <a class="mode-social-link threads" href="https://www.threads.net/@blackcatunderthemoonhk" target="_blank" rel="noopener noreferrer">
-      <svg width="13" height="13" viewBox="0 0 192 192" fill="currentColor"><path d="M141.537 88.988a66.667 66.667 0 0 0-2.518-1.143c-1.482-27.307-16.403-42.94-41.457-43.1h-.34c-14.986 0-27.449 6.396-35.12 18.036l13.779 9.452c5.73-8.695 14.724-10.548 21.348-10.548h.229c8.249.053 14.474 2.452 18.503 7.129 2.932 3.405 4.893 8.111 5.864 14.05-7.314-1.243-15.224-1.626-23.68-1.14-23.82 1.371-39.134 15.264-38.105 34.568.522 9.792 5.4 18.216 13.735 23.719 7.047 4.652 16.124 6.927 25.557 6.412 12.458-.683 22.231-5.436 29.049-14.127 5.178-6.6 8.453-15.153 9.899-25.93 5.937 3.583 10.337 8.298 12.767 13.966 4.132 9.635 4.373 25.468-8.546 38.376-11.319 11.308-24.925 16.2-45.488 16.351-22.809-.169-40.06-7.484-51.275-21.742C35.236 139.966 29.808 120.682 29.605 96c.203-24.682 5.63-43.966 16.133-57.317C56.954 24.425 74.206 17.11 97.015 16.94c22.975.17 40.526 7.52 52.171 21.847 5.71 7.026 10.015 15.86 12.853 26.162l16.147-4.308c-3.44-12.68-8.853-23.606-16.219-32.668C147.036 10.784 125.322 1.201 97.098 1 68.752 1.201 47.264 10.816 32.216 28.447 18.568 44.425 11.565 67.461 11.318 96.001c.247 28.54 7.25 51.576 20.898 67.554C47.264 181.216 68.752 190.798 97.098 191c23.814-.168 41.037-6.404 55.3-20.153 18.04-17.916 17.406-40.364 11.476-54.158-4.269-9.956-12.492-18.047-22.337-27.701z"/></svg>
-      Threads
-    </a>
-    <a class="mode-social-link kofi" href="https://ko-fi.com/blackcatunderthemoon" target="_blank" rel="noopener noreferrer">
-      ☕ Ko-fi
-    </a>
-  </div>
-  <footer class="site-footer site-footer--legal site-footer--embedded" aria-label="頁尾">
-    <nav class="site-footer__nav site-footer__nav--legal" aria-label="法律與聯絡">
-      <a class="site-legal-link" href="about.html">關於我們</a>
-      <span class="site-legal-sep" aria-hidden="true">|</span>
-      <a class="site-legal-link" href="/guides">文章</a>
-      <span class="site-legal-sep" aria-hidden="true">|</span>
-      <a class="site-legal-link" href="contact.html">聯絡我們</a>
-      <span class="site-legal-sep" aria-hidden="true">|</span>
-      <a class="site-legal-link" href="tos.html">使用條款</a>
-      <span class="site-legal-sep" aria-hidden="true">|</span>
-      <a class="site-legal-link" href="privacy.html">私隱政策</a>
-      <span class="site-legal-sep" aria-hidden="true">|</span>
-      <a class="site-legal-link" href="refund.html">退款與取消政策</a>
-    </nav>
-    <p class="site-footer__copy site-footer__copy--legal">© 2026 Black Cat Under The Moon. All rights reserved.</p>
-  </footer>
-  <div class="welcome-scroll-end" aria-hidden="true"></div>
+  <div class="home-landing__bottom">
+    <div class="mode-select-socials welcome-socials home-landing__socials" aria-label="社群連結">
+      <a class="mode-social-link ig" href="https://www.instagram.com/blackcatunderthemoonhk/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" title="Instagram">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+      </a>
+      <a class="mode-social-link threads" href="https://www.threads.net/@blackcatunderthemoonhk" target="_blank" rel="noopener noreferrer" aria-label="Threads" title="Threads">
+        <svg width="18" height="18" viewBox="0 0 192 192" fill="currentColor" aria-hidden="true"><path d="M141.537 88.988a66.667 66.667 0 0 0-2.518-1.143c-1.482-27.307-16.403-42.94-41.457-43.1h-.34c-14.986 0-27.449 6.396-35.12 18.036l13.779 9.452c5.73-8.695 14.724-10.548 21.348-10.548h.229c8.249.053 14.474 2.452 18.503 7.129 2.932 3.405 4.893 8.111 5.864 14.05-7.314-1.243-15.224-1.626-23.68-1.14-23.82 1.371-39.134 15.264-38.105 34.568.522 9.792 5.4 18.216 13.735 23.719 7.047 4.652 16.124 6.927 25.557 6.412 12.458-.683 22.231-5.436 29.049-14.127 5.178-6.6 8.453-15.153 9.899-25.93 5.937 3.583 10.337 8.298 12.767 13.966 4.132 9.635 4.373 25.468-8.546 38.376-11.319 11.308-24.925 16.2-45.488 16.351-22.809-.169-40.06-7.484-51.275-21.742C35.236 139.966 29.808 120.682 29.605 96c.203-24.682 5.63-43.966 16.133-57.317C56.954 24.425 74.206 17.11 97.015 16.94c22.975.17 40.526 7.52 52.171 21.847 5.71 7.026 10.015 15.86 12.853 26.162l16.147-4.308c-3.44-12.68-8.853-23.606-16.219-32.668C147.036 10.784 125.322 1.201 97.098 1 68.752 1.201 47.264 10.816 32.216 28.447 18.568 44.425 11.565 67.461 11.318 96.001c.247 28.54 7.25 51.576 20.898 67.554C47.264 181.216 68.752 190.798 97.098 191c23.814-.168 41.037-6.404 55.3-20.153 18.04-17.916 17.406-40.364 11.476-54.158-4.269-9.956-12.492-18.047-22.337-27.701z"/></svg>
+      </a>
+      <a class="mode-social-link kofi" href="https://ko-fi.com/blackcatunderthemoon" target="_blank" rel="noopener noreferrer" aria-label="Ko-fi" title="Ko-fi">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-1h2c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2zm0 8h-2V5h2v6zM2 21h18v-2H2v2z"/></svg>
+      </a>
+    </div>
+
+    <footer class="site-footer site-footer--legal site-footer--embedded home-landing__footer" aria-label="頁尾">
+      <nav class="home-landing__menu" aria-label="主要選單">
+        <div class="home-landing__menu-row">
+          <a class="site-legal-link" href="about.html">關於我們</a>
+          <span class="site-legal-sep" aria-hidden="true">·</span>
+          <a class="site-legal-link" href="contact.html">聯絡我們</a>
+          <span class="site-legal-sep" aria-hidden="true">·</span>
+          <a class="site-legal-link" href="tos.html">使用條款</a>
+          <span class="site-legal-sep" aria-hidden="true">·</span>
+          <a class="site-legal-link" href="privacy.html">私隱政策</a>
+          <span class="site-legal-sep" aria-hidden="true">·</span>
+          <a class="site-legal-link" href="refund.html" title="退款與取消政策">退款政策</a>
+        </div>
+      </nav>
+      <p class="site-footer__copy site-footer__copy--legal">© 2026 Black Cat Under The Moon.</p>
+    </footer>
   </div>
 </div>
-
-<!-- Mode Select Screen -->
-<div class="mode-select-screen" id="mode-select">
-  <div class="mode-select-hdr">
-    <img
-      src="BlackCatPixLogo.png"
-      alt="Black Cat Under The Moon"
-      class="mode-select-hdr-mark mode-select-hdr-mark--pix"
-      width="120"
-      height="120"
-    >
-    <div class="mode-select-hdr-wordmark mode-select-hdr-wordmark--pix">
-      <span class="mode-select-hdr-wordmark__line mode-select-hdr-wordmark__line--top">Black Cat</span>
-      <span class="mode-select-hdr-wordmark__line mode-select-hdr-wordmark__line--bottom">Under The Moon</span>
-    </div>
-  </div>
-  <div class="mode-select-intro">
-    <div class="mode-select-title pixel-font">選擇你的模式</div>
-    <div class="mode-select-sub">認識自己 · 尋找同頻 · 匿名漂流 · 圍爐傾訴</div>
-  </div>
-  <div class="mode-cards">
-    <div class="mode-card mode-b" id="mode-b-btn" style="cursor:pointer;">
-      <div class="mode-card-icon"><img class="mode-card-icon__img" src="icon/mirroricon.png" alt="" width="54" height="54" aria-hidden="true"></div>
-      <div class="mode-card-badge pixel-font">MIRROR MODE</div>
-      <div class="mode-card-name"><span class="name-zh">【靈魂鏡像】</span></div>
-      <div class="mode-card-desc">測驗探索性格鏡像<br>── 這是起點</div>
-      <div class="mode-card-cta pixel-font">開始測驗 ▸</div>
-    </div>
-    <a class="mode-card mode-c" href="drift-bottle.html" style="text-decoration:none; color:inherit;">
-      <div class="mode-card-icon"><img class="mode-card-icon__img" src="icon/driftbottleicon.png" alt="" width="54" height="54" aria-hidden="true"></div>
-      <div class="mode-card-badge pixel-font">DRIFT MODE</div>
-      <div class="mode-card-name"><span class="name-zh">【月光漂流瓶】</span></div>
-      <div class="mode-card-desc">匿名傾訴 · 搵同路隊友<br>── 把心事丟進大海</div>
-      <div class="mode-card-cta pixel-font">投瓶入海 ▸</div>
-    </a>
-    <div class="mode-card mode-a" id="mode-a-btn" style="cursor:pointer;">
-      <div class="mode-card-icon"><img class="mode-card-icon__img" src="icon/echoicon.png" alt="" width="54" height="54" aria-hidden="true"></div>
-      <div class="mode-card-badge pixel-font">ECHO MODE</div>
-      <div class="mode-card-name"><span class="name-zh">【月下緣份】</span></div>
-      <div class="mode-card-desc">問卷分析心靈契合度<br>── 尋找靈魂同頻者</div>
-      <div class="mode-card-cta pixel-font">開始配對 ▸</div>
-    </div>
-    <a class="mode-card mode-d" href="/forum" style="text-decoration:none; color:inherit;">
-      <div class="mode-card-icon"><img class="mode-card-icon__img" src="icon/treeholeicon.png" alt="" width="54" height="54" aria-hidden="true"></div>
-      <div class="mode-card-badge pixel-font">TREEHOLE MODE</div>
-      <div class="mode-card-name"><span class="name-zh">【黑貓樹洞】</span></div>
-      <div class="mode-card-desc">圍爐傾訴 · 認識同頻的她<br>── 在樹洞裡說說心事</div>
-      <div class="mode-card-cta pixel-font">走進樹洞 ▸</div>
-    </a>
-  </div>
-  <div class="mode-select-socials">
-    <a class="mode-social-link ig" href="https://www.instagram.com/blackcatunderthemoonhk/" target="_blank" rel="noopener noreferrer">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
-      Instagram
-    </a>
-    <a class="mode-social-link threads" href="https://www.threads.net/@blackcatunderthemoonhk" target="_blank" rel="noopener noreferrer">
-      <svg width="13" height="13" viewBox="0 0 192 192" fill="currentColor"><path d="M141.537 88.988a66.667 66.667 0 0 0-2.518-1.143c-1.482-27.307-16.403-42.94-41.457-43.1h-.34c-14.986 0-27.449 6.396-35.12 18.036l13.779 9.452c5.73-8.695 14.724-10.548 21.348-10.548h.229c8.249.053 14.474 2.452 18.503 7.129 2.932 3.405 4.893 8.111 5.864 14.05-7.314-1.243-15.224-1.626-23.68-1.14-23.82 1.371-39.134 15.264-38.105 34.568.522 9.792 5.4 18.216 13.735 23.719 7.047 4.652 16.124 6.927 25.557 6.412 12.458-.683 22.231-5.436 29.049-14.127 5.178-6.6 8.453-15.153 9.899-25.93 5.937 3.583 10.337 8.298 12.767 13.966 4.132 9.635 4.373 25.468-8.546 38.376-11.319 11.308-24.925 16.2-45.488 16.351-22.809-.169-40.06-7.484-51.275-21.742C35.236 139.966 29.808 120.682 29.605 96c.203-24.682 5.63-43.966 16.133-57.317C56.954 24.425 74.206 17.11 97.015 16.94c22.975.17 40.526 7.52 52.171 21.847 5.71 7.026 10.015 15.86 12.853 26.162l16.147-4.308c-3.44-12.68-8.853-23.606-16.219-32.668C147.036 10.784 125.322 1.201 97.098 1 68.752 1.201 47.264 10.816 32.216 28.447 18.568 44.425 11.565 67.461 11.318 96.001c.247 28.54 7.25 51.576 20.898 67.554C47.264 181.216 68.752 190.798 97.098 191c23.814-.168 41.037-6.404 55.3-20.153 18.04-17.916 17.406-40.364 11.476-54.158-4.269-9.956-12.492-18.047-22.337-27.701z"/></svg>
-      Threads
-    </a>
-    <a class="mode-social-link kofi" href="https://ko-fi.com/blackcatunderthemoon" target="_blank" rel="noopener noreferrer">
-      ☕ Ko-fi
-    </a>
-  </div>
-  <footer class="site-footer site-footer--legal site-footer--embedded" aria-label="頁尾">
-    <nav class="site-footer__nav site-footer__nav--legal" aria-label="法律與聯絡">
-      <a class="site-legal-link" href="about.html">關於我們</a>
-      <span class="site-legal-sep" aria-hidden="true">|</span>
-      <a class="site-legal-link" href="/guides">文章</a>
-      <span class="site-legal-sep" aria-hidden="true">|</span>
-      <a class="site-legal-link" href="contact.html">聯絡我們</a>
-      <span class="site-legal-sep" aria-hidden="true">|</span>
-      <a class="site-legal-link" href="tos.html">使用條款</a>
-      <span class="site-legal-sep" aria-hidden="true">|</span>
-      <a class="site-legal-link" href="privacy.html">私隱政策</a>
-      <span class="site-legal-sep" aria-hidden="true">|</span>
-      <a class="site-legal-link" href="refund.html">退款與取消政策</a>
-    </nav>
-    <p class="site-footer__copy site-footer__copy--legal">© 2026 Black Cat Under The Moon. All rights reserved.</p>
-  </footer>
-  <div class="mode-select-scroll-end" aria-hidden="true"></div>
-</div>
-
-<aside class="site-presence" id="site-presence" hidden aria-live="polite" aria-label="月下在線人數">
-  <span class="site-presence__sigil" aria-hidden="true">🌙</span>
-  <span class="site-presence__content">
-    <span class="site-presence__eyebrow">月下同在</span>
-    <span class="site-presence__line">
-      <span class="site-presence__count" data-presence-count>0</span>
-      <span class="site-presence__label">位旅人在線上</span>
-      <span class="site-presence__dot" aria-hidden="true"></span>
-    </span>
-  </span>
-</aside>
 
 <div class="live-activity-toasts" id="live-activity-toasts" aria-live="polite" aria-relevant="additions"></div>
 
@@ -350,12 +336,13 @@
   </span>
 </button>
 
-<script src="/js/mobile-document-scroll.js?v=20260710a"></script>
+<script src="/js/mobile-document-scroll.js?v=20260724home"></script>
 <script>
-/* Landing page — starfield + welcome/mode-select only */
+/* Landing page — starfield only (carousel logic in home-carousel.js) */
 (function () {
   function initStarfield() {
     var canvas = document.getElementById('bg-canvas');
+    if (!canvas) return;
     var ctx = canvas.getContext('2d');
     function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
     resize(); window.addEventListener('resize', resize);
@@ -381,82 +368,23 @@
     requestAnimationFrame(draw);
   }
 
-  function getSupabaseToken() {
-    try {
-      for (var i = 0; i < localStorage.length; i++) {
-        var k = localStorage.key(i);
-        if (k && k.startsWith('sb-') && k.endsWith('-auth-token')) {
-          var v = JSON.parse(localStorage.getItem(k) || 'null');
-          if (v && v.access_token) return v.access_token;
-        }
-      }
-    } catch (e) {}
-    return null;
-  }
-
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function () {
     initStarfield();
-    var welcome = document.getElementById('welcome');
-    var modeSelect = document.getElementById('mode-select');
-    if (window.location.hash === '#mode') {
-      welcome.style.display = 'none';
-      modeSelect.classList.add('active');
-      if (window.MobileDocumentScroll) {
-        MobileDocumentScroll.setLandingScrollScreen('mode-select');
-      }
-    } else if (window.MobileDocumentScroll) {
-      MobileDocumentScroll.setLandingScrollScreen('welcome');
-    }
-    var welcomeLogo = welcome && welcome.querySelector('.welcome-cat img');
-    if (welcomeLogo && window.MobileDocumentScroll && MobileDocumentScroll.refreshLandingScrollExtent) {
-      var refreshWelcomeScroll = function () { MobileDocumentScroll.refreshLandingScrollExtent(); };
-      if (welcomeLogo.complete) refreshWelcomeScroll();
-      else welcomeLogo.addEventListener('load', refreshWelcomeScroll);
-    }
-    function enterModeSelect() {
-      welcome.classList.add('hiding');
-      welcome.style.display = 'none';
-      welcome.style.pointerEvents = 'none';
-      modeSelect.classList.add('active');
-      if (window.MobileDocumentScroll) {
-        MobileDocumentScroll.setLandingScrollScreen('mode-select');
-        if (MobileDocumentScroll.applyMobileLandingInFlow) {
-          MobileDocumentScroll.applyMobileLandingInFlow();
-        }
-        if (MobileDocumentScroll.refreshLandingScrollExtent) {
-          MobileDocumentScroll.refreshLandingScrollExtent();
-          setTimeout(function () { MobileDocumentScroll.refreshLandingScrollExtent(); }, 200);
-          setTimeout(function () { MobileDocumentScroll.refreshLandingScrollExtent(); }, 600);
-        }
-      }
-      window.scrollTo(0, 0);
-    }
-    var enterBtn = document.getElementById('welcome-enter-btn');
-    if (enterBtn) enterBtn.addEventListener('click', enterModeSelect);
-
-    var mirrorBtn = document.getElementById('mode-b-btn');
-    if (mirrorBtn) {
-      mirrorBtn.addEventListener('click', function() {
-        window.location.href = '/mirror.html';
-      });
-    }
-
-    var matchBtn = document.getElementById('mode-a-btn');
-    if (matchBtn) {
-      matchBtn.addEventListener('click', function() {
-        window.location.href = '/echo.html';
-      });
+    if (window.MobileDocumentScroll && MobileDocumentScroll.setLandingScrollScreen) {
+      MobileDocumentScroll.setLandingScrollScreen('home');
     }
   });
 }());
 </script>
 
-<script src="/js/welcome-mascot.js?v=20260708catmoon"></script>
+<script src="/js/home-carousel.js?v=20260725polish"></script>
+<script src="/js/welcome-mascot.js?v=20260724home2"></script>
 <script src="/js/site-presence-heartbeat.js?v=20260709a"></script>
 <script src="/js/site-presence.js?v=20260709a"></script>
-<script src="/js/live-activity.js?v=20260724a"></script>
+<script src="/js/live-activity.js?v=20260725livesync"></script>
 <script src="/js/me-cache.js?v=20260707perf"></script>
-<script src="/js/auth-nav.js?v=20260724unread3"></script>
+<script src="/js/auth-nav.js?v=20260725polish"></script>
 
 </body>
 </html>
+
