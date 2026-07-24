@@ -458,7 +458,7 @@
 .gathering-card {
   position: relative;
   display: block;
-  padding: 1.05rem 1.15rem 1.15rem;
+  padding: 1.05rem 1.15rem 1.35rem;
   border: 1px solid rgba(255, 224, 102, 0.3);
   border-radius: 6px;
   background:
@@ -2291,7 +2291,7 @@
   }
 
   .gathering-card {
-    padding: 0.9rem 0.85rem;
+    padding: 0.9rem 0.85rem 1.25rem;
   }
 
   .gathering-card__title {
@@ -2517,9 +2517,14 @@
   .app-page--gatherings .app-header--account .auth-nav-badge {
     margin-top: 2px;
     padding: 2px 4px;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .app-page--gatherings .app-header--account.mode-top-bar {
+    box-shadow: 0 1px 0 rgba(240, 235, 216, 0.08);
   }
 }
-
 .gatherings-hero__eyebrow {
   font-family: 'Zpix', 'Press Start 2P', monospace;
   font-size: 0.68rem;

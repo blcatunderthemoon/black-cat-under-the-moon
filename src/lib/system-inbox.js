@@ -4,8 +4,11 @@
  * The DB blocks self-threads (`no_self_thread`) and `source_id` is a uuid column,
  * so system notices are delivered as a normal two-party thread between the
  * recipient and a per-channel internal "anchor" account, using
- * `source_type = 'system'` and `source_id = null`. The anchor's display name
- * (e.g. 月光聚會 / 論壇守護) is what the user sees as the sender.
+ * `source_type = 'system'`. The anchor's display name (e.g. 月光聚會 / 論壇守護)
+ * is what the user sees as the sender.
+ *
+ * Optional `sourceId` scopes the thread (e.g. one Moonlight Gathering thread
+ * per gathering UUID) so notices for different gatherings stay separate.
  */
 
 import { getAdminClient, ensureProfile } from './server-auth.js';
@@ -86,17 +89,36 @@ export async function ensureSystemAnchorId(channel, admin = getAdminClient()) {
   return anchorId;
 }
 
-async function findOrCreateSystemThread(admin, userId, anchorId) {
-  const { data: existing } = await admin
-    .from('inbox_threads')
-    .select('id')
-    .eq('source_type', 'system')
-    .or(`and(participant_a.eq.${userId},participant_b.eq.${anchorId}),and(participant_a.eq.${anchorId},participant_b.eq.${userId})`)
-    .order('created_at', { ascending: true })
-    .limit(1)
-    .maybeSingle();
+function normalizeSourceId(sourceId) {
+  if (sourceId == null || sourceId === '') return null;
+  const id = String(sourceId);
+  // source_id is uuid — reject non-uuid keys so we never fail the insert
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+    return null;
+  }
+  return id;
+}
 
-  if (existing?.id) return existing.id;
+async function findOrCreateSystemThread(admin, userId, anchorId, sourceId = null) {
+  const scopedId = normalizeSourceId(sourceId);
+
+  const pairFilter = `and(participant_a.eq.${userId},participant_b.eq.${anchorId}),and(participant_a.eq.${anchorId},participant_b.eq.${userId})`;
+
+  async function findExisting() {
+    let query = admin
+      .from('inbox_threads')
+      .select('id')
+      .eq('source_type', 'system')
+      .or(pairFilter)
+      .order('created_at', { ascending: true })
+      .limit(1);
+    query = scopedId ? query.eq('source_id', scopedId) : query.is('source_id', null);
+    const { data } = await query.maybeSingle();
+    return data?.id || null;
+  }
+
+  const existingId = await findExisting();
+  if (existingId) return existingId;
 
   const { data: created, error } = await admin
     .from('inbox_threads')
@@ -104,31 +126,47 @@ async function findOrCreateSystemThread(admin, userId, anchorId) {
       participant_a: userId,
       participant_b: anchorId,
       source_type: 'system',
-      source_id: null,
+      source_id: scopedId,
       last_message_at: databaseNowIso(),
     })
     .select('id')
     .single();
 
-  if (error) {
-    console.error('[system-inbox] thread create failed:', error.message, error.code);
-    return null;
-  }
-  return created.id;
+  if (!error && created?.id) return created.id;
+
+  // Race / unique conflict — re-read before giving up (avoid dropped notices).
+  const raced = await findExisting();
+  if (raced) return raced;
+
+  console.error('[system-inbox] thread create failed:', error?.message, error?.code);
+  return null;
 }
 
 /**
  * Deliver a system notification to a user's inbox.
+ * @param {{ channel: string, userId: string, content: string, payload?: object, sourceId?: string|null }} opts
  * @returns {Promise<boolean>} whether it was delivered
  */
-export async function sendSystemInboxMessage({ channel, userId, content, payload }) {
+export async function sendSystemInboxMessage({
+  channel,
+  userId,
+  content,
+  payload,
+  sourceId,
+} = {}) {
   if (!userId) return false;
   const admin = getAdminClient();
 
   const anchorId = await ensureSystemAnchorId(channel, admin);
   if (!anchorId) return false;
 
-  const threadId = await findOrCreateSystemThread(admin, userId, anchorId);
+  // Omitted sourceId → gathering channel scopes by payload.gathering_id (per-gathering threads).
+  // Explicit null keeps a shared channel thread (forum / legacy).
+  const threadSourceId = sourceId !== undefined
+    ? sourceId
+    : (channel === 'gathering' ? (payload?.gathering_id || null) : null);
+
+  const threadId = await findOrCreateSystemThread(admin, userId, anchorId, threadSourceId);
   if (!threadId) return false;
 
   const { error } = await admin.from('inbox_messages').insert({

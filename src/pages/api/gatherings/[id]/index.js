@@ -12,9 +12,10 @@ import {
   getAttendanceMap,
   maybeMarkCompleted,
   canViewPrivateLocation,
+  hostHasOpenGatheringWithTitle,
 } from '../../../../lib/gatherings.js';
 import { databaseNowIso } from '../../../../lib/hong-kong-time.js';
-import { ensureGatheringDecisionNotified } from '../../../../lib/gathering-notify.js';
+import { ensureGatheringDecisionNotified, ensureGatheringApplicationReceivedNotified } from '../../../../lib/gathering-notify.js';
 
 async function loadGathering(admin, id) {
   const { data, error } = await admin.from('gatherings').select('*').eq('id', id).maybeSingle();
@@ -50,20 +51,25 @@ export default async function handler(req, res) {
         ? await canViewPrivateLocation(admin, row, user.id)
         : false;
 
-      // Backfill missed Inbox approval/rejection notices.
+      // Backfill missed Inbox notices for the applicant (per-gathering thread).
       let inboxNotified = null;
-      if (
-        user
-        && user.id !== row.host_id
-        && (myAttendance?.status === 'approved' || myAttendance?.status === 'rejected')
-      ) {
+      if (user && user.id !== row.host_id && myAttendance?.status) {
         try {
-          inboxNotified = await ensureGatheringDecisionNotified({
-            applicantId: user.id,
-            gatheringId: row.id,
-            gatheringTitle: row.title,
-            approved: myAttendance.status === 'approved',
-          });
+          if (myAttendance.status === 'approved' || myAttendance.status === 'rejected') {
+            inboxNotified = await ensureGatheringDecisionNotified({
+              applicantId: user.id,
+              gatheringId: row.id,
+              gatheringTitle: row.title,
+              approved: myAttendance.status === 'approved',
+            });
+          } else if (myAttendance.status === 'pending') {
+            inboxNotified = await ensureGatheringApplicationReceivedNotified({
+              applicantId: user.id,
+              gatheringId: row.id,
+              gatheringTitle: row.title,
+              startsAt: row.starts_at,
+            });
+          }
         } catch (err) {
           console.error('[gatherings/id] ensure notify failed:', err?.message || err);
           inboxNotified = false;
@@ -108,6 +114,18 @@ export default async function handler(req, res) {
         return res.status(validated.status).json({
           error: validated.error,
           crisis: validated.crisis || false,
+        });
+      }
+
+      if (
+        validated.data.title
+        && await hostHasOpenGatheringWithTitle(admin, user.id, validated.data.title, {
+          excludeGatheringId: id,
+        })
+      ) {
+        return res.status(422).json({
+          error: '你已有一場進行中、同名嘅聚會。請換標題。',
+          code: 'duplicate_title',
         });
       }
 

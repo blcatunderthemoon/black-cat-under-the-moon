@@ -7,7 +7,7 @@
 import { requireUser, getProfile, ensureProfile, getSubscriptionTier, sendAuthError, getAdminClient, resolveSubscriptionTier } from '../../lib/server-auth.js';
 import { filterContent } from '../../lib/content-filter.js';
 import { validateDisplayName } from '../../lib/display-name-policy.js';
-import { isDisplayNameTaken } from '../../lib/display-name-uniqueness.js';
+import { isDisplayNameTaken, isDisplayNameUniqueViolation } from '../../lib/display-name-uniqueness.js';
 import { getQuotaUsage } from '../../lib/permissions.js';
 import { normalizeLetterPrefs } from '../../lib/letter-gameplay.js';
 import { buildMoonJourneySummary } from '../../lib/moon-journey.js';
@@ -197,7 +197,12 @@ async function handlePatch(req, res) {
     .select('display_name, bio, avatar_style, status, subscription_tier')
     .single();
 
-  if (error) return res.status(500).json({ error: 'Failed to update profile' });
+  if (error) {
+    if (updates.display_name && isDisplayNameUniqueViolation(error)) {
+      return res.status(422).json({ error: '此暱稱已被使用，請換一個名字。' });
+    }
+    return res.status(500).json({ error: 'Failed to update profile' });
+  }
 
   if (updates.display_name) {
     admin

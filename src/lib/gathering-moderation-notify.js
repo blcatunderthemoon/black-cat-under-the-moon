@@ -75,6 +75,7 @@ export async function notifyGatheringModerators({
       userId: mod.id,
       content,
       payload,
+      sourceId: gatheringId || null,
     });
     if (ok) sent = true;
   }

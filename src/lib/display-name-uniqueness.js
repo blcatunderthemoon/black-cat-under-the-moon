@@ -25,6 +25,27 @@ export async function isDisplayNameTaken(admin, displayName, options = {}) {
   const key = normalizeDisplayNameKey(trimmed);
   if (!key) return false;
 
+  // Prefer indexed display_name_key when migration is applied.
+  let keyQuery = admin
+    .from('profiles')
+    .select('id, display_name, status, display_name_key')
+    .eq('display_name_key', key)
+    .limit(8);
+
+  if (options.excludeUserId) {
+    keyQuery = keyQuery.neq('id', options.excludeUserId);
+  }
+
+  const keyed = await keyQuery;
+  if (!keyed.error) {
+    return (keyed.data || []).some((row) => {
+      if (!row?.id || row.id === options.excludeUserId) return false;
+      if (row.status === 'deleted') return false;
+      return normalizeDisplayNameKey(row.display_name_key || row.display_name) === key;
+    });
+  }
+
+  // Fallback before migration / if column missing from schema cache.
   let query = admin
     .from('profiles')
     .select('id, display_name, status')
@@ -45,4 +66,14 @@ export async function isDisplayNameTaken(admin, displayName, options = {}) {
     if (row.status === 'deleted') return false;
     return normalizeDisplayNameKey(row.display_name) === key;
   });
+}
+
+/** True when a Postgres / PostgREST error is a display_name unique violation. */
+export function isDisplayNameUniqueViolation(error) {
+  const code = String(error?.code || '');
+  const msg = String(error?.message || error?.details || '').toLowerCase();
+  return code === '23505' && (
+    msg.includes('display_name')
+    || msg.includes('profiles_display_name_key')
+  );
 }

@@ -171,6 +171,40 @@ export default function AccountPage() {
       setSaving(false);
       return;
     }
+    const previousName = String(profile?.profile?.display_name || '').trim();
+    if (nameCheck.value !== previousName) {
+      try {
+        const nameAvailabilityRes = await fetch('/api/auth/check-display-name', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            display_name: nameCheck.value,
+            previous_name: previousName || undefined,
+          }),
+        });
+        const nameAvailabilityData = await nameAvailabilityRes.json().catch(() => ({}));
+        if (!nameAvailabilityRes.ok) {
+          setSaveOk(false);
+          setSaveMsg(nameAvailabilityData.error || '無法驗證暱稱，請稍後再試。');
+          setSaving(false);
+          return;
+        }
+        if (!nameAvailabilityData.available) {
+          setSaveOk(false);
+          setSaveMsg('此暱稱已被使用，請換一個名字。');
+          setSaving(false);
+          return;
+        }
+      } catch {
+        setSaveOk(false);
+        setSaveMsg('無法驗證暱稱，請稍後再試。');
+        setSaving(false);
+        return;
+      }
+    }
     try {
       const r = await fetch('/api/me', {
         method: 'PATCH',

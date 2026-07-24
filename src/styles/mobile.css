@@ -1440,7 +1440,8 @@
     margin-top: 3px;
     padding: 3px 6px 2px;
     border-top: none;
-    background: rgba(12, 11, 24, 0.92);
+    background: transparent;
+    box-shadow: none;
   }
 
   .app-header--account .auth-nav-badge__inner {
@@ -1476,10 +1477,11 @@
     gap: 2px;
     flex-shrink: 0;
     margin-left: auto;
-    padding: 2px;
-    border-radius: 10px;
-    background: rgba(15, 14, 34, 0.55);
-    border: 1px solid rgba(189, 147, 249, 0.18);
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
   }
 
   .app-header--account .auth-nav-badge__icon-group .auth-nav-badge__item--icon {
@@ -1541,7 +1543,8 @@
     margin-top: 2px;
     padding: 4px 6px 5px;
     border-top: none;
-    background: rgba(12, 11, 24, 0.92);
+    background: transparent;
+    box-shadow: none;
   }
 
   .app-header--account .auth-nav-badge--user-toolbar .auth-nav-badge__inner {
@@ -1592,8 +1595,11 @@
     min-height: 32px;
     align-items: center;
     margin-left: auto;
-    padding: 1px;
-    border-radius: 8px;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
   }
 
   .app-header--account .auth-nav-badge--user-toolbar .auth-nav-badge__icon-group .auth-nav-badge__item--icon {

@@ -98,7 +98,7 @@ async function loadRecentChannelMessages(admin, threadIds) {
     threadIds.map(async (threadId) => {
       const { data } = await admin
         .from('inbox_messages')
-        .select('id, thread_id, sender_id, recipient_id, message_type, created_at, content')
+        .select('id, thread_id, sender_id, recipient_id, message_type, created_at, content, payload')
         .eq('thread_id', threadId)
         .eq('is_hidden', false)
         .in('message_type', ['user_letter', 'photo_exchange_request', 'system'])
@@ -287,10 +287,16 @@ export async function listThreads(userId, { limit = 20, offset = 0 } = {}) {
     const systemChannelName = isSystem
       ? (profileById[otherId]?.display_name || '系統通知')
       : null;
+    const gatheringTitle = isSystem
+      ? String(latestMessage?.payload?.gathering_title || '').trim().slice(0, 40)
+      : '';
+    const systemDisplayName = gatheringTitle
+      ? `${systemChannelName} · ${gatheringTitle}`
+      : systemChannelName;
 
     const channelMeta = isSystem
       ? {
-          mysterious_title: (latestMessage?.content || systemChannelName).slice(0, 80),
+          mysterious_title: (latestMessage?.content || systemDisplayName || systemChannelName).slice(0, 80),
           list_meta: `${systemChannelName}通知`,
           can_reply: false,
           reply_opportunity: false,
@@ -318,7 +324,7 @@ export async function listThreads(userId, { limit = 20, offset = 0 } = {}) {
     const otherProfile = soloPartner ? null : profileById[otherId];
     const matchCard = matchCardByThread[thread.id] || null;
 
-    const systemName = systemChannelName || '系統通知';
+    const systemName = systemDisplayName || systemChannelName || '系統通知';
 
     return {
       ...thread,
@@ -558,9 +564,17 @@ export async function getThread(threadId, userId) {
     ? (otherProfile?.display_name || '系統通知')
     : null;
 
+  const latestSystemPayload = isSystemInboxThread(thread)
+    ? ([...(messages || [])].reverse().find((m) => m.message_type === 'system')?.payload || null)
+    : null;
+  const gatheringTitle = String(latestSystemPayload?.gathering_title || '').trim().slice(0, 40);
+  const systemDisplayName = gatheringTitle
+    ? `${systemChannelName} · ${gatheringTitle}`
+    : systemChannelName;
+
   const channelMeta = isSystemInboxThread(thread)
     ? {
-        mysterious_title: systemChannelName,
+        mysterious_title: systemDisplayName || systemChannelName,
         list_meta: `${systemChannelName}通知`,
         can_reply: false,
         reply_opportunity: false,
@@ -593,7 +607,7 @@ export async function getThread(threadId, userId) {
     : null;
 
   const isSystem = isSystemInboxThread(thread);
-  const systemName = systemChannelName || '系統通知';
+  const systemName = systemDisplayName || systemChannelName || '系統通知';
 
   return {
     thread,

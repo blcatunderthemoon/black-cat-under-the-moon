@@ -8,7 +8,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { resolveSafeDisplayName, DISPLAY_NAME_MAX_LENGTH } from './display-name-policy.js';
-import { isDisplayNameTaken } from './display-name-uniqueness.js';
+import { isDisplayNameTaken, isDisplayNameUniqueViolation } from './display-name-uniqueness.js';
 import { isProduction } from './production-guard.js';
 
 const supabaseUrl =
@@ -150,11 +150,13 @@ export async function ensureProfile(user) {
 
   if (await isDisplayNameTaken(admin, displayName)) {
     const suffix = user.id.replace(/-/g, '').slice(0, 4);
-    const base = displayName.slice(0, Math.max(1, DISPLAY_NAME_MAX_LENGTH - suffix.length - 1));
-    displayName = `${base}#${suffix}`;
+    const base = displayName.slice(0, Math.max(1, DISPLAY_NAME_MAX_LENGTH - suffix.length));
+    displayName = `${base}${suffix}`.slice(0, DISPLAY_NAME_MAX_LENGTH);
   }
 
-  const { data, error } = await admin
+  let data;
+  let error;
+  ({ data, error } = await admin
     .from('profiles')
     .insert({
       id: user.id,
@@ -164,7 +166,25 @@ export async function ensureProfile(user) {
       subscription_tier: 'free',
     })
     .select()
-    .single();
+    .single());
+
+  // Race: another signup claimed the same name — retry once with a unique suffix.
+  if (error && isDisplayNameUniqueViolation(error)) {
+    const suffix = user.id.replace(/-/g, '').slice(0, 6);
+    const base = displayName.slice(0, Math.max(1, DISPLAY_NAME_MAX_LENGTH - suffix.length - 1));
+    displayName = `${base}${suffix}`.slice(0, DISPLAY_NAME_MAX_LENGTH);
+    ({ data, error } = await admin
+      .from('profiles')
+      .insert({
+        id: user.id,
+        email: user.email,
+        display_name: displayName,
+        status: 'active',
+        subscription_tier: 'free',
+      })
+      .select()
+      .single());
+  }
 
   if (error) {
     const err = new Error('Failed to create profile: ' + error.message);

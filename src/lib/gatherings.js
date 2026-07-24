@@ -286,6 +286,30 @@ export async function countOpenHostedGatherings(admin, hostId) {
   return count ?? 0;
 }
 
+/** True if this host already has an open/full gathering with the same title (case-insensitive). */
+export async function hostHasOpenGatheringWithTitle(admin, hostId, title, { excludeGatheringId } = {}) {
+  const needle = String(title || '').trim().toLowerCase();
+  if (!hostId || !needle) return false;
+
+  let query = admin
+    .from('gatherings')
+    .select('id, title')
+    .eq('host_id', hostId)
+    .in('status', ['open', 'full'])
+    .limit(20);
+
+  if (excludeGatheringId) {
+    query = query.neq('id', excludeGatheringId);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    console.error('[gatherings] title uniqueness check failed:', error.message);
+    return false;
+  }
+  return (data || []).some((row) => String(row.title || '').trim().toLowerCase() === needle);
+}
+
 export async function countHostedThisHkMonth(admin, hostId) {
   const now = new Date();
   const parts = new Intl.DateTimeFormat('en-CA', {

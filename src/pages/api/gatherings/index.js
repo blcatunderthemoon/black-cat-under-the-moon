@@ -10,6 +10,7 @@ import {
   validateGatheringInput,
   countOpenHostedGatherings,
   countHostedThisHkMonth,
+  hostHasOpenGatheringWithTitle,
   GATHERING_OPEN_HOST_LIMIT,
   GATHERING_MONTHLY_HOST_LIMIT,
   toPublicGathering,
@@ -171,6 +172,13 @@ async function handlePost(req, res) {
       error: validated.error,
       crisis: validated.crisis || false,
       errors: validated.errors,
+    });
+  }
+
+  if (await hostHasOpenGatheringWithTitle(admin, user.id, validated.data.title)) {
+    return res.status(422).json({
+      error: '你已有一場進行中、同名嘅聚會。請換標題，或先完成／取消舊場。',
+      code: 'duplicate_title',
     });
   }
 

@@ -8,7 +8,18 @@ import { formatGatheringHkTime } from './gatherings.js';
 import { sendSystemInboxMessage, isSystemInboxThread } from './system-inbox.js';
 
 async function sendSystemMessage(_admin, userId, content, payload) {
-  return sendSystemInboxMessage({ channel: 'gathering', userId, content, payload });
+  const gatheringId = payload?.gathering_id || null;
+  if (!gatheringId) {
+    console.error('[gathering-notify] refusing system message without gathering_id (would merge threads)');
+    return false;
+  }
+  return sendSystemInboxMessage({
+    channel: 'gathering',
+    userId,
+    content,
+    payload,
+    sourceId: gatheringId,
+  });
 }
 
 async function hasGatheringSystemMessage(admin, userId, { kind, gatheringId, applicantId }) {
@@ -139,6 +150,45 @@ export async function ensureGatheringDecisionNotified({
 }
 
 /**
+ * If the applicant's "已申請／等候審核" notice never landed, send it once.
+ * Keeps each gathering on its own Inbox thread (source_id = gathering_id).
+ */
+export async function ensureGatheringApplicationReceivedNotified({
+  applicantId,
+  gatheringId,
+  gatheringTitle,
+  startsAt,
+}) {
+  if (!applicantId || !gatheringId) return false;
+  const admin = getAdminClient();
+  if (await hasGatheringSystemMessage(admin, applicantId, {
+    kind: 'gathering_applied',
+    gatheringId,
+  })) {
+    return true;
+  }
+  // Already decided — decision notice is the source of truth.
+  if (await hasGatheringSystemMessage(admin, applicantId, {
+    kind: 'gathering_approved',
+    gatheringId,
+  })) {
+    return true;
+  }
+  if (await hasGatheringSystemMessage(admin, applicantId, {
+    kind: 'gathering_rejected',
+    gatheringId,
+  })) {
+    return true;
+  }
+  return notifyGatheringApplicationReceived({
+    applicantId,
+    gatheringId,
+    gatheringTitle,
+    startsAt,
+  });
+}
+
+/**
  * Backfill host Inbox when a pending application never produced a system notice.
  */
 export async function ensureGatheringApplicationNotified({
@@ -182,14 +232,17 @@ export async function notifyGatheringCancelled({
   gatheringTitle,
   reason,
 }) {
+  if (!gatheringId) return false;
   const admin = getAdminClient();
+  const title = String(gatheringTitle || '月光聚會').slice(0, 40);
   const reasonText = reason ? `原因：${String(reason).slice(0, 100)}` : '';
-  const content = `❌ 聚會「${String(gatheringTitle).slice(0, 40)}」已取消。${reasonText}`;
+  const content = `❌ 聚會「${title}」已取消。${reasonText}`;
   let any = false;
   for (const userId of userIds || []) {
     const ok = await sendSystemMessage(admin, userId, content, {
       kind: 'gathering_cancelled',
       gathering_id: gatheringId,
+      gathering_title: title,
       gathering_url: `/gatherings/${gatheringId}`,
     });
     if (ok) any = true;
