@@ -265,6 +265,9 @@ export default function InboxPage() {
                 const matchTitle = isMatchUnread
                   ? '靈魂共鳴連線通知'
                   : (isMatchRead ? (thread.mysterious_title || '連線紀錄') : null);
+                const systemChannel = isSystem ? (thread.system_channel || null) : null;
+                const gatheringTitle = isSystem ? (thread.gathering_title || null) : null;
+                const systemNameLabel = gatheringTitle || thread.other_participant.display_name;
 
                 return (
                   <li key={thread.id} className="inbox-letter-list__item">
@@ -294,17 +297,30 @@ export default function InboxPage() {
                       ) : (
                         <PixelSealedLetterIcon variant={iconVariant} size={56} />
                       )}
-                      <div className={`inbox-letter-row__stack${isMatch ? ' inbox-letter-row__stack--match' : ''}`}>
+                      <div className={`inbox-letter-row__stack${isMatch ? ' inbox-letter-row__stack--match' : ''}${isSystem ? ' inbox-letter-row__stack--system' : ''}`}>
                         <div className="inbox-letter-row__top">
                           <span className="inbox-letter-row__name">
-                            <PixelMixedLabel
-                              text={thread.other_participant.display_name}
-                              zhClass="inbox-letter-row__zh"
-                              enClass="inbox-letter-row__en inbox-letter-row__en--name"
-                            />
+                            {isSystem && gatheringTitle && systemChannel ? (
+                              <>
+                                <span className="inbox-letter-row__channel">{systemChannel}</span>
+                                <span className="inbox-letter-row__name-sep" aria-hidden="true">·</span>
+                                <span className="inbox-letter-row__en inbox-letter-row__en--name">{gatheringTitle}</span>
+                              </>
+                            ) : (
+                              <PixelMixedLabel
+                                text={systemNameLabel}
+                                zhClass="inbox-letter-row__zh"
+                                enClass="inbox-letter-row__en inbox-letter-row__en--name"
+                              />
+                            )}
                           </span>
                           {isMatchRead && (
                             <span className="inbox-letter-row__match-flag">已查看</span>
+                          )}
+                          {isSystem && (
+                            <span className="inbox-letter-row__time inbox-letter-row__time--inline">
+                              {timeAgo(thread.last_message_at)}
+                            </span>
                           )}
                         </div>
                         <div className="inbox-letter-row__bottom">
@@ -325,7 +341,7 @@ export default function InboxPage() {
                               </span>
                             )}
                           </div>
-                          {!isMirrorClosed && (
+                          {!isMirrorClosed && !isSystem && (
                             <div className="inbox-letter-row__aside">
                               {!isMatch && metaText ? (
                                 <div className="inbox-letter-row__trail">

@@ -1,4 +1,7 @@
-const CJK_RE = /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff·\u2014\u2013]/u;
+const CJK_RE = /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff\u2014\u2013]/u;
+
+/** Middot / dashes kept out of CJK runs so「月光聚會 · Title」can space via layout gap. */
+const SEP_RE = /^[·\u30FB\u2014\u2013]+$/u;
 
 /** Punctuation / digits that should share the Chinese font run for baseline balance. */
 const ATTACH_TO_ZH_RE = /^[\s!！?？.,，。:：;；…~～'""''「」【】（）()\-—―0-9]+$/u;
@@ -33,9 +36,12 @@ export function splitPixelMixedText(text) {
   if (text == null || text === '') return [];
 
   const parts = String(text)
-    .split(/([\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff·\u2014\u2013]+)/u)
+    .split(/([\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]+|[·\u30FB]+|[\u2014\u2013]+)/u)
     .filter(Boolean)
-    .map((part) => ({ text: part, zh: CJK_RE.test(part) }));
+    .map((part) => ({
+      text: part,
+      zh: CJK_RE.test(part) || SEP_RE.test(part),
+    }));
 
   return mergeAttachedParts(parts);
 }

@@ -290,14 +290,15 @@ export async function listThreads(userId, { limit = 20, offset = 0 } = {}) {
     const gatheringTitle = isSystem
       ? String(latestMessage?.payload?.gathering_title || '').trim().slice(0, 40)
       : '';
-    const systemDisplayName = gatheringTitle
-      ? `${systemChannelName} · ${gatheringTitle}`
-      : systemChannelName;
+    // Prefer gathering title as the row name — avoid「月光聚會 · Title」+「月光聚會通知」triple repeat.
+    const systemDisplayName = gatheringTitle || systemChannelName;
 
     const channelMeta = isSystem
       ? {
-          mysterious_title: (latestMessage?.content || systemDisplayName || systemChannelName).slice(0, 80),
-          list_meta: `${systemChannelName}通知`,
+          mysterious_title: (latestMessage?.content || systemDisplayName || systemChannelName || '').slice(0, 80),
+          list_meta: null,
+          system_channel: systemChannelName || null,
+          gathering_title: gatheringTitle || null,
           can_reply: false,
           reply_opportunity: false,
         }
@@ -568,14 +569,13 @@ export async function getThread(threadId, userId) {
     ? ([...(messages || [])].reverse().find((m) => m.message_type === 'system')?.payload || null)
     : null;
   const gatheringTitle = String(latestSystemPayload?.gathering_title || '').trim().slice(0, 40);
-  const systemDisplayName = gatheringTitle
-    ? `${systemChannelName} · ${gatheringTitle}`
-    : systemChannelName;
-
+  const systemDisplayName = gatheringTitle || systemChannelName;
   const channelMeta = isSystemInboxThread(thread)
     ? {
         mysterious_title: systemDisplayName || systemChannelName,
-        list_meta: `${systemChannelName}通知`,
+        list_meta: null,
+        system_channel: systemChannelName || null,
+        gathering_title: gatheringTitle || null,
         can_reply: false,
         reply_opportunity: false,
         compose_enabled: false,

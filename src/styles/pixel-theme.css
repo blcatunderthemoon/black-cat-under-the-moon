@@ -1813,15 +1813,21 @@
 .inbox-letter-row--system .inbox-letter-row__new-badge--system {
   top: 6px;
   right: 6px;
-  padding: 3px 5px 2px;
-  font-size: 6px;
+  padding: 4px 6px 3px;
+  font-family: 'Zpix', 'Noto Sans TC', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
   letter-spacing: 0.08em;
-  color: #1a1408;
-  background: linear-gradient(145deg, #ffe066 0%, #f0c14a 100%);
-  border: 2px solid rgba(255, 244, 200, 0.95);
+  line-height: 1;
+  color: #1a1200;
+  background: #ffe066;
+  border: 2px solid #1a1200;
   box-shadow:
-    2px 2px 0 0 rgba(0, 0, 0, 0.5),
-    0 0 12px rgba(255, 224, 102, 0.35);
+    2px 2px 0 0 rgba(0, 0, 0, 0.55),
+    0 0 10px rgba(255, 224, 102, 0.35);
+  text-shadow: none;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .inbox-match-card-row {
@@ -5310,7 +5316,9 @@
 
   .inbox-letter-row__en--name,
   .inbox-letter-row__name .inbox-letter-row__zh,
-  .inbox-letter-list .inbox-letter-row__zh {
+  .inbox-letter-list .inbox-letter-row__zh,
+  .inbox-letter-row__channel,
+  .inbox-letter-row__name-sep {
     font-size: 9px;
     line-height: 1;
   }
@@ -5321,6 +5329,11 @@
   .inbox-letter-row__closed-hint-text {
     font-size: 9px;
     line-height: 1.5;
+  }
+
+  .inbox-letter-row__time--inline {
+    font-size: 9px;
+    line-height: 1.2;
   }
 
   .inbox-letter-row__name .inbox-letter-row__en,
@@ -7850,9 +7863,10 @@
 
 .inbox-letter-row__top {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   width: 100%;
   min-width: 0;
+  gap: 8px;
 }
 
 .inbox-letter-row__bottom {
@@ -7879,6 +7893,69 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
+}
+
+/* System / 月光聚會 rows — channel · title on one line, time on the right (no duplicate meta) */
+.inbox-letter-row__stack--system .inbox-letter-row__top {
+  align-items: baseline;
+}
+
+.inbox-letter-row__channel {
+  flex-shrink: 0;
+  font-family: 'Zpix', 'Press Start 2P', monospace;
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  color: rgba(255, 224, 102, 0.78);
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.inbox-letter-row__name-sep {
+  flex-shrink: 0;
+  margin: 0 0.35em;
+  color: rgba(240, 235, 216, 0.45);
+  font-family: 'Zpix', 'Press Start 2P', monospace;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.inbox-letter-row__time--inline {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-right: 0;
+  color: rgba(186, 178, 210, 0.55);
+  font-size: 10px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.inbox-letter-row:has(.inbox-letter-row__new-badge) .inbox-letter-row__time--inline {
+  padding-right: 2.75em; /* clear unread corner chip */
+}
+
+.inbox-letter-row__stack--system .inbox-letter-row__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  align-items: baseline;
+  column-gap: 0;
+  flex-wrap: nowrap;
+}
+
+.inbox-letter-row__stack--system .inbox-letter-row__en--name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transform: none;
+}
+
+.inbox-letter-row__stack--system .inbox-letter-row__bottom {
+  align-items: flex-start;
+}
+
+.inbox-letter-row__stack--system .inbox-letter-row__title {
+  color: rgba(216, 210, 232, 0.88);
 }
 
 .inbox-letter-list .inbox-letter-row__zh,
@@ -7930,7 +8007,9 @@
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  column-gap: 0;
+  /* Pixel fonts often collapse space glyphs — gap keeps「月光聚會 · Demo」readable */
+  column-gap: 0.35em;
+  row-gap: 0.1em;
   max-width: 100%;
   vertical-align: middle;
   line-height: 1;
