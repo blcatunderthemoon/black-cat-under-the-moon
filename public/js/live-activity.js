@@ -43,10 +43,53 @@
     return 'live-activity__tag--post';
   }
 
+  /* Keep paths in sync with HeaderNavIcons / ForumIcons (stroke icons sitewide). */
+  var LIVE_ICON = {
+    gathering:
+      '<svg class="live-activity__tag-ico" width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true">'
+      + '<rect x="4" y="5.5" width="16" height="14" rx="1.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>'
+      + '<path d="M4 10h16" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>'
+      + '<path d="M9 3.5v3.5M15 3.5v3.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>'
+      + '<path d="M8 14h2.5M13.5 14H16" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>'
+      + '</svg>',
+    member:
+      '<svg class="live-activity__tag-ico" width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true">'
+      + '<ellipse cx="12" cy="15.2" rx="4.2" ry="3.4" stroke="currentColor" stroke-width="1.75"/>'
+      + '<circle cx="7.2" cy="10.2" r="1.7" stroke="currentColor" stroke-width="1.75"/>'
+      + '<circle cx="10.2" cy="8.2" r="1.7" stroke="currentColor" stroke-width="1.75"/>'
+      + '<circle cx="13.8" cy="8.2" r="1.7" stroke="currentColor" stroke-width="1.75"/>'
+      + '<circle cx="16.8" cy="10.2" r="1.7" stroke="currentColor" stroke-width="1.75"/>'
+      + '</svg>',
+    post:
+      '<svg class="live-activity__tag-ico" width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true">'
+      + '<path d="M5 6.5h14v9.5H11l-3.5 3v-3H5V6.5z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>'
+      + '</svg>',
+  };
+
   function tagLabel(type, tag) {
-    if (type === 'gathering') return '🎉 ' + (tag || '活動');
-    if (type === 'member') return '👋 ' + (tag || '新會員');
-    return '💬 ' + (tag || '論壇');
+    if (type === 'gathering') return tag || '活動';
+    if (type === 'member') return tag || '新會員';
+    return tag || '論壇';
+  }
+
+  function typeIconHtml(type) {
+    if (type === 'gathering') return LIVE_ICON.gathering;
+    if (type === 'member') return LIVE_ICON.member;
+    return LIVE_ICON.post;
+  }
+
+  function fillTag(el, item) {
+    el.className = 'live-activity__tag ' + typeClass(item.type);
+    el.textContent = '';
+    var ico = global.document.createElement('span');
+    ico.className = 'live-activity__tag-ico-wrap';
+    ico.setAttribute('aria-hidden', 'true');
+    ico.innerHTML = typeIconHtml(item.type);
+    var label = global.document.createElement('span');
+    label.className = 'live-activity__tag-text';
+    label.textContent = tagLabel(item.type, item.tag);
+    el.appendChild(ico);
+    el.appendChild(label);
   }
 
   function readIsoMs(key) {
@@ -106,8 +149,7 @@
 
   function buildRow(item) {
     var tag = global.document.createElement('span');
-    tag.className = 'live-activity__tag ' + typeClass(item.type);
-    tag.textContent = tagLabel(item.type, item.tag);
+    fillTag(tag, item);
 
     var text = global.document.createElement('span');
     text.className = 'live-activity__text';
@@ -222,8 +264,7 @@
     toast.setAttribute('role', 'status');
 
     var tag = global.document.createElement('span');
-    tag.className = 'live-activity__tag ' + typeClass(item.type);
-    tag.textContent = tagLabel(item.type, item.tag);
+    fillTag(tag, item);
 
     var text = global.document.createElement('span');
     text.className = 'live-activity-toast__text';

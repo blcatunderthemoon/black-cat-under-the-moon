@@ -17,6 +17,7 @@ export default function GatheringConfirmOverlay({
   onNoteChange,
   notePlaceholder = '可留空',
   noteLabel = '備註',
+  choices = null,
   onConfirm,
   onCancel,
 }) {
@@ -41,6 +42,7 @@ export default function GatheringConfirmOverlay({
   const confirmClass = variant === 'danger'
     ? 'gathering-confirm__btn gathering-confirm__btn--danger'
     : 'gathering-confirm__btn gathering-confirm__btn--primary';
+  const hasChoices = Array.isArray(choices) && choices.length > 0;
 
   return (
     <div
@@ -73,15 +75,36 @@ export default function GatheringConfirmOverlay({
           </label>
         )}
 
-        <div className="gathering-confirm__actions">
-          <button
-            type="button"
-            className={confirmClass}
-            onClick={onConfirm}
-            disabled={busy}
-          >
-            {busy ? '處理中…' : confirmLabel}
-          </button>
+        <div className={`gathering-confirm__actions${hasChoices ? ' gathering-confirm__actions--stack' : ''}`}>
+          {hasChoices ? (
+            choices.map((choice) => {
+              const choiceClass = choice.variant === 'danger'
+                ? 'gathering-confirm__btn gathering-confirm__btn--danger'
+                : choice.variant === 'ghost'
+                  ? 'gathering-confirm__btn gathering-confirm__btn--ghost'
+                  : 'gathering-confirm__btn gathering-confirm__btn--primary';
+              return (
+                <button
+                  key={choice.id || choice.label}
+                  type="button"
+                  className={choiceClass}
+                  onClick={choice.onClick}
+                  disabled={busy || choice.disabled}
+                >
+                  {choice.label}
+                </button>
+              );
+            })
+          ) : (
+            <button
+              type="button"
+              className={confirmClass}
+              onClick={onConfirm}
+              disabled={busy}
+            >
+              {busy ? '處理中…' : confirmLabel}
+            </button>
+          )}
           <button
             type="button"
             className="gathering-confirm__btn gathering-confirm__btn--ghost"

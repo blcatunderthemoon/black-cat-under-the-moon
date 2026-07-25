@@ -214,7 +214,6 @@ export default function WishSidebarPanel({ accessToken = null, viewerId = null, 
                 <ForumMoonIcon size={16} />
                 月光心願
               </h3>
-              <p className="forum-wish-quest__tagline">溫暖圍爐 · 彼此陪伴</p>
             </div>
             <span className="forum-wish-quest__chevron" aria-hidden="true" />
           </button>
@@ -225,7 +224,6 @@ export default function WishSidebarPanel({ accessToken = null, viewerId = null, 
                 <ForumMoonIcon size={16} />
                 月光心願
               </h3>
-              <p className="forum-wish-quest__tagline">溫暖圍爐 · 彼此陪伴</p>
             </div>
           </div>
         )}

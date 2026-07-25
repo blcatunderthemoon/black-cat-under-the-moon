@@ -853,6 +853,7 @@ body.landing-document-scroll.welcome-active .site-presence__dot {
 .live-activity__tag {
   display: inline-flex;
   align-items: center;
+  gap: 4px;
   flex-shrink: 0;
   font-size: 9px;
   font-weight: 700;
@@ -861,6 +862,20 @@ body.landing-document-scroll.welcome-active .site-presence__dot {
   border-radius: 999px;
   line-height: 1.35;
   white-space: nowrap;
+}
+
+.live-activity__tag-ico-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.live-activity__tag-ico {
+  display: block;
+  width: 11px;
+  height: 11px;
 }
 
 .live-activity__tag--post {

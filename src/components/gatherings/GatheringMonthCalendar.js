@@ -89,7 +89,8 @@ export default function GatheringMonthCalendar({
 
       <div className="gathering-cal__grid" role="grid" aria-label={`${formatMonthTitle(year, month)} 日曆`}>
         {grid.map((cell) => {
-          const count = cell.inMonth ? (byDate.get(cell.dateKey)?.length || 0) : 0;
+          const dayList = cell.inMonth ? (byDate.get(cell.dateKey) || []) : [];
+          const activeCount = dayList.filter((g) => g.status !== 'cancelled').length;
           const selected = selectedDate === cell.dateKey;
           return (
             <button
@@ -101,20 +102,20 @@ export default function GatheringMonthCalendar({
                 'gathering-cal__day',
                 cell.inMonth ? '' : 'is-out',
                 cell.isToday ? 'is-today' : '',
-                count > 0 ? 'has-events' : '',
+                activeCount > 0 ? 'has-events' : '',
                 selected ? 'is-selected' : '',
               ].filter(Boolean).join(' ')}
-              aria-label={`${cell.dateKey}${count ? `，${count} 場聚會` : ''}`}
+              aria-label={`${cell.dateKey}${activeCount ? `，${activeCount} 場聚會` : ''}`}
               aria-pressed={selected}
               onClick={() => cell.inMonth && onSelectDate?.(cell.dateKey)}
             >
               <span className="gathering-cal__day-num">{cell.day}</span>
-              {count > 0 && (
+              {activeCount > 0 && (
                 <span className="gathering-cal__marker" aria-hidden="true">
                   <span className="gathering-cal__marker-moon" aria-hidden="true">
                     <ForumMoonIcon size={11} />
                   </span>
-                  {count > 1 && <span className="gathering-cal__marker-count">{count}</span>}
+                  {activeCount > 1 && <span className="gathering-cal__marker-count">{activeCount}</span>}
                 </span>
               )}
             </button>

@@ -470,7 +470,7 @@ function stickyNoteTilt(seed) {
   return ((Math.abs(h) % 41) - 20) / 10;
 }
 
-const GATHERING_NOTICE_META = {
+const SYSTEM_NOTICE_META = {
   gathering_application: { tone: 'apply', title: '有人申請加入你的聚會', cta: '查看申請 →' },
   gathering_joined: { tone: 'ok', title: '有新成員加入聚會', cta: '查看申請 →' },
   gathering_applied: { tone: 'apply', title: '申請已送出', cta: '查看聚會 →' },
@@ -483,6 +483,8 @@ const GATHERING_NOTICE_META = {
   forum_comment_reply: { tone: 'apply', title: '有人回覆你的留言', cta: '查看回覆 →' },
   forum_comment_liked: { tone: 'ok', title: '有人對你的留言按讚', cta: '查看貼文 →' },
   forum_moderation_alert: { tone: 'warn', title: '月光守護者通知', cta: '前往處理 →' },
+  wish_cheer: { tone: 'ok', title: '有人為你的心願打氣', cta: null },
+  wish_completed: { tone: 'ok', title: '心願已完成', cta: null },
 };
 
 function SystemNoticeItem({ msg, stackIndex = 0 }) {
@@ -490,17 +492,25 @@ function SystemNoticeItem({ msg, stackIndex = 0 }) {
   const kind = typeof p.kind === 'string' ? p.kind : '';
   const isGathering = kind.startsWith('gathering_');
   const isForum = kind.startsWith('forum_');
+  const isWish = kind.startsWith('wish_');
   const url = typeof p.gathering_url === 'string'
     ? p.gathering_url
     : (typeof p.forum_url === 'string' ? p.forum_url : null);
 
-  const meta = GATHERING_NOTICE_META[kind] || {
+  const meta = SYSTEM_NOTICE_META[kind] || {
     tone: kind === 'gathering_cancelled' ? 'danger' : 'default',
-    title: isGathering ? '月光聚會通知' : (isForum ? '黑貓樹洞通知' : '系統通知'),
+    title: isGathering ? '月光聚會通知' : (isForum ? '黑貓樹洞通知' : (isWish ? '月光心願通知' : '系統通知')),
     cta: url ? '查看詳情 →' : null,
   };
 
-  const eyebrow = isGathering ? '月光聚會' : (isForum ? '黑貓樹洞' : '系統通知');
+  const eyebrow = isGathering
+    ? '月光聚會'
+    : isForum
+      ? '黑貓樹洞'
+      : isWish
+        ? '月光心願'
+        : '系統通知';
+  const showEyebrow = eyebrow !== meta.title;
   const gTitle = typeof p.gathering_title === 'string' ? p.gathering_title : null;
   const applicant = (kind === 'gathering_application' || kind === 'gathering_joined')
     && typeof p.applicant_name === 'string' ? p.applicant_name : null;
@@ -510,7 +520,7 @@ function SystemNoticeItem({ msg, stackIndex = 0 }) {
   const showNewTag = Boolean(msg.was_unread);
   const newTagLabel = (kind === 'gathering_application' || kind === 'gathering_joined')
     ? '新申請'
-    : 'NEW';
+    : '未讀';
   const bodyText = stripLeadingNoticeDecor(msg.content);
 
   return (
@@ -535,9 +545,11 @@ function SystemNoticeItem({ msg, stackIndex = 0 }) {
             <SystemNoticeIcon kind={kind} size={18} />
           </span>
           <div className="inbox-system-notice__headings">
-            <p className="inbox-system-notice__eyebrow">
-              <span className="inbox-channel-tag">{eyebrow}</span>
-            </p>
+            {showEyebrow && (
+              <p className="inbox-system-notice__eyebrow">
+                <span className="inbox-channel-tag">{eyebrow}</span>
+              </p>
+            )}
             <p className="inbox-system-notice__title">{meta.title}</p>
           </div>
         </header>

@@ -86,7 +86,10 @@ export default function WishCard({
           <span className="wish-card__category">{wish.category || '其他'}</span>
           {left && (
             <span className="wish-card__eta" title="目標日子（低壓提醒）">
-              <ForumClockIcon size={11} /> {left}
+              <span className="wish-card__eta-ico" aria-hidden="true">
+                <ForumClockIcon size={11} />
+              </span>
+              <span className="wish-card__eta-text">{left}</span>
             </span>
           )}
         </div>
@@ -121,8 +124,10 @@ export default function WishCard({
           </button>
         ) : (
           <span className="wish-card__cheers">
-            <HeaderHeartIcon size={12} />
-            {localCount}
+            <span className="wish-card__cheers-ico" aria-hidden="true">
+              <HeaderHeartIcon size={12} />
+            </span>
+            <span>{localCount}</span>
           </span>
         )}
       </div>

@@ -71,7 +71,7 @@ export default function GatheringCard({ gathering }) {
       <div className="gathering-card__seats" aria-label={`已報名 ${approved}，限額 ${max} 人`}>
         <div className="gathering-card__seats-head">
           <span className="gathering-card__seats-label">
-            已報名 <b>{approved}</b> / 限額 <b>{max}</b> 人
+            <b>{approved}</b>/<b>{max}</b>
           </span>
           <span className={`gathering-card__seats-remain${seatsFull ? ' is-full' : ''}`}>
             {seatsFull ? '已滿額' : `仲有 ${remaining} 個位`}

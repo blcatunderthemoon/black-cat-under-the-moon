@@ -303,6 +303,7 @@ body.home-landing-active:has(#live-activity:not([hidden])) {
 .home-landing__live .live-activity__tag {
   display: inline-flex;
   align-items: center;
+  gap: 4px;
   flex-shrink: 0;
   font-family: var(--font-zh, "Noto Sans TC", sans-serif) !important;
   font-size: 9px;
@@ -313,6 +314,34 @@ body.home-landing-active:has(#live-activity:not([hidden])) {
   line-height: 1.35;
   white-space: nowrap;
   -webkit-font-smoothing: antialiased;
+}
+
+.home-landing__live .live-activity__tag-ico-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.home-landing__live .live-activity__tag-ico {
+  display: block;
+  width: 11px;
+  height: 11px;
+}
+
+.home-landing__live .live-activity__eyebrow-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.2em;
+  vertical-align: -0.1em;
+  line-height: 0;
+  color: rgba(255, 224, 102, 0.85);
+}
+
+.home-landing__live .live-activity__eyebrow-ico svg {
+  display: block;
 }
 
 .home-landing__live .live-activity__text {
@@ -941,13 +970,15 @@ body.home-landing-active:has(#live-activity:not([hidden])) {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-sizing: border-box;
   min-width: 1.4em;
-  padding: 1px 6px;
-  border-radius: 4px;
+  height: 1.4em;
+  padding: 0 0.15em;
+  border-radius: 999px;
   font-variant-numeric: tabular-nums;
   font-weight: 800;
   font-size: 11px;
-  line-height: 1.25;
+  line-height: 1;
   letter-spacing: 0;
 }
 

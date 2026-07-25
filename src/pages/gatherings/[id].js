@@ -54,7 +54,7 @@ export default function GatheringDetailPage({ seo = null }) {
   const [phone, setPhone] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
-  const [confirmKind, setConfirmKind] = useState(null); // 'apply' | 'withdraw' | 'cancel' | 'report' | 'block' | null
+  const [confirmKind, setConfirmKind] = useState(null); // 'apply' | 'withdraw' | 'cancel' | 'safety' | 'report' | 'block' | null
   const [cancelReason, setCancelReason] = useState('');
   const [reportReason, setReportReason] = useState('');
   const [safetyMsg, setSafetyMsg] = useState('');
@@ -210,6 +210,15 @@ export default function GatheringDetailPage({ seo = null }) {
     } finally {
       setBusy(false);
     }
+  }
+
+  function openSafetyMenu() {
+    if (!session?.access_token) {
+      router.push(`/login?redirect=${encodeURIComponent(`/gatherings/${id}`)}`);
+      return;
+    }
+    setSafetyMsg('');
+    setConfirmKind('safety');
   }
 
   function reportGathering() {
@@ -533,24 +542,26 @@ export default function GatheringDetailPage({ seo = null }) {
                         isHost ? 'gathering-detail__private--host' : '',
                       ].filter(Boolean).join(' ')}
                     >
-                      <span className="gathering-detail__private-badge">
-                        {isCancelled ? (
-                          '聚會已取消'
-                        ) : isHost ? (
-                          <>
-                            <ForumLockIcon size={11} /> 主辦可見 · 批准後參加者可睇
-                          </>
-                        ) : isApprovedGuest ? (
-                          <>
-                            <UiUnlockIcon size={11} /> 已解鎖 · 專屬通行證
-                          </>
-                        ) : (
-                          <>
-                            <ForumLockIcon size={11} /> 僅獲批准者可見
-                          </>
-                        )}
-                      </span>
-                      <p className="gathering-detail__private-label">私密地點／連結</p>
+                      <div className="gathering-detail__private-head">
+                        <p className="gathering-detail__private-label">私密地點／連結</p>
+                        <span className="gathering-detail__private-badge">
+                          {isCancelled ? (
+                            '聚會已取消'
+                          ) : isHost ? (
+                            <>
+                              <ForumLockIcon size={11} /> 主辦可見 · 批准後參加者可睇
+                            </>
+                          ) : isApprovedGuest ? (
+                            <>
+                              <UiUnlockIcon size={11} /> 已解鎖 · 專屬通行證
+                            </>
+                          ) : (
+                            <>
+                              <ForumLockIcon size={11} /> 僅獲批准者可見
+                            </>
+                          )}
+                        </span>
+                      </div>
                       {isPlaceholder ? (
                         <p className="gathering-detail__private-empty">
                           尚未填寫具體地址或連結
@@ -580,10 +591,12 @@ export default function GatheringDetailPage({ seo = null }) {
                 })()
               ) : gathering.has_private_location && !isHost ? (
                 <div className="gathering-detail__private gathering-detail__private--locked" aria-label="私密地點未解鎖">
-                  <span className="gathering-detail__private-badge">
-                    <ForumLockIcon size={11} /> 僅獲批准者可見
-                  </span>
-                  <p className="gathering-detail__private-label">私密地點／連結</p>
+                  <div className="gathering-detail__private-head">
+                    <p className="gathering-detail__private-label">私密地點／連結</p>
+                    <span className="gathering-detail__private-badge">
+                      <ForumLockIcon size={11} /> 僅獲批准者可見
+                    </span>
+                  </div>
                   <div className="gathering-detail__private-locked-body">
                     <p className="gathering-detail__private-blur" aria-hidden="true">████ ██████ ███ ██</p>
                     <p className="gathering-detail__private-locked-note">
@@ -605,17 +618,9 @@ export default function GatheringDetailPage({ seo = null }) {
                   type="button"
                   className="gathering-detail__safety-btn"
                   disabled={busy}
-                  onClick={reportGathering}
+                  onClick={openSafetyMenu}
                 >
-                  舉報聚會
-                </button>
-                <button
-                  type="button"
-                  className="gathering-detail__safety-btn is-block"
-                  disabled={busy}
-                  onClick={blockHost}
-                >
-                  封鎖主辦
+                  舉報／封鎖
                 </button>
               </div>
             )}
@@ -724,62 +729,77 @@ export default function GatheringDetailPage({ seo = null }) {
                   >
                     <header className="gathering-detail__apply-head">
                       <h2 className="gathering-detail__rsvp-title">申請加入</h2>
-                      <p className="gathering-detail__apply-lead">填聯絡同敲門答案，等主辦人批核。</p>
+                      <p className="gathering-detail__apply-lead">
+                        填聯絡同敲門答案，等主辦人批核。
+                      </p>
                     </header>
 
-                    <div className="gathering-detail__apply-grid">
-                      <label className="gathering-form__field">
-                        <span>電郵 *</span>
-                        <input
-                          type="email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          maxLength={120}
-                          required
-                          autoComplete="email"
-                          placeholder="you@example.com"
-                        />
-                      </label>
-                      <label className="gathering-form__field">
-                        <span>{gathering.is_online ? '電話（選填）' : '電話 *'}</span>
-                        <input
-                          type="tel"
-                          inputMode="numeric"
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                          maxLength={20}
-                          required={!gathering.is_online}
-                          autoComplete="tel"
-                          placeholder="例如：91234567"
-                          aria-invalid={phoneError ? 'true' : 'false'}
-                        />
-                        {phoneError && (
-                          <span className="gathering-form__field-error" role="alert">{phoneError}</span>
-                        )}
-                      </label>
-                    </div>
-                    <p className="gathering-form__hint">
-                      <ForumLockIcon size={12} />{' '}
-                      {gathering.is_online
-                        ? '電郵／電話只會喺主辦人批准後分享俾佢，僅用於聚會協調，唔會公開顯示；線上聚會電話可留空。'
-                        : '電郵／電話只會喺主辦人批准後分享俾佢，僅用於聚會協調，唔會公開顯示。若你撤回或取消參與，聯絡資料亦會失效。'}
-                    </p>
+                    <fieldset className="gathering-detail__apply-block">
+                      <legend>聯絡資料</legend>
+                      <div className="gathering-detail__apply-grid">
+                        <label className="gathering-form__field">
+                          <span>電郵 *</span>
+                          <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            maxLength={120}
+                            required
+                            autoComplete="email"
+                            placeholder="you@example.com"
+                          />
+                        </label>
+                        <label className="gathering-form__field">
+                          <span>{gathering.is_online ? '電話（選填）' : '電話 *'}</span>
+                          <input
+                            type="tel"
+                            inputMode="numeric"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            maxLength={20}
+                            required={!gathering.is_online}
+                            autoComplete="tel"
+                            placeholder="例如：91234567"
+                            aria-invalid={phoneError ? 'true' : 'false'}
+                          />
+                          {phoneError && (
+                            <span className="gathering-form__field-error" role="alert">{phoneError}</span>
+                          )}
+                        </label>
+                      </div>
+                      <p className="gathering-detail__apply-privacy">
+                        <span className="gathering-detail__apply-privacy-ico" aria-hidden="true">
+                          <ForumLockIcon size={12} />
+                        </span>
+                        <span>
+                          {gathering.is_online
+                            ? '批准後先分享俾主辦，僅用於聚會協調；線上聚會電話可留空。'
+                            : '批准後先分享俾主辦，僅用於聚會協調，唔會公開。撤回或取消後聯絡資料會失效。'}
+                        </span>
+                      </p>
+                    </fieldset>
 
                     {gathering.require_knock_message && (
-                      <label className="gathering-form__field gathering-detail__knock-field">
-                        <span>敲門暗號 *</span>
+                      <fieldset className="gathering-detail__apply-block gathering-detail__apply-block--knock">
+                        <legend>敲門暗號 *</legend>
                         {gathering.knock_question && (
-                          <p className="gathering-detail__knock-q">{gathering.knock_question}</p>
+                          <div className="gathering-detail__knock-card">
+                            <p className="gathering-detail__knock-card-label">主辦提問</p>
+                            <p className="gathering-detail__knock-q">{gathering.knock_question}</p>
+                          </div>
                         )}
-                        <textarea
-                          value={knock}
-                          onChange={(e) => setKnock(e.target.value)}
-                          maxLength={200}
-                          rows={3}
-                          required
-                          placeholder="簡短回答主辦的問題…"
-                        />
-                      </label>
+                        <label className="gathering-form__field gathering-detail__knock-field">
+                          <textarea
+                            value={knock}
+                            onChange={(e) => setKnock(e.target.value)}
+                            maxLength={200}
+                            rows={3}
+                            required
+                            placeholder="簡短回答主辦的問題…"
+                            aria-label="你的敲門回答"
+                          />
+                        </label>
+                      </fieldset>
                     )}
 
                     <label className="gathering-form__field gathering-form__check gathering-detail__risk-check">
@@ -790,12 +810,12 @@ export default function GatheringDetailPage({ seo = null }) {
                         required
                       />
                       <span>
-                        我明白本平台只係聚會資訊與申請的<span className="gathering-detail__risk-em">中介渠道</span>，
-                        唔係主辦方；我已閱讀
+                        我明白平台只係<span className="gathering-detail__risk-em">中介渠道</span>、唔係主辦；
+                        已閱讀
                         {' '}
                         <Link href="/tos.html" target="_blank" rel="noopener noreferrer">使用條款</Link>
                         ，並<span className="gathering-detail__risk-em">自行承擔</span>
-                        參加此聚會（含線上／線下）的一切風險與後果。平台不作任何後果承擔。
+                        參加風險。提交後會再確認一次。
                       </span>
                     </label>
 
@@ -884,6 +904,29 @@ export default function GatheringDetailPage({ seo = null }) {
           notePlaceholder="可留空"
           onConfirm={runCancelGathering}
           onCancel={() => { if (!busy) { setConfirmKind(null); setCancelReason(''); } }}
+        />
+
+        <GatheringConfirmOverlay
+          open={confirmKind === 'safety'}
+          title="舉報或封鎖？"
+          sub="遇到不當行為可舉報聚會，或封鎖主辦以免再接觸。涉及即時危險請先報警。"
+          cancelLabel="返回"
+          busy={busy}
+          choices={[
+            {
+              id: 'report',
+              label: '舉報聚會',
+              variant: 'danger',
+              onClick: reportGathering,
+            },
+            {
+              id: 'block',
+              label: '封鎖主辦',
+              variant: 'danger',
+              onClick: blockHost,
+            },
+          ]}
+          onCancel={() => { if (!busy) setConfirmKind(null); }}
         />
 
         <GatheringConfirmOverlay
