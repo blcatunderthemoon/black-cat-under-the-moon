@@ -3,15 +3,23 @@
  *   ?q=<search>        — search by email or display_name (optional)
  *   ?status=<status>   — filter by profiles.status (optional)
  *   ?limit=&offset=    — pagination (default 50)
+ *   Each user includes login_locked / login_lockout_until / login_fail_count.
  *
  * PATCH /api/dashboard/users
- *   Body: { user_id, action: 'suspend' | 'activate' | 'ban' }
+ *   Body: { user_id, action: 'suspend' | 'activate' | 'ban' | 'clear_login_lockout' }
+ *   clear_login_lockout: pass email and/or user_id
  *
- * Admin-only (x-dashboard-key header).
+ * Admin-only (x-dashboard-key header or forum admin Bearer).
  */
 
 import { authorizeStationOrForumAdmin } from '../../../lib/station-or-forum-admin-auth.js';
 import { getAdminClient } from '../../../lib/server-auth.js';
+import {
+  clearLoginLockout,
+  getLoginLockoutDetailsMany,
+} from '../../../lib/login-lockout.js';
+import { getLoginLockoutStatsMany } from '../../../lib/login-lockout-events.js';
+import { validateEmail } from '../../../lib/auth-credentials-policy.js';
 
 function escapeIlike(value) {
   return value.replace(/[%_\\]/g, '\\$&');
@@ -137,6 +145,46 @@ function mergeAuthUsersWithProfiles(authUsers, profiles, statusFilter) {
   return users.filter((u) => u.status === statusFilter);
 }
 
+async function attachLoginLockout(users) {
+  if (!users?.length) return users || [];
+  const emails = users.map((u) => u.email).filter(Boolean);
+  if (!emails.length) {
+    return users.map((u) => ({
+      ...u,
+      login_locked: false,
+      login_lockout_until: null,
+      login_fail_count: 0,
+      login_lockout_count_total: 0,
+      login_lockout_count_window: 0,
+      login_lockout_last_at: null,
+      login_lockout_frequent: false,
+    }));
+  }
+
+  const [detailsMap, statsMap] = await Promise.all([
+    getLoginLockoutDetailsMany(emails),
+    getLoginLockoutStatsMany(emails),
+  ]);
+
+  return users.map((u) => {
+    const email = String(u.email || '').trim().toLowerCase();
+    const details = email ? detailsMap.get(email) : null;
+    const stats = email ? statsMap.get(email) : null;
+    return {
+      ...u,
+      login_locked: !!details?.locked,
+      login_lockout_until: details?.lockoutUntil
+        ? new Date(details.lockoutUntil).toISOString()
+        : null,
+      login_fail_count: details?.failureCount || 0,
+      login_lockout_count_total: stats?.lockout_count_total || 0,
+      login_lockout_count_window: stats?.lockout_count_window || 0,
+      login_lockout_last_at: stats?.last_lockout_at || null,
+      login_lockout_frequent: !!stats?.login_lockout_frequent,
+    };
+  });
+}
+
 export default async function handler(req, res) {
   if (!(await authorizeStationOrForumAdmin(req, res))) return;
 
@@ -166,7 +214,9 @@ async function handleGet(req, res) {
 
     if (error) return res.status(500).json({ error: 'Database error' });
 
-    const users = mergeAuthUsersWithProfiles(authUsers, profiles, statusFilter);
+    const users = await attachLoginLockout(
+      mergeAuthUsersWithProfiles(authUsers, profiles, statusFilter),
+    );
     return res.status(200).json({ users, total: users.length, limit, offset });
   }
 
@@ -187,15 +237,50 @@ async function handleGet(req, res) {
   const { data, count, error } = await query;
   if (error) return res.status(500).json({ error: 'Database error' });
 
-  const users = await enrichProfilesWithEmail(admin, data || []);
+  const users = await attachLoginLockout(await enrichProfilesWithEmail(admin, data || []));
   return res.status(200).json({ users, total: count, limit, offset });
 }
 
+/**
+ * PATCH /api/dashboard/users
+ *   Body: { user_id, action: 'suspend' | 'activate' | 'ban' | 'clear_login_lockout' }
+ *   clear_login_lockout may also pass { email } (preferred when known).
+ */
 async function handlePatch(req, res) {
   const body = req.body || {};
   const { user_id, action } = body;
 
-  if (!user_id || !action) return res.status(400).json({ error: 'user_id and action required' });
+  if (!action) return res.status(400).json({ error: 'action required' });
+
+  if (action === 'clear_login_lockout') {
+    let email = typeof body.email === 'string' ? body.email : '';
+    if (!email && user_id) {
+      const admin = getAdminClient();
+      try {
+        const { data: { user } } = await admin.auth.admin.getUserById(user_id);
+        email = user?.email || '';
+      } catch {
+        email = '';
+      }
+    }
+    const emailCheck = validateEmail(email);
+    if (!emailCheck.ok) {
+      return res.status(400).json({ error: '需要有效的 email 才能解除登入鎖定。', code: 'INVALID_EMAIL' });
+    }
+    const result = await clearLoginLockout(emailCheck.value);
+    return res.status(200).json({
+      success: true,
+      action: 'clear_login_lockout',
+      email: result.email,
+      was_locked: result.wasLocked,
+      failure_count_cleared: result.failureCount,
+      message: result.wasLocked || result.failureCount > 0
+        ? `已解除 ${result.email} 的登入鎖定／失敗計數。`
+        : `${result.email} 目前沒有登入鎖定。`,
+    });
+  }
+
+  if (!user_id) return res.status(400).json({ error: 'user_id and action required' });
 
   const validActions = { suspend: 'suspended', activate: 'active', ban: 'banned' };
   if (!validActions[action]) return res.status(400).json({ error: 'Invalid action' });

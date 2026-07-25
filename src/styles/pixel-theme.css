@@ -12210,6 +12210,237 @@
   max-width: none;
 }
 
+.forum-admin-lockout {
+  max-width: 520px;
+  padding: 18px 18px 20px;
+  border: 1px solid rgba(251, 146, 60, 0.28);
+  border-radius: 14px;
+  background:
+    linear-gradient(165deg, rgba(251, 146, 60, 0.08) 0%, rgba(18, 12, 32, 0.72) 55%, rgba(10, 8, 20, 0.85) 100%);
+}
+
+.forum-admin-lockout__label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(251, 146, 60, 0.95);
+}
+
+.forum-admin-lockout__row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.forum-admin-lockout__input {
+  flex: 1 1 220px;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(189, 147, 249, 0.28);
+  background: rgba(8, 6, 18, 0.75);
+  color: #f0e8ff;
+  font-size: 14px;
+}
+
+.forum-admin-lockout__btn {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(189, 147, 249, 0.4);
+  background: rgba(124, 92, 252, 0.18);
+  color: #e9ddff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.forum-admin-lockout__btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.forum-admin-lockout__btn--unlock {
+  margin-top: 14px;
+  border-color: rgba(251, 146, 60, 0.5);
+  background: rgba(251, 146, 60, 0.16);
+  color: #fb923c;
+}
+
+.forum-admin-lockout__msg {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: #86efac;
+}
+
+.forum-admin-lockout__msg--err {
+  color: #f87171;
+}
+
+.forum-admin-lockout__card {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(189, 147, 249, 0.18);
+}
+
+.forum-admin-lockout__dl {
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.forum-admin-lockout__dl > div {
+  display: grid;
+  grid-template-columns: 88px 1fr;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.forum-admin-lockout__dl dt {
+  margin: 0;
+  color: #9490b0;
+}
+
+.forum-admin-lockout__dl dd {
+  margin: 0;
+  color: #f0e8ff;
+  word-break: break-all;
+}
+
+.forum-admin-lockout-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .forum-admin-lockout-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.forum-admin-lockout__card--frequent {
+  border: 1px solid rgba(251, 146, 60, 0.45);
+  box-shadow: inset 0 0 0 1px rgba(251, 146, 60, 0.12);
+  background: rgba(40, 20, 8, 0.45);
+}
+
+.forum-admin-lockout__events {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(189, 147, 249, 0.18);
+}
+
+.forum-admin-lockout__events-title {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: #fb923c;
+}
+
+.forum-admin-lockout__events-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  max-height: 280px;
+  overflow: auto;
+}
+
+.forum-admin-lockout__events-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(8, 6, 18, 0.55);
+  border: 1px solid rgba(189, 147, 249, 0.16);
+  font-size: 12px;
+  color: #f0e8ff;
+}
+
+.forum-admin-lockout__events-meta {
+  color: #9490b0;
+}
+
+.forum-admin-lockout--frequent {
+  border-color: rgba(251, 146, 60, 0.4);
+}
+
+.forum-admin-lockout__freq-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.forum-admin-lockout__freq-title {
+  margin: 0;
+  font-size: 15px;
+  color: #fb923c;
+}
+
+.forum-admin-lockout__freq-hint,
+.forum-admin-lockout__freq-empty {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: #9490b0;
+  line-height: 1.5;
+}
+
+.forum-admin-lockout__freq-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.forum-admin-lockout__freq-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(40, 20, 8, 0.55);
+  border: 1px solid rgba(251, 146, 60, 0.28);
+}
+
+.forum-admin-lockout__freq-email {
+  grid-column: 1;
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #ffe8c8;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  word-break: break-all;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.forum-admin-lockout__freq-count {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: start;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fb923c;
+}
+
+.forum-admin-lockout__freq-meta {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  color: #9490b0;
+}
+
 @media (max-width: 640px) {
   .forum-admin-nav:not(.forum-admin-nav--sidebar) {
     flex-wrap: nowrap;

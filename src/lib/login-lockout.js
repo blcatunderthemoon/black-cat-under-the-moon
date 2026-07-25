@@ -189,22 +189,107 @@ export async function recordLoginFailure(email) {
 }
 
 /**
- * Clear failure + lockout state after a successful login (or password reset).
  * @param {string} email
+ * @returns {Promise<number>}
+ */
+async function getFailureCount(email) {
+  const normalized = normalizeEmail(email);
+  if (!normalized) return 0;
+
+  const redis = getRedis();
+  const key = failKey(normalized);
+  let raw = null;
+  if (redis) {
+    raw = await redis.get(key);
+  } else if (!isProduction()) {
+    raw = memoryGet(key);
+  }
+  const count = Number(raw || 0);
+  return Number.isFinite(count) && count > 0 ? count : 0;
+}
+
+/**
+ * Full lockout snapshot for admin/dashboard.
+ * @param {string} email
+ * @returns {Promise<{
+ *   email: string,
+ *   locked: boolean,
+ *   lockoutUntil: number | null,
+ *   retryAfterSeconds: number,
+ *   failureCount: number,
+ * }>}
+ */
+export async function getLoginLockoutDetails(email) {
+  const normalized = normalizeEmail(email);
+  if (!normalized) {
+    return {
+      email: '',
+      locked: false,
+      lockoutUntil: null,
+      retryAfterSeconds: 0,
+      failureCount: 0,
+    };
+  }
+
+  const [status, failureCount] = await Promise.all([
+    getLoginLockoutStatus(normalized),
+    getFailureCount(normalized),
+  ]);
+
+  return {
+    email: normalized,
+    locked: status.locked,
+    lockoutUntil: status.lockoutUntil,
+    retryAfterSeconds: status.retryAfterSeconds,
+    failureCount,
+  };
+}
+
+/**
+ * Batch details for dashboard user lists.
+ * @param {string[]} emails
+ * @returns {Promise<Map<string, Awaited<ReturnType<typeof getLoginLockoutDetails>>>>}
+ */
+export async function getLoginLockoutDetailsMany(emails) {
+  const unique = [...new Set((emails || []).map(normalizeEmail).filter(Boolean))];
+  const map = new Map();
+  await Promise.all(unique.map(async (email) => {
+    map.set(email, await getLoginLockoutDetails(email));
+  }));
+  return map;
+}
+
+/**
+ * Clear failure + lockout state (successful login, password reset, or admin unlock).
+ * @param {string} email
+ * @returns {Promise<{
+ *   ok: boolean,
+ *   email: string,
+ *   wasLocked: boolean,
+ *   failureCount: number,
+ * }>}
  */
 export async function clearLoginLockout(email) {
   const normalized = normalizeEmail(email);
-  if (!normalized) return;
+  if (!normalized) {
+    return { ok: false, email: '', wasLocked: false, failureCount: 0 };
+  }
 
+  const before = await getLoginLockoutDetails(normalized);
   const redis = getRedis();
   const keys = [failKey(normalized), lockKey(normalized)];
   if (redis) {
     await redis.del(...keys);
-    return;
-  }
-  if (!isProduction()) {
+  } else if (!isProduction()) {
     memoryDel(...keys);
   }
+
+  return {
+    ok: true,
+    email: normalized,
+    wasLocked: before.locked,
+    failureCount: before.failureCount,
+  };
 }
 
 /**

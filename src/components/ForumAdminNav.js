@@ -6,6 +6,7 @@ const ITEMS = [
   { href: '/forum/guardian/team', label: '版主團隊', icon: '🛡️' },
   { href: '/forum/guardian/monitor', label: '內容監控', icon: '🔍' },
   { href: '/admin/email-automation', label: '郵件自動化', icon: '📧' },
+  { href: '/admin/login-lockout', label: '登入鎖定', icon: '🔓' },
 ];
 
 export default function ForumAdminNav({ layout = 'horizontal' }) {

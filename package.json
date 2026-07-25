@@ -16,7 +16,10 @@
     "test:cards": "node scripts/test-matching.mjs --generateCards",
     "generate:card": "node scripts/generate-matches.mjs",
     "export:excel": "node scripts/export-matches.mjs",
-    "backup:supabase": "node scripts/backup-supabase-tables.mjs"
+    "backup:supabase": "node scripts/backup-supabase-tables.mjs",
+    "backup:supabase:install-task": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-daily-backup-task.ps1",
+    "backup:supabase:uninstall-task": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/uninstall-daily-backup-task.ps1",
+    "restore:supabase": "node scripts/restore-supabase-from-backup.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.103.0",

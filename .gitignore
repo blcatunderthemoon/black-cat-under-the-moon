@@ -38,6 +38,7 @@ src/pages/api/dashboard/**
 !src/pages/api/dashboard/forum-moderators.js
 !src/pages/api/dashboard/forum-monitor.js
 !src/pages/api/dashboard/users.js
+!src/pages/api/dashboard/login-lockout.js
 !src/pages/api/dashboard/email-automation.js
 !src/pages/api/dashboard/create-gmail-drafts.js
 !src/pages/api/dashboard/send-emails.js

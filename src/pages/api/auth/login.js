@@ -22,6 +22,7 @@ import {
   getLoginLockoutStatus,
   recordLoginFailure,
 } from '../../../lib/login-lockout.js';
+import { recordLoginLockoutEvent } from '../../../lib/login-lockout-events.js';
 
 const loginIpLimiter = createRateLimiter('auth-login-ip', 40, '15 m');
 
@@ -99,6 +100,14 @@ export default async function handler(req, res) {
     if (error || !data?.session?.access_token) {
       const fail = await recordLoginFailure(email);
       if (fail.locked) {
+        // Fire-and-forget audit for dashboard investigation
+        void recordLoginLockoutEvent({
+          email,
+          ip,
+          userAgent: req.headers['user-agent'] || null,
+          failureCount: fail.failureCount,
+          lockoutUntil: fail.lockoutUntil,
+        });
         res.setHeader('Retry-After', String(fail.retryAfterSeconds));
         return res.status(423).json(lockoutPayload(fail));
       }

@@ -5,7 +5,7 @@
 **Live：** [www.blackcatunderthemoon.com](https://www.blackcatunderthemoon.com)  
 參與本平台即表示同意[使用條款](/tos.html)與[私隱政策](/privacy.html)。
 
-本 README 以**開發者入門**為主。產品規格見 [docs/PRODUCT-COMMERCIALIZATION-PRD.md](docs/PRODUCT-COMMERCIALIZATION-PRD.md)；漂流瓶／安全機制見 [docs/SYSTEM-OVERVIEW.md](docs/SYSTEM-OVERVIEW.md)；登入密碼鎖定見 [docs/AUTH-LOGIN-LOCKOUT.md](docs/AUTH-LOGIN-LOCKOUT.md)；配對計分見 [docs/SCORING.md](docs/SCORING.md)；**Mobile WebView 捲動與頁尾**見 [docs/MOBILE-WEBVIEW-SCROLL.md](docs/MOBILE-WEBVIEW-SCROLL.md)。
+本 README 以**開發者入門**為主。產品規格與深度技術文件見 `docs/`（本地／內部文件；多數未進公開 repo）。配對計分見 [docs/SCORING.md](docs/SCORING.md)（若你的工作副本有該檔）。
 
 ---
 
@@ -47,17 +47,11 @@
 
 **Moonlight Passport 權益：** 詳細 Mirror Card、每月 **3** 封主動投信、每月 3 次交換相邀請、**連線即時通知**（Inbox 高亮 + Email，配對通知無上限）、論壇發文不限（免費每日 3 篇）；Free 用戶每月配對通知 **3 次**。
 
-**帳號：** Supabase Auth、Legacy Match Claim（Email 認領舊問卷）、Mirror Card 三級可見度（`public` → `basic` → `detailed`）；論壇顯示名稱即時同步與唯一性檢查。
+**帳號：** Supabase Auth；Mirror Card 可見度分級；論壇顯示名稱唯一性檢查。
 
-**管理儀表板（`/dashboard`，gitignore）：**
+**管理儀表板：** 僅內部／本地開發使用（多數 UI 已 gitignore）。管理 API 必須以伺服器端密鑰保護；切勿把管理密鑰放進前端或公開 repo。
 
-- **郵件自動化** — 全域配對、Free「本月 n/3」／Passport「🌙 無限制」、Moonlight Passport 分頁與**即時發送（Email + Inbox）**
-- **Moonlight Passport 管理** — 人手授予／撤銷（PayMe／FPS 核對）
-- 月光旅程監控、論壇／Inbox 監控、配對分析等
-
-**內容安全：** 關鍵字過濾、3 次舉報自動隱藏、Turnstile（漂流瓶）、Upstash 速率限制。
-
-**登入安全：** 15 分鐘內連續輸錯密碼 **10** 次會暫時凍結該 Email **30** 分鐘（`POST /api/auth/login` + Redis）；詳見 [docs/AUTH-LOGIN-LOCKOUT.md](docs/AUTH-LOGIN-LOCKOUT.md)。
+**內容安全：** 關鍵字過濾、舉報自動隱藏、Turnstile（漂流瓶）、API 速率限制、登入暴力破解防護（連續錯密會暫時鎖定）。實作細節見內部 `docs/`，勿在公開 README 列舉門檻與管理端點。
 
 ---
 
@@ -127,13 +121,13 @@ BlackCatUnderTheMoon/
 │   ├── components/
 │   ├── lib/                # intelligence、matching、mirror-scoring-v3、mirror-narratives、match-notify-send…
 │   ├── styles/
-│   └── middleware.js       # 保護 /api/dashboard/*（x-dashboard-key）
+│   └── middleware.js       # 保護管理 API（需伺服器端密鑰）
 ├── src/pages/dashboard/    # 管理儀表板 UI（gitignore，本地開發用）
-├── src/pages/api/dashboard/ # 管理員 API（gitignore）
+├── src/pages/api/dashboard/ # 管理員 API（多數 gitignore）
 ├── supabase/migrations/
-├── scripts/                # seed、配對測試、匯出、create-admin-user
-├── docs/                   # 深度技術文件
-├── .env.example
+├── scripts/                # 建置／備份等（敏感腳本勿提交密鑰）
+├── docs/                   # 內部深度文件（多數 gitignore）
+├── .env.example            # 環境變數名稱範本（無真實密鑰）
 └── package.json
 ```
 
@@ -149,19 +143,20 @@ BlackCatUnderTheMoon/
    - `https://www.blackcatunderthemoon.com/auth/reset-password`
    - `http://localhost:3000/auth/confirm`（本地開發）
    - 換 domain 後若驗證信／重設密碼信收不到或連結失效，多數是此處未更新
-3. **環境變數：** 複製 `.env.example` → `.env.local`，至少填入：
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY`（伺服器 API 必需）
+3. **環境變數：** 複製 `.env.example` → `.env.local`，依註解填入公開／私密變數。**私密金鑰只放 `.env.local` 與 Vercel Environment Variables，永不提交 git。**
 4. **啟動：** `npm run dev`
 5. **驗證：**
    - 首頁 → `http://localhost:3000/index.html`
    - 註冊登入 → `/signup`、`/forum`
-   - 問卷提交 → `/mirror.html`（需 Supabase 寫入權限）
+   - 問卷提交 → `/mirror.html`（需正確的伺服器端 Supabase 權限）
 
-選填：PayPal（見 [docs/paypal-onboarding.md](docs/paypal-onboarding.md)）、Upstash、Turnstile、Gmail。
+選填：PayPal、Upstash、Turnstile、Gmail（見 `.env.example` 註解）。
 
-> **安全：** 切勿將 `SUPABASE_SERVICE_ROLE_KEY`、`PAYPAL_CLIENT_SECRET`、`DASHBOARD_SECRET` 提交至 git。
+> **安全（必讀）：**
+> - 切勿提交：`SUPABASE_SERVICE_ROLE_KEY`、PayPal secret、Dashboard／Cron 密鑰、Gmail App Password、任何 `.env.local`
+> - `NEXT_PUBLIC_*` 會進瀏覽器，只能放可公開的值（anon key、site URL 等）
+> - 管理 API／儀表板僅限信任環境；正式站務必設定管理密鑰並關閉「未設密鑰即放行」的開發行為
+> - `backups/` 含真實用戶資料，已 gitignore，勿上傳 GitHub
 
 ---
 
@@ -211,37 +206,16 @@ npm run dev
 | `/matches` | Next.js | 配對列表（**Moonlight Passport only**） |
 | `/account` `/premium` `/cat-families` `/exchange-photo` | Next.js | 帳戶、訂閱、家族介紹、交換相管理 |
 | `/login` `/signup` `/billing/success` | Next.js | 登入、註冊、付款成功 |
-| `/dashboard/*` | Next.js（gitignore） | 內部管理儀表板（含郵件自動化） |
+| （內部）管理介面 | Next.js（gitignore） | 本地／內部用，勿對外宣傳路徑 |
 
 ---
 
 ## API 模組
 
-完整端點見 `src/pages/api/`。按模組分類：
+公開產品功能的 API 位於 `src/pages/api/`（問卷、論壇、漂流瓶、Inbox、交換相、帳戶、付款、聯絡等）。  
+**管理／營運 API** 需伺服器端密鑰驗證；本 README **不列出**管理端點清單、Header 名稱或 Body 參數，避免成為攻擊地圖。內部操作請查本地 `docs/` 或程式碼。
 
-| 模組 | 路徑前綴 | 重點 |
-|---|---|---|
-| 問卷／配對 | `/api/submit`、`/api/match*`、`/api/matches*` | 問卷提交、配對計分、卡片 |
-| Mirror Card | `/api/mirror-card/*` | 公開卡片、圖片匯出、舉報 |
-| 黑貓樹洞 | `/api/forum/*` | 貼文、留言、meta、舉報 |
-| 漂流瓶 | `/api/bottle/*` | 投瓶、撈瓶、回聲、舉報 |
-| Inbox | `/api/inbox/*` | 對話、發信、封鎖、用戶搜尋 |
-| 交換相 | `/api/photo-exchange/*`、`/api/profile/exchange-photo` | 邀請、回應、取消、上傳 |
-| 帳戶 | `/api/me`、`/api/auth/*` | Profile、**login（含密碼鎖定）**、init-profile、refresh-session、clear-login-lockout |
-| 付款 | `/api/billing/*` | PayPal 訂閱、webhook、人手核對 |
-| 聯絡 | `POST /api/contact-feedback` | 意見箱寫入 `contact_feedback` |
-
-**管理員 API**（Header：`x-dashboard-key: <DASHBOARD_SECRET>`）：
-
-- `GET /api/dashboard/email-automation` — 全域配對、草稿佇列、配額／Passport 標註（`premium_only=1` 篩選）
-- `POST /api/dashboard/send-emails` — Gmail 發送配對通知、寫入 `sent_matches`；Body 可含 `deliver_inbox`、`skip_quota_check`
-- `POST /api/dashboard/create-gmail-drafts` — 存入 Gmail 草稿
-- `POST /api/match/deliver-inbox` — 僅投送 Inbox 連線卡
-- `POST /api/billing/manual-verify` — 人手付款核對（授予／撤銷 Passport）
-- `GET /api/dashboard/premium` — 訂閱列表與人手授予
-- `POST /api/admin/match/legacy-claim/resolve` — Legacy 問卷認領爭議
-
-本地未設定 `DASHBOARD_SECRET` 時，middleware 不攔截。
+開發時：未正確設定管理密鑰前，勿把正式資料庫連到可公開存取的預覽環境。
 
 ---
 
@@ -249,22 +223,12 @@ npm run dev
 
 複製 `.env.example` 為 `.env.local` 並填入。欄位說明見該檔案註解。
 
-| 變數 | 必填 | 用途 |
+| 類別 | 範例變數名（見 `.env.example`） | 注意 |
 |---|---|---|
-| `NEXT_PUBLIC_SUPABASE_*` | ✅ | 客戶端 Auth |
-| `SUPABASE_SERVICE_ROLE_KEY` | ✅ | 伺服器寫入／權限 |
-| `NEXT_PUBLIC_SITE_URL` | 建議 | Canonical、sitemap、PayPal 回傳 URL |
-| `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | 選填 | Google Search Console HTML 驗證 |
-| `NEXT_PUBLIC_POSTHOG_KEY` | 選填 | PostHog 專案 key（未設定則分析關閉） |
-| `NEXT_PUBLIC_POSTHOG_HOST` | 選填 | PostHog API host（預設 `https://us.i.posthog.com`） |
-| `PAYPAL_*` | 選填 | Moonlight Passport 自動訂閱 |
-| `UPSTASH_*` | 選填 | API 速率限制 |
-| `CF_TURNSTILE_SECRET` / `NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY` | 選填 | 漂流瓶人機驗證；換 domain 須在 Cloudflare Turnstile 加入新 hostname |
-| `GMAIL_*` | 選填 | 配對／投信 Email |
-| `DASHBOARD_SECRET` | 選填 | 管理員 API |
-| `NEXT_PUBLIC_PAYME_QR_URL` | 選填 | PayMe QR 圖（預設 `/PayCode.jpg`） |
+| 公開（可進瀏覽器） | `NEXT_PUBLIC_SUPABASE_*`、`NEXT_PUBLIC_SITE_URL`、分析／Turnstile site key 等 | 視為公開資訊 |
+| 私密（僅伺服器） | Service Role、PayPal secret、Upstash、Turnstile secret、Gmail、Dashboard／Cron 密鑰等 | **禁止** commit、禁止寫進前端 |
 
-同樣需在 Vercel Project Settings → Environment Variables 設定。
+同樣需在 Vercel → Project Settings → Environment Variables 設定；Production／Preview 請分開管理密鑰。
 
 ---
 
@@ -277,28 +241,14 @@ npm run dev
 | 每月交換相邀請 | 0 | 3 |
 | 每月配對通知 | 3 | 無限制 |
 
-定義於 `src/lib/permissions.js`（`QUOTA_LIMITS`）。  
-**Dashboard 郵件自動化**使用 `src/lib/match-delivery-quota.js` 計數；Passport 識別見 `src/lib/match-response-premium.js`（已認領 `user_id` 或問卷 Email 對照 Auth 帳號）。發送邏輯集中於 `src/lib/match-notify-send.js`。
-
-| Dashboard 顯示 | Free | Moonlight Passport |
-|---|---|---|
-| 配額 badge | 本月 n/3 | 🌙 無限制 |
-| 即時連線 | — | Email + Inbox（`deliver_inbox: true`） |
-
-任一方 Free 且本月已滿 3 次則 `quota_blocked`，不可勾選發送。
+定義於 `src/lib/permissions.js`。Dashboard 郵件自動化與配額邏輯見內部程式／`docs/`（勿在公開文件暴露營運繞過參數）。
 
 ---
 
-## 登入密碼鎖定
+## 登入安全（摘要）
 
-| 項目 | 設定 |
-|---|---|
-| 觸發條件 | 同一 Email 在 **15 分鐘**內密碼錯誤 **10** 次 |
-| 凍結時間 | **30 分鐘**（期間正確密碼亦無法登入） |
-| 解除方式 | 等待凍結結束；或完成「忘記密碼」重設（會清除鎖定） |
-| 實作 | `src/lib/login-lockout.js`、`POST /api/auth/login`（Upstash Redis；本地無 Redis 時用記憶體） |
-
-完整說明 → [docs/AUTH-LOGIN-LOCKOUT.md](docs/AUTH-LOGIN-LOCKOUT.md)
+登入具暴力破解防護：連續密碼錯誤達門檻會暫時鎖定該帳號；管理員可於內部工具解鎖。  
+**公開 README 不列出精確次數／時長／Redis key／管理路徑**，以免協助攻擊調參。完整規格見內部 `docs/AUTH-LOGIN-LOCKOUT.md`。
 
 ---
 
@@ -333,15 +283,14 @@ Mirror 測驗規格 → [docs/MIRROR-MODE-SPEC.md](docs/MIRROR-MODE-SPEC.md)（v
 ## 開發工具
 
 ```bash
-npm run seed                              # 植入 20 個模擬用戶
-npm run seed:clear                        # 清除後重新植入
-node scripts/seed-test-data.mjs --count=30 --clear
+npm run seed                              # 植入測試用戶（僅本地／測試庫）
+npm run seed:clear                        # 清除後重新植入（危險：勿對正式庫執行）
 npm run test:match                        # 配對算法測試
 npm run test:cards                        # 配對測試 + HTML 卡片
-npm run build:mirror-v3                   # 題庫 + 敘事 bundle（改 mirror-questions-v3 或 mirror-narratives 後）
-npm run generate:card -- --userA=1 --userB=5
-npm run export:excel                      # 匯出配對 Excel（≥ 60 分）
-node scripts/create-admin-user.mjs        # 建立管理員帳號
+npm run build:mirror-v3                   # 題庫 + 敘事 bundle
+npm run export:excel                      # 匯出配對 Excel（本地）
+npm run backup:supabase                   # 只讀備份至本機 backups/（勿 commit）
+# 還原／排程／管理腳本見內部 docs/BACKUP.md；還原會寫入資料庫，慎用
 ```
 
 ---
@@ -352,16 +301,14 @@ node scripts/create-admin-user.mjs        # 建立管理員帳號
 |---|---|
 | `Cannot find module './chunks/...'` 或頁面 500 | 停止 dev server → 刪除 `.next` 資料夾 → `npm run dev` |
 | OneDrive 下路徑 hot reload 異常 | 專案已在 `next.config.js` 啟用 webpack polling；仍異常可移出 OneDrive 同步資料夾 |
-| 論壇／Inbox 401 | 確認已登入；檢查 `init-profile` 是否成功建立 `profiles` row |
-| 登入提示帳號已鎖定 | 15 分鐘內錯密 10 次會凍結 30 分鐘；可等鎖定結束或走「忘記密碼」；見 [docs/AUTH-LOGIN-LOCKOUT.md](docs/AUTH-LOGIN-LOCKOUT.md) |
-| 問卷提交失敗 | 確認 `SUPABASE_SERVICE_ROLE_KEY`；檢查 `responses` 表權限 |
-| Moonlight Passport 付款無反應 | 確認 `PAYPAL_*` 已設且 `PAYPAL_MODE=live`；正式站需設定 Webhook，見 [docs/paypal-onboarding.md](docs/paypal-onboarding.md) |
-| 意見箱提交失敗 | 確認已執行 `20250701000000_contact_feedback.sql`；API 路徑為 `POST /api/contact-feedback` |
-| Dashboard 郵件自動化 API 500 | 刪除 `.next` 後重啟 dev server；深層巢狀 API 路徑可能需改為扁平路徑 |
-| Passport 即時連線 Inbox 未投送 | 已註冊一方應可收 solo match thread；確認 Dashboard 用 Passport 分頁或 `deliver_inbox: true`；已發送配對可 `POST /api/match/deliver-inbox` 補投 |
-| PayMe QR 不顯示 | 檢查 `NEXT_PUBLIC_PAYME_QR_URL` 或 `public/PayCode.jpg`；QR 僅在 `/premium` 付款步驟 popup 內 |
-| Mobile WebView 無法捲動／看不到 footer | 見 [docs/MOBILE-WEBVIEW-SCROLL.md](docs/MOBILE-WEBVIEW-SCROLL.md) |
-| 管理員 API 401 | 請求加 header `x-dashboard-key`，值同 `DASHBOARD_SECRET` |
+| 論壇／Inbox 401 | 確認已登入；檢查 profile 是否已建立 |
+| 登入提示帳號已鎖定 | 屬安全機制；可稍後再試或使用「忘記密碼」。管理員解鎖見內部文件 |
+| 問卷提交失敗 | 確認伺服器端 Supabase 金鑰與表權限 |
+| Moonlight Passport 付款無反應 | 確認 PayPal 環境變數與 Webhook；見內部 paypal 文件 |
+| 意見箱提交失敗 | 確認已執行對應 migration；API 為聯絡意見箱端點 |
+| 管理 API 401 | 確認已設定並傳入正確的管理密鑰（細節不在公開 README） |
+| PayMe QR 不顯示 | 檢查公開 PayMe 圖設定或預設靜態圖 |
+| Mobile WebView 無法捲動／看不到 footer | 見內部 Mobile WebView 文件 |
 
 ---
 
