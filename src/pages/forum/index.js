@@ -1442,7 +1442,7 @@ export default function ForumPage() {
                                 <ForumLikeStat count={post.like_count} />
                                 <ForumCommentStat count={post.comment_count} />
                               </span>
-                              <span>{timeAgo(post.created_at)}</span>
+                              <span className="pixel-post-footer__time">{timeAgo(post.created_at)}</span>
                             </div>
                           </Link>
                         </article>

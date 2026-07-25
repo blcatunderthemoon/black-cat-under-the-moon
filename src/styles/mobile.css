@@ -86,13 +86,16 @@
   }
 
   .pixel-post-footer {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 8px;
-    row-gap: 6px;
   }
 
   .pixel-post-footer__stats {
     margin-left: 0;
+  }
+
+  .pixel-post-footer__time {
+    margin-left: auto;
   }
 
   .site-footer.site-footer--app {
