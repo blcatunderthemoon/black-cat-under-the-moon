@@ -12,18 +12,20 @@ export default function WishShell({
   backLabel = '圍爐',
   maxWidth = '720px',
   redirectPath = '/wishes',
+  hideHeaderTitle = false,
+  hideWishEntrance = true,
 }) {
   return (
     <AppShell
-      title={title}
+      title={hideHeaderTitle ? null : title}
       headerVariant="account"
       backHref={backHref}
       backLabel={backLabel}
       maxWidth={maxWidth}
       showStarfield={false}
       warmBackground
-      pageClassName="app-page--wishes"
-      nav={<AppHeaderAuth redirectPath={redirectPath} />}
+      pageClassName={`app-page--wishes${hideHeaderTitle ? ' app-page--wishes-wall' : ''}`}
+      nav={<AppHeaderAuth redirectPath={redirectPath} hideWishEntrance={hideWishEntrance} />}
     >
       {children}
     </AppShell>

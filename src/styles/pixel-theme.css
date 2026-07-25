@@ -24681,7 +24681,7 @@ button.forum-tag-chip:hover {
   justify-content: center;
   flex-shrink: 0;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: visible;
   width: 36px;
   height: 36px;
   min-width: 36px;
@@ -24715,10 +24715,10 @@ button.forum-tag-chip:hover {
 .header-my-cat-link__sprite {
   display: block;
   width: 24px;
-  height: 22px;
+  height: 24px;
   flex-shrink: 0;
-  overflow: hidden;
-  background: url('/catset_extra_assets/cat05_header_icon.png') no-repeat center / 24px 22px;
+  overflow: visible;
+  background: url('/catset_extra_assets/cat05_header_icon.png') no-repeat center / contain;
   image-rendering: pixelated;
   filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.45));
   transition: transform 0.15s ease-out;
@@ -24744,7 +24744,7 @@ button.forum-tag-chip:hover {
   padding: 0;
 }
 
-/* Avoid icon-slot max-width:32 clipping / overlapping the next header control */
+/* Avoid icon-slot max-width clipping the cat button */
 .auth-nav-badge__item--icon.header-my-cat-link {
   width: 36px;
   min-width: 36px;

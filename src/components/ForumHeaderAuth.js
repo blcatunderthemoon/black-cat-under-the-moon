@@ -69,6 +69,9 @@ export default function ForumHeaderAuth({ extra = null, moonJourney = null, redi
   const unread = meData?.unread_inbox_count || 0;
   const isPremium = isPremiumUser(meData);
   const isForumStaff = canModerateForum(meData?.profile?.forum_role);
+  const path = (router.asPath || router.pathname || '').split(/[?#]/)[0];
+  const onGatheringsPage = path === '/gatherings' || path.startsWith('/gatherings/');
+  const onWishesPage = path === '/wishes' || path.startsWith('/wishes/');
 
   return (
     <>
@@ -105,22 +108,26 @@ export default function ForumHeaderAuth({ extra = null, moonJourney = null, redi
               <HeaderBookmarkIcon />
             </span>
           </button>
-          <Link
-            href="/gatherings"
-            className="app-header__nav-link app-header__nav-link--icon"
-            title="月光聚會"
-            aria-label="月光聚會"
-          >
-            <span className="app-header__nav-icon" aria-hidden="true"><HeaderCalendarIcon /></span>
-          </Link>
-          <Link
-            href="/wishes"
-            className="app-header__nav-link app-header__nav-link--icon"
-            title="月光心願"
-            aria-label="月光心願"
-          >
-            <span className="app-header__nav-icon" aria-hidden="true"><HeaderWishIcon /></span>
-          </Link>
+          {!onGatheringsPage && (
+            <Link
+              href="/gatherings"
+              className="app-header__nav-link app-header__nav-link--icon"
+              title="月光聚會"
+              aria-label="月光聚會"
+            >
+              <span className="app-header__nav-icon" aria-hidden="true"><HeaderCalendarIcon /></span>
+            </Link>
+          )}
+          {!onWishesPage && (
+            <Link
+              href="/wishes"
+              className="app-header__nav-link app-header__nav-link--icon"
+              title="月光心願"
+              aria-label="月光心願"
+            >
+              <span className="app-header__nav-icon" aria-hidden="true"><HeaderWishIcon /></span>
+            </Link>
+          )}
           <Link
             href="/inbox"
             className={`app-header__nav-link app-header__nav-link--icon${unread > 0 ? ' app-header__nav-link--inbox-unread' : ''}`}

@@ -35,17 +35,19 @@ export default function GatheringCard({ gathering }) {
     >
       <div className="gathering-card__glow" aria-hidden="true" />
       <div className="gathering-card__top">
-        <span className={`gathering-card__badge gathering-card__badge--${gathering.is_online ? 'online' : 'offline'}`}>
-          {gathering.is_online ? '線上' : '線下'}
-        </span>
+        <div className="gathering-card__top-start">
+          <span className={`gathering-card__badge gathering-card__badge--${gathering.is_online ? 'online' : 'offline'}`}>
+            {gathering.is_online ? '線上' : '線下'}
+          </span>
+          {gathering.status !== 'cancelled' && gathering.my_attendance?.status && (
+            <span className="gathering-card__mine-chip">
+              {ATTENDANCE_LABEL[gathering.my_attendance.status] || gathering.my_attendance.status}
+            </span>
+          )}
+        </div>
         <span className={`gathering-card__status gathering-card__status--${gathering.status}`}>
           {STATUS_LABEL[gathering.status] || gathering.status}
         </span>
-        {gathering.my_attendance?.status && (
-          <span className="gathering-card__mine-chip">
-            {ATTENDANCE_LABEL[gathering.my_attendance.status] || gathering.my_attendance.status}
-          </span>
-        )}
       </div>
       <h3 className="gathering-card__title">{gathering.title}</h3>
       <p className="gathering-card__meta">

@@ -50,21 +50,23 @@ async function handleGet(req, res, id) {
     .limit(20);
 
   const cheererIds = [...new Set((cheerRows || []).map((c) => c.user_id))];
-  let cheererMap = new Map();
-  if (cheererIds.length) {
-    const { data: profiles } = await admin
-      .from('profiles')
-      .select('id, display_name')
-      .in('id', cheererIds);
-    cheererMap = new Map((profiles || []).map((p) => [p.id, p.display_name || '匿名貓咪']));
-  }
+  const cheererMap = cheererIds.length
+    ? await enrichWishOwners(admin, cheererIds.map((id) => ({ user_id: id })))
+    : new Map();
 
-  const cheers = (cheerRows || []).map((c) => ({
-    id: c.id,
-    note: c.note,
-    created_at: c.created_at,
-    user: { id: c.user_id, display_name: cheererMap.get(c.user_id) || '匿名貓咪' },
-  }));
+  const cheers = (cheerRows || []).map((c) => {
+    const user = cheererMap.get(c.user_id);
+    return {
+      id: c.id,
+      note: c.note,
+      created_at: c.created_at,
+      user: {
+        id: c.user_id,
+        display_name: user?.display_name || '匿名貓咪',
+        public_slug: user?.public_slug || null,
+      },
+    };
+  });
 
   let stampedDays = [];
   let checkinMeta = buildWishCheckinDays(wish);

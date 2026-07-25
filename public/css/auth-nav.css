@@ -964,6 +964,14 @@ html:has(.mode-top-bar--quiz) {
     height: 26px;
   }
 
+  .mode-top-bar--index.mode-top-bar--greeting .auth-nav-badge__item--icon.header-my-cat-link {
+    width: 32px;
+    min-width: 32px;
+    max-width: 32px;
+    height: 32px;
+    overflow: visible;
+  }
+
   .mode-top-bar--index.mode-top-bar--greeting .auth-nav-badge__unread,
   .mode-top-bar--index.mode-top-bar--greeting .forum-nav-unread {
     top: 0;
@@ -979,12 +987,23 @@ html:has(.mode-top-bar--quiz) {
   .mode-top-bar--index.mode-top-bar--greeting .header-my-cat-link {
     width: 32px;
     min-width: 32px;
+    max-width: 32px;
     height: 32px;
+    overflow: visible;
+  }
+
+  .mode-top-bar--index.mode-top-bar--greeting .header-my-cat-link__sprite {
+    width: 22px;
+    height: 22px;
   }
 
   .mode-top-bar--index.mode-top-bar--greeting .header-my-cat-link__sprite--strip {
     width: 26px;
     height: 26px;
+  }
+
+  .mode-top-bar--index.mode-top-bar--greeting .mode-top-bar__nav-slot {
+    padding-right: 2px;
   }
 
   .mode-header-chip {
@@ -1940,7 +1959,7 @@ body.lang-en .mode-top-bar--legal .home-back-btn .en {
   justify-content: center;
   flex-shrink: 0;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: visible;
   width: 36px;
   height: 36px;
   min-width: 36px;
@@ -1974,10 +1993,10 @@ body.lang-en .mode-top-bar--legal .home-back-btn .en {
 .header-my-cat-link__sprite {
   display: block;
   width: 24px;
-  height: 22px;
+  height: 24px;
   flex-shrink: 0;
-  overflow: hidden;
-  background: url('/catset_extra_assets/cat05_header_icon.png') no-repeat center / 24px 22px;
+  overflow: visible;
+  background: url('/catset_extra_assets/cat05_header_icon.png') no-repeat center / contain;
   image-rendering: pixelated;
   filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.45));
   transition: transform 0.15s ease-out;

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { daysLeftLabel } from '../../lib/wishes.js';
+import { mirrorCardHref } from '../../lib/profile-links.js';
 import { ForumSparkleIcon, ForumClockIcon, HeaderHeartIcon } from '../ForumIcons.js';
 
 function timeAgo(dateStr) {
@@ -33,6 +34,10 @@ export default function WishCard({
 
   const link = href || `/wishes/${wish.id}`;
   const ownerName = wish.owner?.display_name || '匿名貓咪';
+  const ownerProfileHref = mirrorCardHref({
+    isMine: !!(viewerId && wish.user_id === viewerId),
+    slug: wish.owner?.public_slug,
+  });
   const left = daysLeftLabel(wish.target_at);
   const isOwn = viewerId && wish.user_id === viewerId;
   const cheered = localCheered;
@@ -90,7 +95,13 @@ export default function WishCard({
       </Link>
       <div className="wish-card__footer">
         <p className="wish-card__owner">
-          @{ownerName}
+          {ownerProfileHref ? (
+            <Link href={ownerProfileHref} className="wish-card__owner-link">
+              {ownerName}
+            </Link>
+          ) : (
+            <span>{ownerName}</span>
+          )}
           {wish.created_at ? ` · ${timeAgo(wish.created_at)}` : ''}
         </p>
         {canCheer ? (

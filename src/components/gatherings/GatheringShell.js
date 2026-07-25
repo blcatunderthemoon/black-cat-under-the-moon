@@ -23,7 +23,7 @@ export default function GatheringShell({
       showStarfield
       warmBackground={false}
       pageClassName="app-page--gatherings"
-      nav={<AppHeaderAuth redirectPath={redirectPath} />}
+      nav={<AppHeaderAuth redirectPath={redirectPath} hideGatheringsEntrance />}
     >
       {children}
     </AppShell>

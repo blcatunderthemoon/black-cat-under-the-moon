@@ -17,15 +17,26 @@ function NavSep() {
   return <span className="auth-nav-badge__sep" aria-hidden="true" />;
 }
 
-export default function AppHeaderAuth({ redirectPath, hideInbox: hideInboxProp, hideName = false }) {
+export default function AppHeaderAuth({
+  redirectPath,
+  hideInbox: hideInboxProp,
+  hideName = false,
+  hideGatheringsEntrance: hideGatheringsProp,
+  hideWishEntrance: hideWishProp,
+}) {
   const { session, profile, displayName, signOut, loading, profileHydrated } = useAuth();
   const router = useRouter();
   const loginRedirect = redirectPath || router.asPath || '/';
-  const onInboxPage = router.pathname === '/inbox' || router.pathname.startsWith('/inbox/');
-  const onAccountPage = router.pathname === '/account';
-  const onMirrorCardPage = router.pathname.startsWith('/mirror-card/');
+  const path = (router.asPath || router.pathname || '').split(/[?#]/)[0];
+  const onInboxPage = path === '/inbox' || path.startsWith('/inbox/');
+  const onAccountPage = path === '/account';
+  const onMirrorCardPage = path.startsWith('/mirror-card/');
+  const onGatheringsPage = path === '/gatherings' || path.startsWith('/gatherings/');
+  const onWishesPage = path === '/wishes' || path.startsWith('/wishes/');
   const useUserToolbar = onInboxPage || onAccountPage || onMirrorCardPage;
   const hideInbox = hideInboxProp ?? onInboxPage;
+  const hideGatheringsEntrance = hideGatheringsProp ?? onGatheringsPage;
+  const hideWishEntrance = hideWishProp ?? onWishesPage;
 
   async function handleLogout() {
     await signOut();
@@ -67,22 +78,26 @@ export default function AppHeaderAuth({ redirectPath, hideInbox: hideInboxProp, 
           )}
           {!hideName && profileHydrated && name && <NavSep />}
           <span className="auth-nav-badge__icon-group">
-            <Link
-              href="/gatherings"
-              className="auth-nav-badge__item auth-nav-badge__item--icon"
-              title="月光聚會"
-              aria-label="月光聚會"
-            >
-              <span className="auth-nav-badge__icon" aria-hidden="true"><HeaderCalendarIcon /></span>
-            </Link>
-            <Link
-              href="/wishes"
-              className="auth-nav-badge__item auth-nav-badge__item--icon"
-              title="月光心願"
-              aria-label="月光心願"
-            >
-              <span className="auth-nav-badge__icon" aria-hidden="true"><HeaderWishIcon /></span>
-            </Link>
+            {!hideGatheringsEntrance && (
+              <Link
+                href="/gatherings"
+                className="auth-nav-badge__item auth-nav-badge__item--icon"
+                title="月光聚會"
+                aria-label="月光聚會"
+              >
+                <span className="auth-nav-badge__icon" aria-hidden="true"><HeaderCalendarIcon /></span>
+              </Link>
+            )}
+            {!hideWishEntrance && (
+              <Link
+                href="/wishes"
+                className="auth-nav-badge__item auth-nav-badge__item--icon"
+                title="月光心願"
+                aria-label="月光心願"
+              >
+                <span className="auth-nav-badge__icon" aria-hidden="true"><HeaderWishIcon /></span>
+              </Link>
+            )}
             {!hideInbox && (
               <Link
                 href="/inbox"

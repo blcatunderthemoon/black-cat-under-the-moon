@@ -69,15 +69,15 @@ export default function WishesIndexPage() {
         description="公開設立近期想完成的小事，互相打氣，慢慢同行。"
         path="/wishes"
       />
-      <WishShell title="月光心願" redirectPath="/wishes" maxWidth="1080px">
+      <WishShell title="月光心願" hideHeaderTitle redirectPath="/wishes" maxWidth="1080px">
         <header className="wishes-hero">
           <p className="wishes-hero__eyebrow">MOONLIGHT WISHES</p>
           <h1 className="wishes-hero__title">
-            <span className="wishes-hero__title-icon" aria-hidden="true"><UiFlagIcon size={20} /></span>
+            <span className="wishes-hero__title-icon" aria-hidden="true"><UiFlagIcon size={32} /></span>
             月光心願
           </h1>
           <p className="wishes-hero__lead">
-            設立一個近期想完成的小事或心事，讓同類為你打氣。慢節奏、低壓——唔係強制打卡，係一齊變好。
+            設立一個近期想完成的小事或心事，讓同路人為你打氣——唔係強制打卡，係一齊慢慢變好。
           </p>
         </header>
 

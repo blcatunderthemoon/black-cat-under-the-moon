@@ -398,7 +398,10 @@ export default function GatheringDetailPage({ seo = null }) {
                   <div className="gathering-detail__private-locked-body">
                     <p className="gathering-detail__private-blur" aria-hidden="true">████ ██████ ███ ██</p>
                     <p className="gathering-detail__private-locked-note">
-                      <ForumLockIcon size={12} /> 詳細地址將於主辦人批准後解鎖
+                      <span className="gathering-detail__private-lock" aria-hidden="true">
+                        <ForumLockIcon size={12} />
+                      </span>
+                      詳細地址將於主辦人批准後解鎖
                     </p>
                   </div>
                 </div>

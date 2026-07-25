@@ -11,6 +11,7 @@ import { ForumSparkleIcon, ForumMoonIcon, ForumClockIcon, ForumPawIcon } from '.
 import { UiFlagIcon } from '../../components/UiIcons.js';
 import WishShareButton from '../../components/wishes/WishShareButton.js';
 import { useAuth } from '../../lib/auth-context.js';
+import { mirrorCardHref } from '../../lib/profile-links.js';
 import {
   daysLeftLabel,
   formatWishCheckinLabel,
@@ -225,6 +226,13 @@ export default function WishDetailPage() {
   const totalDays = checkinDays.length || 1;
   const stampsReady = stampedCount >= totalDays;
   const todayStamped = checkinToday ? stampedSet.has(checkinToday) : false;
+  const ownerName = wish?.owner?.display_name || '匿名貓咪';
+  const ownerProfileHref = wish
+    ? mirrorCardHref({
+      isMine: !!(session?.user?.id && wish.user_id === session.user.id),
+      slug: wish.owner?.public_slug,
+    })
+    : null;
 
   return (
     <>
@@ -243,10 +251,6 @@ export default function WishDetailPage() {
         {!loading && error && <p className="wishes-error">{error}</p>}
         {!loading && wish && (
           <article className="wish-detail">
-            <Link href="/wishes" className="wish-detail__back">
-              ← 返回心願牆
-            </Link>
-
             <h1 className="wish-detail__title">{wish.title}</h1>
 
             <div className="wish-detail__meta">
@@ -266,9 +270,13 @@ export default function WishDetailPage() {
             </div>
 
             <p className="wish-detail__owner">
-              <span className="wish-detail__owner-name">
-                @{wish.owner?.display_name || '匿名貓咪'}
-              </span>
+              {ownerProfileHref ? (
+                <Link href={ownerProfileHref} className="wish-detail__owner-name wish-detail__owner-name--link">
+                  {ownerName}
+                </Link>
+              ) : (
+                <span className="wish-detail__owner-name">{ownerName}</span>
+              )}
               <span className="wish-detail__owner-sep" aria-hidden="true">·</span>
               <span className="wish-detail__cheers">
                 <ForumMoonIcon size={13} />
@@ -285,14 +293,7 @@ export default function WishDetailPage() {
 
             <section className="wish-moon wish-moon--stamps" aria-label="每日月光印花">
               <div className="wish-moon__header">
-                <div className="wish-moon__copy">
-                  <strong>每日印花</strong>
-                  <span>
-                    {ownerActive
-                      ? '一日一印，像喺手帳輕輕蓋章——唔使補舊帳。'
-                      : '主人每日蓋印，慢慢記錄。'}
-                  </span>
-                </div>
+                <strong className="wish-moon__title">每日印花</strong>
                 <span className="wish-moon__stamp-count">
                   已蓋 {stampedCount}／{totalDays} 日
                 </span>
@@ -343,7 +344,7 @@ export default function WishDetailPage() {
                 {stampsReady
                   ? '印花日子已蓋滿——可以標記完成啦。'
                   : todayStamped
-                    ? '今日已蓋印。明日再嚟，慢慢嚟就好。'
+                    ? '今日已蓋印，聽日再嚟吖。'
                     : ownerActive
                       ? '點「今日」蓋一印就得。'
                       : '慢慢嚟就好。'}
@@ -515,19 +516,32 @@ export default function WishDetailPage() {
                 </div>
               ) : (
                 <ul className="wish-cheers__list">
-                  {cheers.map((c) => (
-                    <li key={c.id} className="wish-cheers__item">
-                      <span className="wish-cheers__bubble" aria-hidden="true">
-                        <ForumSparkleIcon size={12} />
-                      </span>
-                      <div className="wish-cheers__content">
-                        <span className="wish-cheers__name">{c.user?.display_name || '匿名貓咪'}</span>
-                        {c.note
-                          ? <span className="wish-cheers__note">{c.note}</span>
-                          : <span className="wish-cheers__note">為你送上溫柔打氣</span>}
-                      </div>
-                    </li>
-                  ))}
+                  {cheers.map((c) => {
+                    const cheerName = c.user?.display_name || '匿名貓咪';
+                    const cheerHref = mirrorCardHref({
+                      isMine: !!(session?.user?.id && c.user?.id === session.user.id),
+                      slug: c.user?.public_slug,
+                    });
+                    return (
+                      <li key={c.id} className="wish-cheers__item">
+                        <span className="wish-cheers__bubble" aria-hidden="true">
+                          <ForumSparkleIcon size={12} />
+                        </span>
+                        <div className="wish-cheers__content">
+                          {cheerHref ? (
+                            <Link href={cheerHref} className="wish-cheers__name wish-cheers__name--link">
+                              {cheerName}
+                            </Link>
+                          ) : (
+                            <span className="wish-cheers__name">{cheerName}</span>
+                          )}
+                          {c.note
+                            ? <span className="wish-cheers__note">{c.note}</span>
+                            : <span className="wish-cheers__note">為你送上溫柔打氣</span>}
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </section>

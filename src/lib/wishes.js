@@ -161,15 +161,25 @@ export async function maybeExpireWish(admin, row) {
 export async function enrichWishOwners(admin, wishes) {
   const ids = [...new Set((wishes || []).map((w) => w.user_id).filter(Boolean))];
   if (!ids.length) return new Map();
-  const { data } = await admin
-    .from('profiles')
-    .select('id, display_name')
-    .in('id', ids);
+  const [{ data: profiles }, { data: cards }] = await Promise.all([
+    admin.from('profiles').select('id, display_name').in('id', ids),
+    admin
+      .from('mirror_cards')
+      .select('user_id, public_slug, is_published')
+      .in('user_id', ids),
+  ]);
+  const slugByUser = new Map();
+  for (const card of cards || []) {
+    if (card.is_published !== false && card.public_slug) {
+      slugByUser.set(card.user_id, card.public_slug);
+    }
+  }
   const map = new Map();
-  for (const p of data || []) {
+  for (const p of profiles || []) {
     map.set(p.id, {
       id: p.id,
       display_name: p.display_name || '匿名貓咪',
+      public_slug: slugByUser.get(p.id) || null,
     });
   }
   return map;
@@ -193,7 +203,11 @@ export function toPublicWish(row, { owner = null, cheered = null } = {}) {
     created_at: row.created_at,
     updated_at: row.updated_at,
     owner: owner
-      ? { id: owner.id, display_name: owner.display_name || '匿名貓咪' }
+      ? {
+        id: owner.id,
+        display_name: owner.display_name || '匿名貓咪',
+        public_slug: owner.public_slug || null,
+      }
       : null,
     cheered_by_me: cheered === null ? undefined : !!cheered,
   };
