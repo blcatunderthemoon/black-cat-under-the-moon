@@ -139,9 +139,9 @@ export default function ForumBookmarksPanel({ open, onClose, accessToken, onBook
           <p className="pixel-error">{loadError}</p>
         ) : isEmpty ? (
           <div className="forum-bookmarks-empty">
-            <p className="forum-bookmarks-empty__emoji" aria-hidden="true">
-              <ForumBookIcon size={28} />
-            </p>
+            <div className="forum-bookmarks-empty__icon" aria-hidden="true">
+              <ForumBookIcon size={26} />
+            </div>
             <p className="forum-bookmarks-empty__text">書櫃尚空</p>
             <p className="forum-bookmarks-empty__hint">
               在樹洞貼文按收藏收入書櫃，<br />

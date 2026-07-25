@@ -26,6 +26,16 @@ export const ATTENDEE_STATUSES = ['pending', 'approved', 'rejected', 'withdrawn'
 
 const FAMILY_SET = new Set(TYPE_ORDER);
 
+/** Treat empty / dummy placeholders as “not filled” (≠ filled-but-hidden). */
+const PRIVATE_LOCATION_PLACEHOLDER_RE = /^(no\s*link|n\/?a|暫無|未定|无|none|null|nil|-|—|－|\.+)$/i;
+
+export function normalizeGatheringPrivateLocation(raw) {
+  if (raw == null) return null;
+  const text = String(raw).trim();
+  if (!text || PRIVATE_LOCATION_PLACEHOLDER_RE.test(text)) return null;
+  return text;
+}
+
 export function normalizeMirrorFamilies(input) {
   if (input == null) return null;
   if (!Array.isArray(input) || input.length === 0) return null;
@@ -214,9 +224,7 @@ export function validateGatheringInput(body = {}, { partial = false } = {}) {
   }
 
   if (!partial || body.location_private !== undefined) {
-    const locationPrivate = body.location_private == null || body.location_private === ''
-      ? null
-      : String(body.location_private).trim();
+    const locationPrivate = normalizeGatheringPrivateLocation(body.location_private);
     if (locationPrivate && locationPrivate.length > 500) errors.push('私密地址／連結最多 500 字。');
     else out.location_private = locationPrivate;
   }
@@ -425,8 +433,11 @@ export function toPublicGathering(row, {
     ends_at_hk: formatGatheringHkTime(row.ends_at),
     timezone: row.timezone || HK_TZ,
     location_public: row.location_public,
-    location_private: includePrivate ? (row.location_private || null) : undefined,
-    has_private_location: !!row.location_private,
+    location_private: includePrivate
+      ? normalizeGatheringPrivateLocation(row.location_private)
+      : undefined,
+    /** True only when a real private address/link exists (not empty / placeholder). */
+    has_private_location: !!normalizeGatheringPrivateLocation(row.location_private),
     // host_email / host_phone: never public — stored for ops / host–attendee coordination only
     max_participants: max,
     approved_count: approvedCount,

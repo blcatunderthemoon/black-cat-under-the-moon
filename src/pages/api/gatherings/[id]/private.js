@@ -3,7 +3,7 @@
  */
 
 import { requireUser, sendAuthError, getAdminClient } from '../../../../lib/server-auth.js';
-import { canViewPrivateLocation, maybeMarkCompleted } from '../../../../lib/gatherings.js';
+import { canViewPrivateLocation, maybeMarkCompleted, normalizeGatheringPrivateLocation } from '../../../../lib/gatherings.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
@@ -29,7 +29,8 @@ export default async function handler(req, res) {
   }
 
   return res.status(200).json({
-    location_private: row.location_private || null,
+    location_private: normalizeGatheringPrivateLocation(row.location_private),
     is_online: row.is_online,
+    has_private_location: !!normalizeGatheringPrivateLocation(row.location_private),
   });
 }

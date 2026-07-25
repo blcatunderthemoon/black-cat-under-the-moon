@@ -204,7 +204,7 @@ export default function GatheringCommentBoard({ gatheringId }) {
               <ForumFlameIcon size={20} />
             </span>
             <p className="gathering-board__empty-title">仲未有留言</p>
-            <p className="gathering-board__empty-hint">做第一個開火煲嘅人啦</p>
+            <p className="gathering-board__empty-hint">做第一個開火爐嘅人啦</p>
           </div>
         ) : (
           comments.map((c) => (
