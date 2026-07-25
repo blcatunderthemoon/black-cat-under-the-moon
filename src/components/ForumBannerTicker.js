@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+
+const DISMISS_KEY = 'bcutm_forum_banner_dismissed';
 
 function BannerItem({ msg }) {
   const inner = (
@@ -40,12 +42,17 @@ function BannerSequence({ messages, keyPrefix }) {
   ));
 }
 
+function messagesFingerprint(messages) {
+  return (messages || []).map((m) => String(m.id || m.text || '')).join('|');
+}
+
 /**
- * Scrolling marquee banner under the forum filters panel.
- * Configured via Dashboard → 論壇橫幅.
+ * Scrolling marquee banner under the forum header / above filters.
+ * Configured via Dashboard → 論壇橫幅. Users can dismiss until content changes.
  */
 export default function ForumBannerTicker() {
   const [messages, setMessages] = useState(null);
+  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -64,7 +71,28 @@ export default function ForumBannerTicker() {
     return () => { cancelled = true; };
   }, []);
 
-  if (!messages?.length) return null;
+  const fingerprint = useMemo(() => messagesFingerprint(messages), [messages]);
+
+  useEffect(() => {
+    if (!fingerprint) return;
+    try {
+      const stored = localStorage.getItem(DISMISS_KEY);
+      setDismissed(stored === fingerprint);
+    } catch {
+      setDismissed(false);
+    }
+  }, [fingerprint]);
+
+  function handleDismiss() {
+    try {
+      localStorage.setItem(DISMISS_KEY, fingerprint);
+    } catch {
+      /* ignore */
+    }
+    setDismissed(true);
+  }
+
+  if (!messages?.length || dismissed) return null;
 
   const duration = Math.max(18, messages.length * 14);
 
@@ -89,6 +117,15 @@ export default function ForumBannerTicker() {
           </div>
         </div>
       </div>
+      <button
+        type="button"
+        className="forum-banner-ticker__dismiss"
+        aria-label="關閉公告"
+        title="關閉"
+        onClick={handleDismiss}
+      >
+        ×
+      </button>
     </aside>
   );
 }

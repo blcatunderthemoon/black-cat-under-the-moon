@@ -43,7 +43,12 @@ export default function ForumHeaderAuth({ extra = null, moonJourney = null, redi
       <>
         <span className="forum-header-guest-group">
           <NavLink href={`/login?redirect=${encodeURIComponent(redirectPath)}`}>登入</NavLink>
-          <NavLink href={`/signup?redirect=${encodeURIComponent(redirectPath)}`}>註冊</NavLink>
+          <NavLink
+            href={`/signup?redirect=${encodeURIComponent(redirectPath)}`}
+            className="forum-header-guest-cta"
+          >
+            註冊
+          </NavLink>
         </span>
         {extra}
       </>

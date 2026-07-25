@@ -2070,10 +2070,10 @@ body:has(#already-screen.active) #site-footer {
 
 #already-screen.overlay-screen--topbar.active {
   padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
-  background:
-    radial-gradient(ellipse 78% 48% at 50% 22%, rgba(189, 147, 249, 0.14) 0%, transparent 68%),
-    radial-gradient(ellipse 60% 36% at 50% 78%, rgba(255, 224, 102, 0.05) 0%, transparent 72%),
-    var(--bg-deep);
+  background: var(--bg-deep);
+}
+#already-screen.overlay-screen--topbar.active.overlay-screen--match-results {
+  background: var(--bg-deep);
 }
 #already-screen.overlay-screen--topbar.active:not(.overlay-screen--match-results) {
   justify-content: center;
@@ -2477,8 +2477,7 @@ body:has(#already-screen.active) #site-footer {
   margin-bottom: 18px;
   padding: 4px 0 14px;
   border-bottom: 1px solid rgba(255, 224, 102, 0.14);
-  background:
-    radial-gradient(ellipse 70% 90% at 50% 0%, rgba(255, 224, 102, 0.08) 0%, transparent 72%);
+  background: none;
 }
 .match-results-panel__title {
   font-size: 16px;

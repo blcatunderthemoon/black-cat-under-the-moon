@@ -165,24 +165,59 @@ function formatMembersDisplay(total) {
   return `${Math.floor(n / step) * step}+`;
 }
 
-function GatheringPanel({ membersTotal }) {
+function GatheringPanel({ membersTotal, session, onCompose, onBookmarks, redirectPath = '/forum' }) {
   const membersLabel = formatMembersDisplay(membersTotal);
 
   return (
-    <aside className="forum-panel forum-panel--stat">
-      <div className="forum-panel__head">
-        <h3 className="forum-panel__title">圍爐黑貓</h3>
-        <p className="forum-panel__hint forum-panel__hint--hot">累積已加入</p>
-      </div>
-      <div className="forum-gathering-count forum-gathering-count--body">
-        {membersLabel || '—'}
-        <span>
-          {membersLabel
-            ? '隻黑貓已加入圍爐'
-            : '歡迎成為第一批圍爐黑貓'}
-        </span>
-      </div>
-    </aside>
+    <>
+      <aside className="forum-panel forum-panel--stat">
+        <div className="forum-panel__head">
+          <h3 className="forum-panel__title">圍爐黑貓</h3>
+          <p className="forum-panel__hint forum-panel__hint--hot">累積已加入</p>
+        </div>
+        <div className="forum-gathering-count forum-gathering-count--body">
+          {membersLabel || '—'}
+          <span>
+            {membersLabel
+              ? '隻黑貓已加入圍爐'
+              : '歡迎成為第一批圍爐黑貓'}
+          </span>
+        </div>
+      </aside>
+      <aside className="forum-panel forum-panel--quick" aria-label="快捷選單">
+        {session ? (
+          <>
+            <button type="button" className="forum-quick-link forum-quick-link--primary" onClick={onCompose}>
+              ✎ 發佈新帖
+            </button>
+            <button type="button" className="forum-quick-link" onClick={onBookmarks}>
+              🔖 我的收藏
+            </button>
+            <Link href="/account" className="forum-quick-link">
+              ⚙ 個人設定
+            </Link>
+          </>
+        ) : (
+          <>
+            <Link
+              href={`/signup?redirect=${encodeURIComponent(redirectPath)}`}
+              className="forum-quick-link forum-quick-link--primary"
+            >
+              ✨ 註冊加入
+            </Link>
+            <Link
+              href={`/login?redirect=${encodeURIComponent(redirectPath)}`}
+              className="forum-quick-link"
+            >
+              登入
+            </Link>
+            <Link href="/mirror.html" className="forum-quick-link">
+              🪞 靈魂鏡像
+            </Link>
+          </>
+        )}
+      </aside>
+    </>
   );
 }
 
@@ -1056,11 +1091,19 @@ export default function ForumPage() {
       >
         <div className="forum-layout">
           <div className="forum-sidebar forum-sidebar--left">
-            <GatheringPanel membersTotal={meta?.members_total} />
+            <GatheringPanel
+              membersTotal={meta?.members_total}
+              session={session}
+              onCompose={openCompose}
+              onBookmarks={() => setShowBookmarks(true)}
+            />
           </div>
 
           <div className="forum-main">
+            <ForumBannerTicker />
+
             <div className="forum-filters-panel forum-panel">
+              <div className="forum-filters-panel__topics">
               <ForumHorizontalScroll
                 ref={topicsRowRef}
                 className="pixel-filter-row pixel-filter-row--topics"
@@ -1094,7 +1137,9 @@ export default function ForumPage() {
                   </button>
                 ))}
               </ForumHorizontalScroll>
+              </div>
 
+              <div className="forum-filters-panel__tools">
               {(topic !== '全部' && !isStoryTopic(topic) && (presetTagsDisplay.length > 0 || activeTag)) && (
                 <div className="forum-preset-tags-row" role="group" aria-label="官方標籤">
                   <span className="forum-preset-tags-row__label">標籤</span>
@@ -1180,13 +1225,17 @@ export default function ForumPage() {
                   )}
                 </span>
               </div>
+              </div>
             </div>
-
-            <ForumBannerTicker />
 
             {topic === '全部' && (
               <div className="forum-treehole-panels forum-treehole-panels--mobile">
-                <GatheringPanel membersTotal={meta?.members_total} />
+                <GatheringPanel
+                  membersTotal={meta?.members_total}
+                  session={session}
+                  onCompose={openCompose}
+                  onBookmarks={() => setShowBookmarks(true)}
+                />
                 <FeaturedPostsPanel featuredPosts={featuredPosts} />
                 <HotTopicsPanel hotPosts={meta?.hot_posts} sparksMode={meta?.sparks_mode} />
               </div>

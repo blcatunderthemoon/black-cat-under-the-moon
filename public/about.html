@@ -180,7 +180,7 @@
     .about-hero__logo-wrap {
       display: block;
       margin: 0 auto;
-      width: min(120px, 28vw);
+      width: min(88px, 22vw);
       line-height: 0;
       text-decoration: none;
     }
@@ -243,7 +243,7 @@
       }
 
       .about-hero__logo-wrap {
-        width: min(96px, 26vw);
+        width: min(72px, 20vw);
       }
 
       .about-hero__wordmark-line {
@@ -311,24 +311,65 @@
     }
     .section--notice .section-title { color: var(--pink); }
 
-    /* Quiet SEO crawl path — not a primary nav item */
-    .about-seo-entry {
-      text-align: center;
-      margin: 1.6rem 0 0;
-      padding: 0;
+    /* Guides entry — readable CTA, not a quiet crawl-only link */
+    .about-guides-entry {
+      margin: 1.5rem 0 0;
+      padding: 1.05rem 1.1rem 1.15rem;
+      border: 1px solid rgba(189, 147, 249, 0.28);
+      border-radius: 14px;
+      background:
+        linear-gradient(165deg, rgba(124, 92, 252, 0.1) 0%, rgba(18, 12, 34, 0.55) 55%, rgba(10, 8, 20, 0.7) 100%);
+      text-align: left;
     }
-    .about-seo-entry a {
-      font-size: .7rem;
-      font-weight: 400;
-      letter-spacing: 0.04em;
-      color: rgba(122, 117, 144, 0.72);
+    .about-guides-entry__eyebrow {
+      margin: 0 0 0.35rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: rgba(189, 147, 249, 0.9);
+    }
+    .about-guides-entry__title {
+      margin: 0 0 0.45rem;
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--cream, #f0ebd8);
+    }
+    .about-guides-entry__desc {
+      margin: 0 0 0.85rem;
+      font-size: 0.86rem;
+      line-height: 1.65;
+      color: rgba(210, 200, 230, 0.82);
+    }
+    .about-guides-entry__links {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.65rem 1.1rem;
+    }
+    .about-guides-entry__link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--purple-l, #bd93f9);
       text-decoration: none;
+      letter-spacing: 0.02em;
     }
-    .about-seo-entry a:hover,
-    .about-seo-entry a:focus-visible {
-      color: rgba(189, 147, 249, 0.85);
-      text-decoration: underline;
+    .about-guides-entry__link--soft {
+      font-weight: 500;
+      color: rgba(210, 200, 230, 0.88);
+    }
+    .about-guides-entry__link:hover,
+    .about-guides-entry__link:focus-visible {
+      color: #ffe066;
       outline: none;
+      text-decoration: underline;
+    }
+    .about-guides-entry__arrow {
+      font-size: 0.75rem;
+      line-height: 1;
     }
 
     .legal-footer {
@@ -359,7 +400,7 @@
   <div class="page">
     <header class="about-hero">
       <a class="about-hero__logo-wrap" href="index.html" aria-label="返回主頁">
-        <img class="about-hero__logo" src="BlackCatPixLogo.png" alt="" width="120" height="120" decoding="async">
+        <img class="about-hero__logo" src="BlackCatPixLogo.png" alt="" width="88" height="88" decoding="async">
       </a>
       <h1 class="about-hero__wordmark">
         <span class="about-hero__wordmark-line about-hero__wordmark-line--top">Black Cat</span>
@@ -490,9 +531,23 @@
       </div>
     </div>
 
-    <p class="about-seo-entry">
-      <a href="/guides">文章與指南</a>
-    </p>
+    <aside class="about-guides-entry" aria-labelledby="about-guides-title">
+      <p class="about-guides-entry__eyebrow">✦ 文章與指南</p>
+      <h2 class="about-guides-entry__title" id="about-guides-title">交友、約會與安全指南</h2>
+      <p class="about-guides-entry__desc">
+        香港Les交友入門、約會地點、第一次去 Les Bar，同埋<strong>交友安全</strong>實用文章 — 幫你慢慢認識自己、認識彼此。
+      </p>
+      <div class="about-guides-entry__links">
+        <a class="about-guides-entry__link" href="/guides">
+          瀏覽全部文章
+          <span class="about-guides-entry__arrow" aria-hidden="true">▸</span>
+        </a>
+        <a class="about-guides-entry__link about-guides-entry__link--soft" href="/guides/hong-kong-les-dating-safety">
+          交友安全指南
+          <span class="about-guides-entry__arrow" aria-hidden="true">▸</span>
+        </a>
+      </div>
+    </aside>
 
     <div class="legal-footer">
       <a href="about.html">關於我們</a> ·

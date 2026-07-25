@@ -53,6 +53,9 @@
     try {
       sessionStorage.removeItem(CACHE_KEY);
     } catch (e) {}
+    try {
+      window.dispatchEvent(new CustomEvent(EVENT, { detail: { userId: null, data: null } }));
+    } catch (e) {}
   }
 
   function patchMeCacheDisplayName(userId, displayName) {

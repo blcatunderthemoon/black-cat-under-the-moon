@@ -69,19 +69,59 @@
     if (!slide || !track) return;
     var target = Math.max(0, slideCenterOffset(slide) - track.clientWidth / 2);
     if (behavior === 'auto' || behavior === 'instant') {
-      /* Direct assignment — never animates, even if CSS smooth sneaks back */
+      cancelSettle();
       track.scrollLeft = target;
     } else {
-      track.scrollTo({
-        left: target,
-        behavior: 'smooth',
-      });
+      animateScrollTo(target);
     }
     updateFocus(index, { announce: true });
   }
 
+  var settleRaf = 0;
+
+  function cancelSettle() {
+    if (settleRaf) {
+      global.cancelAnimationFrame(settleRaf);
+      settleRaf = 0;
+    }
+    if (track) track.classList.remove('is-settling');
+  }
+
+  /** Eased settle — smoother than native scrollTo(smooth) + snap fighting on mobile */
+  function animateScrollTo(target) {
+    cancelSettle();
+    var start = track.scrollLeft;
+    var dist = target - start;
+    if (Math.abs(dist) < 1.5) {
+      track.scrollLeft = target;
+      return;
+    }
+    var duration = Math.min(420, Math.max(240, Math.abs(dist) * 0.62));
+    var t0 = global.performance && performance.now ? performance.now() : Date.now();
+    track.classList.add('is-settling');
+
+    function easeOutCubic(t) {
+      return 1 - Math.pow(1 - t, 3);
+    }
+
+    function frame(now) {
+      var t = Math.min(1, (now - t0) / duration);
+      track.scrollLeft = start + dist * easeOutCubic(t);
+      if (t < 1) {
+        settleRaf = global.requestAnimationFrame(frame);
+      } else {
+        settleRaf = 0;
+        track.scrollLeft = target;
+        track.classList.remove('is-settling');
+      }
+    }
+    settleRaf = global.requestAnimationFrame(frame);
+  }
+
   function onScroll() {
     if (scrollRaf) return;
+    if (track && track.classList.contains('is-settling')) return;
+    if (track && track.classList.contains('is-dragging')) return;
     scrollRaf = requestAnimationFrame(function () {
       scrollRaf = 0;
       updateFocus(nearestIndex());
@@ -186,12 +226,12 @@
     var dragged = false;
     var downSlide = null;
     var listening = false;
-    var DRAG_THRESHOLD = 8;
+    var DRAG_THRESHOLD = 6;
     /* Commit next/prev if swipe clears this fraction of slide width, or a flick */
-    var COMMIT_RATIO = 0.18;
-    var COMMIT_MIN_PX = 36;
-    var COMMIT_MAX_PX = 88;
-    var FLICK_VX = 0.4; /* px/ms */
+    var COMMIT_RATIO = 0.14;
+    var COMMIT_MIN_PX = 28;
+    var COMMIT_MAX_PX = 72;
+    var FLICK_VX = 0.28; /* px/ms — easier flick on touch */
 
     function clearDragClasses() {
       root.classList.remove('is-dragging');
@@ -224,8 +264,10 @@
       var dy = e.clientY - startY;
       var now = e.timeStamp || Date.now();
       var dt = now - lastT;
-      if (dt > 0 && dt < 80) {
-        velocityX = (e.clientX - lastX) / dt;
+      if (dt > 0 && dt < 64) {
+        var instant = (e.clientX - lastX) / dt;
+        /* Smooth velocity so release doesn't feel twitchy */
+        velocityX = velocityX * 0.55 + instant * 0.45;
       }
       lastX = e.clientX;
       lastT = now;
@@ -286,11 +328,12 @@
       startX = e.clientX;
       startY = e.clientY;
       startScroll = track.scrollLeft;
-      startIndex = activeIndex;
+      startIndex = nearestIndex();
       lastX = e.clientX;
       lastT = e.timeStamp || Date.now();
       velocityX = 0;
       dragged = false;
+      cancelSettle();
       downSlide =
         e.target.closest && e.target.closest('.home-carousel__slide')
           ? e.target.closest('.home-carousel__slide')
@@ -317,6 +360,8 @@
   function fetchGatheringCount() {
     var meta = root && root.querySelector('[data-gathering-count]');
     if (!meta) return;
+    /* Always show 進行中 tag — including when open count is 0 */
+    meta.hidden = false;
     fetch('/api/gatherings?open_only=1&limit=40', {
       credentials: 'same-origin',
       headers: { Accept: 'application/json' },
@@ -327,12 +372,39 @@
       })
       .then(function (data) {
         var n = typeof data.total === 'number' ? data.total : (data.gatherings || []).length;
+        if (typeof n !== 'number' || n < 0 || !isFinite(n)) n = 0;
         meta.textContent = '進行中 (' + n + ')';
         meta.hidden = false;
       })
       .catch(function () {
-        meta.textContent = '進行中 (—)';
+        meta.textContent = '進行中 (0)';
         meta.hidden = false;
+      });
+  }
+
+  function fetchDriftWeeklyCount() {
+    var meta = root && root.querySelector('[data-drift-weekly]');
+    if (!meta) return;
+    meta.hidden = true;
+    fetch('/api/public/bottle-stats', {
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' },
+    })
+      .then(function (res) {
+        if (!res.ok) throw new Error('bottle-stats ' + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        var n = data && typeof data.weekly_new === 'number' ? data.weekly_new : 0;
+        if (!isFinite(n) || n <= 0) {
+          meta.hidden = true;
+          return;
+        }
+        meta.textContent = '💌 漂流瓶等待你拾起（' + Math.floor(n) + '）';
+        meta.hidden = false;
+      })
+      .catch(function () {
+        meta.hidden = true;
       });
   }
 
@@ -366,6 +438,7 @@
     });
 
     fetchGatheringCount();
+    fetchDriftWeeklyCount();
 
     if (global.MobileDocumentScroll) {
       if (MobileDocumentScroll.setLandingScrollScreen) {

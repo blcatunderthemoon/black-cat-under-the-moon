@@ -125,7 +125,8 @@ export default function ThreadPage() {
       && !(data.messages || []).some(
         (m) => isLetterMessage(m) || m.message_type === 'photo_exchange_request',
       );
-    if (isMatchOnly) {
+    // System notices (gathering applicants etc.) list newest-first — stay at top.
+    if (isMatchOnly || data?.thread?.source_type === 'system') {
       window.scrollTo({ top: 0, behavior: 'auto' });
       return;
     }
@@ -253,7 +254,11 @@ export default function ThreadPage() {
     : messages.filter((m) => isLetterMessage(m));
   const systemMessages = isPhotoExchangeThread
     ? []
-    : messages.filter((m) => isSystemMessage(m));
+    : (() => {
+      const list = messages.filter((m) => isSystemMessage(m));
+      // Newest applicants / notices first in system threads
+      return isSystemThread ? [...list].reverse() : list;
+    })();
   // 一個 thread 只代表一次連線；match_card 可能重複入庫，只保留第一張。
   const matchMessages = isPhotoExchangeThread
     ? []
@@ -499,13 +504,28 @@ function SystemNoticeItem({ msg, stackIndex = 0 }) {
   const knock = typeof p.knock_message === 'string' && p.knock_message ? p.knock_message : null;
   const whenLabel = typeof p.when_label === 'string' ? p.when_label : null;
   const hasStructured = isGathering && (gTitle || applicant);
+  const showNewTag = Boolean(msg.was_unread);
+  const newTagLabel = (kind === 'gathering_application' || kind === 'gathering_joined')
+    ? '新申請'
+    : 'NEW';
 
   return (
     <div
       className="letter-row letter-row--center inbox-system-notice-row"
       style={{ '--letter-z': stackIndex + 1 }}
     >
-      <article className={`inbox-system-notice inbox-system-notice--${meta.tone}`}>
+      <article
+        className={[
+          'inbox-system-notice',
+          `inbox-system-notice--${meta.tone}`,
+          showNewTag && 'inbox-system-notice--new',
+        ].filter(Boolean).join(' ')}
+      >
+        {showNewTag && (
+          <span className="inbox-system-notice__new-tag" aria-label={newTagLabel}>
+            {newTagLabel}
+          </span>
+        )}
         <header className="inbox-system-notice__head">
           <span className="inbox-system-notice__icon" aria-hidden="true">{meta.icon}</span>
           <div className="inbox-system-notice__headings">

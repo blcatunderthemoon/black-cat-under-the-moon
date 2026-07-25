@@ -268,6 +268,23 @@ export default function InboxPage() {
                 const systemChannel = isSystem ? (thread.system_channel || null) : null;
                 const gatheringTitle = isSystem ? (thread.gathering_title || null) : null;
                 const systemNameLabel = gatheringTitle || thread.other_participant.display_name;
+                const systemKind = isSystem ? (thread.system_notice_kind || '') : '';
+                const isGatheringApplicantNotice = systemKind === 'gathering_application'
+                  || systemKind === 'gathering_joined';
+                const unreadBadgeLabel = isMatch
+                  ? '連線'
+                  : isGatheringApplicantNotice
+                    ? '新申請'
+                    : isSystem
+                      ? '通知'
+                      : 'NEW';
+                const unreadBadgeAria = isMatch
+                  ? '新的連線通知'
+                  : isGatheringApplicantNotice
+                    ? '新的聚會申請'
+                    : isSystem
+                      ? '新的系統通知'
+                      : '未讀的新訊息';
 
                 return (
                   <li key={thread.id} className="inbox-letter-list__item">
@@ -286,10 +303,10 @@ export default function InboxPage() {
                     >
                       {hasUnread && (
                         <span
-                          className={`inbox-letter-row__new-badge${isMatch ? ' inbox-letter-row__new-badge--match' : ''}${isSystem ? ' inbox-letter-row__new-badge--system' : ''}`}
-                          aria-label={isMatch ? '新的連線通知' : isSystem ? '新的系統通知' : '未讀的新訊息'}
+                          className={`inbox-letter-row__new-badge${isMatch ? ' inbox-letter-row__new-badge--match' : ''}${isSystem ? ' inbox-letter-row__new-badge--system' : ''}${isGatheringApplicantNotice ? ' inbox-letter-row__new-badge--applicant' : ''}`}
+                          aria-label={unreadBadgeAria}
                         >
-                          {isMatch ? '連線' : isSystem ? '通知' : 'NEW'}
+                          {unreadBadgeLabel}
                         </span>
                       )}
                       {isPhotoExchange ? (

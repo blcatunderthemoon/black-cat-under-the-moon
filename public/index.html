@@ -41,7 +41,7 @@
 <link rel="stylesheet" href="css/auth-nav.css?v=20260724unread3">
 <link rel="stylesheet" href="css/mobile-webview-scroll.css?v=20260725authfs">
 <link rel="stylesheet" href="css/welcome-atmosphere.css?v=20260725bubble">
-<link rel="stylesheet" href="css/home-carousel.css?v=20260725arrows">
+<link rel="stylesheet" href="css/home-carousel.css?v=20260725swipe2">
 <script src="/js/posthog-page-context.js" defer></script>
 <script src="/js/posthog-init.js" defer></script>
 </head>
@@ -67,7 +67,7 @@
     </div>
   </div>
 </div>
-<script src="/js/me-cache.js?v=20260707perf"></script>
+<script src="/js/me-cache.js?v=20260725presence"></script>
 <script src="/js/auth-greeting-bootstrap.js?v=20260706name"></script>
 
 <!-- Background layers -->
@@ -90,7 +90,7 @@
         Under <span class="home-landing__moon">The Moon</span>
       </span>
     </h1>
-    <p class="home-landing__headline">選擇你的模式</p>
+    <p class="home-landing__headline">月光下，想開始邊段旅程？</p>
     <p class="home-landing__sub" role="doc-subtitle">靈魂鏡像 · 月光聚會 · 黑貓樹洞 · 月光漂流瓶 · 月下緣份</p>
   </header>
 
@@ -137,7 +137,7 @@
           aria-label="月光聚會 Moonlight Gathering"
         >
           <div class="home-carousel__card">
-            <p class="home-carousel__label home-carousel__label--live" data-gathering-count hidden>進行中 (—)</p>
+            <p class="home-carousel__label home-carousel__label--live" data-gathering-count>進行中 (0)</p>
             <div class="home-carousel__icon">
               <img src="moonlightlogo.png?v=20260725alpha2" alt="" width="88" height="88" aria-hidden="true">
             </div>
@@ -179,6 +179,7 @@
           aria-label="月光漂流瓶 Drift Mode"
         >
           <div class="home-carousel__card">
+            <p class="home-carousel__label home-carousel__label--drift" data-drift-weekly hidden>💌 漂流瓶等待你拾起（0）</p>
             <div class="home-carousel__icon">
               <img src="icon/driftbottleicon.png" alt="" width="88" height="88" aria-hidden="true">
             </div>
@@ -265,13 +266,13 @@
   <div class="home-landing__bottom">
     <div class="mode-select-socials welcome-socials home-landing__socials" aria-label="社群連結">
       <a class="mode-social-link ig" href="https://www.instagram.com/blackcatunderthemoonhk/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" title="Instagram">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
       </a>
       <a class="mode-social-link threads" href="https://www.threads.net/@blackcatunderthemoonhk" target="_blank" rel="noopener noreferrer" aria-label="Threads" title="Threads">
-        <svg width="18" height="18" viewBox="0 0 192 192" fill="currentColor" aria-hidden="true"><path d="M141.537 88.988a66.667 66.667 0 0 0-2.518-1.143c-1.482-27.307-16.403-42.94-41.457-43.1h-.34c-14.986 0-27.449 6.396-35.12 18.036l13.779 9.452c5.73-8.695 14.724-10.548 21.348-10.548h.229c8.249.053 14.474 2.452 18.503 7.129 2.932 3.405 4.893 8.111 5.864 14.05-7.314-1.243-15.224-1.626-23.68-1.14-23.82 1.371-39.134 15.264-38.105 34.568.522 9.792 5.4 18.216 13.735 23.719 7.047 4.652 16.124 6.927 25.557 6.412 12.458-.683 22.231-5.436 29.049-14.127 5.178-6.6 8.453-15.153 9.899-25.93 5.937 3.583 10.337 8.298 12.767 13.966 4.132 9.635 4.373 25.468-8.546 38.376-11.319 11.308-24.925 16.2-45.488 16.351-22.809-.169-40.06-7.484-51.275-21.742C35.236 139.966 29.808 120.682 29.605 96c.203-24.682 5.63-43.966 16.133-57.317C56.954 24.425 74.206 17.11 97.015 16.94c22.975.17 40.526 7.52 52.171 21.847 5.71 7.026 10.015 15.86 12.853 26.162l16.147-4.308c-3.44-12.68-8.853-23.606-16.219-32.668C147.036 10.784 125.322 1.201 97.098 1 68.752 1.201 47.264 10.816 32.216 28.447 18.568 44.425 11.565 67.461 11.318 96.001c.247 28.54 7.25 51.576 20.898 67.554C47.264 181.216 68.752 190.798 97.098 191c23.814-.168 41.037-6.404 55.3-20.153 18.04-17.916 17.406-40.364 11.476-54.158-4.269-9.956-12.492-18.047-22.337-27.701z"/></svg>
+        <svg width="15" height="15" viewBox="0 0 192 192" fill="currentColor" aria-hidden="true"><path d="M141.537 88.988a66.667 66.667 0 0 0-2.518-1.143c-1.482-27.307-16.403-42.94-41.457-43.1h-.34c-14.986 0-27.449 6.396-35.12 18.036l13.779 9.452c5.73-8.695 14.724-10.548 21.348-10.548h.229c8.249.053 14.474 2.452 18.503 7.129 2.932 3.405 4.893 8.111 5.864 14.05-7.314-1.243-15.224-1.626-23.68-1.14-23.82 1.371-39.134 15.264-38.105 34.568.522 9.792 5.4 18.216 13.735 23.719 7.047 4.652 16.124 6.927 25.557 6.412 12.458-.683 22.231-5.436 29.049-14.127 5.178-6.6 8.453-15.153 9.899-25.93 5.937 3.583 10.337 8.298 12.767 13.966 4.132 9.635 4.373 25.468-8.546 38.376-11.319 11.308-24.925 16.2-45.488 16.351-22.809-.169-40.06-7.484-51.275-21.742C35.236 139.966 29.808 120.682 29.605 96c.203-24.682 5.63-43.966 16.133-57.317C56.954 24.425 74.206 17.11 97.015 16.94c22.975.17 40.526 7.52 52.171 21.847 5.71 7.026 10.015 15.86 12.853 26.162l16.147-4.308c-3.44-12.68-8.853-23.606-16.219-32.668C147.036 10.784 125.322 1.201 97.098 1 68.752 1.201 47.264 10.816 32.216 28.447 18.568 44.425 11.565 67.461 11.318 96.001c.247 28.54 7.25 51.576 20.898 67.554C47.264 181.216 68.752 190.798 97.098 191c23.814-.168 41.037-6.404 55.3-20.153 18.04-17.916 17.406-40.364 11.476-54.158-4.269-9.956-12.492-18.047-22.337-27.701z"/></svg>
       </a>
       <a class="mode-social-link kofi" href="https://ko-fi.com/blackcatunderthemoon" target="_blank" rel="noopener noreferrer" aria-label="Ko-fi" title="Ko-fi">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-1h2c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2zm0 8h-2V5h2v6zM2 21h18v-2H2v2z"/></svg>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-1h2c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2zm0 8h-2V5h2v6zM2 21h18v-2H2v2z"/></svg>
       </a>
     </div>
 
@@ -398,12 +399,12 @@
 }());
 </script>
 
-<script src="/js/home-carousel.js?v=20260725livebadge"></script>
+<script src="/js/home-carousel.js?v=20260725swipe2"></script>
 <script src="/js/welcome-mascot.js?v=20260725rarecat"></script>
 <script src="/js/site-presence-heartbeat.js?v=20260709a"></script>
-<script src="/js/site-presence.js?v=20260709a"></script>
+<script src="/js/site-presence.js?v=20260725gate"></script>
 <script src="/js/live-activity.js?v=20260725livesync"></script>
-<script src="/js/me-cache.js?v=20260707perf"></script>
+<script src="/js/me-cache.js?v=20260725presence"></script>
 <script src="/js/auth-nav.js?v=20260725polish"></script>
 
 </body>

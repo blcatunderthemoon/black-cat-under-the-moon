@@ -293,12 +293,16 @@ export async function listThreads(userId, { limit = 20, offset = 0 } = {}) {
     // Prefer gathering title as the row name — avoid「月光聚會 · Title」+「月光聚會通知」triple repeat.
     const systemDisplayName = gatheringTitle || systemChannelName;
 
+    const systemNoticeKind = isSystem && typeof latestMessage?.payload?.kind === 'string'
+      ? latestMessage.payload.kind
+      : null;
     const channelMeta = isSystem
       ? {
           mysterious_title: (latestMessage?.content || systemDisplayName || systemChannelName || '').slice(0, 80),
           list_meta: null,
           system_channel: systemChannelName || null,
           gathering_title: gatheringTitle || null,
+          system_notice_kind: systemNoticeKind,
           can_reply: false,
           reply_opportunity: false,
         }
@@ -387,10 +391,11 @@ export async function getThread(threadId, userId) {
 
   if (msgError) throw Object.assign(new Error('Failed to load messages'), { status: 500 });
 
-  // Mark unread messages for this user as read
+  // Mark unread messages for this user as read (keep was_unread for first-open UI)
   const unreadIds = (messages || [])
     .filter((m) => m.recipient_id === userId && !m.read_at)
     .map((m) => m.id);
+  const unreadIdSet = new Set(unreadIds);
 
   const markedReadCount = unreadIds.length;
   if (markedReadCount > 0) {
@@ -400,7 +405,7 @@ export async function getThread(threadId, userId) {
       .update({ read_at: readAt })
       .in('id', unreadIds);
     for (const msg of messages || []) {
-      if (unreadIds.includes(msg.id)) msg.read_at = readAt;
+      if (unreadIdSet.has(msg.id)) msg.read_at = readAt;
     }
   }
 
@@ -466,6 +471,7 @@ export async function getThread(threadId, userId) {
 
     const messagesWithSenders = (messages || []).map((m) => ({
       ...m,
+      was_unread: unreadIdSet.has(m.id),
       sender: m.sender_id
         ? {
             display_name: senderProfiles[m.sender_id]?.display_name || '神秘貓咪',
@@ -487,6 +493,7 @@ export async function getThread(threadId, userId) {
     return {
       thread,
       messages: messagesWithSenders,
+      marked_read_count: markedReadCount,
       other_participant: {
         id: otherId,
         display_name: otherProfile?.display_name || '神秘貓咪',
@@ -549,6 +556,7 @@ export async function getThread(threadId, userId) {
     }
     return {
       ...m,
+      was_unread: unreadIdSet.has(m.id),
       sender: m.sender_id
         ? {
             display_name: senderProfiles[m.sender_id]?.display_name || '神秘貓咪',
@@ -576,6 +584,7 @@ export async function getThread(threadId, userId) {
         list_meta: null,
         system_channel: systemChannelName || null,
         gathering_title: gatheringTitle || null,
+        system_notice_kind: typeof latestSystemPayload?.kind === 'string' ? latestSystemPayload.kind : null,
         can_reply: false,
         reply_opportunity: false,
         compose_enabled: false,

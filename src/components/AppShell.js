@@ -182,11 +182,11 @@ export default function AppShell({
 }
 
 /** Convenience nav link for header right side */
-export function NavLink({ href, children, dim = false }) {
+export function NavLink({ href, children, dim = false, className = '' }) {
   return (
     <Link
       href={href}
-      className={`app-header__nav-link${dim ? ' app-header__nav-link--dim' : ''}`}
+      className={`app-header__nav-link${dim ? ' app-header__nav-link--dim' : ''}${className ? ` ${className}` : ''}`}
     >
       {children}
     </Link>
