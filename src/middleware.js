@@ -1,16 +1,18 @@
 /**
- * Next.js Edge Middleware — Dashboard API authentication
+ * Next.js Edge Middleware — Dashboard API first gate
  *
- * Protects all /api/dashboard/* routes.
+ * Defense-in-depth only. Every /api/dashboard/* handler MUST also call
+ * authorizeDashboardAccess / authorizeStationOrForumAdmin / checkDashboardAuth.
  *
- * Auth paths (first match wins):
- *   1. Bearer — production forum-admin session (API verifies role)
- *   2. x-dashboard-key — when DASHBOARD_SECRET / DASHBOARD_PASSWORD is set
- *   3. No secret — pass through; Node API handlers enforce (dev bypass / 503 / Bearer)
+ * Auth paths:
+ *   1. /api/dashboard/ping — always pass (key probe)
+ *   2. Valid x-dashboard-key when DASHBOARD_SECRET is set — pass
+ *   3. Authorization Bearer present — pass to Node (handler verifies JWT + forum admin)
+ *   4. No secret configured — pass to Node (handlers fail-closed in production)
+ *   5. Secret set, no valid key, no Bearer — 401
  *
- * Note: Edge middleware may not see the same env as Node API routes after a
- * stale `next build`. Do not fail-closed here when the secret is missing —
- * `checkDashboardAuth` / `authorizeStationOrForumAdmin` own that decision.
+ * IMPORTANT: A Bearer header alone is NOT proof of admin. Fake Bearer must be
+ * rejected in the handler via resolveModerationActor / requireUser.
  */
 
 import { NextResponse } from 'next/server';
@@ -19,21 +21,20 @@ import { getDashboardSecret } from './lib/dashboard-secret.js';
 export function middleware(request) {
   const { pathname } = request.nextUrl;
 
-  // Allow key verification before the client has a stored key
   if (pathname === '/api/dashboard/ping') {
     return NextResponse.next();
   }
 
-  // Production dashboard uses forum admin Bearer; never block on missing secret.
   const bearer = request.headers.get('authorization');
   if (bearer?.startsWith('Bearer ')) {
+    // Handler must verify JWT + forum_role === admin.
     return NextResponse.next();
   }
 
   const secret = getDashboardSecret();
 
-  // No station key configured — let API routes decide.
   if (!secret) {
+    // Dev bypass / production forum-admin-only: handlers own fail-closed.
     return NextResponse.next();
   }
 

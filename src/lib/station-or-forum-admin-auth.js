@@ -1,8 +1,9 @@
 /**
  * Station dashboard (x-dashboard-key) OR website forum admin (Bearer + forum_role admin).
  *
- * Prefer Bearer when present so /admin/* pages are not blocked by a missing /
- * mismatched station key when DASHBOARD_SECRET is unset or only for /dashboard.
+ * Intentional product model: production /dashboard is gated by forum admin session
+ * (see ProductionDashboardAdminGate). Station key remains for local ops and automation.
+ * Prefer Bearer when present so /admin/* works without a station key.
  */
 
 import { isDashboardKeyValid } from './dashboard-auth.js';

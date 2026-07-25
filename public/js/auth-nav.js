@@ -180,16 +180,53 @@
     '</a>';
   }
 
+  /* Keep SVG paths in sync with src/components/HeaderNavIcons.js / ForumIcons.js */
+  var NAV_ICON = {
+    calendar:
+      '<svg class="header-nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">'
+      + '<rect x="4" y="5.5" width="16" height="14" rx="1.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>'
+      + '<path d="M4 10h16" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>'
+      + '<path d="M9 3.5v3.5M15 3.5v3.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>'
+      + '<path d="M8 14h2.5M13.5 14H16" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>'
+      + '</svg>',
+    mail:
+      '<svg class="header-nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">'
+      + '<rect x="3.5" y="6" width="17" height="12.5" rx="1.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>'
+      + '<path d="M4.2 7.8 12 13.2 19.8 7.8" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>'
+      + '</svg>',
+    settings:
+      '<svg class="header-nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">'
+      + '<circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.75"/>'
+      + '<path d="M12 3.5v2.2M12 18.3v2.2M3.5 12h2.2M18.3 12h2.2M6.1 6.1l1.6 1.6M16.3 16.3l1.6 1.6M17.9 6.1l-1.6 1.6M7.7 16.3l-1.6 1.6" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>'
+      + '</svg>',
+    moon:
+      '<svg class="header-nav-icon premium-moon-badge__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">'
+      + '<path d="M15.2 4.8A7.8 7.8 0 1 0 19.2 15 6.2 6.2 0 0 1 15.2 4.8z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>'
+      + '</svg>',
+  };
+
+  function gatheringsLinkHtml() {
+    return '<a href="/gatherings" class="auth-nav-badge__item auth-nav-badge__item--icon" title="月光聚會" aria-label="月光聚會">' +
+      '<span class="auth-nav-badge__icon" aria-hidden="true">' + NAV_ICON.calendar + '</span>' +
+    '</a>';
+  }
+
   function inboxLinkHtml(unreadCount) {
     if (unreadCount > 0) {
       var n = Number(unreadCount) > 99 ? '99+' : String(unreadCount);
       return '<a href="/inbox" class="auth-nav-badge__item auth-nav-badge__item--icon auth-nav-badge__item--inbox-unread" title="收件箱（' + n + '）未讀">' +
-        '<span class="auth-nav-badge__icon" aria-hidden="true">✉</span>' +
+        '<span class="auth-nav-badge__icon" aria-hidden="true">' + NAV_ICON.mail + '</span>' +
         '<span data-unread class="auth-nav-badge__unread">' + n + '</span>' +
       '</a>';
     }
     return '<a href="/inbox" class="auth-nav-badge__item auth-nav-badge__item--icon" title="收件箱">' +
-      '<span class="auth-nav-badge__icon" aria-hidden="true">✉</span>' +
+      '<span class="auth-nav-badge__icon" aria-hidden="true">' + NAV_ICON.mail + '</span>' +
+    '</a>';
+  }
+
+  function settingsLinkHtml() {
+    return '<a href="/account" class="auth-nav-badge__item auth-nav-badge__item--icon" title="設定">' +
+      '<span class="auth-nav-badge__icon" aria-hidden="true">' + NAV_ICON.settings + '</span>' +
     '</a>';
   }
 
@@ -328,7 +365,7 @@
     }
   }
 
-  function updateWelcomeGreeting(displayName, isPremium) {
+  function updateWelcomeGreeting(displayName) {
     var el = document.getElementById('welcome-greeting');
     if (!el) return;
     var name = String(displayName || '').trim();
@@ -339,8 +376,7 @@
       syncGreetingTopBar(false);
       return;
     }
-    var moonSuffix = isPremium ? '' : ' 🌙';
-    el.textContent = getWelcomeGreetingPrefix() + '。 ' + name + moonSuffix;
+    el.textContent = getWelcomeGreetingPrefix() + '。 ' + name;
     el.hidden = false;
     syncGreetingTopBar(true);
     requestAnimationFrame(function() {
@@ -374,7 +410,7 @@
       : '';
     return (
       '<p class="premium-moon-popover__line premium-moon-popover__line--status">' +
-        '<span class="premium-moon-popover__glyph" aria-hidden="true">🌙</span> ' +
+        '<span class="premium-moon-popover__glyph" aria-hidden="true">' + NAV_ICON.moon + '</span> ' +
         escHtml(statusLine) +
       '</p>' +
       quotaHtml
@@ -384,7 +420,7 @@
   function premiumMoonHtml(data) {
     return (
       '<span class="header-premium-moon-wrap">' +
-        '<button type="button" class="premium-moon-badge premium-moon-badge--interactive auth-nav-badge__moon" aria-label="' + MOONLIGHT_PASSPORT_BRAND + ' 狀態" title="' + MOONLIGHT_PASSPORT_BRAND + ' 狀態" aria-expanded="false">🌙</button>' +
+        '<button type="button" class="premium-moon-badge premium-moon-badge--interactive auth-nav-badge__moon" aria-label="' + MOONLIGHT_PASSPORT_BRAND + ' 狀態" title="' + MOONLIGHT_PASSPORT_BRAND + ' 狀態" aria-expanded="false">' + NAV_ICON.moon + '</button>' +
         '<div class="premium-moon-popover" role="tooltip">' +
           buildPopoverInnerHtml(data || null) +
         '</div>' +
@@ -629,11 +665,10 @@
       shellStart() +
       nameBlock +
       afterName +
+      gatheringsLinkHtml() +
       inboxLinkHtml(unreadCount) +
       sep() +
-      '<a href="/account" class="auth-nav-badge__item auth-nav-badge__item--icon" title="設定">' +
-        '<span class="auth-nav-badge__icon" aria-hidden="true">⚙</span>' +
-      '</a>' +
+      settingsLinkHtml() +
       sep() +
       myCatLinkHtml(meData || meCache) +
       shellEnd();
@@ -698,12 +733,12 @@
       var n = Number(count) > 99 ? '99+' : String(count);
       inbox.className = 'auth-nav-badge__item auth-nav-badge__item--icon auth-nav-badge__item--inbox-unread';
       inbox.title = '收件箱（' + n + '）未讀';
-      inbox.innerHTML = '<span class="auth-nav-badge__icon" aria-hidden="true">✉</span>' +
+      inbox.innerHTML = '<span class="auth-nav-badge__icon" aria-hidden="true">' + NAV_ICON.mail + '</span>' +
         '<span data-unread class="auth-nav-badge__unread">' + n + '</span>';
     } else {
       inbox.className = 'auth-nav-badge__item auth-nav-badge__item--icon';
       inbox.title = '收件箱';
-      inbox.innerHTML = '<span class="auth-nav-badge__icon" aria-hidden="true">✉</span>';
+      inbox.innerHTML = '<span class="auth-nav-badge__icon" aria-hidden="true">' + NAV_ICON.mail + '</span>';
     }
   }
 

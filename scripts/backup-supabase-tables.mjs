@@ -28,6 +28,7 @@ import { mkdir, writeFile, readdir, rm, stat } from 'fs/promises';
 import { existsSync, readFileSync } from 'fs';
 import { resolve, dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import { createHash } from 'crypto';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -549,6 +550,7 @@ This command is READ-ONLY against Supabase (SELECT / OpenAPI only).
       const { rows, orderCol } = await fetchTableRows(supabase, table);
       const files = [];
       const columns = collectColumns(rows);
+      let sha256Json = null;
 
       if (formats.sql) {
         const rel = join('sql', `${table}.sql`);
@@ -557,8 +559,10 @@ This command is READ-ONLY against Supabase (SELECT / OpenAPI only).
       }
       if (formats.json) {
         const rel = join('json', `${table}.json`);
-        await writeFile(join(backupDir, rel), `${JSON.stringify(rows, null, 2)}\n`, 'utf8');
+        const jsonBody = `${JSON.stringify(rows, null, 2)}\n`;
+        await writeFile(join(backupDir, rel), jsonBody, 'utf8');
         files.push(rel.replace(/\\/g, '/'));
+        sha256Json = createHash('sha256').update(jsonBody, 'utf8').digest('hex');
       }
       if (formats.csv) {
         const rel = join('csv', `${table}.csv`);
@@ -571,6 +575,7 @@ This command is READ-ONLY against Supabase (SELECT / OpenAPI only).
         columns,
         order_by: orderCol,
         files,
+        ...(sha256Json ? { sha256_json: sha256Json } : {}),
       };
       okCount += 1;
       console.log(`${rows.length} rows`);

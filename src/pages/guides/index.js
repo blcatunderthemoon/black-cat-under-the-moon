@@ -7,6 +7,7 @@ import AppShell from '../../components/AppShell.js';
 import ForumHeaderAuth from '../../components/ForumHeaderAuth.js';
 import ForumHeaderLogo from '../../components/ForumHeaderLogo.js';
 import SeoHead from '../../components/SeoHead.js';
+import { ForumPawIcon } from '../../components/UiIcons.js';
 import { getAllGuides } from '../../lib/guides.js';
 import { breadcrumbJsonLd, organizationJsonLd, webSiteJsonLd } from '../../lib/structured-data.js';
 
@@ -57,7 +58,12 @@ export default function GuidesIndexPage({ guides }) {
         </header>
 
         {guides.length === 0 ? (
-          <p className="guides-empty">文章即將登場，敬請期待 🐈‍⬛</p>
+          <p className="guides-empty">
+            <span className="guides-empty__icon" aria-hidden="true">
+              <ForumPawIcon size={18} />
+            </span>
+            文章即將登場，敬請期待
+          </p>
         ) : (
           <ul className="guides-list">
             {guides.map((guide) => (

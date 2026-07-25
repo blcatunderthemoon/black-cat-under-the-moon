@@ -9,6 +9,7 @@ import AppShell from '../../components/AppShell.js';
 import ForumHeaderAuth from '../../components/ForumHeaderAuth.js';
 import ForumHeaderLogo from '../../components/ForumHeaderLogo.js';
 import SeoHead from '../../components/SeoHead.js';
+import { ForumMoonIcon } from '../../components/UiIcons.js';
 import { getAllGuideSlugs, getGuideBySlug } from '../../lib/guides.js';
 import { articleJsonLd, breadcrumbJsonLd, faqPageJsonLd, organizationJsonLd } from '../../lib/structured-data.js';
 
@@ -121,7 +122,9 @@ export default function GuideDetailPage({ guide }) {
           </div>
 
           <aside className="guide-article__cta">
-            <span className="guide-article__cta-icon" aria-hidden="true">🐈‍⬛</span>
+            <span className="guide-article__cta-icon" aria-hidden="true">
+              <ForumMoonIcon size={22} />
+            </span>
             <p className="guide-article__cta-title">想認識更多香港 Les？</p>
             <p className="guide-article__cta-text">
               歡迎加入 Black Cat Under The Moon —— 香港 Les Community，

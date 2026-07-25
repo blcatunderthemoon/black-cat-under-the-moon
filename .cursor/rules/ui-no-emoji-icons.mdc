@@ -1,0 +1,25 @@
+---
+description: No emoji in product UI chrome — use shared stroke icons (UiIcons)
+alwaysApply: true
+---
+
+# UI icons — no emoji chrome
+
+Do **not** use emoji as icons in product UI (nav, badges, buttons, empty states, section titles, stats, FABs, filter chips, modal headers).
+
+Use stroke SVGs from `src/components/UiIcons.js` (re-exports `HeaderNavIcons` + `ForumIcons` + extras).
+
+## Style
+
+- `currentColor`, stroke 1.75, round caps/joins, 24×24 viewBox
+- Match existing `header-nav-icon` look
+- Add new icons to `UiIcons.js` rather than inventing one-offs or emoji
+
+## Exceptions
+
+- User-generated content bodies
+- Email copy
+- Intentional pixel sprites (header cat / My Cat art)
+- Legacy stored banner/hit-topic emoji fields — public UI must still render SVG
+
+Full rule: `docs/overview/UI-ICON-SYSTEM.md`

@@ -29,6 +29,11 @@ import PhotoExchangeOverlay from '../../components/PhotoExchangeOverlay.js';
 import MirrorVisitorPremiumUpsell, { buildMirrorVisitorPremiumPerks } from '../../components/MirrorVisitorPremiumUpsell.js';
 import MirrorVisitorDualActions from '../../components/MirrorVisitorDualActions.js';
 import MediaCaptureGuard from '../../components/MediaCaptureGuard.js';
+import {
+  ForumSparkleIcon,
+  HeaderMailIcon,
+  UiFlagIcon,
+} from '../../components/UiIcons.js';
 
 function MirrorOwnerBioSection({ bio, displayName, variant = 'default' }) {
   const text = String(bio || '').trim();
@@ -48,7 +53,9 @@ function MirrorOwnerBioSection({ bio, displayName, variant = 'default' }) {
       <span className="mirror-card-bio__rivet mirror-card-bio__rivet--br" aria-hidden="true" />
 
       <header className="mirror-card-bio__head">
-        <span className="mirror-card-bio__icon" aria-hidden="true">✦</span>
+        <span className="mirror-card-bio__icon" aria-hidden="true">
+          <ForumSparkleIcon size={14} />
+        </span>
         <div className="mirror-card-bio__head-text">
           <p className="mirror-card-bio__eyebrow">
             <span className="mirror-card-bio__eyebrow-prefix" aria-hidden="true">//</span>
@@ -81,7 +88,9 @@ function MirrorReportConfirmOverlay({ open, onConfirm, onCancel, confirming }) {
   return (
     <div className="mirror-report-overlay show" role="dialog" aria-modal="true" aria-labelledby="mirror-report-confirm-title">
       <div className="mirror-report-overlay__box">
-        <span className="mirror-report-overlay__icon" aria-hidden="true">⚑</span>
+        <span className="mirror-report-overlay__icon" aria-hidden="true">
+          <UiFlagIcon size={28} />
+        </span>
         <div className="mirror-report-overlay__title" id="mirror-report-confirm-title">確認檢舉此用戶？</div>
         <div className="mirror-report-overlay__sub">
           我們會審核這份報告。請只在對方行為或內容確實違反社群規範時才提交檢舉。
@@ -138,7 +147,9 @@ function MirrorLetterOverlay({
         >
           ✕
         </button>
-        <span className="mirror-report-overlay__icon" aria-hidden="true">✉</span>
+        <span className="mirror-report-overlay__icon" aria-hidden="true">
+          <HeaderMailIcon size={28} />
+        </span>
         <div className="mirror-report-overlay__title mirror-letter-overlay__title" id="mirror-letter-title">
           <PixelMixedLabel
             text={`留信給 ${ownerName || '對方'}`}
@@ -779,7 +790,9 @@ export default function MirrorCardSlugPage({ seo = null }) {
                               href={`/inbox/${messaging.existing_thread_id}`}
                               className="mirror-letter-btn mirror-letter-btn--link"
                             >
-                              <span className="mirror-letter-btn__icon" aria-hidden="true">✉</span>
+                              <span className="mirror-letter-btn__icon" aria-hidden="true">
+                                <HeaderMailIcon size={16} />
+                              </span>
                               <span>查看對話</span>
                             </Link>
                             <button
@@ -796,7 +809,9 @@ export default function MirrorCardSlugPage({ seo = null }) {
                             onClick={openLetterComposer}
                             className="mirror-letter-btn mirror-letter-btn--full"
                           >
-                            <span className="mirror-letter-btn__icon" aria-hidden="true">✉</span>
+                            <span className="mirror-letter-btn__icon" aria-hidden="true">
+                              <HeaderMailIcon size={16} />
+                            </span>
                             <span>留信</span>
                           </button>
                         )
@@ -807,7 +822,9 @@ export default function MirrorCardSlugPage({ seo = null }) {
                           href={`/inbox/${messaging.existing_thread_id}`}
                           className="mirror-letter-btn mirror-letter-btn--full"
                         >
-                          <span className="mirror-letter-btn__icon" aria-hidden="true">✉</span>
+                          <span className="mirror-letter-btn__icon" aria-hidden="true">
+                            <HeaderMailIcon size={16} />
+                          </span>
                           <span>繼續對話</span>
                         </Link>
                       )}

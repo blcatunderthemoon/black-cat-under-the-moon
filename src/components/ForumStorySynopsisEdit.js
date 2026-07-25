@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { STORY_SYNOPSIS_MAX } from '../lib/forum-story.js';
+import { ForumScrollIcon } from './ForumIcons.js';
 
 export default function ForumStorySynopsisEdit({
   postId,
@@ -43,7 +44,7 @@ export default function ForumStorySynopsisEdit({
     <form className="forum-story-synopsis-modal" onSubmit={handleSubmit}>
       <div className="forum-story-synopsis-modal__head">
         <h3 id="forum-story-synopsis-title" className="forum-story-synopsis-modal__title">
-          <span aria-hidden="true">📜</span> 編輯簡介
+          <span aria-hidden="true"><ForumScrollIcon size={14} /></span> 編輯簡介
         </h3>
         {onCancel && (
           <button

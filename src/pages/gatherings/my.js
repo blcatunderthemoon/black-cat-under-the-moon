@@ -10,6 +10,7 @@ import GatheringShell from '../../components/gatherings/GatheringShell.js';
 import GatheringCard from '../../components/gatherings/GatheringCard.js';
 import MoonLoading from '../../components/MoonLoading.js';
 import LoadingText from '../../components/LoadingText.js';
+import { ForumMoonIcon } from '../../components/UiIcons.js';
 import { useAuth } from '../../lib/auth-context.js';
 
 export default function GatheringsMyPage() {
@@ -110,7 +111,9 @@ export default function GatheringsMyPage() {
         )}
 
         <Link href="/gatherings/new" className="gathering-fab" aria-label="發起聚會">
-          <span className="gathering-fab__icon" aria-hidden="true">🌙</span>
+          <span className="gathering-fab__icon" aria-hidden="true">
+            <ForumMoonIcon size={18} />
+          </span>
           <span className="gathering-fab__text">發起聚會</span>
         </Link>
       </GatheringShell>

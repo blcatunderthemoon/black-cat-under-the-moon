@@ -1,4 +1,5 @@
 import { useEffect, useId } from 'react';
+import { HeaderShieldIcon } from './UiIcons.js';
 
 /**
  * Styled moderation confirm dialog (replaces window.confirm).
@@ -7,7 +8,7 @@ export default function ForumModConfirmOverlay({
   open,
   title,
   sub,
-  icon = '🛡️',
+  icon = <HeaderShieldIcon size={28} />,
   confirmLabel = '確認',
   cancelLabel = '取消',
   variant = 'default',

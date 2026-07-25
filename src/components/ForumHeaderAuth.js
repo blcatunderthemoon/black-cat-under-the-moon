@@ -11,6 +11,13 @@ import { NavLink } from './AppShell.js';
 import ForumBookmarksPanel from './ForumBookmarksPanel.js';
 import HeaderPremiumMoon from './HeaderPremiumMoon.js';
 import HeaderMyCatLink from './HeaderMyCatLink.js';
+import {
+  HeaderBookmarkIcon,
+  HeaderCalendarIcon,
+  HeaderMailIcon,
+  HeaderSettingsIcon,
+  HeaderShieldIcon,
+} from './HeaderNavIcons.js';
 import { isPremiumUser } from '../lib/premium.js';
 import { canModerateForum } from '../lib/forum-roles.js';
 import { readMeCache } from '../lib/me-cache.js';
@@ -82,7 +89,7 @@ export default function ForumHeaderAuth({ extra = null, moonJourney = null, redi
               title="月光守護者"
               aria-label="月光守護者治理面板"
             >
-              <span className="app-header__nav-icon" aria-hidden="true">🛡️</span>
+              <span className="app-header__nav-icon" aria-hidden="true"><HeaderShieldIcon /></span>
             </Link>
           )}
           <button
@@ -92,7 +99,9 @@ export default function ForumHeaderAuth({ extra = null, moonJourney = null, redi
             aria-label="我的收藏"
             onClick={openBookmarks}
           >
-            <span className="app-header__nav-icon forum-header-bookmark-btn__icon" aria-hidden="true">🔖</span>
+            <span className="app-header__nav-icon forum-header-bookmark-btn__icon" aria-hidden="true">
+              <HeaderBookmarkIcon />
+            </span>
           </button>
           <Link
             href="/gatherings"
@@ -100,20 +109,20 @@ export default function ForumHeaderAuth({ extra = null, moonJourney = null, redi
             title="月光聚會"
             aria-label="月光聚會"
           >
-            <span className="app-header__nav-icon" aria-hidden="true">📅</span>
+            <span className="app-header__nav-icon" aria-hidden="true"><HeaderCalendarIcon /></span>
           </Link>
           <Link
             href="/inbox"
             className={`app-header__nav-link app-header__nav-link--icon${unread > 0 ? ' app-header__nav-link--inbox-unread' : ''}`}
             title={unread > 0 ? `收件箱（${unread > 99 ? '99+' : unread}）未讀` : '收件箱'}
           >
-            <span className="app-header__nav-icon" aria-hidden="true">✉</span>
+            <span className="app-header__nav-icon" aria-hidden="true"><HeaderMailIcon /></span>
             {unread > 0 && (
               <span data-unread className="auth-nav-badge__unread forum-nav-unread">{unread > 99 ? '99+' : unread}</span>
             )}
           </Link>
           <Link href="/account" className="app-header__nav-link app-header__nav-link--icon" title="設定">
-            <span className="app-header__nav-icon" aria-hidden="true">⚙</span>
+            <span className="app-header__nav-icon" aria-hidden="true"><HeaderSettingsIcon /></span>
           </Link>
           {moonJourney}
           <HeaderMyCatLink variant="forum" needsFeedBadge={meData?.my_cat?.needs_feed_badge === true} skinId={meData?.my_cat?.skin_id} />

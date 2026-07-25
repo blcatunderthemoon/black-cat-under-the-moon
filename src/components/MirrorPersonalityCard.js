@@ -20,6 +20,7 @@ import { getTraitBars } from '../lib/mirror-scoring-v3.js';
 import { assembleNarrative, formatWarningSteps } from '../lib/mirror-narratives/index.js';
 import { MIRROR_NARRATIVE_LABELS, MIRROR_WARNING_STEP_LABELS, joinMirrorText, getMirrorHero, splitMoonWhisperCopy } from '../lib/mirror-narrative-ui.js';
 import { getSiteHost } from '../lib/site-seo.js';
+import { HeaderHeartIcon, UiWarningIcon } from './UiIcons.js';
 
 function PcardMixedText({ children, as: Tag = 'span', className }) {
   const text = children == null ? '' : String(children);
@@ -229,7 +230,9 @@ function IngredientBars({ bars, ingredientLabel = '// 靈魂成分', variant = '
                   style={{ width: '0%', backgroundColor: bar.color }}
                 />
               </div>
-              <span className="pcard-bar-heart">♥</span>
+              <span className="pcard-bar-heart" aria-hidden="true">
+                <HeaderHeartIcon size={12} />
+              </span>
               <div className="pcard-bar-pct">{bar.pct}%</div>
             </div>
           ))}
@@ -312,7 +315,9 @@ function NarrativeWarning({ narrative, legacyWarning }) {
         <div className="pcard-berserk-terminal">
           <div className="pcard-berserk-terminal__scan" aria-hidden="true" />
           <div className="pcard-berserk-terminal__head">
-            <span className="pcard-berserk-terminal__icon" aria-hidden="true">⚠</span>
+            <span className="pcard-berserk-terminal__icon" aria-hidden="true">
+              <UiWarningIcon size={14} />
+            </span>
             <span className="pcard-berserk-terminal__title pcard-zh">
               {MIRROR_NARRATIVE_LABELS.warn.zh}
             </span>
@@ -503,7 +508,7 @@ export default function MirrorPersonalityCard({
 
       {isDetailed && !hideCta && (
         <div className="pcard-cta">
-          <div className="pcard-cta-text">測測你是哪隻貓 ➡️</div>
+          <div className="pcard-cta-text">測測你是哪隻貓 ›</div>
           <div className="pcard-cta-url">{getSiteHost()}</div>
         </div>
       )}

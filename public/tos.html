@@ -10,7 +10,8 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/auth-nav.css?v=20260725hdrfix">
-  <link rel="stylesheet" href="css/mobile-webview-scroll.css?v=20260713echo">
+<link rel="stylesheet" href="css/mobile-webview-scroll.css?v=20260713echo">
+  <link rel="stylesheet" href="css/legal-ui-icons.css?v=20260725icons">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -64,7 +65,7 @@
     .section-body ul { padding-left: 1.4rem; margin-bottom: .7rem; }
     .section-body li { margin-bottom: .35rem; }
     .highlight { color: var(--yellow); font-weight: 700; }
-    .danger    { color: var(--pink);   font-weight: 700; }
+    .danger    { color: var(--pink);   font-weight: 700; display: flex; align-items: flex-start; gap: .4rem; }
 
     /* hotlines */
     .hotlines { display: flex; flex-direction: column; gap: .5rem; margin-top: .8rem; }
@@ -127,7 +128,7 @@
   <div class="page">
     <!-- 1. Disclaimer -->
     <div class="section">
-      <div class="section-title">📋 <span class="zh">免責聲明</span><span class="en">Disclaimer</span></div>
+      <div class="section-title"><span class="ui-ico ui-ico--clipboard" aria-hidden="true"></span><span class="zh">免責聲明</span><span class="en">Disclaimer</span></div>
       <div class="section-body zh">
         <ul>
           <li>本平台不對用戶發佈的任何內容承擔責任。</li>
@@ -150,7 +151,7 @@
 
     <!-- 2. Resonance Analysis Disclaimer -->
     <div class="section">
-      <div class="section-title">💫 <span class="zh">靈魂共鳴分析免責聲明</span><span class="en">Resonance Analysis Disclaimer</span></div>
+      <div class="section-title"><span class="ui-ico ui-ico--sparkle" aria-hidden="true"></span><span class="zh">靈魂共鳴分析免責聲明</span><span class="en">Resonance Analysis Disclaimer</span></div>
       <div class="section-body zh">
         <p>靈魂共鳴分析功能由系統演算法根據問卷答案進行心靈契合度評估，<span class="highlight">結果僅供參考，並不構成任何形式的推薦或保證。</span></p>
         <ul>
@@ -160,7 +161,7 @@
           <li>參加者須自行評估風險，對自身安全及行為負全部責任。</li>
           <li>平台不會主動要求用戶提供個人聯絡資料；如有人以平台名義索取，請提高警惕。</li>
         </ul>
-        <p class="danger">⚠️ 請保護自身安全。如遇到任何令你感到不適的情況，請立即停止聯繫並向相關機構舉報。</p>
+        <p class="danger"><span class="ui-ico ui-ico--warn" aria-hidden="true"></span> 請保護自身安全。如遇到任何令你感到不適的情況，請立即停止聯繫並向相關機構舉報。</p>
       </div>
       <div class="section-body en">
         <p>The Resonance Analysis feature uses an algorithm to assess compatibility between platform members based on questionnaire answers. <span class="highlight">Results are for reference only and do not constitute any recommendation or guarantee.</span></p>
@@ -171,13 +172,13 @@
           <li>Members must independently assess risks and take full responsibility for their own safety and actions.</li>
           <li>The platform will never proactively request users' personal contact details; be vigilant if anyone claims to represent this platform and asks for such information.</li>
         </ul>
-        <p class="danger">⚠️ Please protect your safety. If you encounter any situation that makes you uncomfortable, cease contact immediately and report to the relevant authorities.</p>
+        <p class="danger"><span class="ui-ico ui-ico--warn" aria-hidden="true"></span> Please protect your safety. If you encounter any situation that makes you uncomfortable, cease contact immediately and report to the relevant authorities.</p>
       </div>
     </div>
 
     <!-- 3. Compatibility Assessment Data Use -->
     <div class="section">
-      <div class="section-title">📋 <span class="zh">契合度評估資料使用聲明</span><span class="en">Compatibility Assessment Data — Use Statement</span></div>
+      <div class="section-title"><span class="ui-ico ui-ico--clipboard" aria-hidden="true"></span><span class="zh">契合度評估資料使用聲明</span><span class="en">Compatibility Assessment Data — Use Statement</span></div>
       <div class="section-body zh">
         <p>參加者於填寫 Echo Mode 問卷時所提供的資料（以下稱「契合度評估數據」），<span class="highlight">僅作共鳴分析與社群連線運算用途</span>，不會用於任何其他商業目的。</p>
         <ul>
@@ -214,7 +215,7 @@
 
     <!-- 4. Platform Services -->
     <div class="section">
-      <div class="section-title">🪞 <span class="zh">平台功能</span><span class="en">Platform Services</span></div>
+      <div class="section-title"><span class="ui-ico ui-ico--mirror" aria-hidden="true"></span><span class="zh">平台功能</span><span class="en">Platform Services</span></div>
       <div class="section-body zh">
         <p>除匿名漂流瓶外，本平台提供以下需註冊帳號的功能（詳見<a href="privacy.html" style="color:var(--purple-l)">私隱政策</a>）：</p>
         <ul>
@@ -243,7 +244,7 @@
 
     <!-- 5. Moonlight Passport -->
     <div class="section">
-      <div class="section-title">💎 <span class="zh">Moonlight Passport 會員</span><span class="en">Moonlight Passport Membership</span></div>
+      <div class="section-title"><span class="ui-ico ui-ico--gem" aria-hidden="true"></span><span class="zh">Moonlight Passport 會員</span><span class="en">Moonlight Passport Membership</span></div>
       <div class="section-body zh">
         <p>Moonlight Passport 為<span class="highlight">虛擬數位會員服務</span>，可透過 PayPal 訂閱或 PayMe／FPS 人手付款開通。訂閱成功後即解鎖進階功能；<span class="danger">數位內容一經開通恕不退款</span>，詳見<a href="refund.html" style="color:var(--purple-l)">退款與取消訂閱政策</a>。</p>
         <p>會員與免費帳號主要差異（每月配額，香港時間重置）：</p>
@@ -270,7 +271,7 @@
 
     <!-- 6. Forum & Moon Journey -->
     <div class="section">
-      <div class="section-title">🌲 <span class="zh">黑貓樹洞與月光旅程</span><span class="en">Forum & Moon Journey</span></div>
+      <div class="section-title"><span class="ui-ico ui-ico--tree" aria-hidden="true"></span><span class="zh">黑貓樹洞與月光旅程</span><span class="en">Forum & Moon Journey</span></div>
       <div class="section-body zh">
         <p>黑貓樹洞為註冊會員的公開討論區。你發佈的內容須合法、尊重他人，且不得侵犯他人權利。平台可因舉報或主動審核隱藏、刪除違規內容，並暫停或終止違規帳號。</p>
         <p><span class="highlight">月光旅程</span>為論壇互動的成長系統：發文、留言、獲讚、書籤與每日打卡可獲得經驗值（EXP），累積升級。每日留言 EXP 有上限；重複或刷分行為不予計分。等級與 EXP 規則由平台制定，可能調整。</p>
@@ -285,7 +286,7 @@
 
     <!-- 7. Inbox & Photo Exchange -->
     <div class="section">
-      <div class="section-title">✉️ <span class="zh">收件箱、神秘通道與相片交換</span><span class="en">Inbox, Mystic Channel & Photo Exchange</span></div>
+      <div class="section-title"><span class="ui-ico ui-ico--mail" aria-hidden="true"></span><span class="zh">收件箱、神秘通道與相片交換</span><span class="en">Inbox, Mystic Channel & Photo Exchange</span></div>
       <div class="section-body zh">
         <p><span class="highlight">收件箱</span>讓你透過 Mirror Card 與其他會員通訊，包括一般私信、緣份卡投遞與相片交換邀請。</p>
         <ul>
@@ -308,7 +309,7 @@
 
     <!-- 8. Platform Rules -->
     <div class="section">
-      <div class="section-title">🌙 <span class="zh">平台規則</span><span class="en">Platform Rules</span></div>
+      <div class="section-title"><span class="ui-ico ui-ico--moon" aria-hidden="true"></span><span class="zh">平台規則</span><span class="en">Platform Rules</span></div>
       <div class="section-body zh">
         <p>月光漂流瓶是一個完全匿名的心靈漂流空間；黑貓樹洞、收件箱等註冊功能亦須遵守相同行為準則。使用本平台即表示你同意以下規則：</p>
         <ul>
@@ -341,7 +342,7 @@
 
     <!-- 9. Legal Statement -->
     <div class="section">
-      <div class="section-title">⚖️ <span class="zh">法律聲明</span><span class="en">Legal Statement</span></div>
+      <div class="section-title"><span class="ui-ico ui-ico--scales" aria-hidden="true"></span><span class="zh">法律聲明</span><span class="en">Legal Statement</span></div>
       <div class="section-body zh">
         <p>本平台根據香港適用法律運營，包括但不限於《個人資料（私隱）條例》。</p>
         <ul>
@@ -366,7 +367,7 @@
 
     <!-- 10. Crisis Intervention -->
     <div class="section">
-      <div class="section-title">💙 <span class="zh">危機介入聲明</span><span class="en">Crisis Intervention</span></div>
+      <div class="section-title"><span class="ui-ico ui-ico--heart" aria-hidden="true"></span><span class="zh">危機介入聲明</span><span class="en">Crisis Intervention</span></div>
       <div class="section-body zh">
         <p>如果你或你身邊的人正在經歷困難，請記住：你並不孤單。</p>
         <p>當系統偵測到內容可能涉及心理危機時，會自動顯示危機介入横幅，提供以下緊急支援熱線：</p>

@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { useAuth } from '../lib/auth-context.js';
 import { validateEmail } from '../lib/auth-credentials-policy.js';
 import AppShell from '../components/AppShell.js';
+import { HeaderMailIcon } from '../components/UiIcons.js';
 
 function buildRedirectQuery(redirect) {
   if (!redirect || typeof redirect !== 'string') return '';
@@ -60,7 +61,7 @@ export default function ForgotPasswordPage() {
         <Head><title>重設密碼 — Black Cat Under The Moon</title></Head>
         <AppShell centered hideHeader>
           <div className="pixel-card pixel-card--auth">
-            <div style={{ fontSize: 40 }}>✉️</div>
+            <div style={{ fontSize: 40 }} aria-hidden="true"><HeaderMailIcon size={40} /></div>
             <h1 className="pixel-title">請檢查 Email</h1>
             <p className="pixel-subtitle" style={{ lineHeight: 1.8 }}>
               如果此 Email 有註冊帳號，我們已寄出重設密碼連結至<br />

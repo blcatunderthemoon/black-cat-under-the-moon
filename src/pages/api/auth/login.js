@@ -29,6 +29,11 @@ const loginIpLimiter = createRateLimiter('auth-login-ip', 40, '15 m');
 const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+/** When Auth Hook is configured, it owns failure counters (avoids double-count). */
+function hookOwnsFailureCounting() {
+  return Boolean(process.env.AUTH_HOOK_SECRET);
+}
+
 function parseBody(req) {
   if (typeof req.body === 'string') {
     try {
@@ -98,18 +103,26 @@ export default async function handler(req, res) {
     });
 
     if (error || !data?.session?.access_token) {
-      const fail = await recordLoginFailure(email);
-      if (fail.locked) {
-        // Fire-and-forget audit for dashboard investigation
-        void recordLoginLockoutEvent({
-          email,
-          ip,
-          userAgent: req.headers['user-agent'] || null,
-          failureCount: fail.failureCount,
-          lockoutUntil: fail.lockoutUntil,
-        });
-        res.setHeader('Retry-After', String(fail.retryAfterSeconds));
-        return res.status(423).json(lockoutPayload(fail));
+      if (!hookOwnsFailureCounting()) {
+        const fail = await recordLoginFailure(email);
+        if (fail.locked) {
+          void recordLoginLockoutEvent({
+            email,
+            ip,
+            userAgent: req.headers['user-agent'] || null,
+            failureCount: fail.failureCount,
+            lockoutUntil: fail.lockoutUntil,
+          });
+          res.setHeader('Retry-After', String(fail.retryAfterSeconds));
+          return res.status(423).json(lockoutPayload(fail));
+        }
+      } else {
+        // Hook may have just frozen the account — surface lockout if so.
+        const after = await getLoginLockoutStatus(email);
+        if (after.locked) {
+          res.setHeader('Retry-After', String(after.retryAfterSeconds));
+          return res.status(423).json(lockoutPayload(after));
+        }
       }
       return res.status(401).json({
         error: 'Email 或密碼不正確，請再試。',

@@ -4,6 +4,7 @@ import {
   optimizeForumDisplayUrl,
   uploadForumImage,
 } from '../lib/cloudinary-forum-upload.js';
+import { ForumBookIcon } from './ForumIcons.js';
 
 export default function ForumStoryCoverEdit({
   postId,
@@ -138,12 +139,14 @@ export default function ForumStoryCoverEdit({
           />
         ) : displayCover && imgError ? (
           <span className="forum-story-cover-edit__placeholder forum-story-cover-edit__placeholder--error">
-            <span className="forum-story-cover-edit__placeholder-icon" aria-hidden="true">⚠️</span>
+            <span className="forum-story-cover-edit__placeholder-icon" aria-hidden="true">!</span>
             <span className="forum-story-cover-edit__placeholder-text">封面無法載入</span>
           </span>
         ) : (
           <span className="forum-story-cover-edit__placeholder">
-            <span className="forum-story-cover-edit__placeholder-icon" aria-hidden="true">📖</span>
+            <span className="forum-story-cover-edit__placeholder-icon" aria-hidden="true">
+              <ForumBookIcon size={22} />
+            </span>
             <span className="forum-story-cover-edit__placeholder-text">上傳封面</span>
           </span>
         )}

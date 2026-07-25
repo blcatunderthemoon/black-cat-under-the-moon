@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { getBrowserClient } from '../../lib/auth-context.js';
 import AppShell from '../../components/AppShell.js';
 import MoonLoading from '../../components/MoonLoading.js';
+import { UiWarningIcon } from '../../components/UiIcons.js';
 
 export default function AuthConfirmPage() {
   const router = useRouter();
@@ -76,7 +77,7 @@ export default function AuthConfirmPage() {
             <MoonLoading />
           ) : (
             <>
-              <div style={{ fontSize: 40 }}>⚠️</div>
+              <div style={{ fontSize: 40 }} aria-hidden="true"><UiWarningIcon size={40} /></div>
               <p className="pixel-subtitle" style={{ lineHeight: 1.8 }}>{errorMsg}</p>
               <Link href="/signup" className="pixel-btn pixel-btn--primary" style={{ marginTop: 8, textDecoration: 'none' }}>
                 重新註冊

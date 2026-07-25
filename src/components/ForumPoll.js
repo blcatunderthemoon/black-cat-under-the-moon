@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import MoonLoading from './MoonLoading.js';
+import { UiChartIcon } from './UiIcons.js';
 
 function percent(count, total) {
   if (!total) return 0;
@@ -35,7 +36,7 @@ export default function ForumPoll({
   if (!poll?.options?.length) {
     return (
       <div className="forum-poll forum-poll--missing">
-        <p className="forum-poll__title">📊 投票</p>
+        <p className="forum-poll__title"><span aria-hidden="true"><UiChartIcon size={14} /></span> 投票</p>
         <MoonLoading centered={false} size={24} />
       </div>
     );
@@ -94,7 +95,7 @@ export default function ForumPoll({
   return (
     <div className={`forum-poll${legacy ? ' forum-poll--legacy' : ''}${showResults ? ' forum-poll--results' : ''}`}>
       <div className="forum-poll__head">
-        <span className="forum-poll__icon" aria-hidden="true">📊</span>
+        <span className="forum-poll__icon" aria-hidden="true"><UiChartIcon size={16} /></span>
         <h3 className="forum-poll__title">{title}</h3>
       </div>
 

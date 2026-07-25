@@ -1,6 +1,6 @@
-/**
+﻿/**
  * /my-cat — 我的月光貓（Phase 1 MVP）
- * Single entry via header 🐾 icon (§1.3, docs/MY-CAT-GAME-DESIGN.md).
+ * Single entry via header 🐾 icon (§1.3, docs/my-cat/MY-CAT-GAME-DESIGN.md).
  */
 
 import { useEffect, useRef } from 'react';

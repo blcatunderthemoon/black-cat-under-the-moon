@@ -2,6 +2,12 @@ import Link from 'next/link';
 import { optimizeForumDisplayUrl } from '../lib/cloudinary-forum-upload.js';
 import { storyFeedPreviewText } from '../lib/forum-story.js';
 import ForumAuthorName from './ForumAuthorName.js';
+import {
+  ForumBookIcon,
+  ForumLikeStat,
+  ForumCommentStat,
+  HeaderBookmarkIcon,
+} from './ForumIcons.js';
 
 export default function ForumStoryBookshelf({
   posts,
@@ -32,7 +38,7 @@ export default function ForumStoryBookshelf({
                     disabled={bookmarkingIds?.has(post.id)}
                     onClick={(e) => onBookmark?.(post.id, e)}
                   >
-                    <span aria-hidden="true">🔖</span>
+                    <span aria-hidden="true"><HeaderBookmarkIcon size={14} /></span>
                   </button>
                 )}
                 <Link href={href} className={`forum-story-book__link${post.members_gated ? ' forum-story-book__link--gated' : ''}`}>
@@ -49,7 +55,7 @@ export default function ForumStoryBookshelf({
                       />
                     ) : (
                       <div className="forum-story-book__cover forum-story-book__cover--placeholder">
-                        <span aria-hidden="true">📖</span>
+                        <span aria-hidden="true"><ForumBookIcon size={28} /></span>
                       </div>
                     )}
                     <span className="forum-story-book__spine" aria-hidden="true" />
@@ -65,7 +71,8 @@ export default function ForumStoryBookshelf({
                       onLinkClick={(e) => e.stopPropagation()}
                     />
                     <span className="forum-story-book__stats">
-                      💗 {post.like_count} · 💬 {post.comment_count}
+                      <ForumLikeStat count={post.like_count} />
+                      <ForumCommentStat count={post.comment_count} />
                     </span>
                   </footer>
                 </Link>

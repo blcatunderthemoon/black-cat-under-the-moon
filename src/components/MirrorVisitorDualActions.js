@@ -4,6 +4,7 @@
 
 import Link from 'next/link';
 import { MOONLIGHT_PASSPORT_BRAND } from '../lib/premium.js';
+import { ForumMoonIcon } from './UiIcons.js';
 
 function DualIcon({ variant }) {
   const svgProps = {
@@ -155,7 +156,7 @@ export default function MirrorVisitorDualActions({
       <span className="mirror-card-bio__rivet mirror-card-bio__rivet--br" aria-hidden="true" />
 
       <header className="mirror-card-bio__head">
-        <span className="mirror-card-bio__icon mirror-card-bio__icon--moon" aria-hidden="true">🌙</span>
+        <span className="mirror-card-bio__icon mirror-card-bio__icon--moon" aria-hidden="true"><ForumMoonIcon size={18} /></span>
         <div className="mirror-card-bio__head-text">
           <p className="mirror-card-bio__eyebrow">
             <span className="mirror-card-bio__eyebrow-prefix" aria-hidden="true">//</span>

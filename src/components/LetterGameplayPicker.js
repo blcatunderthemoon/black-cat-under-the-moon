@@ -110,8 +110,9 @@ export default function LetterGameplayPicker({
           disabled={disabled}
           title={prefs?.sound_enabled ? '蓋印音效：開' : '蓋印音效：關'}
           aria-pressed={prefs?.sound_enabled !== false}
+          aria-label={prefs?.sound_enabled !== false ? '蓋印音效：開' : '蓋印音效：關'}
         >
-          {prefs?.sound_enabled !== false ? '🔊' : '🔇'}
+          {prefs?.sound_enabled !== false ? '音效' : '靜音'}
         </button>
       </div>
 

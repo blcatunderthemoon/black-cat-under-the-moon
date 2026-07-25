@@ -1,6 +1,7 @@
 import ChannelNarrativeViz from './ChannelNarrativeViz.js';
 import { ScrollMixedText } from './PixelScrollMessage.js';
 import { stripChannelStatusLead } from '../lib/inbox-channel.js';
+import { ForumMoonIcon } from './UiIcons.js';
 
 /**
  * Compact channel status chip — cat + candle glyphs, structured copy.
@@ -27,7 +28,9 @@ export default function ChannelStatusLine({
         : body}
     >
       <div className="channel-status-line__glyphs" aria-hidden="true">
-        <span className="channel-status-line__cat">🐈‍⬛</span>
+        <span className="channel-status-line__cat">
+          <ForumMoonIcon size={14} />
+        </span>
         <ChannelNarrativeViz
           remaining={remaining}
           max={max}

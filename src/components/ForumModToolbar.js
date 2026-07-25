@@ -1,8 +1,15 @@
 import { useState } from 'react';
 import Link from 'next/link';
-import { displayTopic, TOPIC_STYLES, forumTopicLabel } from '../lib/forum-categories.js';
+import { displayTopic, forumTopicLabel } from '../lib/forum-categories.js';
 import { forumModFetch } from '../lib/forum-mod-api.js';
 import ForumModConfirmOverlay from './ForumModConfirmOverlay.js';
+import {
+  ForumTopicIcon,
+  ForumPinIcon,
+  ForumSparkleIcon,
+  ForumMoonIcon,
+  HeaderShieldIcon,
+} from './ForumIcons.js';
 
 /**
  * Post-level guardian toolbar (front-end moderators).
@@ -23,7 +30,6 @@ export default function ForumModToolbar({
 
   const topicCanonical = displayTopic(post.topic);
   const topicLabel = forumTopicLabel(post.topic);
-  const topicEmoji = TOPIC_STYLES[topicCanonical]?.emoji || '';
   const isHidden = post.is_hidden || post.visibility === 'hidden';
 
   async function modAction(method, path, body, successText) {
@@ -65,13 +71,13 @@ export default function ForumModToolbar({
       'POST',
       `/api/forum/moderation/posts/${post.id}/hide`,
       { note: note.trim() || undefined },
-      '🌑 已夜幕降臨',
+      '已夜幕降臨',
     );
     if (ok) setConfirmHideOpen(false);
   }
 
   function handleUnhide() {
-    modAction('POST', `/api/forum/moderation/posts/${post.id}/unhide`, undefined, '🌕 已恢復月光');
+    modAction('POST', `/api/forum/moderation/posts/${post.id}/unhide`, undefined, '已恢復月光');
   }
 
   function handlePin() {
@@ -80,7 +86,7 @@ export default function ForumModToolbar({
       'POST',
       `/api/forum/moderation/posts/${post.id}/pin`,
       { pinned: next },
-      next ? '📌 已圍爐置頂' : '已取消置頂',
+      next ? '已圍爐置頂' : '已取消置頂',
     );
   }
 
@@ -90,7 +96,7 @@ export default function ForumModToolbar({
       'POST',
       `/api/forum/moderation/posts/${post.id}/highlight`,
       { highlighted: next },
-      next ? '✨ 已月光加冕' : '已取消加冕',
+      next ? '已月光加冕' : '已取消加冕',
     );
   }
 
@@ -100,7 +106,7 @@ export default function ForumModToolbar({
         open={confirmHideOpen}
         title="夜幕降臨"
         sub="此帖將從前台隱藏，資料仍保留。你之後可以恢復月光。"
-        icon="🌑"
+        icon={<ForumMoonIcon size={28} />}
         confirmLabel="確認夜幕降臨"
         showNote
         note={note}
@@ -111,7 +117,9 @@ export default function ForumModToolbar({
       />
     <div className={`forum-mod-toolbar${className ? ` ${className}` : ''}`}>
       <div className="forum-mod-toolbar__head">
-        <p className="forum-mod-toolbar__title">🛡️ 守護者工具列</p>
+        <p className="forum-mod-toolbar__title">
+          <HeaderShieldIcon size={13} /> 守護者工具列
+        </p>
         {showQueueLink && (
           <Link href="/forum/guardian" className="forum-mod-toolbar__queue-link">
             檢舉佇列
@@ -121,11 +129,23 @@ export default function ForumModToolbar({
 
       <div className="forum-mod-toolbar__meta">
         <span className="forum-mod-toolbar__topic">
-          {topicEmoji ? `${topicEmoji} ` : ''}{topicLabel}
+          <ForumTopicIcon topic={topicCanonical} size={13} /> {topicLabel}
         </span>
-        {isHidden && <span className="forum-mod-toolbar__badge">🌑 夜幕降臨</span>}
-        {post.is_pinned && <span className="forum-mod-toolbar__badge">📌 置頂</span>}
-        {post.is_highlighted && <span className="forum-mod-toolbar__badge forum-mod-toolbar__badge--crown">✨ 加冕</span>}
+        {isHidden && (
+          <span className="forum-mod-toolbar__badge">
+            <ForumMoonIcon size={11} /> 夜幕降臨
+          </span>
+        )}
+        {post.is_pinned && (
+          <span className="forum-mod-toolbar__badge">
+            <ForumPinIcon size={11} /> 置頂
+          </span>
+        )}
+        {post.is_highlighted && (
+          <span className="forum-mod-toolbar__badge forum-mod-toolbar__badge--crown">
+            <ForumSparkleIcon size={11} /> 加冕
+          </span>
+        )}
       </div>
 
       <div className="forum-mod-toolbar__actions">

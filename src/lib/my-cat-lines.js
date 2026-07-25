@@ -1,7 +1,7 @@
-/**
- * My Cat — Tap to Meow line pools (§9, docs/MY-CAT-GAME-DESIGN.md).
+﻿/**
+ * My Cat — Tap to Meow line pools (§9, docs/my-cat/MY-CAT-GAME-DESIGN.md).
  * Client-safe. Later可遷 DB 供營運編輯。
- * 完整清單亦見 docs/MY-CAT-SOUL-AND-SHARDS.md §9
+ * 完整清單亦見 docs/my-cat/MY-CAT-SOUL-AND-SHARDS.md §9
  */
 
 /** 深夜心靈毒雞湯（預設池）— 100 句 */

@@ -4,19 +4,14 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { MODERATOR_ASSIGNABLE_TOPICS, formatModeratorTopicsLabel } from '../../lib/forum-moderator-assignments.js';
-import { TOPIC_STYLES } from '../../lib/forum-categories.js';
 import LoadingText from '../LoadingText.js';
+import { ForumTopicIcon } from '../ForumIcons.js';
 
 const ROLE_LABELS = {
   member: '一般會員',
-  moderator: '🛡️ 月光守護者（版主）',
-  admin: '🛡️ 管理員',
+  moderator: '月光守護者（版主）',
+  admin: '管理員',
 };
-
-function topicChipLabel(topic) {
-  const emoji = TOPIC_STYLES[topic]?.emoji;
-  return emoji ? `${emoji} ${topic}` : topic;
-}
 
 function TopicScopeEditor({ user, disabled, onSave, busy }) {
   const isAdmin = user.forum_role === 'admin';
@@ -76,7 +71,7 @@ function TopicScopeEditor({ user, disabled, onSave, busy }) {
                     onChange={() => toggleTopic(topic)}
                     className="forum-admin-team__topic-check"
                   />
-                  {topicChipLabel(topic)}
+                  <ForumTopicIcon topic={topic} size={12} /> {topic}
                 </label>
               );
             })}

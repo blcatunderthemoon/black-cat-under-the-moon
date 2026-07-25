@@ -4,12 +4,12 @@ import {
   PERSONALITY_TYPES,
   CAT_IMG_MAP,
   CAT_GLOW_MAP,
-  MIRROR_EMOJI,
   getPublicProfile,
   formatZodiacDisplay,
   splitPcardMixedText,
 } from '../lib/mirror-personality.js';
 import PixelMixedLabel from './PixelMixedLabel.js';
+import { MirrorTypeIcon } from './UiIcons.js';
 
 function MirrorMetaValue({ value }) {
   const parts = splitPcardMixedText(value);
@@ -56,7 +56,6 @@ export default function AccountMirrorFamilySummary({ card, displayName }) {
 
   const glow = CAT_GLOW_MAP[mainType] || family.color;
   const slug = card?.public_slug;
-  const emoji = MIRROR_EMOJI[mainType] || '🐾';
 
   return (
     <article className="account-mirror-family" style={{ '--family-glow': glow }}>
@@ -86,7 +85,9 @@ export default function AccountMirrorFamilySummary({ card, displayName }) {
 
         <div className="account-mirror-family__info">
           <div className="account-mirror-family__title-row">
-            <span className="account-mirror-family__sigil" aria-hidden="true">{emoji}</span>
+            <span className="account-mirror-family__sigil" aria-hidden="true">
+              <MirrorTypeIcon type={mainType} size={17} />
+            </span>
             <div className="account-mirror-family__title-block">
               <h2 className="account-mirror-family__name">
                 <PixelMixedLabel

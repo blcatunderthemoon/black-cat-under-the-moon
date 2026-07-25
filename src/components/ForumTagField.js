@@ -237,7 +237,7 @@ export default function ForumTagField({
                       onClick={() => addTag(item.display_label, item.tag)}
                     >
                       <span className="forum-tag-suggest__label">
-                        🎴 {formatForumTagLabel(item.tag, item.display_label)}
+                        {formatForumTagLabel(item.tag, item.display_label)}
                       </span>
                       <span className="forum-tag-suggest__count">
                         {item.count > 0 ? `已有 ${item.count} 篇` : '新標籤'}

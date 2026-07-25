@@ -1,12 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { ForumFlameIcon, ForumMegaphoneIcon, ForumSparkleIcon } from './ForumIcons.js';
 
 const DISMISS_KEY = 'bcutm_forum_banner_dismissed';
 
 function BannerItem({ msg }) {
+  const Icon = msg.type === 'post' ? ForumSparkleIcon : ForumMegaphoneIcon;
   const inner = (
     <>
-      <span className="forum-banner-ticker__icon" aria-hidden="true">{msg.icon || '📢'}</span>
+      <span className="forum-banner-ticker__icon" aria-hidden="true">
+        <Icon size={13} />
+      </span>
       {msg.type === 'post' && (
         <span className="forum-banner-ticker__label">精選貼文</span>
       )}
@@ -103,7 +107,9 @@ export default function ForumBannerTicker() {
       aria-label="論壇公告"
     >
       <span className="forum-banner-ticker__sigil" aria-hidden="true">
-        <span className="forum-banner-ticker__sigil-icon">🔥</span>
+        <span className="forum-banner-ticker__sigil-icon">
+          <ForumFlameIcon size={14} />
+        </span>
         <span className="forum-banner-ticker__pulse" />
       </span>
       <div className="forum-banner-ticker__viewport">

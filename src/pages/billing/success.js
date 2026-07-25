@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { useAuth } from '../../lib/auth-context.js';
 import { MOONLIGHT_PASSPORT_BRAND } from '../../lib/premium.js';
 import AppShell from '../../components/AppShell.js';
+import { ForumSparkleIcon } from '../../components/UiIcons.js';
 
 export default function BillingSuccessPage() {
   const { session } = useAuth();
@@ -58,7 +59,7 @@ export default function BillingSuccessPage() {
       <Head><title>付款成功 — Black Cat Under The Moon</title></Head>
       <AppShell centered hideHeader>
         <div className="pixel-card pixel-card--auth">
-          <span style={{ fontSize: 56 }}>🎉</span>
+          <span style={{ fontSize: 56 }} aria-hidden="true"><ForumSparkleIcon size={56} /></span>
           <h1 className="pixel-title">{MOONLIGHT_PASSPORT_BRAND} 啟用成功！</h1>
           <p className="pixel-subtitle" style={{ lineHeight: 1.8 }}>
             {syncing ? '正在確認 PayPal 訂閱狀態…' : (

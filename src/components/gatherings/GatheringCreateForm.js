@@ -179,7 +179,7 @@ export default function GatheringCreateForm({ meta, onDateChange }) {
 
       <label className="gathering-form__field">
         <span>聚會主題 *</span>
-        <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={40} required placeholder="例如：旺角深夜桌遊局" />
+        <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={40} required placeholder="例如：旺角深夜枱遊局" />
       </label>
 
       <label className="gathering-form__field">

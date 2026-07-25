@@ -54,7 +54,7 @@ export async function notifyGatheringModerators({
       ? '聚會留言'
       : '參加者';
 
-  const content = `🛡️ 有${label}收到 ${reportCount} 次檢舉，待月光守護者處理。${title ? `「${String(title).slice(0, 40)}」` : ''}`;
+  const content = `有${label}收到 ${reportCount} 次檢舉，待月光守護者處理。${title ? `「${String(title).slice(0, 40)}」` : ''}`;
 
   const payload = {
     kind: 'gathering_moderation_alert',

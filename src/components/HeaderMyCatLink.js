@@ -1,5 +1,5 @@
-/**
- * HeaderMyCatLink — the ONLY navigation entry to /my-cat (§1.3, docs/MY-CAT-GAME-DESIGN.md).
+﻿/**
+ * HeaderMyCatLink — the ONLY navigation entry to /my-cat (§1.3, docs/my-cat/MY-CAT-GAME-DESIGN.md).
  * Shared by AppHeaderAuth and ForumHeaderAuth; shows a hungry-dot badge
  * when today's feed (= daily check-in) hasn't happened yet.
  */

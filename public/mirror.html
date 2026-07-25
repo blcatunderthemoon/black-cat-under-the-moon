@@ -23,10 +23,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
 <script src="/js/vendor/html-to-image.min.js"></script>
 <script src="/js/vendor/html2canvas.min.js"></script>
-<link rel="stylesheet" href="css/questionnaire.css?v=20260725moonload">
+<link rel="stylesheet" href="css/questionnaire.css?v=20260725thankfix">
 <link rel="stylesheet" href="css/auth-nav.css?v=20260725hdrfix">
 <link rel="stylesheet" href="css/mobile-webview-scroll.css?v=20260713echo">
 <link rel="stylesheet" href="css/moon-loading.css?v=20260711n">
+<link rel="stylesheet" href="css/legal-ui-icons.css?v=20260725icons">
 <script src="/js/posthog-page-context.js" defer></script>
 <script src="/js/posthog-init.js" defer></script>
 <style>
@@ -179,28 +180,40 @@
 
 <!-- Thank You Screen (unused in mirror mode, kept for shared JS compatibility) -->
 <div class="overlay-screen scrollable" id="thankyou-screen">
-  <div id="confetti-container" style="position:fixed;inset:0;pointer-events:none;z-index:10;"></div>
+  <div id="confetti-container" aria-hidden="true"></div>
   <div class="thankyou-content">
     <div class="level-up pixel-font" id="level-up-text">✦ LEVEL UP! ✦</div>
-    <div class="thankyou-cat">🐈‍⬛✨</div>
+    <div class="thankyou-cat" aria-hidden="true">
+      <span class="ui-ico ui-ico--paw"></span>
+      <span class="ui-ico ui-ico--sparkle"></span>
+    </div>
     <div class="thankyou-msg">資料已成功傳送！</div>
-    <div class="thankyou-msg thankyou-heart">多謝你嘅參與 ♡</div>
-    <div class="thankyou-msg" style="margin-top:16px;color:var(--text-dim);">期待你的靈魂知己出現 🌙</div>
+    <div class="thankyou-msg thankyou-heart">多謝你嘅參與</div>
+    <div class="thankyou-msg thankyou-msg--hint">
+      期待你的靈魂知己出現
+      <span class="ui-ico ui-ico--moon" aria-hidden="true"></span>
+    </div>
     <div class="support-section">
       <div class="support-stack">
         <div class="support-card">
-          <div class="support-card-title">分享你的故事 📲</div>
-          <a class="share-btn" id="share-threads-btn" href="#" target="_blank" rel="noopener noreferrer" aria-label="分享到 Threads">🧵 <span>分享到 Threads</span></a>
+          <div class="support-card-title"><span class="ui-ico ui-ico--share" aria-hidden="true"></span>分享你的故事</div>
+          <a class="share-btn" id="share-threads-btn" href="#" target="_blank" rel="noopener noreferrer" aria-label="分享到 Threads">
+            <svg width="14" height="14" viewBox="0 0 192 192" fill="currentColor" aria-hidden="true"><path d="M141.537 88.988a66.667 66.667 0 0 0-2.518-1.143c-1.482-27.307-16.403-42.94-41.457-43.1h-.34c-14.986 0-27.449 6.396-35.12 18.036l13.779 9.452c5.73-8.695 14.724-10.548 21.348-10.548h.229c8.249.053 14.474 2.452 18.503 7.129 2.932 3.405 4.893 8.111 5.864 14.05-7.314-1.243-15.224-1.626-23.68-1.14-23.82 1.371-39.134 15.264-38.105 34.568.522 9.792 5.4 18.216 13.735 23.719 7.047 4.652 16.124 6.927 25.557 6.412 12.458-.683 22.231-5.436 29.049-14.127 5.178-6.6 8.453-15.153 9.899-25.93 5.937 3.583 10.337 8.298 12.767 13.966 4.132 9.635 4.373 25.468-8.546 38.376-11.319 11.308-24.925 16.2-45.488 16.351-22.809-.169-40.06-7.484-51.275-21.742C35.236 139.966 29.808 120.682 29.605 96c.203-24.682 5.63-43.966 16.133-57.317C56.954 24.425 74.206 17.11 97.015 16.94c22.975.17 40.526 7.52 52.171 21.847 5.71 7.026 10.015 15.86 12.853 26.162l16.147-4.308c-3.44-12.68-8.853-23.606-16.219-32.668C147.036 10.784 125.322 1.201 97.098 1 68.752 1.201 47.264 10.816 32.216 28.447 18.568 44.425 11.565 67.461 11.318 96.001c.247 28.54 7.25 51.576 20.898 67.554C47.264 181.216 68.752 190.798 97.098 191c23.814-.168 41.037-6.404 55.3-20.153 18.04-17.916 17.406-40.364 11.476-54.158-4.269-9.956-12.492-18.047-22.337-27.701z"/></svg>
+            <span>分享到 Threads</span>
+          </a>
         </div>
         <div class="support-card">
-          <div class="support-card-title">支持黑貓 ☕</div>
-          <a class="donate-btn" href="https://ko-fi.com/blackcatunderthemoon" target="_blank" rel="noopener noreferrer">☕ <span>SUPPORT ON KO-FI</span></a>
+          <div class="support-card-title"><span class="ui-ico ui-ico--coffee" aria-hidden="true"></span>支持黑貓</div>
+          <a class="donate-btn" href="https://ko-fi.com/blackcatunderthemoon" target="_blank" rel="noopener noreferrer">
+            <span class="ui-ico ui-ico--coffee" aria-hidden="true"></span>
+            <span>SUPPORT ON KO-FI</span>
+          </a>
         </div>
         <div class="support-card contact-panel">
-          <div class="support-card-title">聯絡黑貓 ✉️</div>
+          <div class="support-card-title"><span class="ui-ico ui-ico--mail" aria-hidden="true"></span>聯絡黑貓</div>
           <div class="contact-links" id="social-handles">
             <a class="contact-link" href="mailto:blcatunderthemoon@gmail.com">
-              <span class="contact-link-icon email">✉</span>
+              <span class="contact-link-icon email"><span class="ui-ico ui-ico--mail" aria-hidden="true"></span></span>
               <span class="contact-link-copy">
                 <span class="contact-link-label">Email</span>
                 <span class="contact-link-value">blcatunderthemoon@gmail.com</span>
@@ -299,7 +312,8 @@
 
 <!-- Ko-fi Toast Nudge -->
 <div id="kofi-toast">
-  <span>☕ 支持黑貓繼續運作 ♡</span>
+  <span class="ui-ico ui-ico--coffee" aria-hidden="true"></span>
+  <span>支持黑貓繼續運作</span>
   <a id="kofi-toast-link" href="https://ko-fi.com/blackcatunderthemoon" target="_blank" rel="noopener noreferrer">去支持</a>
   <button id="kofi-toast-close" aria-label="關閉">✕</button>
 </div>

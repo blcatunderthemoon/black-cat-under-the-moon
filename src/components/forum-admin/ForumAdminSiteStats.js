@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { forumAdminFetch } from '../../lib/forum-admin-fetch.js';
+import {
+  ForumMoonIcon,
+  ForumBookIcon,
+  ForumLockIcon,
+  HeaderChatIcon,
+  HeaderShieldIcon,
+  HeaderUserPlusIcon,
+  HeaderForumIcon,
+} from '../ForumIcons.js';
 
 function formatStat(value) {
   if (value == null) return '—';
@@ -63,14 +72,20 @@ export default function ForumAdminSiteStats({ accessToken }) {
       )}
 
       <div className="forum-admin-stats__grid">
-        <StatCard icon="👥" label="註冊會員" value={stats?.members_total} sub={stats?.members_this_month != null ? `本月 +${formatStat(stats.members_this_month)}` : null} tone="accent" />
-        <StatCard icon="📝" label="問卷回覆" value={stats?.questionnaires_total} />
-        <StatCard icon="🌙" label="論壇貼文" value={stats?.forum_posts_total} />
-        <StatCard icon="💬" label="論壇留言" value={stats?.forum_comments_total} />
-        <StatCard icon="📖" label="故事作品" value={stats?.story_posts_total} />
-        <StatCard icon="🛂" label="Passport 會員" value={stats?.premium_members_total} tone="gold" />
         <StatCard
-          icon="⚑"
+          icon={<HeaderUserPlusIcon size={18} />}
+          label="註冊會員"
+          value={stats?.members_total}
+          sub={stats?.members_this_month != null ? `本月 +${formatStat(stats.members_this_month)}` : null}
+          tone="accent"
+        />
+        <StatCard icon={<HeaderForumIcon size={18} />} label="問卷回覆" value={stats?.questionnaires_total} />
+        <StatCard icon={<ForumMoonIcon size={18} />} label="論壇貼文" value={stats?.forum_posts_total} />
+        <StatCard icon={<HeaderChatIcon size={18} />} label="論壇留言" value={stats?.forum_comments_total} />
+        <StatCard icon={<ForumBookIcon size={18} />} label="故事作品" value={stats?.story_posts_total} />
+        <StatCard icon={<HeaderShieldIcon size={18} />} label="Passport 會員" value={stats?.premium_members_total} tone="gold" />
+        <StatCard
+          icon={<ForumLockIcon size={18} />}
           label="待處理檢舉"
           value={stats?.pending_reports_total}
           sub={stats ? `貼文 ${formatStat(stats.pending_posts)} · 留言 ${formatStat(stats.pending_comments)}` : null}

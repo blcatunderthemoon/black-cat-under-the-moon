@@ -1,5 +1,6 @@
 import PixelMixedLabel from './PixelMixedLabel.js';
 import PremiumMoonBadge from './PremiumMoonBadge.js';
+import { ForumPawIcon } from './UiIcons.js';
 import { getStampById, letterStyleFromMessage, notePaperClassName } from '../lib/letter-gameplay.js';
 
 const SCROLL_ZH = 'scroll-text-zh';
@@ -64,7 +65,9 @@ export default function PixelScrollMessage({
           )}
           {isMine && !stamp && (
             <span className="scroll-message__wax-seal" aria-hidden="true" title="黑貓火漆">
-              <span className="scroll-message__wax-seal__icon">🐈</span>
+              <span className="scroll-message__wax-seal__icon">
+                <ForumPawIcon size={12} />
+              </span>
             </span>
           )}
         </header>

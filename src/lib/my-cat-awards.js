@@ -1,5 +1,5 @@
-/**
- * awardCatCare — 共用發獎 helper（docs/MY-CAT-SOUL-AND-SHARDS.md §5.2）。
+﻿/**
+ * awardCatCare — 共用發獎 helper（docs/my-cat/MY-CAT-SOUL-AND-SHARDS.md §5.2）。
  * SERVER ONLY. 冪等：ledger UNIQUE(user_id, action_type, source_id) 防重複發放。
  * 靈魂寫 cat_care_events；碎屑寫 cat_economy_events；成功先更新 user_cats。
  */

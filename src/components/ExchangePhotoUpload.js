@@ -7,6 +7,7 @@ import {
   isCloudinaryProfileUploadConfigured,
   uploadProfileExchangePhoto,
 } from '../lib/cloudinary-profile-upload.js';
+import { UiCameraIcon } from './UiIcons.js';
 
 export default function ExchangePhotoUpload({
   accessToken,
@@ -87,7 +88,7 @@ export default function ExchangePhotoUpload({
     />
   ) : (
     <div className="photo-exchange-upload__placeholder">
-      <span className="photo-exchange-upload__placeholder-icon" aria-hidden="true">📷</span>
+      <span className="photo-exchange-upload__placeholder-icon" aria-hidden="true"><UiCameraIcon size={28} /></span>
       {isPage ? (
         <>
           <span className="photo-exchange-upload__placeholder-title">點擊選擇相片</span>

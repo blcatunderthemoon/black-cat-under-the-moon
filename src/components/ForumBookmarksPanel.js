@@ -10,6 +10,7 @@ import { TOPIC_STYLES, displayTopic, forumTopicLabel } from '../lib/forum-welcom
 import ForumPostTags from './ForumPostTags.js';
 import ForumAuthorName from './ForumAuthorName.js';
 import { forumListPreviewText } from '../lib/forum-list-preview.js';
+import { ForumLikeStat, ForumCommentStat, ForumBookIcon } from './ForumIcons.js';
 
 function timeAgo(dateStr) {
   if (!dateStr) return '';
@@ -120,7 +121,9 @@ export default function ForumBookmarksPanel({ open, onClose, accessToken, onBook
         <header className="forum-bookmarks-panel__header">
           <div className="forum-bookmarks-panel__heading">
             <h2 id="forum-bookmarks-title" className="forum-bookmarks-panel__title">
-              <span className="forum-bookmarks-panel__title-icon" aria-hidden="true">📚</span>
+              <span className="forum-bookmarks-panel__title-icon" aria-hidden="true">
+                <ForumBookIcon size={18} />
+              </span>
               <span className="forum-bookmarks-panel__title-text">黑貓書櫃</span>
             </h2>
             <p className="forum-bookmarks-panel__sub">你收藏的貼文，只屬於你的私人清單。</p>
@@ -136,10 +139,12 @@ export default function ForumBookmarksPanel({ open, onClose, accessToken, onBook
           <p className="pixel-error">{loadError}</p>
         ) : isEmpty ? (
           <div className="forum-bookmarks-empty">
-            <p className="forum-bookmarks-empty__emoji" aria-hidden="true">📚</p>
+            <p className="forum-bookmarks-empty__emoji" aria-hidden="true">
+              <ForumBookIcon size={28} />
+            </p>
             <p className="forum-bookmarks-empty__text">書櫃尚空</p>
             <p className="forum-bookmarks-empty__hint">
-              在樹洞貼文按 🔖 收入書櫃，<br />
+              在樹洞貼文按收藏收入書櫃，<br />
               只有你能翻閱這些私藏。
             </p>
           </div>
@@ -191,7 +196,8 @@ export default function ForumBookmarksPanel({ open, onClose, accessToken, onBook
                         }}
                       />
                       <span className="forum-bookmarks-item__stats">
-                        💗 {post.like_count} · 💬 {post.comment_count}
+                        <ForumLikeStat count={post.like_count} />
+                        <ForumCommentStat count={post.comment_count} />
                       </span>
                       <span className="forum-bookmarks-item__time">{timeAgo(post.created_at)}</span>
                     </div>

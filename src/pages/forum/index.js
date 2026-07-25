@@ -71,11 +71,25 @@ import {
 } from '../../lib/forum-mature.js';
 import ForumHorizontalScroll from '../../components/ForumHorizontalScroll.js';
 import ForumBannerTicker from '../../components/ForumBannerTicker.js';
+import {
+  ForumTopicIcon,
+  ForumSortIcon,
+  ForumLikeStat,
+  ForumCommentStat,
+  ForumPinIcon,
+  ForumSparkleIcon,
+  ForumMoonIcon,
+  ForumTrophyIcon,
+  ForumFlameIcon,
+  ForumBookIcon,
+  ForumLockIcon,
+  HeaderBookmarkIcon,
+} from '../../components/ForumIcons.js';
 
 const SORT_OPTIONS = [
-  { id: 'latest', label: '最新', icon: '🕐', hint: '依發文時間由新到舊' },
-  { id: 'popular', label: '熱門', icon: '🔥', hint: '依愛心數由高到低' },
-  { id: 'clan', label: '同族', icon: '🐾', hint: '同家族的貼文', authOnly: true },
+  { id: 'latest', label: '最新', hint: '依發文時間由新到舊' },
+  { id: 'popular', label: '熱門', hint: '依愛心數由高到低' },
+  { id: 'clan', label: '同族', hint: '同家族的貼文', authOnly: true },
 ];
 
 function timeAgo(dateStr) {
@@ -122,7 +136,7 @@ function EmptyState({ topic, onCompose, canCompose, sort, viewerClanType }) {
       {isClanNoMirror ? (
         <>
           <h2 className="forum-empty__headline">還未加入任何貓家族</h2>
-          <p className="forum-empty__subline">完成 Mirror 測驗後，就能在同族模式找到氣場相近的貓咪 🐾</p>
+          <p className="forum-empty__subline">完成 Mirror 測驗後，就能在同族模式找到氣場相近的貓咪</p>
           <Link href="/mirror.html" className="forum-empty__cta">
             開始 Mirror 測驗
           </Link>
@@ -132,7 +146,7 @@ function EmptyState({ topic, onCompose, canCompose, sort, viewerClanType }) {
           <h2 className="forum-empty__headline">同族暫時未有貼文</h2>
           <p className="forum-empty__subline forum-empty__subline--inline">
             <MirrorFamilyBadge type={viewerClanType} variant="compact" className="forum-empty__clan-badge" />
-            <span className="forum-empty__subline-text">的貓咪還沒開口，來點第一把火吧 🔥</span>
+            <span className="forum-empty__subline-text">的貓咪還沒開口，來點第一把火吧</span>
           </p>
           <button type="button" className="forum-empty__cta" onClick={onCompose}>
             立刻發文
@@ -141,7 +155,7 @@ function EmptyState({ topic, onCompose, canCompose, sort, viewerClanType }) {
       ) : (
         <>
           <h2 className="forum-empty__headline">{copy.headline}</h2>
-          <p className="forum-empty__subline">{copy.subline} {copy.emoji}</p>
+          <p className="forum-empty__subline">{copy.subline}</p>
           {canCompose ? (
             <button type="button" className="forum-empty__cta" onClick={onCompose}>
               立刻發文
@@ -192,7 +206,10 @@ function FeaturedPostsPanel({ featuredPosts }) {
   return (
     <aside className="forum-panel forum-panel--featured">
       <div className="forum-panel__head">
-        <h3 className="forum-panel__title">✨ 月光精選</h3>
+        <h3 className="forum-panel__title">
+          <ForumSparkleIcon size={14} className="forum-panel__title-icon" />
+          {' '}月光精選
+        </h3>
         <p className="forum-panel__hint forum-panel__hint--hot">版主加冕的優質文章</p>
       </div>
       <ol className="forum-hot-list">
@@ -204,8 +221,8 @@ function FeaturedPostsPanel({ featuredPosts }) {
                 <span className="forum-hot-item__meta">
                   <span className="forum-hot-item__topic">{forumTopicLabel(p.topic)}</span>
                   <span className="forum-hot-item__stats">
-                    <span>💗 {p.like_count}</span>
-                    <span>💬 {p.comment_count}</span>
+                    <ForumLikeStat count={p.like_count} />
+                    <ForumCommentStat count={p.comment_count} />
                   </span>
                 </span>
               </div>
@@ -218,18 +235,22 @@ function FeaturedPostsPanel({ featuredPosts }) {
 }
 
 function HotTopicsPanel({ hotPosts, sparksMode }) {
-  const trophies = ['🥇', '🥈', '🥉'];
   const rankMods = ['forum-hot-item--gold', 'forum-hot-item--silver', 'forum-hot-item--bronze'];
   const curated = sparksMode === 'curated';
-  const title = curated ? '✨ 週度精選' : '🔥 活躍火種';
+  const title = curated ? '週度精選' : '活躍火種';
+  const TitleIcon = curated ? ForumSparkleIcon : ForumFlameIcon;
   const hint = curated ? '官方推薦' : '本週最活躍 TOP 3';
+  const curatedIcons = [ForumPinIcon, ForumSparkleIcon, ForumMoonIcon];
 
   if (!hotPosts?.length) {
     // Last-resort UI: still never announce a dead week
     return (
       <aside className="forum-panel forum-panel--hot">
         <div className="forum-panel__head">
-          <h3 className="forum-panel__title">✨ 週度精選</h3>
+          <h3 className="forum-panel__title">
+            <ForumSparkleIcon size={14} className="forum-panel__title-icon" />
+            {' '}週度精選
+          </h3>
           <p className="forum-panel__hint forum-panel__hint--hot">官方推薦</p>
         </div>
         <p className="forum-hot-empty forum-hot-empty--soft">
@@ -242,32 +263,40 @@ function HotTopicsPanel({ hotPosts, sparksMode }) {
   return (
     <aside className="forum-panel forum-panel--hot">
       <div className="forum-panel__head">
-        <h3 className="forum-panel__title">{title}</h3>
+        <h3 className="forum-panel__title">
+          <TitleIcon size={14} className="forum-panel__title-icon" />
+          {' '}{title}
+        </h3>
         <p className="forum-panel__hint forum-panel__hint--hot">{hint}</p>
       </div>
       <ol className="forum-hot-list">
-        {hotPosts.map((p, index) => (
-          <li key={p.id}>
-            <Link
-              href={`/forum/${p.id}`}
-              className={`forum-hot-item${rankMods[index] ? ` ${rankMods[index]}` : ''}${curated ? ' forum-hot-item--curated' : ''}`}
-            >
-              <span className="forum-hot-item__rank" aria-label={`第 ${index + 1} 名`}>
-                {curated ? (['📌', '✨', '🌙'][index] || '✦') : trophies[index]}
-              </span>
-              <div className="forum-hot-item__body">
-                <p className="forum-hot-item__title">{p.title || p.topic}</p>
-                <span className="forum-hot-item__meta">
-                  <span className="forum-hot-item__topic">{forumTopicLabel(p.topic) || p.topic}</span>
-                  <span className="forum-hot-item__stats">
-                    <span>💗 {p.like_count}</span>
-                    <span>💬 {p.comment_count}</span>
-                  </span>
+        {hotPosts.map((p, index) => {
+          const RankIcon = curated
+            ? (curatedIcons[index] || ForumSparkleIcon)
+            : ForumTrophyIcon;
+          return (
+            <li key={p.id}>
+              <Link
+                href={`/forum/${p.id}`}
+                className={`forum-hot-item${rankMods[index] ? ` ${rankMods[index]}` : ''}${curated ? ' forum-hot-item--curated' : ''}`}
+              >
+                <span className="forum-hot-item__rank" aria-label={`第 ${index + 1} 名`}>
+                  <RankIcon size={14} place={index + 1} />
                 </span>
-              </div>
-            </Link>
-          </li>
-        ))}
+                <div className="forum-hot-item__body">
+                  <p className="forum-hot-item__title">{p.title || p.topic}</p>
+                  <span className="forum-hot-item__meta">
+                    <span className="forum-hot-item__topic">{forumTopicLabel(p.topic) || p.topic}</span>
+                    <span className="forum-hot-item__stats">
+                      <ForumLikeStat count={p.like_count} />
+                      <ForumCommentStat count={p.comment_count} />
+                    </span>
+                  </span>
+                </div>
+              </Link>
+            </li>
+          );
+        })}
       </ol>
     </aside>
   );
@@ -1026,7 +1055,7 @@ export default function ForumPage() {
       <SeoHead
         title={matureTopicActive ? `${MATURE_FORUM_TOPIC} · ${FORUM_DISPLAY_NAME}` : `${FORUM_DISPLAY_NAME}｜香港Les討論區`}
         description={matureTopicActive
-          ? '黑貓樹洞成熟話題版 — 已登入會員的文字討論空間，分享親密關係、界線與同意。'
+          ? '黑貓樹洞成熟話題版 — 已登入會員的文字討論空間，分享親密關係、同意同界線。'
           : '香港Les討論區｜黑貓樹洞 — 香港女同志匿名分享心情、交流同認識同路朋友。'}
         path="/forum"
         noindex={matureTopicActive}
@@ -1084,16 +1113,17 @@ export default function ForumPage() {
                     {t === MATURE_FORUM_TOPIC ? (
                       <span className="forum-topic-badge__mature-inner">
                         <span className="forum-topic-badge__mature-label">
-                          {TOPIC_STYLES[t]?.emoji ? (
-                            <span className="forum-topic-badge__mature-moon" aria-hidden="true">{TOPIC_STYLES[t].emoji}</span>
-                          ) : null}
+                          <span className="forum-topic-badge__mature-moon" aria-hidden="true">
+                            <ForumTopicIcon topic={t} size={13} />
+                          </span>
                           親密
                         </span>
                         <span className="forum-topic-badge__age" aria-hidden="true">18+</span>
                       </span>
                     ) : (
                       <>
-                        {TOPIC_STYLES[t]?.emoji ? `${TOPIC_STYLES[t].emoji} ` : ''}{forumTopicLabel(t)}
+                        <ForumTopicIcon topic={t} size={13} className="forum-topic-badge__icon" />
+                        {' '}{forumTopicLabel(t)}
                       </>
                     )}
                   </button>
@@ -1168,7 +1198,9 @@ export default function ForumPage() {
                       aria-pressed={sort === o.id}
                       className={`forum-sort-badge${sort === o.id ? ' forum-sort-badge--active' : ''}`}
                     >
-                      <span className="forum-sort-badge__icon" aria-hidden="true">{o.icon}</span>
+                      <span className="forum-sort-badge__icon" aria-hidden="true">
+                        <ForumSortIcon sortId={o.id} size={13} />
+                      </span>
                       {o.label}
                     </button>
                   ))}
@@ -1309,7 +1341,7 @@ export default function ForumPage() {
                               disabled={bookmarkingIds.has(post.id)}
                               onClick={(e) => toggleBookmark(post.id, e)}
                             >
-                              <span aria-hidden="true">🔖</span>
+                              <span aria-hidden="true"><HeaderBookmarkIcon size={14} /></span>
                             </button>
                           )}
                           <Link
@@ -1339,17 +1371,23 @@ export default function ForumPage() {
                                 onTagClick={(tag) => setActiveTag((prev) => (prev === tag ? null : tag))}
                               />
                               {post.visibility === 'members_only' && (
-                                <span className="forum-visibility-badge">🔒 會員限定</span>
+                                <span className="forum-visibility-badge">
+                                  <ForumLockIcon size={11} /> 會員限定
+                                </span>
                               )}
                               {post.hide_username && (
-                                <span className="forum-visibility-badge">🎭 匿名</span>
+                                <span className="forum-visibility-badge">匿名</span>
                               )}
                               {post.is_pinned && (
-                                <span className="forum-visibility-badge">📌 圍爐置頂</span>
+                                <span className="forum-visibility-badge">
+                                  <ForumPinIcon size={11} /> 圍爐置頂
+                                </span>
                               )}
                               {post.is_highlighted && (
                                 <span className="forum-crown-badge" aria-label="月光加冕">
-                                  <span className="forum-crown-badge__sigil" aria-hidden="true">✨</span>
+                                  <span className="forum-crown-badge__sigil" aria-hidden="true">
+                                    <ForumSparkleIcon size={12} />
+                                  </span>
                                   <span className="forum-crown-badge__text">月光加冕</span>
                                 </span>
                               )}
@@ -1374,7 +1412,8 @@ export default function ForumPage() {
                                 />
                               </span>
                               <span className="pixel-post-footer__stats">
-                                💗 {post.like_count} · 💬 {post.comment_count}
+                                <ForumLikeStat count={post.like_count} />
+                                <ForumCommentStat count={post.comment_count} />
                               </span>
                               <span>{timeAgo(post.created_at)}</span>
                             </div>
@@ -1444,7 +1483,9 @@ export default function ForumPage() {
               <div className={`forum-compose-modal__head${isStoryTopic(form.topic) ? ' forum-compose-modal__head--story' : ''}`}>
                 <div className="forum-compose-modal__head-copy">
                   {isStoryTopic(form.topic) && (
-                    <p className="forum-compose-modal__eyebrow">📖 黑貓書櫃</p>
+                    <p className="forum-compose-modal__eyebrow">
+                      <ForumBookIcon size={13} /> 黑貓書櫃
+                    </p>
                   )}
                   <h2 id="forum-compose-title" className="forum-compose-modal__title">
                     {isStoryTopic(form.topic) ? '新故事' : '新貼文'}
@@ -1532,7 +1573,7 @@ export default function ForumPage() {
                         checked={form.visibility === 'public'}
                         onChange={() => setForm((f) => ({ ...f, visibility: 'public' }))}
                       />
-                      <span>🌍 公開</span>
+                      <span>公開</span>
                     </label>
                     <label className={`forum-visibility-option${form.visibility === 'members_only' ? ' forum-visibility-option--active' : ''}`}>
                       <input
@@ -1542,7 +1583,7 @@ export default function ForumPage() {
                         checked={form.visibility === 'members_only'}
                         onChange={() => setForm((f) => ({ ...f, visibility: 'members_only' }))}
                       />
-                      <span>🔒 會員限定</span>
+                      <span><ForumLockIcon size={12} /> 會員限定</span>
                     </label>
                   </div>
                   {form.visibility === 'members_only' && (
@@ -1559,7 +1600,7 @@ export default function ForumPage() {
                       disabled={submitting}
                     />
                     <span className="forum-anonymous-field__copy">
-                      <span className="forum-anonymous-field__title">🎭 匿名發文</span>
+                      <span className="forum-anonymous-field__title">匿名發文</span>
                       <span className="forum-anonymous-field__hint">隱藏你的用戶名，對外顯示為「神秘貓咪」。留言仍會顯示你的用戶名。</span>
                     </span>
                   </label>
@@ -1606,7 +1647,7 @@ export default function ForumPage() {
                     取消並捨棄
                   </button>
                   <button type="submit" disabled={submitting} className="forum-compose-actions__submit">
-                    {submitting ? '發送中…' : (isStoryTopic(form.topic) ? '📚 放上書架' : '發文')}
+                    {submitting ? '發送中…' : (isStoryTopic(form.topic) ? '放上書架' : '發文')}
                   </button>
                 </div>
               </form>
@@ -1617,7 +1658,7 @@ export default function ForumPage() {
         <div className="forum-bookmark-whisper" role="status" aria-live="polite">
           <p className="forum-bookmark-whisper__text">
             <span className="forum-bookmark-whisper__glyph" aria-hidden="true">
-              {bookmarkToast === 'saved' ? '🔖' : '✦'}
+              {bookmarkToast === 'saved' ? <HeaderBookmarkIcon size={14} /> : '✦'}
             </span>
             {bookmarkToast === 'saved' ? '已收入書櫃' : '已從書櫃取下'}
           </p>

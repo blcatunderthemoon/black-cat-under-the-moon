@@ -7,6 +7,7 @@ import StarfieldBackground from './StarfieldBackground.js';
 import ForumWarmBackground from './ForumWarmBackground.js';
 import SiteLegalFooter from './SiteLegalFooter.js';
 import PixelMixedLabel from './PixelMixedLabel.js';
+import { HeaderSettingsIcon } from './HeaderNavIcons.js';
 
 const ACCOUNT_HEADER_ZH = 'app-header__text-zh';
 const ACCOUNT_HEADER_EN = 'app-header__text-en';
@@ -182,11 +183,13 @@ export default function AppShell({
 }
 
 /** Convenience nav link for header right side */
-export function NavLink({ href, children, dim = false, className = '' }) {
+export function NavLink({ href, children, dim = false, className = '', title, 'aria-label': ariaLabel }) {
   return (
     <Link
       href={href}
       className={`app-header__nav-link${dim ? ' app-header__nav-link--dim' : ''}${className ? ` ${className}` : ''}`}
+      title={title}
+      aria-label={ariaLabel}
     >
       {children}
     </Link>
@@ -195,5 +198,9 @@ export function NavLink({ href, children, dim = false, className = '' }) {
 
 /** Settings link for header right side */
 export function NavSettings() {
-  return <NavLink href="/account">⚙</NavLink>;
+  return (
+    <NavLink href="/account" className="app-header__nav-link--icon" aria-label="設定" title="設定">
+      <span className="app-header__nav-icon" aria-hidden="true"><HeaderSettingsIcon /></span>
+    </NavLink>
+  );
 }

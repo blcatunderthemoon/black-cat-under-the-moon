@@ -112,7 +112,7 @@ export default function ForumMonitorPanel({ apiFetch }) {
         {/* Posts */}
         {(typeFilter === 'all' || typeFilter === 'post') && posts.length > 0 && (
           <section className="forum-admin-monitor__section">
-            <h2 className="forum-admin-monitor__section-title">📝 貼文 ({posts.length})</h2>
+            <h2 className="forum-admin-monitor__section-title">貼文 ({posts.length})</h2>
             {posts.map(post => (
               <div key={post.id} className="forum-admin-monitor__card">
                 <div className="forum-admin-monitor__card-head">
@@ -143,7 +143,7 @@ export default function ForumMonitorPanel({ apiFetch }) {
         {/* Comments */}
         {(typeFilter === 'all' || typeFilter === 'comment') && comments.length > 0 && (
           <section className="forum-admin-monitor__section forum-admin-monitor__section--comments">
-            <h2 className="forum-admin-monitor__section-title">💬 留言 ({comments.length})</h2>
+            <h2 className="forum-admin-monitor__section-title">留言 ({comments.length})</h2>
             {comments.map(comment => (
               <div key={comment.id} className="forum-admin-monitor__card">
                 <div className="forum-admin-monitor__card-head">

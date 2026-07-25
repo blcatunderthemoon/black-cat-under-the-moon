@@ -1,7 +1,7 @@
-/**
+﻿/**
  * My Cat (月光小貓) — shared constants & pure helpers.
  * Client-safe: no server imports. Server ops live in my-cat-server.js.
- * Spec: docs/MY-CAT-GAME-DESIGN.md
+ * Spec: docs/my-cat/MY-CAT-GAME-DESIGN.md
  */
 
 export const MY_CAT_PATH = '/my-cat';

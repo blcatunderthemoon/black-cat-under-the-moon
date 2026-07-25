@@ -12,6 +12,14 @@ import GatheringHostQueue from '../../components/gatherings/GatheringHostQueue.j
 import GatheringCommentBoard from '../../components/gatherings/GatheringCommentBoard.js';
 import GatheringConfirmOverlay from '../../components/gatherings/GatheringConfirmOverlay.js';
 import MoonLoading from '../../components/MoonLoading.js';
+import {
+  ForumClockIcon,
+  ForumLockIcon,
+  ForumMoonIcon,
+  ForumPawIcon,
+  ForumPinIcon,
+  UiUnlockIcon,
+} from '../../components/UiIcons.js';
 import { useAuth } from '../../lib/auth-context.js';
 
 const STATUS_LABEL = {
@@ -207,7 +215,7 @@ export default function GatheringDetailPage({ seo = null }) {
       setConfirmKind(null);
       setReportReason('');
       setSafetyMsg(res.ok
-        ? (data.already_reported ? '你已舉報過呢個聚會。' : '已收到你的舉報，多謝你守護社群。🐈‍⬛')
+        ? (data.already_reported ? '你已舉報過呢個聚會。' : '已收到你的舉報，多謝你守護社群。')
         : (data.error || '舉報失敗'));
     } catch {
       setSafetyMsg('網絡錯誤');
@@ -272,12 +280,22 @@ export default function GatheringDetailPage({ seo = null }) {
         ) : error || !gathering ? (
           <p className="gatherings-empty gatherings-empty--err">{error || '找不到聚會'}</p>
         ) : (
-          <article className="gathering-detail gathering-detail--simple">
+          <article className={`gathering-detail gathering-detail--simple${gathering.status === 'cancelled' ? ' gathering-detail--cancelled' : ''}`}>
             <Link href="/gatherings" className="gathering-detail__back">
               ← 返回月曆
             </Link>
 
             <div className="gathering-detail__sheet">
+              {gathering.status === 'cancelled' && (
+                <div className="gathering-detail__cancel-banner" role="status" aria-live="polite">
+                  <p className="gathering-detail__cancel-banner-title">此聚會已取消</p>
+                  <p className="gathering-detail__cancel-banner-body">
+                    申請審批與報名已關閉
+                    {gathering.cancel_reason ? ` · 原因：${gathering.cancel_reason}` : ''}
+                  </p>
+                </div>
+              )}
+
               <header className="gathering-detail__hero">
                 <div className="gathering-detail__badges">
                   <span className={`gathering-detail__badge gathering-detail__badge--${gathering.is_online ? 'online' : 'offline'}`}>
@@ -347,25 +365,41 @@ export default function GatheringDetailPage({ seo = null }) {
               </div>
 
               {gathering.location_private != null && gathering.location_private !== '' ? (
-                <div className={`gathering-detail__private gathering-detail__private--unlocked${!isHost && gathering.my_attendance?.status === 'approved' ? ' gathering-detail__private--pass' : ''}`}>
+                <div className={`gathering-detail__private gathering-detail__private--unlocked${gathering.status === 'cancelled' ? ' gathering-detail__private--cancelled' : (!isHost && gathering.my_attendance?.status === 'approved' ? ' gathering-detail__private--pass' : '')}`}>
                   <span className="gathering-detail__private-badge">
-                    {!isHost && gathering.my_attendance?.status === 'approved' ? '🔓 已解鎖 · 專屬通行證' : '🔒 僅獲批准者可見'}
+                    {gathering.status === 'cancelled'
+                      ? '聚會已取消'
+                      : (!isHost && gathering.my_attendance?.status === 'approved' ? (
+                        <>
+                          <UiUnlockIcon size={11} /> 已解鎖 · 專屬通行證
+                        </>
+                      ) : (
+                        <>
+                          <ForumLockIcon size={11} /> 僅獲批准者可見
+                        </>
+                      ))}
                   </span>
                   <p className="gathering-detail__private-label">私密地點／連結</p>
                   <p className="gathering-detail__private-value">
-                    <span className="gathering-detail__private-pin" aria-hidden="true">📍</span>
+                    <span className="gathering-detail__private-pin" aria-hidden="true">
+                      <ForumPinIcon size={14} />
+                    </span>
                     {gathering.location_private}
                   </p>
                 </div>
               ) : gathering.has_private_location && !isHost ? (
                 <div className="gathering-detail__private gathering-detail__private--locked" aria-label="私密地點未解鎖">
                   <p className="gathering-detail__private-label">
-                    <span className="gathering-detail__private-lock" aria-hidden="true">🔒</span>
+                    <span className="gathering-detail__private-lock" aria-hidden="true">
+                      <ForumLockIcon size={14} />
+                    </span>
                     私密地點／連結
                   </p>
                   <div className="gathering-detail__private-locked-body">
                     <p className="gathering-detail__private-blur" aria-hidden="true">████ ██████ ███ ██</p>
-                    <p className="gathering-detail__private-locked-note">🔒 詳細地址將於主辦人批准後解鎖 🐈‍⬛</p>
+                    <p className="gathering-detail__private-locked-note">
+                      <ForumLockIcon size={12} /> 詳細地址將於主辦人批准後解鎖
+                    </p>
                   </div>
                 </div>
               ) : null}
@@ -449,16 +483,18 @@ export default function GatheringDetailPage({ seo = null }) {
                         className={`gathering-detail__attendance-icon gathering-detail__attendance-icon--${gathering.my_attendance.status}`}
                         aria-hidden="true"
                       >
-                        {gathering.my_attendance.status === 'pending' && '⏳'}
-                        {gathering.my_attendance.status === 'approved' && '🐾'}
-                        {gathering.my_attendance.status === 'rejected' && '🌙'}
-                        {gathering.my_attendance.status === 'waitlist' && '⏳'}
+                        {(gathering.my_attendance.status === 'pending' || gathering.my_attendance.status === 'waitlist') && (
+                          <ForumClockIcon size={20} />
+                        )}
+                        {gathering.my_attendance.status === 'approved' && <ForumPawIcon size={20} />}
+                        {gathering.my_attendance.status === 'rejected' && <ForumMoonIcon size={20} />}
                       </span>
                       <p className="gathering-detail__attendance-copy">
-                        {gathering.my_attendance.status === 'pending' && '申請已送出！小黑貓正幫你將靈魂信件叼去俾主辦人，批准後會喺 Inbox 收到通知喔 🐈‍⬛✨'}
-                        {gathering.my_attendance.status === 'approved' && '你已獲邀！私密地點／連結已喺上方解鎖，記得準時赴約 🐾'}
-                        {gathering.my_attendance.status === 'rejected' && '今次未獲邀。唔緊要，仲有好多月光聚會等緊你 🌙'}
-                        {gathering.my_attendance.status === 'waitlist' && '你而家喺候補名單，有位會第一時間通知你。'}
+                        {gathering.status === 'cancelled' && '此聚會已取消，無需再赴約。'}
+                        {gathering.status !== 'cancelled' && gathering.my_attendance.status === 'pending' && '申請已送出！小黑貓正幫你將靈魂信件叼去俾主辦人，批准後會喺 Inbox 收到通知喔'}
+                        {gathering.status !== 'cancelled' && gathering.my_attendance.status === 'approved' && '你已獲邀！私密地點／連結已喺上方解鎖，記得準時赴約'}
+                        {gathering.status !== 'cancelled' && gathering.my_attendance.status === 'rejected' && '今次未獲邀。唔緊要，仲有好多月光聚會等緊你'}
+                        {gathering.status !== 'cancelled' && gathering.my_attendance.status === 'waitlist' && '你而家喺候補名單，有位會第一時間通知你。'}
                       </p>
                     </div>
                     {gathering.my_attendance.knock_message && (
@@ -529,9 +565,10 @@ export default function GatheringDetailPage({ seo = null }) {
                       </label>
                     </div>
                     <p className="gathering-form__hint">
+                      <ForumLockIcon size={12} />{' '}
                       {gathering.is_online
-                        ? '🔒 電郵／電話只會喺主辦人批准後分享俾佢，僅用於聚會協調，唔會公開顯示；線上聚會電話可留空。'
-                        : '🔒 電郵／電話只會喺主辦人批准後分享俾佢，僅用於聚會協調，唔會公開顯示。若你撤回或取消參與，聯絡資料亦會失效。'}
+                        ? '電郵／電話只會喺主辦人批准後分享俾佢，僅用於聚會協調，唔會公開顯示；線上聚會電話可留空。'
+                        : '電郵／電話只會喺主辦人批准後分享俾佢，僅用於聚會協調，唔會公開顯示。若你撤回或取消參與，聯絡資料亦會失效。'}
                     </p>
 
                     {gathering.require_knock_message && (
@@ -588,7 +625,7 @@ export default function GatheringDetailPage({ seo = null }) {
           open={confirmKind === 'withdraw'}
           title={gathering?.my_attendance?.status === 'approved' ? '確定取消參與？' : '確定撤回申請？'}
           sub={gathering?.my_attendance?.status === 'approved'
-            ? '確定要放棄呢個聚會名額嗎？小黑貓會好傷心喔 🐈‍⬛'
+            ? '確定要放棄呢個聚會名額嗎？小黑貓會好傷心喔'
             : '退出後若聚會仍喺招募，可以重新申請。'}
           confirmLabel={gathering?.my_attendance?.status === 'approved' ? '取消參與' : '撤回申請'}
           cancelLabel="繼續留下"

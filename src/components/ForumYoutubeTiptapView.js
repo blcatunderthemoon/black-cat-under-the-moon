@@ -1,4 +1,5 @@
 import { NodeViewWrapper } from '@tiptap/react';
+import { UiTvIcon } from './UiIcons.js';
 
 export default function ForumYoutubeTiptapView({ node, deleteNode }) {
   const videoId = node.attrs.videoId;
@@ -14,7 +15,7 @@ export default function ForumYoutubeTiptapView({ node, deleteNode }) {
           <span className="forum-youtube-tiptap__play">▶</span>
         </div>
         <div className="forum-youtube-tiptap__body">
-          <span className="forum-youtube-tiptap__label">📺 YouTube 影片</span>
+          <span className="forum-youtube-tiptap__label"><span aria-hidden="true"><UiTvIcon size={14} /></span> YouTube 影片</span>
           {videoId && (
             <span className="forum-youtube-tiptap__id">{videoId}</span>
           )}

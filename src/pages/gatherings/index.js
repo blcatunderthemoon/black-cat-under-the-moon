@@ -9,6 +9,7 @@ import SeoHead from '../../components/SeoHead.js';
 import GatheringShell from '../../components/gatherings/GatheringShell.js';
 import GatheringMonthCalendar from '../../components/gatherings/GatheringMonthCalendar.js';
 import GatheringSafetyNotice from '../../components/gatherings/GatheringSafetyNotice.js';
+import { ForumMoonIcon, HeaderCalendarIcon } from '../../components/UiIcons.js';
 import { useAuth } from '../../lib/auth-context.js';
 import { getHongKongDateParts, getHongKongDateString } from '../../lib/hong-kong-time.js';
 import {
@@ -156,8 +157,10 @@ export default function GatheringsIndexPage() {
           <div className="gatherings-hero__copy">
             <p className="gatherings-hero__eyebrow">Moonlight Gatherings</p>
             <h1 className="gatherings-hero__title">
-              <span className="gatherings-hero__cal" aria-hidden="true">📅</span>
-              {' '}月光聚會
+              <span className="gatherings-hero__cal" aria-hidden="true">
+                <HeaderCalendarIcon size={26} />
+              </span>
+              <span className="gatherings-hero__title-text">月光聚會</span>
             </h1>
             <p className="gatherings-hero__lead">
               揀日子發起／參加聚會
@@ -191,7 +194,9 @@ export default function GatheringsIndexPage() {
           className="gathering-fab"
           aria-label="發起聚會"
         >
-          <span className="gathering-fab__icon" aria-hidden="true">🌙</span>
+          <span className="gathering-fab__icon" aria-hidden="true">
+            <ForumMoonIcon size={18} />
+          </span>
           <span className="gathering-fab__text">發起聚會</span>
         </Link>
       </GatheringShell>

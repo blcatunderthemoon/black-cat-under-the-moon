@@ -199,6 +199,12 @@ export async function canSendActiveLetter(senderId, recipientId, existingThreadI
 
   if (!thread) return { allowed: false, reason: 'no_existing_thread' };
 
+  const otherParticipant =
+    thread.participant_a === senderId ? thread.participant_b : thread.participant_a;
+  if (recipientId !== otherParticipant) {
+    return { allowed: false, reason: 'recipient_mismatch' };
+  }
+
   if (thread.source_type === 'photo_exchange') {
     return { allowed: false, reason: 'photo_exchange_thread' };
   }

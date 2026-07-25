@@ -29,6 +29,7 @@ import {
 } from '../lib/forum-tiptap-markdown.js';
 import { preserveMarkdownLeadingSpaces } from '../lib/forum-story.js';
 import ForumEditorOverlay from './ForumEditorOverlay.js';
+import { UiChartIcon, UiImageIcon } from './UiIcons.js';
 
 const MENTION_DEBOUNCE_MS = 220;
 
@@ -632,7 +633,7 @@ export default function ForumTiptapEditor({
             disabled={toolbarDisabled}
             onClick={openPollDialog}
           >
-            📊
+            <UiChartIcon size={16} />
           </button>
           <button
             type="button"
@@ -661,7 +662,7 @@ export default function ForumTiptapEditor({
                 disabled={toolbarDisabled}
                 onClick={() => fileInputRef.current?.click()}
               >
-                {uploading ? '…' : '🖼'}
+                {uploading ? '…' : <UiImageIcon size={16} />}
               </button>
             </>
           )}
@@ -720,7 +721,7 @@ export default function ForumTiptapEditor({
         <ForumEditorOverlay
           open={pollDialogOpen}
           onClose={closePollDialog}
-          title="📊 新增投票"
+          title={<><span aria-hidden="true"><UiChartIcon size={16} /></span> 新增投票</>}
           titleId="forum-poll-compose-title"
         >
           <label className="forum-poll-compose__field">

@@ -1,4 +1,5 @@
 import { getFamilyMeta } from '../lib/mirror-personality.js';
+import { MirrorTypeIcon } from './UiIcons.js';
 
 /**
  * Mirror cat family badge — compact (post cards) or hero (sort bar).
@@ -46,7 +47,9 @@ export default function MirrorFamilyBadge({
       style={{ '--family-color': meta.color, '--family-glow': meta.glow }}
       title={tip}
     >
-      <span className="mirror-family-badge__emoji" aria-hidden="true">{meta.emoji}</span>
+      <span className="mirror-family-badge__emoji" aria-hidden="true">
+        <MirrorTypeIcon type={meta.key} size={14} />
+      </span>
       <span className="mirror-family-badge__name">{meta.nameZh}</span>
     </span>
   );

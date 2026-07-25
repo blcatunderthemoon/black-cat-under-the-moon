@@ -5,6 +5,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import MoonJourneyPanel from './MoonJourneyPanel.js';
 import { getHongKongDateString } from '../lib/moon-journey.js';
+import { ForumMoonIcon } from './ForumIcons.js';
 
 const NUDGE_MS = 4500;
 const NUDGE_STORAGE_PREFIX = 'forum_mj_nudge_';
@@ -99,7 +100,9 @@ export default function ForumMoonJourneyMobile({
           onClick={openPanel}
           aria-live="polite"
         >
-          <span className="forum-mj-mobile-nudge__moon" aria-hidden="true">🌙</span>
+          <span className="forum-mj-mobile-nudge__moon" aria-hidden="true">
+            <ForumMoonIcon size={18} />
+          </span>
           <span className="forum-mj-mobile-nudge__copy">
             <strong>今日還未打卡</strong>
             <span>+2 EXP · 點此打開</span>

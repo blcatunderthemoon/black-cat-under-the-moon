@@ -1,12 +1,19 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import {
+  HeaderShieldIcon,
+  HeaderMailIcon,
+  HeaderForumIcon,
+  ForumLockIcon,
+  ForumEyeIcon,
+} from './ForumIcons.js';
 
 const ITEMS = [
-  { href: '/forum/guardian', label: '檢舉佇列', icon: '📋' },
-  { href: '/forum/guardian/team', label: '版主團隊', icon: '🛡️' },
-  { href: '/forum/guardian/monitor', label: '內容監控', icon: '🔍' },
-  { href: '/admin/email-automation', label: '郵件自動化', icon: '📧' },
-  { href: '/admin/login-lockout', label: '登入鎖定', icon: '🔓' },
+  { href: '/forum/guardian', label: '檢舉佇列', Icon: HeaderForumIcon },
+  { href: '/forum/guardian/team', label: '版主團隊', Icon: HeaderShieldIcon },
+  { href: '/forum/guardian/monitor', label: '內容監控', Icon: ForumEyeIcon },
+  { href: '/admin/email-automation', label: '郵件自動化', Icon: HeaderMailIcon },
+  { href: '/admin/login-lockout', label: '登入鎖定', Icon: ForumLockIcon },
 ];
 
 export default function ForumAdminNav({ layout = 'horizontal' }) {
@@ -19,6 +26,7 @@ export default function ForumAdminNav({ layout = 'horizontal' }) {
     >
       {ITEMS.map((item) => {
         const active = router.pathname === item.href;
+        const Icon = item.Icon;
         return (
           <Link
             key={item.href}
@@ -26,7 +34,9 @@ export default function ForumAdminNav({ layout = 'horizontal' }) {
             className={`forum-admin-nav__link${active ? ' forum-admin-nav__link--active' : ''}`}
             aria-current={active ? 'page' : undefined}
           >
-            <span className="forum-admin-nav__icon" aria-hidden="true">{item.icon}</span>
+            <span className="forum-admin-nav__icon" aria-hidden="true">
+              <Icon size={14} />
+            </span>
             {item.label}
           </Link>
         );

@@ -21,6 +21,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/auth-nav.css?v=20260725hdrfix">
   <link rel="stylesheet" href="css/mobile-webview-scroll.css?v=20260713echo">
+  <link rel="stylesheet" href="css/legal-ui-icons.css?v=20260725icons">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -301,7 +302,7 @@
     }
     .feature-link:last-child { margin-bottom: 0; }
     .feature-link:hover { background: rgba(124,92,252,.14); border-color: rgba(124,92,252,.4); }
-    .feature-link__icon { font-size: 1.1rem; flex-shrink: 0; }
+    .feature-link__icon { flex-shrink: 0; color: var(--purple-l); }
     .feature-link__text { flex: 1; }
     .feature-link__arrow { color: var(--purple-l); font-size: .75rem; }
 
@@ -323,6 +324,9 @@
     }
     .about-guides-entry__eyebrow {
       margin: 0 0 0.35rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
       font-size: 0.72rem;
       font-weight: 600;
       letter-spacing: 0.08em;
@@ -407,14 +411,14 @@
     </header>
 
     <div class="section">
-      <div class="section-title">🌙 我們是誰</div>
+      <div class="section-title"><span class="ui-ico ui-ico--moon" aria-hidden="true"></span>我們是誰</div>
       <div class="section-body">
         <p>Black Cat Under The Moon 是一個結合<span class="highlight">心理測驗</span>、<span class="highlight">靈魂共鳴分析</span>與<span class="highlight">社群傾訴</span>的線上空間。我們相信，認識自己是一段值得溫柔對待的旅程——在月色之下，慢慢找到屬於你的節奏。</p>
       </div>
     </div>
 
     <div class="section">
-      <div class="section-title">🌈 為香港女同志而設</div>
+      <div class="section-title"><span class="ui-ico ui-ico--rainbow" aria-hidden="true"></span>為香港女同志而設</div>
       <div class="section-body">
         <p>本平台專為<span class="highlight">香港女同志社群</span>而設，用熟悉的語言與生活場景設計問卷與互動，讓你在安全、被理解的環境裡探索自我、連結同路人。</p>
         <p>無論你正在認識自己的取向、尋找合拍的人，或只是想找一個可以說心事的地方——這裡都歡迎你。</p>
@@ -422,17 +426,17 @@
     </div>
 
     <div class="section">
-      <div class="section-title">🪞 認識自己 — Mirror Mode</div>
+      <div class="section-title"><span class="ui-ico ui-ico--mirror" aria-hidden="true"></span>認識自己 — Mirror Mode</div>
       <div class="section-body">
         <p>透過 <span class="highlight">Mirror Mode</span> 心理測驗，探索你的性格鏡像，歸屬於四大貓家族之一（獨處、暖陽、秘境、守護），並獲得專屬的 <span class="highlight">Mirror Card</span>。</p>
         <p>測驗不是為你貼標籤，而是幫你看見自己獨特的愛情與相處方式。</p>
         <a class="feature-link" href="mirror.html">
-          <span class="feature-link__icon">🔮</span>
+          <span class="feature-link__icon"><span class="ui-ico ui-ico--crystal" aria-hidden="true"></span></span>
           <span class="feature-link__text">開始 Mirror Mode 測驗</span>
           <span class="feature-link__arrow">▸</span>
         </a>
         <a class="feature-link" href="/cat-families">
-          <span class="feature-link__icon">🐾</span>
+          <span class="feature-link__icon"><span class="ui-ico ui-ico--paw" aria-hidden="true"></span></span>
           <span class="feature-link__text">了解四大貓家族</span>
           <span class="feature-link__arrow">▸</span>
         </a>
@@ -440,11 +444,11 @@
     </div>
 
     <div class="section">
-      <div class="section-title">💫 月下緣份 — Echo Mode</div>
+      <div class="section-title"><span class="ui-ico ui-ico--sparkle" aria-hidden="true"></span>月下緣份 — Echo Mode</div>
       <div class="section-body">
         <p><span class="highlight">Echo Mode</span> 心靈契合度問卷涵蓋價值觀、生活節奏、溝通方式等多個維度。系統會為你找出最合拍的靈魂同頻者候選，連線成功後透過 Inbox 與電郵通知你。</p>
         <a class="feature-link" href="echo.html">
-          <span class="feature-link__icon">💫</span>
+          <span class="feature-link__icon"><span class="ui-ico ui-ico--sparkle" aria-hidden="true"></span></span>
           <span class="feature-link__text">開始 Echo Mode 連線</span>
           <span class="feature-link__arrow">▸</span>
         </a>
@@ -452,7 +456,7 @@
     </div>
 
     <div class="section">
-      <div class="section-title">📅 月光聚會 — Moonlight Gatherings</div>
+      <div class="section-title"><span class="ui-ico ui-ico--calendar" aria-hidden="true"></span>月光聚會 — Moonlight Gatherings</div>
       <div class="section-body">
         <p><span class="highlight">月光聚會</span>是一個以香港時間顯示嘅活動月曆，集合社群裡真人見面同線上嘅聚會。你可以按日子瀏覽、申請加入，主辦人審批後就可以一齊參與。</p>
         <p><strong>點樣參加：</strong></p>
@@ -477,7 +481,7 @@
           <li>線下見面請揀公眾地方，並讓可信嘅朋友知悉行程。</li>
         </ul>
         <a class="feature-link" href="/gatherings">
-          <span class="feature-link__icon">🌙</span>
+          <span class="feature-link__icon"><span class="ui-ico ui-ico--moon" aria-hidden="true"></span></span>
           <span class="feature-link__text">進入月光聚會月曆</span>
           <span class="feature-link__arrow">▸</span>
         </a>
@@ -485,15 +489,15 @@
     </div>
 
     <div class="section">
-      <div class="section-title">✨ 更多方式連結</div>
+      <div class="section-title"><span class="ui-ico ui-ico--sparkle" aria-hidden="true"></span>更多方式連結</div>
       <div class="section-body">
         <a class="feature-link" href="drift-bottle.html">
-          <span class="feature-link__icon">🌙</span>
+          <span class="feature-link__icon"><span class="ui-ico ui-ico--bottle" aria-hidden="true"></span></span>
           <span class="feature-link__text"><strong>月光漂流瓶</strong> — 完全匿名，把心事丟進大海</span>
           <span class="feature-link__arrow">▸</span>
         </a>
         <a class="feature-link" href="/forum">
-          <span class="feature-link__icon">🔥</span>
+          <span class="feature-link__icon"><span class="ui-ico ui-ico--flame" aria-hidden="true"></span></span>
           <span class="feature-link__text"><strong>黑貓樹洞</strong> — 圍爐傾訴、認識同頻的她</span>
           <span class="feature-link__arrow">▸</span>
         </a>
@@ -501,7 +505,7 @@
     </div>
 
     <div class="section">
-      <div class="section-title">💎 Moonlight Passport</div>
+      <div class="section-title"><span class="ui-ico ui-ico--gem" aria-hidden="true"></span>Moonlight Passport</div>
       <div class="section-body">
         <p><span class="highlight">Moonlight Passport</span> 是為想更深入探索自己、主動連結同頻的她而設的會員方案。升級後可解鎖更多社群與個人化功能，讓你在月色下走得更遠。</p>
         <ul>
@@ -513,7 +517,7 @@
         </ul>
         <p>交換相前需先上傳你的交換用相片；對方同意並回傳後，雙方才可查看清晰版本。相片僅用於交換功能，不會公開顯示在 Mirror Card 上。</p>
         <a class="feature-link" href="/premium">
-          <span class="feature-link__icon">🌙</span>
+          <span class="feature-link__icon"><span class="ui-ico ui-ico--moon" aria-hidden="true"></span></span>
           <span class="feature-link__text">了解 Moonlight Passport 方案與升級</span>
           <span class="feature-link__arrow">▸</span>
         </a>
@@ -521,14 +525,14 @@
     </div>
 
     <div class="section section--notice">
-      <div class="section-title">⚠️ 重要提醒</div>
+      <div class="section-title"><span class="ui-ico ui-ico--warn" aria-hidden="true"></span>重要提醒</div>
       <div class="section-body">
         <p>本平台的心理測驗與共鳴分析功能屬<span class="highlight">自我探索與娛樂用途</span>，並非臨床心理評估、醫療診斷或專業諮詢服務。若你正面對情緒困擾或需要專業支援，請尋求合資格的心理健康服務。</p>
       </div>
     </div>
 
     <aside class="about-guides-entry" aria-labelledby="about-guides-title">
-      <p class="about-guides-entry__eyebrow">✦ 文章與指南</p>
+      <p class="about-guides-entry__eyebrow"><span class="ui-ico ui-ico--book" aria-hidden="true"></span> 文章與指南</p>
       <h2 class="about-guides-entry__title" id="about-guides-title">交友、約會與安全指南</h2>
       <p class="about-guides-entry__desc">
         香港Les交友入門、約會地點、第一次去 Les Bar，同埋<strong>交友安全</strong>實用文章 — 幫你慢慢認識自己、認識彼此。

@@ -3,11 +3,11 @@ import {
   PERSONALITY_TYPES,
   CAT_IMG_MAP,
   CAT_GLOW_MAP,
-  MIRROR_EMOJI,
   TYPE_ORDER,
 } from '../lib/mirror-personality.js';
 import { TRAIT_LABELS } from '../lib/mirror-scoring-v3.js';
 import PixelMixedLabel from './PixelMixedLabel.js';
+import { MirrorTypeIcon } from './UiIcons.js';
 
 const GUIDE_ZH = 'cat-families-card__zh';
 const GUIDE_EN = 'cat-families-card__en';
@@ -59,8 +59,8 @@ export default function CatFamiliesGuide() {
                 />
               </div>
               <div className="cat-families-card__body">
-                <p className="cat-families-card__emoji" aria-hidden="true">
-                  {MIRROR_EMOJI[key]}
+                <p className="cat-families-card__icon" aria-hidden="true">
+                  <MirrorTypeIcon type={key} size={22} />
                 </p>
                 <h2 className="cat-families-card__name">
                   <PixelMixedLabel text={family.nameZh} zhClass={GUIDE_ZH} enClass={GUIDE_EN} />

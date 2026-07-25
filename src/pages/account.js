@@ -22,6 +22,7 @@ import { validatePassword, PASSWORD_MIN_LENGTH, PASSWORD_REQUIREMENTS_LABEL } fr
 import PasswordRequirementsChecklist from '../components/PasswordRequirementsChecklist.js';
 import PageLoadingShell from '../components/PageLoadingShell.js';
 import { patchMeCacheDisplayName } from '../lib/me-cache.js';
+import { HeaderCheckIcon, UiWarningIcon } from '../components/UiIcons.js';
 
 export default function AccountPage() {
   const router = useRouter();
@@ -220,7 +221,7 @@ export default function AccountPage() {
       const data = await r.json();
       if (r.ok) {
         setSaveOk(true);
-        setSaveMsg('✅ 已儲存！');
+        setSaveMsg('已儲存！');
         const userId = session.user.id;
         const newName = nameCheck.value;
         patchMeCacheDisplayName(userId, newName);
@@ -254,7 +255,7 @@ export default function AccountPage() {
       const client = getBrowserClient();
       const { error } = await client.auth.updateUser({ password: passwordCheck.value });
       if (error) { setPwOk(false); setPwMsg(error.message || '密碼更改失敗，請重試。'); }
-      else { setPwOk(true); setPwMsg('✅ 密碼已更新！'); setPwNew(''); setPwConfirm(''); }
+      else { setPwOk(true); setPwMsg('密碼已更新！'); setPwNew(''); setPwConfirm(''); }
     } catch {
       setPwOk(false);
       setPwMsg('網路錯誤，請重試。');
@@ -274,7 +275,7 @@ export default function AccountPage() {
         body: JSON.stringify({ notification_prefs: notifPrefs }),
       });
       const data = await r.json();
-      if (r.ok) { setNotifOk(true); setNotifMsg('✅ 通知設定已儲存！'); }
+      if (r.ok) { setNotifOk(true); setNotifMsg('通知設定已儲存！'); }
       else { setNotifOk(false); setNotifMsg(data.error || '儲存失敗。'); }
     } catch { setNotifOk(false); setNotifMsg('網路錯誤，請重試。'); }
     finally { setNotifSaving(false); }
@@ -393,8 +394,23 @@ export default function AccountPage() {
           </div>
           <div className="pixel-info-row">
             <span style={{ color: 'var(--text-muted)' }}>Email 驗證</span>
-            <span style={{ color: session.user?.email_confirmed_at ? '#4ade80' : '#fbbf24' }}>
-              {session.user?.email_confirmed_at ? '✅ 已驗證' : '⚠️ 未驗證'}
+            <span
+              className="account-email-verify"
+              style={{ color: session.user?.email_confirmed_at ? '#4ade80' : '#fbbf24' }}
+            >
+              {session.user?.email_confirmed_at ? (
+                <>
+                  <HeaderCheckIcon size={14} />
+                  {' '}
+                  已驗證
+                </>
+              ) : (
+                <>
+                  <UiWarningIcon size={14} />
+                  {' '}
+                  未驗證
+                </>
+              )}
             </span>
           </div>
           <div className="pixel-info-row">

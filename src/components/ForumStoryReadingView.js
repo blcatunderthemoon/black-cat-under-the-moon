@@ -3,6 +3,8 @@ import Link from 'next/link';
 import ForumMarkdownBody from './ForumMarkdownBody.js';
 import { getChapterByNumber, chapterDisplayTitle, isGuestReadableChapter } from '../lib/forum-story-chapters.js';
 import { saveStoryReadingChapter } from '../lib/forum-story-reading-progress.js';
+import { ForumMoonIcon, ForumLockIcon } from './ForumIcons.js';
+
 const READ_MODE = 'night';
 
 export default function ForumStoryReadingView({
@@ -179,7 +181,9 @@ export default function ForumStoryReadingView({
           {isLocked ? (
             isCommentLock ? (
               <div className="forum-story-chapters__login-gate forum-story-reading__login-gate forum-story-chapters__login-gate--bonus">
-                <span className="forum-story-chapters__login-icon" aria-hidden="true">🔒</span>
+                <span className="forum-story-chapters__login-icon" aria-hidden="true">
+                  <ForumLockIcon size={18} />
+                </span>
                 <p className="forum-story-chapters__login-title">番外篇 · 留言解鎖</p>
                 <p className="forum-story-chapters__login-text">在下方留言，即可解鎖這段番外篇內容。</p>
                 <button
@@ -192,7 +196,9 @@ export default function ForumStoryReadingView({
               </div>
             ) : (
               <div className="forum-story-chapters__login-gate forum-story-reading__login-gate">
-                <span className="forum-story-chapters__login-icon" aria-hidden="true">🔒</span>
+                <span className="forum-story-chapters__login-icon" aria-hidden="true">
+                  <ForumLockIcon size={18} />
+                </span>
                 <p className="forum-story-chapters__login-text">登入會員即可閱讀章節內容</p>
                 <Link href={loginHref} className="forum-story-chapters__login-btn">
                   登入閱讀
@@ -232,7 +238,9 @@ export default function ForumStoryReadingView({
               </button>
             )}
             <div className="forum-story-reading__end">
-              <span className="forum-story-reading__end-sigil" aria-hidden="true">{post.story_completed ? '🌕' : '🌙'}</span>
+              <span className="forum-story-reading__end-sigil" aria-hidden="true">
+                <ForumMoonIcon size={22} />
+              </span>
               <span className="forum-story-reading__end-text">{post.story_completed ? '已完結' : '暫無新章節'}</span>
               <span className="forum-story-reading__end-sub">
                 {post.story_completed ? '感謝閱讀，故事到此圓滿' : '感謝閱讀，靜候作者更新'}

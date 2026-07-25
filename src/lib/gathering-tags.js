@@ -1,19 +1,24 @@
-/**
+﻿/**
  * Moonlight Gatherings — preset + custom event tags.
- * Spec: docs/MOONLIGHT-GATHERINGS-PLAN.md §3.1
+ * Spec: docs/community/MOONLIGHT-GATHERINGS-PLAN.md §3.1
  */
 
 export const GATHERING_TAGS = [
-  { id: 'boardgame', label: '#深夜桌遊' },
-  { id: 'drinks', label: '#微醺酒局' },
-  { id: 'treehole', label: '#心靈樹洞' },
-  { id: 'hiking', label: '#戶外行山' },
+  { id: 'boardgame', label: '#深夜枱遊' },
+  { id: 'drinks', label: '#去酒吧' },
+  { id: 'treehole', label: '#傾偈樹洞' },
+  { id: 'hiking', label: '#行山局' },
   { id: 'movie', label: '#睇戲搭子' },
   { id: 'bookclub', label: '#讀書會' },
-  { id: 'tarot', label: '#塔羅占卜夜' },
-  { id: 'voice', label: '#線上語音' },
+  { id: 'tarot', label: '#睇塔羅' },
+  { id: 'voice', label: '#語音房' },
   { id: 'chat', label: '#純傾計' },
-  { id: 'sports', label: '#運動局' },
+  { id: 'sports', label: '#打波局' },
+  { id: 'cafe', label: '#咖啡局' },
+  { id: 'karaoke', label: '#唱K' },
+  { id: 'yumcha', label: '#飲茶' },
+  { id: 'hotpot', label: '#打邊爐' },
+  { id: 'mall', label: '#商場行街' },
 ];
 
 export const GATHERING_TAG_IDS = GATHERING_TAGS.map((t) => t.id);

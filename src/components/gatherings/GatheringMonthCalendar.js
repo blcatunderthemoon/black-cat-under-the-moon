@@ -12,6 +12,7 @@ import {
 } from '../../lib/gathering-calendar.js';
 import GatheringCard from './GatheringCard.js';
 import LoadingText from '../LoadingText.js';
+import { ForumMoonIcon } from '../UiIcons.js';
 
 function formatMonthTitle(year, month) {
   return `${year}年${month}月`;
@@ -110,7 +111,9 @@ export default function GatheringMonthCalendar({
               <span className="gathering-cal__day-num">{cell.day}</span>
               {count > 0 && (
                 <span className="gathering-cal__marker" aria-hidden="true">
-                  <span className="gathering-cal__marker-moon">🌙</span>
+                  <span className="gathering-cal__marker-moon" aria-hidden="true">
+                    <ForumMoonIcon size={11} />
+                  </span>
                   {count > 1 && <span className="gathering-cal__marker-count">{count}</span>}
                 </span>
               )}

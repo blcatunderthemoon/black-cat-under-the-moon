@@ -9,6 +9,7 @@ import SeoHead from '../../components/SeoHead.js';
 import GatheringShell from '../../components/gatherings/GatheringShell.js';
 import GatheringCreateForm from '../../components/gatherings/GatheringCreateForm.js';
 import MoonLoading from '../../components/MoonLoading.js';
+import { HeaderCalendarIcon } from '../../components/UiIcons.js';
 import { useAuth } from '../../lib/auth-context.js';
 
 function formatChosenDate(dateKey) {
@@ -66,7 +67,9 @@ export default function GatheringsNewPage() {
           <p className="gatherings-hero__eyebrow">發起聚會</p>
           {chosenDateLabel && (
             <p className="gatherings-hero__chosen-date">
-              <span className="gatherings-hero__chosen-date-icon" aria-hidden="true">📅</span>
+              <span className="gatherings-hero__chosen-date-icon" aria-hidden="true">
+                <HeaderCalendarIcon size={16} />
+              </span>
               <span className="gatherings-hero__chosen-date-label">選定日期</span>
               <strong>{chosenDateLabel}</strong>
             </p>

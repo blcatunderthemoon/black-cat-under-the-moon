@@ -5,8 +5,13 @@ import { MOONLIGHT_PASSPORT_BRAND } from './premium.js';
 export const MANUAL_PAYMENT_AMOUNT_HKD = 58;
 export const MANUAL_PAYMENT_SUPPORT_EMAIL = 'blcatunderthemoon@gmail.com';
 
-/** Default site asset; override with NEXT_PUBLIC_PAYME_QR_URL if needed. */
-export const MANUAL_PAYMENT_QR_URL = process.env.NEXT_PUBLIC_PAYME_QR_URL || '/PayCode.jpg';
+/**
+ * Authenticated QR endpoint (login required).
+ * File lives in secure-assets/PayCode.jpg (not under public/).
+ * Optional override: PAYME_QR_FILE_PATH (server-only).
+ */
+export const MANUAL_PAYMENT_QR_API = '/api/billing/payme-qr';
+
 export const MANUAL_PAYMENT_FPS_ID = process.env.NEXT_PUBLIC_MANUAL_FPS_ID || '';
 export const MANUAL_PAYMENT_PAYME_LINK = process.env.NEXT_PUBLIC_PAYME_LINK || '';
 

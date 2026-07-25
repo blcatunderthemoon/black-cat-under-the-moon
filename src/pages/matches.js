@@ -12,6 +12,7 @@ import AppShell from '../components/AppShell.js';
 import AppHeaderAuth from '../components/AppHeaderAuth.js';
 import { MOONLIGHT_PASSPORT_BRAND } from '../lib/premium.js';
 import MoonLoading from '../components/MoonLoading.js';
+import { HeaderMailIcon, ForumLockIcon, ForumPawIcon } from '../components/UiIcons.js';
 
 function ScoreRing({ score }) {
   const r = 24;
@@ -249,7 +250,7 @@ function MatchCard({ match, onOpenCard }) {
             )}
             {thread_id && (
               <Link href={`/inbox/${thread_id}`} className="pixel-link" style={{ fontSize: 12, padding: '4px 10px', border: '1px solid rgba(80,250,123,.3)', color: '#50fa7b' }}>
-                開啟對話 ✉
+                開啟對話 <span aria-hidden="true"><HeaderMailIcon size={12} /></span>
               </Link>
             )}
           </div>
@@ -281,7 +282,7 @@ function LockedScreen() {
         ))}
       </div>
       <div className="match-locked-overlay">
-        <div style={{ fontSize: 36 }}>🔒</div>
+        <div style={{ fontSize: 36 }} aria-hidden="true"><ForumLockIcon size={36} /></div>
         <h2 className="pixel-title" style={{ fontSize: 10 }}>{MOONLIGHT_PASSPORT_BRAND}</h2>
         <p className="pixel-subtitle" style={{ lineHeight: 1.7 }}>
           升級 {MOONLIGHT_PASSPORT_BRAND} 即可查看所有連線成功的成員<br />
@@ -374,7 +375,7 @@ export default function MatchesPage() {
 
         {state === 'empty' && (
           <div className="pixel-empty">
-            <p style={{ fontSize: 32, margin: 0 }}>🐈‍⬛</p>
+            <p style={{ fontSize: 32, margin: 0 }} aria-hidden="true"><ForumPawIcon size={32} /></p>
             <p className="pixel-title" style={{ fontSize: 10 }}>
               {hasSubmitted ? '暫無連線記錄' : '連線尚未開始'}
             </p>

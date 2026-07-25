@@ -61,8 +61,8 @@ export async function notifyGatheringApplication({
   const title = String(gatheringTitle || '月光聚會').slice(0, 40);
   const name = applicantName || '匿名貓咪';
   const content = autoApproved
-    ? `🌙 ${name} 已加入你的聚會「${title}」${when ? `（${when}）` : ''}（自動批准）。${knock}`
-    : `🌙 有人申請加入你的聚會「${title}」${when ? `（${when}）` : ''}。申請人：${name}。${knock}`;
+    ? `${name} 已加入你的聚會「${title}」${when ? `（${when}）` : ''}（自動批准）。${knock}`
+    : `有人申請加入你的聚會「${title}」${when ? `（${when}）` : ''}。申請人：${name}。${knock}`;
 
   return sendSystemMessage(admin, hostId, content, {
     kind: autoApproved ? 'gathering_joined' : 'gathering_application',
@@ -94,7 +94,7 @@ export async function notifyGatheringApplicationReceived({
   }
   const when = formatGatheringHkTime(startsAt);
   const title = String(gatheringTitle || '月光聚會').slice(0, 40);
-  const content = `🌙 你已申請「${title}」${when ? `（${when}）` : ''}。等候主辦人審核，結果會喺 Inbox 通知你。`;
+  const content = `你已申請「${title}」${when ? `（${when}）` : ''}。等候主辦人審核，結果會喺 Inbox 通知你。`;
   return sendSystemMessage(admin, applicantId, content, {
     kind: 'gathering_applied',
     gathering_id: gatheringId,
@@ -115,8 +115,8 @@ export async function notifyGatheringDecision({
   const admin = getAdminClient();
   const title = String(gatheringTitle || '月光聚會').slice(0, 40);
   const content = approved
-    ? `✅ 主辦人已批准你參加「${title}」。可到活動頁查看私密地點／連結。`
-    : `🌙 主辦人婉拒了你參加「${title}」的申請。等候下一輪月光吧。`;
+    ? `主辦人已批准你參加「${title}」。可到活動頁查看私密地點／連結。`
+    : `主辦人婉拒了你參加「${title}」的申請。等候下一輪月光吧。`;
   return sendSystemMessage(admin, applicantId, content, {
     kind: approved ? 'gathering_approved' : 'gathering_rejected',
     gathering_id: gatheringId,
@@ -236,7 +236,7 @@ export async function notifyGatheringCancelled({
   const admin = getAdminClient();
   const title = String(gatheringTitle || '月光聚會').slice(0, 40);
   const reasonText = reason ? `原因：${String(reason).slice(0, 100)}` : '';
-  const content = `❌ 聚會「${title}」已取消。${reasonText}`;
+  const content = `聚會「${title}」已取消。${reasonText}`;
   let any = false;
   for (const userId of userIds || []) {
     const ok = await sendSystemMessage(admin, userId, content, {

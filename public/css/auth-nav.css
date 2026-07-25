@@ -775,10 +775,19 @@ html:has(.mode-top-bar--quiz) {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   font-size: 12px;
   line-height: 1;
+  flex-shrink: 0;
+}
+
+.auth-nav-badge__icon .header-nav-icon,
+.app-header__nav-icon .header-nav-icon,
+.header-nav-icon {
+  display: block;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
 }
 

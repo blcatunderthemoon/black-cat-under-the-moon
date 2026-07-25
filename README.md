@@ -5,7 +5,7 @@
 **Live：** [www.blackcatunderthemoon.com](https://www.blackcatunderthemoon.com)  
 參與本平台即表示同意[使用條款](/tos.html)與[私隱政策](/privacy.html)。
 
-本 README 以**開發者入門**為主。產品規格與深度技術文件見 `docs/`（本地／內部文件；多數未進公開 repo）。配對計分見 [docs/SCORING.md](docs/SCORING.md)（若你的工作副本有該檔）。
+本 README 以**開發者入門**為主。產品規格與深度技術文件見 `docs/`（本地／內部文件；多數未進公開 repo；索引見 [docs/README.md](docs/README.md)）。配對計分見 [docs/matching/SCORING.md](docs/matching/SCORING.md)（若你的工作副本有該檔）。
 
 ---
 
@@ -187,7 +187,7 @@ npm run dev
 
 **PayPal 本地 webhook（選填）：**
 
-本地需用 [ngrok](https://ngrok.com/) 等工具將 `https://xxxx.ngrok.app/api/billing/webhook` 登記至 PayPal Developer Dashboard。詳見 [docs/paypal-onboarding.md](docs/paypal-onboarding.md)。
+本地需用 [ngrok](https://ngrok.com/) 等工具將 `https://xxxx.ngrok.app/api/billing/webhook` 登記至 PayPal Developer Dashboard。詳見 [docs/billing/paypal-onboarding.md](docs/billing/paypal-onboarding.md)。
 
 ---
 
@@ -248,7 +248,7 @@ npm run dev
 ## 登入安全（摘要）
 
 登入具暴力破解防護：連續密碼錯誤達門檻會暫時鎖定該帳號；管理員可於內部工具解鎖。  
-**公開 README 不列出精確次數／時長／Redis key／管理路徑**，以免協助攻擊調參。完整規格見內部 `docs/AUTH-LOGIN-LOCKOUT.md`。
+**公開 README 不列出精確次數／時長／Redis key／管理路徑**，以免協助攻擊調參。完整規格見內部 `docs/ops/AUTH-LOGIN-LOCKOUT.md`。
 
 ---
 
@@ -258,8 +258,8 @@ npm run dev
 2. **六維度引擎** — `src/lib/intelligence.js` 的 `computeCompatibility()`：火花、情感、生活、溝通、關係期望、衝突風險 → 0–100 分
 3. **等級** — 80+ 靈魂伴侶候選｜65+ 高度契合｜50+ 值得了解｜35+ 需磨合｜以下差異較大
 
-完整權重、非線性調整、地雷矩陣 → [docs/SCORING.md](docs/SCORING.md)  
-Mirror 測驗規格 → [docs/MIRROR-MODE-SPEC.md](docs/MIRROR-MODE-SPEC.md)（v3 Trait 設計 → [docs/MIRROR-MODE-V3-DESIGN.md](docs/MIRROR-MODE-V3-DESIGN.md)）
+完整權重、非線性調整、地雷矩陣 → [docs/matching/SCORING.md](docs/matching/SCORING.md)
+Mirror 測驗規格 → [docs/mirror/MIRROR-MODE-SPEC.md](docs/mirror/MIRROR-MODE-SPEC.md)（v3 Trait 設計 → [docs/mirror/MIRROR-MODE-V3-DESIGN.md](docs/mirror/MIRROR-MODE-V3-DESIGN.md)）
 
 ---
 
@@ -290,7 +290,7 @@ npm run test:cards                        # 配對測試 + HTML 卡片
 npm run build:mirror-v3                   # 題庫 + 敘事 bundle
 npm run export:excel                      # 匯出配對 Excel（本地）
 npm run backup:supabase                   # 只讀備份至本機 backups/（勿 commit）
-# 還原／排程／管理腳本見內部 docs/BACKUP.md；還原會寫入資料庫，慎用
+# 還原／排程／管理腳本見內部 docs/ops/BACKUP.md；還原會寫入資料庫，慎用
 ```
 
 ---

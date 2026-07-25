@@ -1,6 +1,6 @@
-/**
+﻿/**
  * Moonlight Gatherings — core business logic (Phase 1 MVP).
- * Spec: docs/MOONLIGHT-GATHERINGS-PLAN.md
+ * Spec: docs/community/MOONLIGHT-GATHERINGS-PLAN.md
  * SERVER-SAFE (no React). Client pages may import constants / pure helpers.
  */
 
@@ -426,6 +426,8 @@ export function toPublicGathering(row, {
     min_moon_level: row.min_moon_level,
     premium_only: !!row.premium_only,
     status: lazyUpdateStatus(row),
+    cancel_reason: row.cancel_reason || null,
+    cancelled_at: row.cancelled_at || null,
     my_attendance: myAttendance
       ? {
         status: myAttendance.status,

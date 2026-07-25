@@ -1696,6 +1696,11 @@
 .inbox-system-notice--apply::before { background: #bd93f9; }
 .inbox-system-notice--muted::before { background: rgba(232, 228, 240, 0.4); }
 .inbox-system-notice--warn::before { background: #ff8c42; }
+.inbox-system-notice--danger::before { background: #ff6b6b; }
+
+.inbox-system-notice--danger {
+  border-color: rgba(255, 120, 110, 0.45);
+}
 
 .inbox-system-notice--new {
   border-color: rgba(0, 229, 255, 0.45);
@@ -1712,21 +1717,31 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 4px 8px;
+  gap: 5px;
+  padding: 4px 9px;
   font-family: var(--font-zh, "Noto Sans TC", "PingFang HK", sans-serif);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   line-height: 1.2;
   color: #061820;
-  background: #00e5ff;
+  background: linear-gradient(135deg, #7cf0ff 0%, #00e5ff 100%);
   border: 1px solid rgba(170, 245, 255, 0.95);
-  border-radius: 999px;
+  border-radius: 4px;
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.35) inset,
-    0 0 0 1px rgba(0, 40, 50, 0.35),
-    0 0 10px rgba(0, 229, 255, 0.28);
+    0 0 0 1px rgba(0, 40, 50, 0.28);
   pointer-events: none;
+}
+
+.inbox-system-notice__new-tag::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #061820;
+  opacity: 0.8;
+  flex-shrink: 0;
 }
 
 .inbox-letter-row--system .inbox-letter-row__new-badge--applicant {
@@ -1759,18 +1774,68 @@
   height: 38px;
   font-size: 1.15rem;
   line-height: 1;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 224, 102, 0.3);
+  border-radius: 8px;
+  color: #ffe066;
+  background: rgba(255, 224, 102, 0.08);
+  border: 1px solid rgba(255, 224, 102, 0.32);
 }
+
+.inbox-system-notice--ok .inbox-system-notice__icon {
+  color: #7ddea0;
+  background: rgba(80, 250, 123, 0.1);
+  border-color: rgba(80, 250, 123, 0.35);
+}
+
+.inbox-system-notice--apply .inbox-system-notice__icon {
+  color: #cbb6ff;
+  background: rgba(189, 147, 249, 0.12);
+  border-color: rgba(189, 147, 249, 0.4);
+}
+
+.inbox-system-notice--warn .inbox-system-notice__icon {
+  color: #ffb86b;
+  background: rgba(255, 140, 66, 0.12);
+  border-color: rgba(255, 140, 66, 0.4);
+}
+
+.inbox-system-notice--danger .inbox-system-notice__icon {
+  color: #ff9b96;
+  background: rgba(255, 100, 90, 0.12);
+  border-color: rgba(255, 120, 110, 0.45);
+}
+
+.inbox-system-notice--muted .inbox-system-notice__icon {
+  color: #c8c2d8;
+  background: rgba(232, 228, 240, 0.06);
+  border-color: rgba(200, 194, 220, 0.28);
+}
+
 .inbox-system-notice__headings { min-width: 0; }
 
 .inbox-system-notice__eyebrow {
-  margin: 0;
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
-  color: rgba(255, 224, 102, 0.8);
+  margin: 0 0 0.28rem;
+  line-height: 1;
 }
+
+.inbox-channel-tag {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 0.18rem 0.5rem;
+  font-family: 'Zpix', 'Press Start 2P', monospace;
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  color: #ffe9a0;
+  background: rgba(255, 224, 102, 0.1);
+  border: 1px solid rgba(255, 224, 102, 0.42);
+  border-radius: 3px;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  box-shadow: inset 0 0 0 1px rgba(255, 224, 102, 0.06);
+}
+
 .inbox-system-notice__title {
   margin: 0.1rem 0 0;
   font-size: 0.98rem;
@@ -1785,6 +1850,11 @@
   line-height: 1.55;
   color: #e8e4f0;
   white-space: pre-wrap;
+}
+
+.inbox-system-notice__body--compact {
+  font-size: 0.86rem;
+  color: rgba(240, 210, 205, 0.9);
 }
 
 .inbox-system-notice__detail {
@@ -4952,6 +5022,13 @@
   line-height: 1;
 }
 
+.account-email-verify {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1;
+}
+
 .account-tier-value--premium {
   color: var(--purple-light);
 }
@@ -5111,8 +5188,25 @@
   margin: 0 auto 10px;
   padding: 10px;
   background: #fff;
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: min(260px, 78vw);
+  min-height: 200px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.manual-payment-overlay__qr-status {
+  margin: 0;
+  padding: 1.25rem 1rem;
+  text-align: center;
+  font-size: 0.88rem;
+  color: #5a5470;
+  line-height: 1.55;
+}
+
+.manual-payment-overlay__qr-status--error {
+  color: #c2185b;
 }
 
 .manual-payment-overlay__qr {
@@ -5682,11 +5776,12 @@
   gap: 6px;
 }
 
-.cat-families-card__emoji {
+.cat-families-card__icon {
   margin: 0;
-  font-size: 22px;
   line-height: 1;
   align-self: center;
+  display: inline-flex;
+  color: var(--family-glow, var(--yellow));
 }
 
 .cat-families-card__name {
@@ -6111,12 +6206,10 @@
 
 .mirror-card-bio__icon {
   flex-shrink: 0;
-  font-size: 15px;
+  display: inline-flex;
   line-height: 1;
   color: rgba(0, 229, 255, 0.92);
-  text-shadow:
-    0 0 12px rgba(0, 229, 255, 0.5),
-    0 0 22px rgba(189, 147, 249, 0.25);
+  filter: drop-shadow(0 0 12px rgba(0, 229, 255, 0.5));
   margin-top: 6px;
   animation: mirror-card-bio-icon-twinkle 3.6s ease-in-out infinite;
 }
@@ -6383,7 +6476,7 @@
 }
 
 .mirror-letter-btn__icon {
-  font-size: 12px;
+  display: inline-flex;
   line-height: 1;
 }
 
@@ -6933,9 +7026,10 @@
 }
 
 .mirror-report-overlay__icon {
-  font-size: 32px;
-  display: block;
-  margin-bottom: 12px;
+  display: inline-flex;
+  justify-content: center;
+  margin: 0 auto 12px;
+  line-height: 1;
   filter: drop-shadow(0 0 8px rgba(255, 110, 110, 0.35));
 }
 
@@ -7988,24 +8082,59 @@
 
 /* System / 月光聚會 rows — channel · title on one line, time on the right (no duplicate meta) */
 .inbox-letter-row__stack--system .inbox-letter-row__top {
-  align-items: baseline;
+  align-items: center;
+}
+
+.inbox-letter-row__sys-icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin: 2px 2px 2px 0;
+  color: #cbb6ff;
+  background:
+    linear-gradient(165deg, rgba(189, 147, 249, 0.14) 0%, rgba(20, 16, 36, 0.85) 100%);
+  border: 1px solid rgba(189, 147, 249, 0.4);
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.inbox-letter-row__sys-icon--unread {
+  color: #ffe066;
+  border-color: rgba(255, 224, 102, 0.5);
+  background:
+    linear-gradient(165deg, rgba(255, 224, 102, 0.14) 0%, rgba(24, 18, 28, 0.9) 100%);
+}
+
+.inbox-letter-row__sys-icon--danger {
+  color: #ff9b96;
+  border-color: rgba(255, 120, 110, 0.5);
+  background:
+    linear-gradient(165deg, rgba(255, 100, 90, 0.14) 0%, rgba(28, 14, 16, 0.9) 100%);
 }
 
 .inbox-letter-row__channel {
   flex-shrink: 0;
-  font-family: 'Zpix', 'Press Start 2P', monospace;
-  font-size: 10px;
-  letter-spacing: 0.02em;
-  line-height: 1;
-  color: rgba(255, 224, 102, 0.78);
-  -webkit-font-smoothing: none;
-  -moz-osx-font-smoothing: grayscale;
+}
+
+.inbox-letter-row .inbox-channel-tag {
+  transform: translateY(0);
+}
+
+.inbox-letter-row__title--cancelled {
+  color: rgba(240, 200, 196, 0.88);
+}
+
+.inbox-letter-row--system-cancelled {
+  border-color: rgba(200, 110, 100, 0.35);
 }
 
 .inbox-letter-row__name-sep {
   flex-shrink: 0;
-  margin: 0 0.35em;
-  color: rgba(240, 235, 216, 0.45);
+  margin: 0 0.4em;
+  color: rgba(240, 235, 216, 0.4);
   font-family: 'Zpix', 'Press Start 2P', monospace;
   font-size: 10px;
   line-height: 1;
@@ -8248,7 +8377,7 @@
 }
 
 .inbox-letter-row__closed-hint-icon {
-  font-size: 11px;
+  display: inline-flex;
   line-height: 1.55;
   flex-shrink: 0;
   opacity: 0.92;
@@ -8640,9 +8769,8 @@
 }
 
 .scroll-message__wax-seal__icon {
-  font-size: 14px;
+  display: inline-flex;
   line-height: 1;
-  filter: grayscale(0.2) contrast(1.15);
   opacity: 0.95;
 }
 
@@ -8955,10 +9083,10 @@
 
 .channel-status-line__cat {
   flex-shrink: 0;
-  display: block;
-  font-size: 16px;
+  display: inline-flex;
   line-height: 1;
   margin-bottom: 1px;
+  color: currentColor;
 }
 
 .channel-status-line__copy {
@@ -9414,12 +9542,15 @@
 .letter-gameplay-picker__sound {
   flex-shrink: 0;
   margin-left: auto;
-  width: 30px;
+  min-width: 44px;
   height: 30px;
+  padding: 0 6px;
   border: 2px solid rgba(78, 62, 116, 0.95);
   border-radius: 3px;
   background: linear-gradient(180deg, rgba(34, 26, 54, 0.95) 0%, rgba(20, 15, 32, 0.95) 100%);
-  font-size: 13px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: rgba(230, 220, 255, 0.92);
   cursor: pointer;
   line-height: 1;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
@@ -11251,6 +11382,87 @@
   color: #e9d5ff;
   background: rgba(124, 92, 252, 0.16);
   border: 1px solid rgba(189, 147, 249, 0.35);
+}
+
+.forum-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.forum-stat__icon {
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.forum-stat--like {
+  color: #f9a8d4;
+}
+
+.forum-stat--comment {
+  color: rgba(232, 224, 208, 0.78);
+}
+
+.pixel-post-footer__stats {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.forum-panel__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.forum-panel__title-icon {
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.forum-topic-badge__icon {
+  flex-shrink: 0;
+  margin-right: 2px;
+}
+
+.forum-compose-modal__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.forum-welcome-card__badge,
+.forum-welcome-card__title-text,
+.forum-mod-toolbar__topic,
+.forum-mod-toolbar__badge,
+.forum-mod-queue__status,
+.forum-mod-queue__topic {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.forum-mod-toolbar__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.forum-story-reader__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.forum-visibility-option span,
+.forum-bookmarks-panel__title,
+.forum-bookmarks-item__stats,
+.forum-story-book__stats {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 /* Moonlight Coronation (月光加冕) */
@@ -14688,12 +14900,16 @@
   margin-left: auto;
 }
 
+.forum-post-card.pixel-card {
+  gap: 0;
+}
+
 .forum-post-card__tag-row {
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .forum-post-card__header {
@@ -14708,8 +14924,8 @@
   font-size: 15px;
   line-height: 1.65;
   letter-spacing: 0.02em;
-  color: #ffe066;
-  text-shadow: 0 0 14px rgba(255, 200, 80, 0.22);
+  color: #fff3d6;
+  text-shadow: none;
   max-width: 100%;
   min-width: 0;
   overflow-wrap: anywhere;
@@ -14717,9 +14933,9 @@
 }
 
 .forum-post-card__body-wrap {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 159, 67, 0.12);
+  margin-top: 14px;
+  padding-top: 0;
+  border-top: none;
 }
 
 .forum-post-card__body-wrap--no-title {
@@ -14730,8 +14946,8 @@
 
 .forum-post-card__body.forum-md-body {
   font-size: 15px;
-  line-height: 1.8;
-  color: rgba(232, 224, 208, 0.94);
+  line-height: 1.75;
+  color: rgba(232, 224, 208, 0.9);
 }
 
 .forum-post-card__body.forum-md-body strong {
@@ -14739,8 +14955,16 @@
   font-weight: 700;
 }
 
+.forum-post-card__body .forum-md-body__p {
+  margin-bottom: 0.55rem;
+}
+
 .forum-post-card__body .forum-md-body__p:first-child {
   margin-top: 0;
+}
+
+.forum-post-card__body .forum-md-body__p:last-child {
+  margin-bottom: 0;
 }
 
 .forum-post-card__tags {
@@ -14829,30 +15053,43 @@
   border: none;
   cursor: pointer;
   font-size: 12px;
-  color: rgba(200, 100, 130, 0.72);
-  text-shadow: 0 0 5px rgba(255, 107, 157, 0.2);
-  padding: 2px 6px;
+  color: rgba(244, 160, 180, 0.92);
+  padding: 4px 8px;
   border-radius: 12px;
   line-height: 1;
-  transition: color 0.2s, background 0.2s, text-shadow 0.2s;
+  transition: color 0.2s, background 0.2s;
   display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.forum-btn-like-comment .header-nav-icon,
+.forum-comment-like-count .header-nav-icon {
+  display: block;
   flex-shrink: 0;
 }
 
+.forum-btn-like-comment__count,
+.forum-comment-like-count__num {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: inherit;
+}
+
 .forum-btn-like-comment:hover:not(:disabled) {
-  color: var(--pink);
-  background: rgba(255, 107, 157, 0.08);
-  text-shadow: 0 0 10px rgba(255, 107, 157, 0.45);
+  color: #ff8fb5;
+  background: rgba(255, 107, 157, 0.12);
 }
 
 .forum-btn-like-comment--liked,
 .forum-btn-like-comment:disabled {
-  color: var(--pink);
+  color: #ff8fb5;
   cursor: default;
-  opacity: 0.9;
-  text-shadow: 0 0 8px rgba(255, 107, 157, 0.45);
+  opacity: 1;
 }
 
 .forum-btn-like-comment--pending {
@@ -14866,11 +15103,18 @@
 }
 
 .forum-comment-like-count {
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 5px;
   flex-shrink: 0;
   font-size: 12px;
-  color: rgba(200, 100, 130, 0.65);
-  padding: 2px 6px;
+  font-weight: 600;
+  color: rgba(244, 160, 180, 0.88);
+  padding: 4px 8px;
   line-height: 1;
+  white-space: nowrap;
 }
 
 .forum-report-notice {
@@ -15018,9 +15262,11 @@
 }
 
 .forum-mod-confirm__icon {
-  font-size: 40px;
-  display: block;
-  margin-bottom: 12px;
+  display: inline-flex;
+  justify-content: center;
+  margin: 0 auto 12px;
+  line-height: 1;
+  color: rgba(196, 181, 253, 0.95);
   filter: drop-shadow(0 2px 8px rgba(124, 92, 252, 0.35));
 }
 
@@ -15156,20 +15402,20 @@
 }
 
 .forum-post-card__meta {
-  margin-top: 18px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(255, 159, 67, 0.12);
+  margin-top: 16px;
+  padding-top: 0;
+  border-top: none;
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
   flex-wrap: wrap;
-  gap: 12px 20px;
+  gap: 10px 20px;
 }
 
 .forum-post-card__meta-item {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
 }
 
@@ -15180,72 +15426,68 @@
 
 .forum-post-card__meta-label {
   font-size: 11px;
-  color: var(--text-muted);
+  color: rgba(180, 160, 140, 0.55);
   letter-spacing: 0.04em;
   line-height: 1.2;
 }
 
 .forum-post-card__date {
   font-size: 12px;
-  color: rgba(232, 224, 208, 0.88);
+  color: rgba(210, 198, 180, 0.72);
   line-height: 1.4;
 }
 
 .forum-post-card__actions {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border-glow);
+  gap: 4px;
+  margin-top: 4px;
+  padding-top: 0;
+  border-top: none;
 }
 
 .forum-stat-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
+  gap: 5px;
+  padding: 6px 10px;
   border: none;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  background: transparent;
   cursor: pointer;
   font-family: 'Noto Sans TC', sans-serif;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
-  color: var(--text-muted);
-  transition: transform 0.15s ease, color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  color: rgba(180, 160, 140, 0.72);
+  transition: color 0.15s ease, background 0.15s ease;
 }
 
 .forum-stat-btn:hover {
-  transform: scale(1.05);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .forum-stat-btn--like:hover:not(:disabled) {
   color: #ff7597;
-  box-shadow: 0 0 12px rgba(255, 117, 151, 0.2);
 }
 
 .forum-stat-btn--liked,
 .forum-stat-btn--like:disabled {
   color: #ff7597;
-  opacity: 0.75;
+  opacity: 0.9;
   cursor: default;
-  transform: none;
 }
 
 .forum-stat-btn--comment:hover {
   color: #7dd3fc;
-  box-shadow: 0 0 12px rgba(125, 211, 252, 0.15);
 }
 
 .forum-stat-btn--bookmark:hover:not(:disabled) {
-  color: #ffe066;
-  box-shadow: 0 0 12px rgba(255, 224, 102, 0.22);
+  color: #e8c878;
 }
 
 .forum-stat-btn--bookmarked {
-  color: #ffe066;
-  background: rgba(255, 224, 102, 0.1);
+  color: #e8c878;
+  background: rgba(232, 200, 120, 0.08);
 }
 
 .forum-comments-section {
@@ -18379,6 +18621,10 @@ button.forum-tag-chip:hover {
   font-size: 12px;
   color: rgba(255, 180, 100, 0.85);
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 .moon-journey-panel__streak strong {
@@ -18587,6 +18833,9 @@ button.forum-tag-chip:hover {
   font-size: 11px;
   color: rgba(255, 180, 120, 0.92);
   line-height: 1.4;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .moon-journey-account__streak strong {
@@ -19625,6 +19874,11 @@ button.forum-tag-chip:hover {
   height: 18px;
   font-size: 15px;
   line-height: 1;
+}
+
+.forum-header-icon-group .header-nav-icon {
+  width: 16px;
+  height: 16px;
 }
 
 .forum-header-icon-group .forum-mj-header-btn__lv {
@@ -24209,7 +24463,7 @@ button.forum-tag-chip:hover {
 
 /* ============================================================
    My Cat（月光小貓）— /my-cat + header 🐾 entry
-   Spec: docs/MY-CAT-GAME-DESIGN.md
+   Spec: docs/my-cat/MY-CAT-GAME-DESIGN.md
    ============================================================ */
 
 /* ── Header 標題置中平衡（真中央：1fr auto 1fr） ── */
@@ -24429,8 +24683,10 @@ button.forum-tag-chip:hover {
 }
 
 .my-cat-away__paws {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 13px;
-  letter-spacing: 6px;
   opacity: 0.65;
 }
 
@@ -25094,7 +25350,7 @@ button.forum-tag-chip:hover {
 
 .my-cat-room__bowl-spark {
   position: absolute;
-  font-size: 10px;
+  display: inline-flex;
   color: #ffe08a;
   opacity: 0;
   animation: my-cat-bowl-spark 1.2s steps(3, jump-end) infinite;
@@ -25363,6 +25619,9 @@ button.forum-tag-chip:hover {
 .my-cat-reward__sub {
   font-size: 0.8rem;
   color: rgba(240, 235, 216, 0.9);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .my-cat-reward__sub--up {
@@ -25482,6 +25741,9 @@ button.forum-tag-chip:hover {
   letter-spacing: 1px;
   color: #ffe08a;
   background: #1d1836;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   box-shadow:
     0 -2px 0 #07060e,
     0 2px 0 #07060e,
@@ -25604,6 +25866,15 @@ button.forum-tag-chip:hover {
 
 .my-cat-stat__label {
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.my-cat-stat__icon {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
 }
 
 .my-cat-stat__track {
@@ -25869,6 +26140,9 @@ a.my-cat-footer-chip--link:active {
   color: #ff9f6b;
   text-shadow: none;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
 }
 
 .my-cat-footer-chip__value--hint {
@@ -26546,6 +26820,7 @@ a.moon-journey-dropdown-card__checkin {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 5px;
   white-space: nowrap;
 }
 
@@ -26847,6 +27122,9 @@ a.moon-journey-dropdown-card__checkin--done {
 
 .my-cat-guide__stat-name strong {
   color: var(--stat, #ffe08a);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .my-cat-guide__statbar {

@@ -12,6 +12,7 @@ import PasswordRequirementsChecklist from '../../components/PasswordRequirements
 import AppShell from '../../components/AppShell.js';
 import MoonLoading from '../../components/MoonLoading.js';
 import { resolvePostAuthDestination } from '../../lib/post-auth-redirect.js';
+import { UiWarningIcon } from '../../components/UiIcons.js';
 
 function buildRedirectQuery(redirect) {
   if (!redirect || typeof redirect !== 'string') return '';
@@ -132,7 +133,7 @@ export default function ResetPasswordPage() {
 
           {status === 'error' && (
             <>
-              <div style={{ fontSize: 40 }}>⚠️</div>
+              <div style={{ fontSize: 40 }} aria-hidden="true"><UiWarningIcon size={40} /></div>
               <h1 className="pixel-title">無法重設密碼</h1>
               <p className="pixel-subtitle" style={{ lineHeight: 1.8 }}>{errorMsg}</p>
               <Link

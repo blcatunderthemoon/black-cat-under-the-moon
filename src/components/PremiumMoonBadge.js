@@ -1,4 +1,5 @@
 import { MOONLIGHT_PASSPORT_BRAND } from '../lib/premium.js';
+import { ForumMoonIcon } from './ForumIcons.js';
 
 /** Moonlight Passport moon marker — interactive only in header via HeaderPremiumMoon. */
 export default function PremiumMoonBadge({
@@ -10,6 +11,7 @@ export default function PremiumMoonBadge({
   ariaExpanded = undefined,
 }) {
   const cls = `premium-moon-badge${interactive ? ' premium-moon-badge--interactive' : ''}${className ? ` ${className}` : ''}`;
+  const glyph = <ForumMoonIcon size={14} className="premium-moon-badge__icon" />;
 
   if (interactive) {
     return (
@@ -21,7 +23,7 @@ export default function PremiumMoonBadge({
         title={title}
         onClick={onClick}
       >
-        🌙
+        {glyph}
       </button>
     );
   }
@@ -33,7 +35,7 @@ export default function PremiumMoonBadge({
       title={title}
       tabIndex={tabIndex}
     >
-      🌙
+      {glyph}
     </span>
   );
 }

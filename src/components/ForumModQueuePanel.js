@@ -6,6 +6,13 @@ import { forumModFetch } from '../lib/forum-mod-api.js';
 import { dashboardFetch } from '../lib/dashboard-fetch.js';
 import ForumModConfirmOverlay from './ForumModConfirmOverlay.js';
 import MoonLoading from './MoonLoading.js';
+import {
+  ForumTopicIcon,
+  ForumPinIcon,
+  ForumSparkleIcon,
+  ForumMoonIcon,
+  HeaderShieldIcon,
+} from './ForumIcons.js';
 
 const AUTO_REFRESH_MS = 45000;
 
@@ -58,7 +65,10 @@ function TopicBadge({ topic }) {
       className="forum-mod-queue__topic"
       style={{ borderColor: `${accent}66`, color: accent }}
     >
-      {TOPIC_STYLES[canonical]?.emoji ? `${TOPIC_STYLES[canonical].emoji} ` : ''}{label}
+      {TOPIC_STYLES[canonical]?.icon ? (
+        <ForumTopicIcon topic={canonical} size={12} />
+      ) : null}
+      {' '}{label}
     </span>
   );
 }
@@ -277,7 +287,9 @@ export default function ForumModQueuePanel({
 
       {queue && totalPending === 0 && filter === 'all' && (
         <div className="forum-mod-queue__empty-hero" role="status">
-          <span className="forum-mod-queue__empty-icon" aria-hidden="true">🌕</span>
+          <span className="forum-mod-queue__empty-icon" aria-hidden="true">
+            <ForumMoonIcon size={28} />
+          </span>
           <p className="forum-mod-queue__empty-title">月夜寧靜</p>
           <p className="forum-mod-queue__empty">目前沒有待處理的檢舉。你可以稍後再回來看看。</p>
         </div>
@@ -301,10 +313,20 @@ export default function ForumModQueuePanel({
                             <span className="forum-mod-queue__status forum-mod-queue__status--urgent">⚠ 高檢舉</span>
                           )}
                           {p.visibility === 'hidden' && (
-                            <span className="forum-mod-queue__status">🌑 夜幕降臨</span>
+                            <span className="forum-mod-queue__status">
+                              <ForumMoonIcon size={11} /> 夜幕降臨
+                            </span>
                           )}
-                          {p.is_pinned && <span className="forum-mod-queue__status">📌 置頂</span>}
-                          {p.is_highlighted && <span className="forum-mod-queue__status forum-mod-queue__status--crown">✨ 加冕</span>}
+                          {p.is_pinned && (
+                            <span className="forum-mod-queue__status">
+                              <ForumPinIcon size={11} /> 置頂
+                            </span>
+                          )}
+                          {p.is_highlighted && (
+                            <span className="forum-mod-queue__status forum-mod-queue__status--crown">
+                              <ForumSparkleIcon size={11} /> 加冕
+                            </span>
+                          )}
                         </div>
                         <p className="forum-mod-queue__title">{p.title || '（無標題）'}</p>
                         <p className="forum-mod-queue__preview">{p.preview}</p>
@@ -326,7 +348,7 @@ export default function ForumModQueuePanel({
                               showNote: true,
                               title: '夜幕降臨',
                               sub: '此帖將從前台隱藏，資料仍保留。你之後可以恢復月光。',
-                              icon: '🌑',
+                              icon: <ForumMoonIcon size={28} />,
                               confirmLabel: '確認夜幕降臨',
                               variant: 'default',
                             })}
@@ -364,7 +386,7 @@ export default function ForumModQueuePanel({
                               showNote: false,
                               title: '硬刪除此帖？',
                               sub: '此操作不可復原，僅在必要時使用。',
-                              icon: '⚠️',
+                              icon: '!',
                               confirmLabel: '確認硬刪',
                               variant: 'danger',
                             })}
@@ -390,7 +412,7 @@ export default function ForumModQueuePanel({
                       <p className="forum-mod-queue__preview">{c.preview}</p>
                       <p className="forum-mod-queue__meta">
                         檢舉 <strong>{c.report_count}</strong> 次 · {c.author_display_name || '—'} · {timeAgo(c.created_at)} ·{' '}
-                        {c.is_hidden ? '🌑 已隱藏' : '可見'} ·{' '}
+                        {c.is_hidden ? '已隱藏' : '可見'} ·{' '}
                         <Link href={c.forum_url} className="forum-mod-queue__link">查看</Link>
                       </p>
                       {!c.is_hidden && (
@@ -406,7 +428,7 @@ export default function ForumModQueuePanel({
                               showNote: true,
                               title: '夜幕降臨（留言）',
                               sub: '此留言將從前台隱藏，資料仍保留。',
-                              icon: '🌑',
+                              icon: <ForumMoonIcon size={28} />,
                               confirmLabel: '確認隱藏',
                               variant: 'default',
                             })}

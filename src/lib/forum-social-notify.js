@@ -52,8 +52,8 @@ export async function notifyForumPostLiked({
   const name = actorLabel(actorName);
   const title = clip(postTitle);
   const content = title
-    ? `💜 ${name} 對你的貼文「${title}」按讚了。`
-    : `💜 ${name} 對你的貼文按讚了。`;
+    ? `${name} 對你的貼文「${title}」按讚了。`
+    : `${name} 對你的貼文按讚了。`;
 
   return deliver(postAuthorId, content, {
     kind: 'forum_post_liked',
@@ -79,7 +79,7 @@ export async function notifyForumCommentLiked({
     return false;
   }
   const name = actorLabel(actorName);
-  const content = `✨ ${name} 對你的留言按讚了。`;
+  const content = `${name} 對你的留言按讚了。`;
 
   return deliver(commentAuthorId, content, {
     kind: 'forum_comment_liked',
@@ -118,8 +118,8 @@ export async function notifyForumCommentCreated({
 
   if (parentCommentId && parentAuthorId && parentAuthorId !== actorId) {
     const content = snippet
-      ? `↩️ ${name} 回覆了你的留言：「${snippet}」`
-      : `↩️ ${name} 回覆了你的留言。`;
+      ? `${name} 回覆了你的留言：「${snippet}」`
+      : `${name} 回覆了你的留言。`;
     jobs.push(deliver(parentAuthorId, content, {
       kind: 'forum_comment_reply',
       post_id: postId,
@@ -136,11 +136,11 @@ export async function notifyForumCommentCreated({
   if (postAuthorId && postAuthorId !== actorId && !notified.has(postAuthorId)) {
     const content = title
       ? (snippet
-        ? `💬 ${name} 回應了你的貼文「${title}」：「${snippet}」`
-        : `💬 ${name} 回應了你的貼文「${title}」。`)
+        ? `${name} 回應了你的貼文「${title}」：「${snippet}」`
+        : `${name} 回應了你的貼文「${title}」。`)
       : (snippet
-        ? `💬 ${name} 回應了你的貼文：「${snippet}」`
-        : `💬 ${name} 回應了你的貼文。`);
+        ? `${name} 回應了你的貼文：「${snippet}」`
+        : `${name} 回應了你的貼文。`);
     jobs.push(deliver(postAuthorId, content, {
       kind: 'forum_post_commented',
       post_id: postId,

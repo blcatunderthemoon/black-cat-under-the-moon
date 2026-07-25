@@ -12,6 +12,14 @@ import SeoHead from '../components/SeoHead.js';
 import PixelMixedLabel from '../components/PixelMixedLabel.js';
 import PixelMoonIcon from '../components/PixelMoonIcon.js';
 import {
+  ForumSearchIcon,
+  HeaderMailIcon,
+  HeaderForumIcon,
+  UiCameraIcon,
+  UiBoltIcon,
+  UiPhoneIcon,
+} from '../components/UiIcons.js';
+import {
   MANUAL_PAYMENT_AMOUNT_HKD,
   MANUAL_PAYMENT_FPS_NOTE,
   MANUAL_PAYMENT_SUPPORT_EMAIL,
@@ -19,11 +27,11 @@ import {
 import { isPremiumUser, getPremiumStatusMessage, getActiveLetterQuotaLine, MOONLIGHT_PASSPORT_BRAND } from '../lib/premium.js';
 
 const BENEFITS = [
-  { icon: '🔍', title: '查看詳細 Mirror Card', desc: '從月光圍爐、我的連線查看任何人的深層 Mirror 分析與關係期待。' },
-  { icon: '✉️', title: '每月主動投信 3 封', desc: '主動聯絡有共鳴的人，每次開通道可來回傾談最多 10 次。' },
-  { icon: '📷', title: '每月交換相 3 次', desc: '在對方 Mirror Card 發起真人相片交換邀請；對方回傳時才扣配額，成功後雙方可查看 7 日。' },
-  { icon: '⚡', title: '連線即時通知', desc: '共鳴連線成功後第一時間收到 Inbox 高亮提示與 Email 通知。' },
-  { icon: '📝', title: '論壇發文不限', desc: '月光圍爐發文無每日上限；免費會員每日 3 篇。' },
+  { Icon: ForumSearchIcon, title: '查看詳細 Mirror Card', desc: '從月光圍爐、我的連線查看任何人的深層 Mirror 分析與關係期待。' },
+  { Icon: HeaderMailIcon, title: '每月主動投信 3 封', desc: '主動聯絡有共鳴的人，每次開通道可來回傾談最多 10 次。' },
+  { Icon: UiCameraIcon, title: '每月交換相 3 次', desc: '在對方 Mirror Card 發起真人相片交換邀請；對方回傳時才扣配額，成功後雙方可查看 7 日。' },
+  { Icon: UiBoltIcon, title: '連線即時通知', desc: '共鳴連線成功後第一時間收到 Inbox 高亮提示與 Email 通知。' },
+  { Icon: HeaderForumIcon, title: '論壇發文不限', desc: '月光圍爐發文無每日上限；免費會員每日 3 篇。' },
 ];
 
 export default function PremiumPage() {
@@ -73,6 +81,14 @@ export default function PremiumPage() {
     }
   }
 
+  function openManualPayment() {
+    if (!session?.access_token) {
+      window.location.href = '/login?redirect=/premium';
+      return;
+    }
+    setManualOpen(true);
+  }
+
   return (
     <>
       <SeoHead
@@ -87,7 +103,9 @@ export default function PremiumPage() {
         nav={session ? <AppHeaderAuth redirectPath="/premium" /> : <NavLink href="/login?redirect=/premium">登入</NavLink>}
       >
         <div className="premium-hero">
-          <p style={{ fontSize: 52, lineHeight: 1, margin: 0 }}>🌙</p>
+          <p style={{ fontSize: 52, lineHeight: 1, margin: 0 }} aria-hidden="true">
+            <PixelMoonIcon size={52} />
+          </p>
           <h1 className="pixel-title" style={{ fontSize: 14 }}>{MOONLIGHT_PASSPORT_BRAND}</h1>
           <p className="pixel-subtitle">{MOONLIGHT_PASSPORT_BRAND} — 解鎖進階 Mirror Card、主動投信、交換相與更多社群功能</p>
         </div>
@@ -129,7 +147,9 @@ export default function PremiumPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {BENEFITS.map((b) => (
             <div key={b.title} className="premium-benefit">
-              <span style={{ fontSize: 28, flexShrink: 0, lineHeight: 1 }}>{b.icon}</span>
+              <span style={{ fontSize: 28, flexShrink: 0, lineHeight: 1 }} aria-hidden="true">
+                <b.Icon size={28} />
+              </span>
               <div>
                 <h3 style={{ fontSize: 15, fontWeight: 700, margin: '0 0 4px' }}>{b.title}</h3>
                 <p className="pixel-subtitle" style={{ fontSize: 13 }}>{b.desc}</p>
@@ -161,7 +181,7 @@ export default function PremiumPage() {
                 <p className="premium-payme-block__label">PayMe 掃碼付款</p>
               </div>
               <div className="premium-payme-block__card">
-                <span className="premium-payme-block__icon" aria-hidden="true">📱</span>
+                <span className="premium-payme-block__icon" aria-hidden="true"><UiPhoneIcon size={28} /></span>
                 <p className="premium-payme-block__amount">
                   HKD <strong>{MANUAL_PAYMENT_AMOUNT_HKD}</strong>
                   <span className="premium-payme-block__period">/ 月</span>
@@ -170,10 +190,12 @@ export default function PremiumPage() {
               </div>
               <button
                 type="button"
-                onClick={() => setManualOpen(true)}
+                onClick={openManualPayment}
                 className="pixel-btn pixel-btn--primary premium-payme-block__cta"
               >
-                <PixelMixedLabel text="查看 PayMe 付款步驟" />
+                <PixelMixedLabel
+                  text={session ? '查看 PayMe 付款步驟' : '登入後查看 PayMe 付款步驟'}
+                />
               </button>
               <p className="pixel-subtitle premium-payme-block__hint">
                 備註填註冊 Email，截圖寄至{' '}
@@ -223,6 +245,7 @@ export default function PremiumPage() {
         <ManualPaymentModal
           open={manualOpen}
           onClose={() => setManualOpen(false)}
+          accessToken={session?.access_token || null}
         />
 
         <div>

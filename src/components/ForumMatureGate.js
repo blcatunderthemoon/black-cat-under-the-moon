@@ -7,6 +7,7 @@ import {
   MATURE_DECLINE_WARNING,
   persistMatureGateAck,
 } from '../lib/forum-mature.js';
+import { ForumIntimateIcon } from './ForumIcons.js';
 
 function MatureGateRules() {
   return (
@@ -72,7 +73,7 @@ export default function ForumMatureGate({
     content = (
       <>
         <div className="forum-mature-modal__header">
-          <span className="forum-mature-modal__icon" aria-hidden="true">🌙</span>
+          <span className="forum-mature-modal__icon" aria-hidden="true"><ForumIntimateIcon size={28} /></span>
           <span className="forum-mature-modal__badge">成熟話題 · 18+</span>
           <h2 id="forum-mature-gate-title" className="forum-mature-modal__title">
             {MATURE_FORUM_TOPIC}
@@ -101,7 +102,7 @@ export default function ForumMatureGate({
     content = (
       <>
         <div className="forum-mature-modal__header forum-mature-modal__header--decline">
-          <span className="forum-mature-modal__icon" aria-hidden="true">⚠️</span>
+          <span className="forum-mature-modal__icon" aria-hidden="true">!</span>
           <h2 id="forum-mature-decline-title" className="forum-mature-modal__title">
             未能進入
           </h2>
@@ -118,7 +119,7 @@ export default function ForumMatureGate({
     content = (
       <>
         <div className="forum-mature-modal__header">
-          <span className="forum-mature-modal__icon" aria-hidden="true">🌙</span>
+          <span className="forum-mature-modal__icon" aria-hidden="true"><ForumIntimateIcon size={28} /></span>
           <span className="forum-mature-modal__badge">成熟話題 · 18+</span>
           <h2 id="forum-mature-gate-title" className="forum-mature-modal__title">
             進入前請先閱讀

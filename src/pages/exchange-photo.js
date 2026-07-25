@@ -7,16 +7,12 @@
 
 
 import { useState, useEffect } from 'react';
-
 import Link from 'next/link';
-
 import { useRouter } from 'next/router';
-
 import { useAuth } from '../lib/auth-context.js';
-
 import AppShell from '../components/AppShell.js';
-
 import AppHeaderAuth from '../components/AppHeaderAuth.js';
+import { UiCameraIcon } from '../components/UiIcons.js';
 
 import SeoHead from '../components/SeoHead.js';
 
@@ -459,7 +455,7 @@ export default function ExchangePhotoPage() {
 
           <header className="exchange-photo-page__header">
 
-            <span className="exchange-photo-page__icon" aria-hidden="true">📷</span>
+            <span className="exchange-photo-page__icon" aria-hidden="true"><UiCameraIcon size={28} /></span>
 
             <h1 className="exchange-photo-page__title">{pageTitle}</h1>
 

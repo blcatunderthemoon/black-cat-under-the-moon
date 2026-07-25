@@ -1,4 +1,5 @@
 import { NodeViewWrapper } from '@tiptap/react';
+import { UiChartIcon } from './UiIcons.js';
 
 export default function ForumPollTiptapView({ node, deleteNode, extension }) {
   const pollId = node.attrs.pollId;
@@ -10,7 +11,7 @@ export default function ForumPollTiptapView({ node, deleteNode, extension }) {
     <NodeViewWrapper className="forum-poll-tiptap" contentEditable={false}>
       <div className="forum-poll-tiptap__card">
         <div className="forum-poll-tiptap__head">
-          <span className="forum-poll-tiptap__icon" aria-hidden="true">📊</span>
+          <span className="forum-poll-tiptap__icon" aria-hidden="true"><UiChartIcon size={16} /></span>
           <span className="forum-poll-tiptap__title">{title}</span>
           <button
             type="button"

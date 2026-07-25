@@ -1,4 +1,5 @@
 import { forwardRef } from 'react';
+import { ForumMoonIcon } from './ForumIcons.js';
 
 /** Popover below header premium moon (hover desktop / tap mobile). */
 const PremiumMoonPopover = forwardRef(function PremiumMoonPopover({
@@ -16,7 +17,9 @@ const PremiumMoonPopover = forwardRef(function PremiumMoonPopover({
       style={style}
     >
       <p className="premium-moon-popover__line premium-moon-popover__line--status">
-        <span className="premium-moon-popover__glyph" aria-hidden="true">🌙</span>
+        <span className="premium-moon-popover__glyph" aria-hidden="true">
+          <ForumMoonIcon size={13} />
+        </span>
         {statusMessage}
       </p>
       {quotaLine && (

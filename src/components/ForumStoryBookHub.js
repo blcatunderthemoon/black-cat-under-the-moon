@@ -11,6 +11,17 @@ import ForumStoryEditChapter from './ForumStoryEditChapter.js';
 import ForumStorySynopsisEdit from './ForumStorySynopsisEdit.js';
 import LoadingText from './LoadingText.js';
 import MoonLoading from './MoonLoading.js';
+import {
+  ForumBookIcon,
+  ForumLockIcon,
+  ForumMoonIcon,
+  ForumEyeIcon,
+  ForumScrollIcon,
+  HeaderHeartIcon,
+  HeaderChatIcon,
+  HeaderBookmarkIcon,
+} from './ForumIcons.js';
+import { UiPenIcon } from './UiIcons.js';
 
 function formatDate(iso) {
   if (!iso) return '';
@@ -46,7 +57,9 @@ function StoryPlaceholderCover({ title }) {
         <span className="forum-story-cover-gen__moon" aria-hidden="true" />
         <span className="forum-story-cover-gen__eyebrow">STORY</span>
         <span className="forum-story-cover-gen__title">{title || '無題'}</span>
-        <span className="forum-story-cover-gen__cat" aria-hidden="true">🐈‍⬛</span>
+        <span className="forum-story-cover-gen__cat" aria-hidden="true">
+          <ForumMoonIcon size={22} />
+        </span>
       </div>
       <span className="forum-story-reader__cover-spine" aria-hidden="true" />
       <span className="forum-story-reader__cover-shine" aria-hidden="true" />
@@ -259,12 +272,16 @@ export default function ForumStoryBookHub({
 
         <header className="forum-story-reader__head">
           <div className="forum-story-reader__head-top">
-            <span className="forum-story-reader__eyebrow">📖 故事</span>
+            <span className="forum-story-reader__eyebrow">
+              <ForumBookIcon size={13} /> 故事
+            </span>
             {post.story_completed && (
               <span className="forum-story-reader__complete-badge">✓ 完結</span>
             )}
             {post.visibility === 'members_only' && (
-              <span className="forum-visibility-badge forum-story-reader__badge">🔒 會員限定</span>
+              <span className="forum-visibility-badge forum-story-reader__badge">
+                <ForumLockIcon size={11} /> 會員限定
+              </span>
             )}
           </div>
 
@@ -290,7 +307,9 @@ export default function ForumStoryBookHub({
 
           <div className="forum-story-reader__stats" aria-label="書籍數據">
             <span className="forum-story-reader__stat">
-              <span className="forum-story-reader__stat-icon" aria-hidden="true">📖</span>
+              <span className="forum-story-reader__stat-icon" aria-hidden="true">
+                <ForumBookIcon size={13} />
+              </span>
               <span className="forum-story-reader__stat-text">
                 {chaptersLoading ? (
                   <LoadingText as="span" className="forum-story-reader__stat-text" />
@@ -298,11 +317,15 @@ export default function ForumStoryBookHub({
               </span>
             </span>
             <span className="forum-story-reader__stat">
-              <span className="forum-story-reader__stat-icon" aria-hidden="true">💬</span>
+              <span className="forum-story-reader__stat-icon" aria-hidden="true">
+                <HeaderChatIcon size={13} />
+              </span>
               <span className="forum-story-reader__stat-text">{post.comment_count || 0} 留言</span>
             </span>
             <span className="forum-story-reader__stat" title="累計閱讀次數">
-              <span className="forum-story-reader__stat-icon" aria-hidden="true">👁</span>
+              <span className="forum-story-reader__stat-icon" aria-hidden="true">
+                <ForumEyeIcon size={13} />
+              </span>
               <span className="forum-story-reader__stat-text">
                 {formatStoryViewCount(post.view_count)} 閱讀
               </span>
@@ -314,7 +337,9 @@ export default function ForumStoryBookHub({
         <figure className="forum-story-reader__synopsis-block">
           <figcaption className="forum-story-reader__synopsis-head">
             <div className="forum-story-reader__synopsis-head-main">
-              <span className="forum-story-reader__synopsis-sigil" aria-hidden="true">📜</span>
+              <span className="forum-story-reader__synopsis-sigil" aria-hidden="true">
+                <ForumScrollIcon size={13} />
+              </span>
               <span className="forum-story-reader__synopsis-label">簡介</span>
             </div>
             {canEdit && (
@@ -339,7 +364,9 @@ export default function ForumStoryBookHub({
       <section className="forum-story-chapters" aria-labelledby="story-chapters-title">
         <div className="forum-story-chapters__frame">
           <div className="forum-story-chapters__head">
-            <span className="forum-story-chapters__sigil" aria-hidden="true">📚</span>
+            <span className="forum-story-chapters__sigil" aria-hidden="true">
+              <ForumBookIcon size={14} />
+            </span>
             <div className="forum-story-chapters__head-copy">
               <div className="forum-story-chapters__title-row">
                 <h2 id="story-chapters-title" className="forum-story-chapters__title">章節目錄</h2>
@@ -412,7 +439,9 @@ export default function ForumStoryBookHub({
                         )}
                       </span>
                       {locked ? (
-                        <span className="forum-story-chapters__lock" aria-hidden="true">🔒</span>
+                        <span className="forum-story-chapters__lock" aria-hidden="true">
+                          <ForumLockIcon size={12} />
+                        </span>
                       ) : (
                         <span className="forum-story-chapters__arrow" aria-hidden="true">›</span>
                       )}
@@ -466,7 +495,9 @@ export default function ForumStoryBookHub({
             </ol>
           ) : (
             <div className="forum-story-chapters__empty">
-              <span className="forum-story-chapters__empty-icon" aria-hidden="true">📖</span>
+              <span className="forum-story-chapters__empty-icon" aria-hidden="true">
+                <ForumBookIcon size={28} />
+              </span>
               <p>作者尚未發佈章節。</p>
             </div>
           )}
@@ -482,7 +513,9 @@ export default function ForumStoryBookHub({
                 onClick={() => onEnterRead()}
               >
                 <span className="forum-story-reader__enter-read-leading" aria-hidden="true">
-                  <span className="forum-story-reader__enter-read-icon">📖</span>
+                  <span className="forum-story-reader__enter-read-icon">
+                    <ForumBookIcon size={16} />
+                  </span>
                 </span>
                 <span className="forum-story-reader__enter-read-text">
                   <span className="forum-story-reader__enter-read-label">{enterReadLabel}</span>
@@ -502,7 +535,7 @@ export default function ForumStoryBookHub({
                 className="forum-story-chapters__add-btn"
                 onClick={openAddChapter}
               >
-                <span className="forum-story-chapters__add-icon" aria-hidden="true">✍️</span>
+                <span className="forum-story-chapters__add-icon" aria-hidden="true"><UiPenIcon size={16} /></span>
                 <span>續寫新一章</span>
               </button>
             </div>
@@ -572,11 +605,11 @@ export default function ForumStoryBookHub({
           disabled={post.viewer_liked || likingPost}
           className={`forum-stat-btn forum-stat-btn--like${post.viewer_liked ? ' forum-stat-btn--liked' : ''}`}
         >
-          <span aria-hidden="true">💗</span>
+          <span aria-hidden="true"><HeaderHeartIcon size={14} /></span>
           <span>{post.like_count}</span>
         </button>
         <button type="button" onClick={onScrollToComments} className="forum-stat-btn forum-stat-btn--comment">
-          <span aria-hidden="true">💬</span>
+          <span aria-hidden="true"><HeaderChatIcon size={14} /></span>
           <span>{post.comment_count}</span>
         </button>
         <button
@@ -585,7 +618,7 @@ export default function ForumStoryBookHub({
           disabled={bookmarking}
           className={`forum-stat-btn forum-stat-btn--bookmark${post.viewer_bookmarked ? ' forum-stat-btn--bookmarked' : ''}`}
         >
-          <span aria-hidden="true">🔖</span>
+          <span aria-hidden="true"><HeaderBookmarkIcon size={14} /></span>
           <span>{post.viewer_bookmarked ? '已收藏' : '收藏'}</span>
         </button>
         {reportButton}

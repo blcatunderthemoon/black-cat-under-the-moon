@@ -1,7 +1,7 @@
-/**
+﻿/**
  * My Cat — server operations (admin client passed in, same pattern as moon-journey.js).
  * SERVER ONLY: import from API routes.
- * Spec: docs/MY-CAT-GAME-DESIGN.md §4, §5, §10
+ * Spec: docs/my-cat/MY-CAT-GAME-DESIGN.md §4, §5, §10
  */
 
 import {

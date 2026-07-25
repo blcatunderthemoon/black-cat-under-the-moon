@@ -1,7 +1,7 @@
-/**
+﻿/**
  * MyCatPanel — /my-cat main interactive area (Phase 1 MVP).
  * Tap to Meow, unified feed (= daily check-in), stats bars.
- * Spec: docs/MY-CAT-GAME-DESIGN.md §4, §5, §11
+ * Spec: docs/my-cat/MY-CAT-GAME-DESIGN.md §4, §5, §11
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -10,6 +10,22 @@ import { useAuth } from '../lib/auth-context.js';
 import CatSprite from './CatSprite.js';
 import CatRoomBowl from './CatRoomBowl.js';
 import MoonLoading from './MoonLoading.js';
+import {
+  ForumCrystalIcon,
+  ForumFlameIcon,
+  ForumMoonIcon,
+  ForumPawIcon,
+  ForumSparkleIcon,
+  HeaderBellIcon,
+  HeaderCheckIcon,
+  HeaderHeartIcon,
+  UiCanIcon,
+  UiCartIcon,
+  UiFishIcon,
+  UiHomeIcon,
+  UiPenIcon,
+  UiWarningIcon,
+} from './UiIcons.js';
 import {
   GROWTH_STAGE_LABELS,
   getCatAnimDurationMs,
@@ -61,12 +77,13 @@ function formatShards(value) {
   return Number(value ?? 0).toLocaleString('en-US');
 }
 
+/** `icon` accepts a React node (stroke SVG from UiIcons). */
 function StatBar({ icon, label, value, barClass, max = 100 }) {
   const pct = Math.round((value / max) * 100);
   return (
     <div className="my-cat-stat">
       <span className="my-cat-stat__label">
-        <span aria-hidden="true">{icon}</span> {label}
+        <span className="my-cat-stat__icon" aria-hidden="true">{icon}</span>{label}
       </span>
       <div
         className="my-cat-stat__track"
@@ -341,7 +358,7 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
       }
       if (data.cat) setCat(data.cat);
       if (data.ok && !data.already_summoned) {
-        setStatusMsg('🔔 召喚咗喇 · 貓咪 1 小時後返嚟');
+        setStatusMsg('召喚咗喇 · 貓咪 1 小時後返嚟');
       }
     } catch {
       setStatusMsg('網路錯誤，請重試');
@@ -383,7 +400,7 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
         setBubble(data.line);
       }
       if (data.counted) {
-        setStatusMsg('❤️ 好感度 +20');
+        setStatusMsg('好感度 +20');
       }
     } catch {
       setStatusMsg('網路錯誤，請重試');
@@ -410,7 +427,7 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
       if (data.away) {
         setStatusMsg(data.error || '貓咪離家出走咗，先召喚佢返嚟。');
       } else if (data.already_fed_today) {
-        setStatusMsg(data.both_meals_fed ? '今日兩餐都餵過罐罐 🐟' : '呢餐已餵過罐罐 🐟');
+        setStatusMsg(data.both_meals_fed ? '今日兩餐都餵過罐罐' : '呢餐已餵過罐罐');
       } else {
         playMeow();
         playAnim('eat', getCatAnimDurationMs('eat', 2));
@@ -420,7 +437,7 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
           soul: (data.soul_gained || 0) + (data.bonus_soul || 0),
           leveledUp: !!data.leveled_up,
         });
-        if (data.leveled_up) setBubble('升級了！月光又亮了一分 ✨');
+        if (data.leveled_up) setBubble('升級了！月光又亮了一分');
       }
     } catch {
       setStatusMsg('網路錯誤，請重試');
@@ -452,7 +469,7 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
       playMeow();
       playAnim('buff', getCatAnimDurationMs('buff', 1));
       const spent = data.shards_spent ? `（−✦ ${data.shards_spent}）` : '';
-      setStatusMsg(`✨ 迎咗${data.cat?.family_zh || '新貓'}回家！${spent}`);
+      setStatusMsg(`迎咗${data.cat?.family_zh || '新貓'}回家！${spent}`);
     } catch {
       setStatusMsg('網路錯誤，請重試');
     } finally {
@@ -510,7 +527,7 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
       }
       applyState(data);
       const spent = data.shards_spent ? `（−✦ ${data.shards_spent}）` : '';
-      setStatusMsg(`🏠 換上新家具了～${spent}`);
+      setStatusMsg(`換上新家具了～${spent}`);
     } catch {
       setStatusMsg('網路錯誤，請重試');
     } finally {
@@ -537,7 +554,7 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
         return;
       }
       applyState(data);
-      setStatusMsg('🏠 佈置好喇～');
+      setStatusMsg('佈置好喇～');
     } catch {
       setStatusMsg('網路錯誤，請重試');
     } finally {
@@ -658,7 +675,7 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
         {bubble && (
           <div className="my-cat-panel__bubble" role="status">
             <span className="my-cat-panel__bubble-tag pixel-font">
-              🐾 {cat?.name || '小黑貓'}
+              <ForumPawIcon size={12} /> {cat?.name || '小黑貓'}
             </span>
             <div className="my-cat-panel__bubble-box">
               <span className="my-cat-panel__bubble-ghost" aria-hidden="true">{bubble}</span>
@@ -675,7 +692,9 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
         )}
 
         {hearts.map((id) => (
-          <span key={id} className="my-cat-room__heart" aria-hidden="true">❤</span>
+          <span key={id} className="my-cat-room__heart" aria-hidden="true">
+            <HeaderHeartIcon size={14} />
+          </span>
         ))}
 
         {feedReward && (
@@ -684,15 +703,23 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
               <span className="my-cat-reward__exp pixel-font">
                 {feedReward.exp > 0 ? `+${feedReward.exp} EXP` : '已打卡'}
               </span>
-              <span className="my-cat-reward__sub">🐟 飽腹回滿 100</span>
+              <span className="my-cat-reward__sub">
+                <UiFishIcon size={12} /> 飽腹回滿 100
+              </span>
               {feedReward.shards > 0 && (
-                <span className="my-cat-reward__sub">✦ 月光碎屑 +{feedReward.shards}</span>
+                <span className="my-cat-reward__sub">
+                  <ForumSparkleIcon size={12} /> 月光碎屑 +{feedReward.shards}
+                </span>
               )}
               {feedReward.soul > 0 && (
-                <span className="my-cat-reward__sub">🔮 靈魂 +{feedReward.soul}</span>
+                <span className="my-cat-reward__sub">
+                  <ForumCrystalIcon size={12} /> 靈魂 +{feedReward.soul}
+                </span>
               )}
               {feedReward.leveledUp && (
-                <span className="my-cat-reward__sub my-cat-reward__sub--up">⭐ 升級！</span>
+                <span className="my-cat-reward__sub my-cat-reward__sub--up">
+                  <ForumSparkleIcon size={12} /> 升級！
+                </span>
               )}
             </div>
           </div>
@@ -700,11 +727,15 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
 
         {isAway ? (
           <div className="my-cat-away" role="status">
-            <span className="my-cat-away__paws" aria-hidden="true">🐾 🐾 🐾</span>
+            <span className="my-cat-away__paws" aria-hidden="true">
+              <ForumPawIcon size={13} />
+              <ForumPawIcon size={13} />
+              <ForumPawIcon size={13} />
+            </span>
             <p className="my-cat-away__title pixel-font">貓咪離家出走咗！</p>
             {cat.summon_pending ? (
               <p className="my-cat-away__text">
-                <span className="my-cat-away__bell" aria-hidden="true">🔔</span>
+                <span className="my-cat-away__bell" aria-hidden="true"><HeaderBellIcon size={14} /></span>
                 {' '}已召喚 · <strong>{formatCooldown(returnMs)}</strong> 後返嚟
               </p>
             ) : (
@@ -718,12 +749,12 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
                 >
                   {summoning ? (
                     <>
-                      <span className="my-cat-away__bell my-cat-away__bell--ringing" aria-hidden="true">🔔</span>
+                      <span className="my-cat-away__bell my-cat-away__bell--ringing" aria-hidden="true"><HeaderBellIcon size={14} /></span>
                       {' '}召喚中…
                     </>
                   ) : (
                     <>
-                      <span className="my-cat-away__bell" aria-hidden="true">🔔</span>
+                      <span className="my-cat-away__bell" aria-hidden="true"><HeaderBellIcon size={14} /></span>
                       {' '}召喚貓咪
                     </>
                   )}
@@ -772,7 +803,7 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
               title="幫貓咪改名（只能改一次）"
               aria-label="幫貓咪改名"
             >
-              ✏️
+              <UiPenIcon size={12} />
             </button>
           )}
         </div>
@@ -790,7 +821,9 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
                 placeholder="最多 12 個字"
                 autoFocus
               />
-              <p className="my-cat-rename__note">⚠ 只能改一次，改完唔反悔㗎！</p>
+              <p className="my-cat-rename__note">
+                <UiWarningIcon size={12} /> 只能改一次，改完唔反悔㗎！
+              </p>
               {renameError && <p className="my-cat-rename__error">{renameError}</p>}
               <div className="my-cat-rename__actions">
                 <button
@@ -817,18 +850,21 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
       <p className={`my-cat-panel__hint${!canPet ? ' my-cat-panel__hint--resting' : ''}`}>
         {isAway ? (
           cat.summon_pending ? (
-            <>🌃 貓咪喺出面遊蕩緊 · 就快返嚟喇</>
+            <>貓咪喺出面遊蕩緊 · 就快返嚟喇</>
           ) : (
-            <>🌃 飽腹去到 0，貓咪離家出走咗 · 按「召喚」叫佢返嚟</>
+            <>飽腹去到 0，貓咪離家出走咗 · 按「召喚」叫佢返嚟</>
           )
         ) : tooHungry ? (
-          <>😿 貓咪好肚餓，冇心機郁 · 記得餵罐罐</>
+          <>貓咪好肚餓，冇心機郁 · 記得餵罐罐</>
         ) : petLimitReached ? (
-          <>🌙 今日摸摸已滿 · 聽日再嚟陪我啦</>
+          <>
+            <span aria-hidden="true"><ForumMoonIcon size={12} /></span>
+            {' '}今日摸摸已滿 · 聽日再嚟陪我啦
+          </>
         ) : canPet ? (
-          <><span aria-hidden="true">👆</span> 點貓咪摸摸 · 好感 <strong>+20</strong></>
+          <>點貓咪摸摸 · 好感 <strong>+20</strong></>
         ) : (
-          <>💤 貓咪休息緊 · <strong>{formatCooldown(cooldownMs)}</strong> 後先可以再摸</>
+          <>貓咪休息緊 · <strong>{formatCooldown(cooldownMs)}</strong> 後先可以再摸</>
         )}
       </p>
 
@@ -837,13 +873,13 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
         <div className="my-cat-panel__stats-head">
           <p className="my-cat-panel__stats-title pixel-font">STATUS</p>
           <span className="my-cat-stage-badge" title="成長階段">
-            <span className="my-cat-stage-badge__icon" aria-hidden="true">🌙</span>
+            <span className="my-cat-stage-badge__icon" aria-hidden="true"><ForumMoonIcon size={12} /></span>
             <span className="my-cat-stage-badge__label pixel-font">{stageLabel}</span>
           </span>
         </div>
-        <StatBar icon="🐟" label="飽腹" value={cat.hunger} barClass="my-cat-stat__fill--hunger" />
-        <StatBar icon="❤️" label="好感" value={cat.affection} barClass="my-cat-stat__fill--affection" />
-        <StatBar icon="🔮" label="靈魂" value={cat.soul} max={cat.soul_max ?? 150} barClass="my-cat-stat__fill--soul" />
+        <StatBar icon={<UiFishIcon size={12} />} label="飽腹" value={cat.hunger} barClass="my-cat-stat__fill--hunger" />
+        <StatBar icon={<HeaderHeartIcon size={12} />} label="好感" value={cat.affection} barClass="my-cat-stat__fill--affection" />
+        <StatBar icon={<ForumCrystalIcon size={12} />} label="靈魂" value={cat.soul} max={cat.soul_max ?? 150} barClass="my-cat-stat__fill--soul" />
       </div>
 
       <button
@@ -852,7 +888,7 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
         onClick={handleFeed}
         disabled={feeding || mealFed || isAway}
       >
-        <span aria-hidden="true">{mealFed ? '✓' : '🥫'}</span>
+        <span aria-hidden="true">{mealFed ? <HeaderCheckIcon size={16} /> : <UiCanIcon size={16} />}</span>
         {feeding
           ? '餵食中…'
           : isAway
@@ -879,7 +915,7 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
             aria-expanded={shopOpen}
             onClick={() => setShopOpen((v) => !v)}
           >
-            <span className="my-cat-shop__badge" aria-hidden="true">🛒</span>
+            <span className="my-cat-shop__badge" aria-hidden="true"><UiCartIcon size={18} /></span>
             <span className="my-cat-shop__head-main">
               <h2 className="my-cat-shop__title pixel-font">貓咪商店</h2>
               <span className="my-cat-shop__hint">家族貓 · 換裝收集</span>
@@ -962,7 +998,7 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
             aria-expanded={roomOpen}
             onClick={() => setRoomOpen((v) => !v)}
           >
-            <span className="my-cat-room-shop__badge" aria-hidden="true">🏠</span>
+            <span className="my-cat-room-shop__badge" aria-hidden="true"><UiHomeIcon size={18} /></span>
             <span className="my-cat-room-shop__head-main">
               <h2 className="my-cat-room-shop__title pixel-font">房間佈置</h2>
               <span className="my-cat-room-shop__hint">貓兜 · 窗外景 · 貓窩</span>
@@ -1043,7 +1079,7 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
 
       <div className="my-cat-panel__footer">
         <div className="my-cat-footer-chip my-cat-footer-chip--shards" title="月光碎屑">
-          <span className="my-cat-footer-chip__icon" aria-hidden="true">✦</span>
+          <span className="my-cat-footer-chip__icon" aria-hidden="true"><ForumSparkleIcon size={18} /></span>
           <span className="my-cat-footer-chip__body">
             <span className="my-cat-footer-chip__label">月光碎屑</span>
             <span className="my-cat-footer-chip__value pixel-font">{formatShards(cat.moon_shards)}</span>
@@ -1055,7 +1091,9 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
             className="my-cat-footer-chip my-cat-footer-chip--growth my-cat-footer-chip--link"
             title="睇等級與稱號說明"
           >
-            <span className="my-cat-footer-chip__icon" aria-hidden="true">{moonJourney.emoji}</span>
+            <span className="my-cat-footer-chip__icon" aria-hidden="true">
+              <ForumMoonIcon size={18} />
+            </span>
             <span className="my-cat-footer-chip__body">
               <span className="my-cat-footer-chip__label my-cat-footer-chip__label--level">
                 <span className="my-cat-footer-chip__lv pixel-font">Lv{moonJourney.level}</span>
@@ -1063,7 +1101,8 @@ export default function MyCatPanel({ accessToken, userId, soundEnabled = true })
               </span>
               {(moonJourney.checkin_streak ?? 0) > 0 ? (
                 <span className="my-cat-footer-chip__value my-cat-footer-chip__value--streak">
-                  🔥 連續 {moonJourney.checkin_streak} 天
+                  <ForumFlameIcon size={11} />
+                  {' '}連續 {moonJourney.checkin_streak} 天
                 </span>
               ) : (
                 <span className="my-cat-footer-chip__value my-cat-footer-chip__value--hint">

@@ -52,7 +52,7 @@ export default function ForumGuardianPage() {
   }, [authLoading, profileHydrated, session, isStaff, router]);
 
   const breadcrumbs = [
-    { href: '/forum', label: `🌙 ${FORUM_DISPLAY_NAME}` },
+    { href: '/forum', label: FORUM_DISPLAY_NAME },
     { label: '月光守護者' },
   ];
 
@@ -100,7 +100,7 @@ export default function ForumGuardianPage() {
               )}
             </div>
 
-            <h1 className="forum-guardian-page__title">🛡️ 月光守護者</h1>
+          <h1 className="forum-guardian-page__title">月光守護者</h1>
             <p className="forum-guardian-page__subtitle">
               處理你負責版塊的檢舉內容。操作會寫入審計日誌。
             </p>

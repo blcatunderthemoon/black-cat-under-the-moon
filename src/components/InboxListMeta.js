@@ -1,10 +1,13 @@
 import PixelMixedLabel from './PixelMixedLabel.js';
+import { ForumScrollIcon } from './UiIcons.js';
 
 /** Closed-channel hint shown in inbox list when reopen requires Mirror Card. */
 export default function InboxClosedChannelHint() {
   return (
     <p className="inbox-letter-row__closed-hint">
-      <span className="inbox-letter-row__closed-hint-icon" aria-hidden="true">🎴</span>
+      <span className="inbox-letter-row__closed-hint-icon" aria-hidden="true">
+        <ForumScrollIcon size={14} />
+      </span>
       <span className="inbox-letter-row__closed-hint-text">
         <span className="inbox-letter-row__closed-hint-dim">此處通道已關閉，可前往對方的</span>
         <span className="inbox-letter-row__closed-hint-glow">『靈魂鏡像』</span>

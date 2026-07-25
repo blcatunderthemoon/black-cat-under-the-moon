@@ -23,6 +23,7 @@ import InboxClosedChannelHint, { InboxListMetaText } from '../components/InboxLi
 import PixelMixedLabel from '../components/PixelMixedLabel.js';
 import { LIST_META_MIRROR_CLOSED } from '../lib/inbox-channel.js';
 import MoonLoading from '../components/MoonLoading.js';
+import { SystemNoticeIcon, stripLeadingNoticeDecor } from '../components/HeaderNavIcons.js';
 
 function timeAgo(dateStr) {
   if (!dateStr) return '';
@@ -271,6 +272,10 @@ export default function InboxPage() {
                 const systemKind = isSystem ? (thread.system_notice_kind || '') : '';
                 const isGatheringApplicantNotice = systemKind === 'gathering_application'
                   || systemKind === 'gathering_joined';
+                const isGatheringCancelled = systemKind === 'gathering_cancelled';
+                const previewTitle = isSystem
+                  ? stripLeadingNoticeDecor(thread.mysterious_title || thread.latest_message?.content || '')
+                  : null;
                 const unreadBadgeLabel = isMatch
                   ? '連線'
                   : isGatheringApplicantNotice
@@ -296,6 +301,7 @@ export default function InboxPage() {
                         isPhotoExchange && 'inbox-letter-row--photo-exchange',
                         isMatch && 'inbox-letter-row--match',
                         isSystem && 'inbox-letter-row--system',
+                        isGatheringCancelled && 'inbox-letter-row--system-cancelled',
                         isMatchUnread && 'inbox-letter-row--match-unread',
                         isMatchRead && 'inbox-letter-row--match-read',
                         hasReplyOpportunity && hasUnread && !isMatch && !isSystem && 'inbox-letter-row--opportunity',
@@ -311,6 +317,13 @@ export default function InboxPage() {
                       )}
                       {isPhotoExchange ? (
                         <PixelPhotoExchangeIcon variant={iconVariant} size={56} />
+                      ) : isSystem ? (
+                        <span
+                          className={`inbox-letter-row__sys-icon${isGatheringCancelled ? ' inbox-letter-row__sys-icon--danger' : ''}${hasUnread ? ' inbox-letter-row__sys-icon--unread' : ''}`}
+                          aria-hidden="true"
+                        >
+                          <SystemNoticeIcon kind={systemKind} size={22} />
+                        </span>
                       ) : (
                         <PixelSealedLetterIcon variant={iconVariant} size={56} />
                       )}
@@ -319,10 +332,12 @@ export default function InboxPage() {
                           <span className="inbox-letter-row__name">
                             {isSystem && gatheringTitle && systemChannel ? (
                               <>
-                                <span className="inbox-letter-row__channel">{systemChannel}</span>
+                                <span className="inbox-channel-tag inbox-letter-row__channel">{systemChannel}</span>
                                 <span className="inbox-letter-row__name-sep" aria-hidden="true">·</span>
                                 <span className="inbox-letter-row__en inbox-letter-row__en--name">{gatheringTitle}</span>
                               </>
+                            ) : isSystem && systemChannel ? (
+                              <span className="inbox-channel-tag inbox-letter-row__channel">{systemChannel}</span>
                             ) : (
                               <PixelMixedLabel
                                 text={systemNameLabel}
@@ -342,10 +357,10 @@ export default function InboxPage() {
                         </div>
                         <div className="inbox-letter-row__bottom">
                           <div className="inbox-letter-row__main">
-                            <span className={`inbox-letter-row__title${isMatch ? ' inbox-letter-row__title--match' : ''}`}>
+                            <span className={`inbox-letter-row__title${isMatch ? ' inbox-letter-row__title--match' : ''}${isGatheringCancelled ? ' inbox-letter-row__title--cancelled' : ''}`}>
                               {isMatch
                                 ? matchTitle
-                                : (thread.mysterious_title || thread.latest_message?.content || '來自夜色的低語…')}
+                                : (previewTitle || thread.mysterious_title || thread.latest_message?.content || '來自夜色的低語…')}
                             </span>
                             {isMatch && thread.match_score != null && (
                               <span

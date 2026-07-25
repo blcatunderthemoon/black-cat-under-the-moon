@@ -1,7 +1,7 @@
 /* ============================================================
    Mobile / in-app WebView scroll — site-wide
    Natural document scroll: html/body overflow-y visible, height auto;
-   viewport scrolls the full document. See docs/MOBILE-WEBVIEW-SCROLL.md.
+   viewport scrolls the full document. See docs/ops/MOBILE-WEBVIEW-SCROLL.md.
    Landing panels forced in-flow; no JS-measured heights or spacers.
    ============================================================ */
 
@@ -20,7 +20,7 @@ body::-webkit-scrollbar {
 
 @media (max-width: 768px), (hover: none) and (pointer: coarse) {
   :root {
-    /* Single source for mobile bottom breathing room (see docs/MOBILE-WEBVIEW-SCROLL.md) */
+    /* Single source for mobile bottom breathing room (see docs/ops/MOBILE-WEBVIEW-SCROLL.md) */
     --mobile-page-bottom-gap: 12px;
     --mobile-footer-inner-pad: 8px;
     --mobile-legal-page-bottom: 12px;

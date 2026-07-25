@@ -29,7 +29,10 @@ export default function GatheringCard({ gathering }) {
   const seatsFull = max > 0 && remaining === 0;
 
   return (
-    <Link href={`/gatherings/${gathering.id}`} className="gathering-card">
+    <Link
+      href={`/gatherings/${gathering.id}`}
+      className={`gathering-card${gathering.status === 'cancelled' ? ' gathering-card--cancelled' : ''}`}
+    >
       <div className="gathering-card__glow" aria-hidden="true" />
       <div className="gathering-card__top">
         <span className={`gathering-card__badge gathering-card__badge--${gathering.is_online ? 'online' : 'offline'}`}>

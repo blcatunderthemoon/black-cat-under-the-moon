@@ -5,6 +5,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../lib/auth-context.js';
 import LoadingText from '../LoadingText.js';
+import { ForumPawIcon } from '../UiIcons.js';
 import { maskEmail, maskPhone } from '../../lib/gathering-contact.js';
 
 export default function GatheringHostQueue({ gatheringId, knockQuestion, onChanged }) {
@@ -113,7 +114,9 @@ export default function GatheringHostQueue({ gatheringId, knockQuestion, onChang
               <blockquote className="gathering-host-queue__answer">
                 {knockQuestion && <p className="gathering-host-queue__q">{knockQuestion}</p>}
                 <p className="gathering-host-queue__knock">
-                  <span className="gathering-host-queue__paw" aria-hidden="true">🐾</span>
+                  <span className="gathering-host-queue__paw" aria-hidden="true">
+                    <ForumPawIcon size={16} />
+                  </span>
                   <span className="gathering-host-queue__knock-text">
                     <b>{a.display_name}</b> 嘅敲門暗號：「{a.knock_message}」
                   </span>

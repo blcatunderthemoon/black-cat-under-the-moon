@@ -1,11 +1,11 @@
-/**
+﻿/**
  * Mobile / in-app WebView scroll helpers.
  *
  * Strategy: natural document scroll on mobile — html/body stay at overflow-y: visible
  * and height: auto so the viewport scrolls the full document. Landing panels
  * (#welcome / #mode-select / #home-landing) must be in document flow (position: relative).
  *
- * Do NOT measure scroll height or add spacers — see docs/MOBILE-WEBVIEW-SCROLL.md.
+ * Do NOT measure scroll height or add spacers — see docs/ops/MOBILE-WEBVIEW-SCROLL.md.
  */
 (function (global) {
   var SCREENS = ['welcome-active', 'mode-select-active', 'home-landing-active'];

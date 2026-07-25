@@ -1,3 +1,5 @@
+import { ForumSearchIcon } from './ForumIcons.js';
+
 export default function ForumStorySearchBar({ value, onChange, onClear, disabled = false }) {
   return (
     <div className="forum-story-search" role="search">
@@ -5,7 +7,9 @@ export default function ForumStorySearchBar({ value, onChange, onClear, disabled
         搜尋書名
       </label>
       <div className="forum-story-search__row">
-        <span className="forum-story-search__icon" aria-hidden="true">🔍</span>
+        <span className="forum-story-search__icon" aria-hidden="true">
+          <ForumSearchIcon size={14} />
+        </span>
         <input
           id="forum-story-search-input"
           type="search"

@@ -36,28 +36,29 @@ export const LEGACY_TOPIC_DISPLAY = {
 };
 
 export const TOPIC_STYLES = {
-  全部: { emoji: '🔥', accent: '#ff9f43', glow: 'rgba(255, 159, 67, 0.25)' },
-  感情: { emoji: '💕', accent: '#f472b6', glow: 'rgba(244, 114, 182, 0.22)' },
-  社群: { emoji: '🌈', accent: '#60a5fa', glow: 'rgba(96, 165, 250, 0.22)' },
-  娛樂: { emoji: '🎬', accent: '#fbbf24', glow: 'rgba(251, 191, 36, 0.22)' },
-  命理: { emoji: '🔮', accent: '#bd93f9', glow: 'rgba(189, 147, 249, 0.25)' },
-  興趣: { emoji: '🎮', accent: '#4ade80', glow: 'rgba(74, 222, 128, 0.2)' },
-  徵友: { emoji: '🌸', accent: '#fb7185', glow: 'rgba(251, 113, 133, 0.22)' },
-  親密話題: { emoji: '🌙', accent: '#e8b4a8', glow: 'rgba(200, 140, 130, 0.2)' },
-  寫故事: { emoji: '📖', accent: '#d4a574', glow: 'rgba(212, 165, 116, 0.24)' },
-  官方公告: { emoji: '📢', accent: '#94a3b8', glow: 'rgba(148, 163, 184, 0.2)' },
+  全部: { icon: 'flame', accent: '#ff9f43', glow: 'rgba(255, 159, 67, 0.25)' },
+  感情: { icon: 'heart', accent: '#f472b6', glow: 'rgba(244, 114, 182, 0.22)' },
+  社群: { icon: 'rainbow', accent: '#60a5fa', glow: 'rgba(96, 165, 250, 0.22)' },
+  娛樂: { icon: 'film', accent: '#fbbf24', glow: 'rgba(251, 191, 36, 0.22)' },
+  命理: { icon: 'crystal', accent: '#bd93f9', glow: 'rgba(189, 147, 249, 0.25)' },
+  興趣: { icon: 'gamepad', accent: '#4ade80', glow: 'rgba(74, 222, 128, 0.2)' },
+  徵友: { icon: 'blossom', accent: '#fb7185', glow: 'rgba(251, 113, 133, 0.22)' },
+  親密話題: { icon: 'intimate', accent: '#e8b4a8', glow: 'rgba(200, 140, 130, 0.2)' },
+  寫故事: { icon: 'book', accent: '#d4a574', glow: 'rgba(212, 165, 116, 0.24)' },
+  官方公告: { icon: 'megaphone', accent: '#94a3b8', glow: 'rgba(148, 163, 184, 0.2)' },
 };
 
 /**
  * Official preset tags per category (Layer 2).
  * Order matters — 泰百 is always first under 娛樂.
+ * Keys are storage/filter ids (no spaces/punctuation); labels are HK display text.
  */
 export const PRESET_TAGS_BY_TOPIC = {
   娛樂: [
     { key: '泰百', label: '泰百' },
-    { key: '電影', label: '電影' },
-    { key: '電視劇', label: '電視劇' },
-    { key: '音樂', label: '音樂' },
+    { key: '煲劇', label: '煲劇' },
+    { key: '睇戲', label: '睇戲' },
+    { key: '聽歌', label: '聽歌' },
     { key: '動漫', label: '動漫' },
     { key: '綜藝', label: '綜藝' },
   ],
@@ -67,41 +68,47 @@ export const PRESET_TAGS_BY_TOPIC = {
     { key: '塔羅', label: '塔羅' },
     { key: '八字', label: '八字' },
     { key: '紫微', label: '紫微' },
-    { key: 'mirror家族', label: 'Mirror家族' },
+    { key: 'mirror家族', label: 'Mirror 家族' },
   ],
   感情: [
     { key: '曖昧', label: '曖昧' },
-    { key: '伴侶', label: '伴侶' },
+    { key: '拍拖', label: '拍拖' },
     { key: '分手', label: '分手' },
     { key: '暗戀', label: '暗戀' },
     { key: '單身', label: '單身' },
+    { key: '已讀不回', label: '已讀不回' },
+    { key: '異地戀', label: '異地戀' },
   ],
   社群: [
-    { key: '日常', label: '日常' },
-    { key: '吐槽', label: '吐槽' },
+    { key: '樹洞', label: '樹洞' },
+    { key: '呻嘢', label: '呻嘢' },
     { key: '出櫃', label: '出櫃' },
-    { key: '工作', label: '工作' },
+    { key: '上班', label: '上班' },
+    { key: 'hangout', label: 'Hangout 位' },
   ],
   興趣: [
+    { key: '飲茶食嘢', label: '飲茶食嘢' },
+    { key: '去旅行', label: '去旅行' },
+    { key: '行山', label: '行山' },
+    { key: '打機', label: '打機' },
     { key: '手作', label: '手作' },
-    { key: '旅遊', label: '旅遊' },
-    { key: '美食', label: '美食' },
-    { key: '運動', label: '運動' },
-    { key: '遊戲', label: '遊戲' },
+    { key: '健身', label: '健身' },
   ],
   徵友: [
-    { key: '徵友', label: '徵友' },
-    { key: '介紹自己', label: '介紹自己' },
-    { key: '尋找同族', label: '尋找同族' },
-    { key: '線下聚會', label: '線下聚會' },
+    { key: '出pool', label: '出 pool' },
+    { key: '報到自介', label: '報到自介' },
+    { key: '搵同族', label: '搵同族' },
+    { key: '約出街', label: '約出街' },
+    { key: '慢熱', label: '慢熱交友' },
+    { key: '認真交往', label: '認真交往' },
   ],
   親密話題: [
-    { key: '慾望探索', label: '慾望探索' },
+    { key: '探索喜好', label: '探索喜好' },
     { key: '開放關係', label: '開放關係' },
-    { key: '角色扮演', label: '角色扮演' },
-    { key: '性癖', label: '性癖' },
-    { key: '性玩具', label: '性玩具' },
-    { key: '界線與同意', label: '界線與同意' },
+    { key: '玩法', label: '玩法／RP' },
+    { key: '癖好', label: '癖好' },
+    { key: '玩具', label: '玩具' },
+    { key: '同意界線', label: '同意同界線' },
   ],
 };
 

@@ -10,6 +10,7 @@ import { preserveMarkdownLeadingSpaces, isForumBlankLineChunk, hasMarkdownChunkT
 import { splitMarkdownByHorizontalRules } from '../lib/forum-tiptap-markdown.js';
 import ForumYoutubeEmbed from './ForumYoutubeEmbed.js';
 import ForumPoll from './ForumPoll.js';
+import { UiChartIcon } from './UiIcons.js';
 
 function MarkdownLink({ href, children }) {
   if (isMentionUserId(href)) {
@@ -224,7 +225,7 @@ export default function ForumMarkdownBody({
             }
             return (
               <div key={`poll-missing-${index}`} className="forum-poll forum-poll--missing">
-                <p className="forum-poll__title">📊 投票</p>
+                <p className="forum-poll__title"><span aria-hidden="true"><UiChartIcon size={14} /></span> 投票</p>
                 <p className="forum-poll__hint">投票資料無法載入</p>
               </div>
             );

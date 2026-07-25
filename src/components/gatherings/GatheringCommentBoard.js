@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../lib/auth-context.js';
 import LoadingText from '../LoadingText.js';
+import { ForumFlameIcon, ForumPawIcon } from '../UiIcons.js';
 import GatheringConfirmOverlay from './GatheringConfirmOverlay.js';
 
 const MAX_BODY = 500;
@@ -180,7 +181,9 @@ export default function GatheringCommentBoard({ gatheringId }) {
   return (
     <section className="gathering-board">
       <header className="gathering-board__head">
-        <h2 className="gathering-board__title">🐾 聚會圍爐房</h2>
+        <h2 className="gathering-board__title">
+          <ForumPawIcon size={16} /> 聚會圍爐房
+        </h2>
         <p className="gathering-board__lead">
           對呢個活動有問題？想同其他參加者相認？即刻喺下面留言傾吓！
         </p>
@@ -190,7 +193,9 @@ export default function GatheringCommentBoard({ gatheringId }) {
         {loading ? (
           <LoadingText className="gathering-board__muted" />
         ) : comments.length === 0 ? (
-          <p className="gathering-board__muted">仲未有留言 —— 做第一個開火煲嘅人啦 🔥</p>
+          <p className="gathering-board__muted">
+            <ForumFlameIcon size={14} /> 仲未有留言 —— 做第一個開火煲嘅人啦
+          </p>
         ) : (
           comments.map((c) => (
             <article

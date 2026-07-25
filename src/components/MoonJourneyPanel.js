@@ -1,6 +1,6 @@
-/**
+﻿/**
  * Forum sidebar — Moon Journey progress.
- * 每日打卡已合併至 /my-cat 餵食（docs/MY-CAT-GAME-DESIGN.md §5）；
+ * 每日打卡已合併至 /my-cat 餵食（docs/my-cat/MY-CAT-GAME-DESIGN.md §5）；
  * 此面板僅展示進度，打卡入口為 header 🐾。
  */
 
@@ -8,8 +8,21 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import PixelMoonIcon from './PixelMoonIcon.js';
 import MoonLoading from './MoonLoading.js';
+import {
+  ForumMoonIcon,
+  ForumSparkleIcon,
+  ForumPawIcon,
+  ForumFlameIcon,
+} from './UiIcons.js';
 import { MOON_JOURNEY_GUIDE_PATH } from '../lib/moon-journey.js';
 import { MY_CAT_PATH } from '../lib/my-cat.js';
+
+function JourneyLevelGlyph({ level, size = 28, className }) {
+  if ((level ?? 0) >= 6) {
+    return <ForumSparkleIcon size={size} className={className} />;
+  }
+  return <ForumMoonIcon size={size} className={className} />;
+}
 
 function MoonJourneyPanelHead({ level }) {
   return (
@@ -31,6 +44,16 @@ function progressCopy(journey) {
   const expToNext = journey.exp_to_next ?? 0;
   if (!nextLevel) return null;
   return { nextLevel, expToNext };
+}
+
+function FeedCheckinCta({ done }) {
+  if (done) return '已打卡';
+  return (
+    <>
+      <ForumPawIcon size={14} />
+      {' '}餵食打卡
+    </>
+  );
 }
 
 export default function MoonJourneyPanel({
@@ -104,7 +127,9 @@ export default function MoonJourneyPanel({
         <div className="moon-journey-dropdown-card__main">
           <Link href={MOON_JOURNEY_GUIDE_PATH} className="moon-journey-dropdown-card__identity">
             <span className="moon-journey-dropdown-card__moon" aria-hidden="true">
-              {journeyLoading ? '🌑' : (viewJourney?.emoji || '🌑')}
+              {journeyLoading
+                ? <ForumMoonIcon size={18} />
+                : <JourneyLevelGlyph level={viewJourney?.level} size={18} />}
             </span>
             <span className="moon-journey-dropdown-card__meta">
               <span className="moon-journey-dropdown-card__level">
@@ -126,7 +151,7 @@ export default function MoonJourneyPanel({
             className={`moon-journey-dropdown-card__checkin${viewJourney?.checked_in_today ? ' moon-journey-dropdown-card__checkin--done' : ''}`}
             title={viewJourney?.checked_in_today ? '今日已餵食打卡' : '去餵貓打卡 +2 EXP'}
           >
-            {viewJourney?.checked_in_today ? '已打卡' : '🐾 餵食打卡'}
+            <FeedCheckinCta done={!!viewJourney?.checked_in_today} />
           </Link>
         </div>
         {!viewJourney?.is_max_level && (
@@ -156,7 +181,9 @@ export default function MoonJourneyPanel({
       return (
         <aside className="forum-panel forum-panel--moon-journey moon-journey-panel moon-journey-panel--compact">
           <Link href={MOON_JOURNEY_GUIDE_PATH} className="moon-journey-panel__compact-info">
-            <span className="moon-journey-panel__compact-emoji" aria-hidden="true">🌑</span>
+            <span className="moon-journey-panel__compact-emoji" aria-hidden="true">
+              <ForumMoonIcon size={22} />
+            </span>
             <span className="moon-journey-panel__compact-text">
               <span className="moon-journey-panel__compact-title">月光旅程</span>
               <span className="moon-journey-panel__compact-sub">登入參與、累積 EXP</span>
@@ -176,7 +203,9 @@ export default function MoonJourneyPanel({
       <aside className="forum-panel forum-panel--moon-journey moon-journey-panel moon-journey-panel--compact">
         <Link href={MOON_JOURNEY_GUIDE_PATH} className="moon-journey-panel__compact-info">
           <span className="moon-journey-panel__compact-emoji" aria-hidden="true">
-            {journeyLoading ? '🌑' : (viewJourney?.emoji || '🌑')}
+            {journeyLoading
+              ? <ForumMoonIcon size={22} />
+              : <JourneyLevelGlyph level={viewJourney?.level} size={22} />}
           </span>
           <span className="moon-journey-panel__compact-text">
             <span className="moon-journey-panel__compact-title">
@@ -211,7 +240,7 @@ export default function MoonJourneyPanel({
           className={`moon-journey-panel__compact-checkin${viewJourney?.checked_in_today ? ' moon-journey-panel__compact-checkin--done' : ''}`}
           title={viewJourney?.checked_in_today ? '今日已餵食打卡' : '去餵貓打卡 +2 EXP'}
         >
-          {viewJourney?.checked_in_today ? '已打卡' : '🐾 餵食打卡'}
+          <FeedCheckinCta done={!!viewJourney?.checked_in_today} />
         </Link>
       </aside>
     );
@@ -256,7 +285,9 @@ export default function MoonJourneyPanel({
           <>
             <div className="moon-journey-panel__hero">
               <div className="moon-journey-panel__moon-orbit" aria-hidden="true">
-                <span className="moon-journey-panel__emoji">{viewJourney?.emoji || '🌑'}</span>
+                <span className="moon-journey-panel__emoji">
+                  <JourneyLevelGlyph level={viewJourney?.level} size={30} />
+                </span>
               </div>
               <div className="moon-journey-panel__identity">
                 <p className="moon-journey-panel__title-zh">{viewJourney?.title_zh || '月下幼貓'}</p>
@@ -303,7 +334,8 @@ export default function MoonJourneyPanel({
 
             {(viewJourney?.checkin_streak ?? 0) > 0 && (
               <p className="moon-journey-panel__streak">
-                🔥 連續打卡 <strong>{viewJourney.checkin_streak}</strong> 天
+                <ForumFlameIcon size={14} />
+                {' '}連續打卡 <strong>{viewJourney.checkin_streak}</strong> 天
               </p>
             )}
 
@@ -312,7 +344,7 @@ export default function MoonJourneyPanel({
                 <>✓ 今日已餵食打卡</>
               ) : (
                 <>
-                  <span aria-hidden="true">🐾</span>
+                  <ForumPawIcon size={14} />
                   <Link href={MY_CAT_PATH}>去餵貓打卡 +2 EXP</Link>
                 </>
               )}
@@ -343,7 +375,9 @@ export function MoonJourneyAccountCard({ moonJourney }) {
 
       <div className="moon-journey-account__hero">
         <div className="moon-journey-account__moon-orbit" aria-hidden="true">
-          <span className="moon-journey-account__emoji">{moonJourney.emoji || '🌑'}</span>
+          <span className="moon-journey-account__emoji">
+            <JourneyLevelGlyph level={moonJourney.level} size={30} />
+          </span>
         </div>
         <div className="moon-journey-account__identity">
           <p className="moon-journey-account__level">
@@ -353,7 +387,8 @@ export function MoonJourneyAccountCard({ moonJourney }) {
           <p className="moon-journey-account__level-en">{moonJourney.title_en}</p>
           {(moonJourney.checkin_streak ?? 0) > 0 && (
             <p className="moon-journey-account__streak">
-              🔥 連續打卡 <strong>{moonJourney.checkin_streak}</strong> 天
+              <ForumFlameIcon size={14} />
+              {' '}連續打卡 <strong>{moonJourney.checkin_streak}</strong> 天
             </p>
           )}
         </div>
@@ -410,7 +445,7 @@ export function MoonJourneyAccountCard({ moonJourney }) {
           {moonJourney.checked_in_today ? (
             <>✓ 今日已餵食打卡</>
           ) : (
-            <Link href={MY_CAT_PATH}>🐾 去餵貓打卡 +2 EXP</Link>
+            <Link href={MY_CAT_PATH}>去餵貓打卡 +2 EXP</Link>
           )}
         </p>
         <Link href={MOON_JOURNEY_GUIDE_PATH} className="moon-journey-account__guide-link">

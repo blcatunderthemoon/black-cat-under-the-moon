@@ -5,6 +5,7 @@ import {
   uploadForumImage,
 } from '../lib/cloudinary-forum-upload.js';
 import { STORY_SYNOPSIS_MAX } from '../lib/forum-story.js';
+import { ForumBookIcon } from './ForumIcons.js';
 
 export default function ForumStoryComposeFields({
   coverUrl,
@@ -104,7 +105,9 @@ export default function ForumStoryComposeFields({
               />
             ) : (
               <span className="forum-story-compose__cover-placeholder">
-                <span className="forum-story-compose__cover-icon" aria-hidden="true">📖</span>
+                <span className="forum-story-compose__cover-icon" aria-hidden="true">
+                  <ForumBookIcon size={22} />
+                </span>
                 <span className="forum-story-compose__cover-ratio">2:3</span>
               </span>
             )}

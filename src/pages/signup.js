@@ -14,6 +14,7 @@ import { isDuplicateSignupError, DUPLICATE_EMAIL_ERROR } from '../lib/auth-signu
 import AppShell from '../components/AppShell.js';
 import AuthBrandHeader from '../components/AuthBrandHeader.js';
 import PasswordRequirementsChecklist from '../components/PasswordRequirementsChecklist.js';
+import { HeaderMailIcon } from '../components/UiIcons.js';
 
 export default function SignupPage() {
   const { signUp, session, loading } = useAuth();
@@ -118,7 +119,7 @@ export default function SignupPage() {
         <AppShell centered hideHeader pageClassName="app-page--signup">
           <div className="pixel-card pixel-card--auth pixel-card--signup pixel-card--signup-success">
             <AuthBrandHeader />
-            <p className="signup-success__icon" aria-hidden="true">✉️</p>
+            <p className="signup-success__icon" aria-hidden="true"><HeaderMailIcon size={40} /></p>
             <h2 className="auth-success-headline">確認你的 Email</h2>
             <p className="signup-success__body pixel-subtitle">
               我們已發送確認信至

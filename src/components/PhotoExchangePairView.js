@@ -3,6 +3,7 @@
  */
 
 import PixelMoonIcon from './PixelMoonIcon.js';
+import { UiCameraIcon } from './UiIcons.js';
 import { useExchangeExpiryCountdown } from '../lib/use-exchange-expiry-countdown.js';
 
 function ExchangeExpiryCountdown({ expiresAt, daysRemaining = 0 }) {
@@ -66,7 +67,7 @@ function PhotoFrame({
         ) : (
           <div className="photo-exchange-pair__placeholder">
             <span className="photo-exchange-pair__placeholder-icon" aria-hidden="true">
-              {placeholderIcon || '📷'}
+              {placeholderIcon || <UiCameraIcon size={28} />}
             </span>
             {placeholder && (
               <span className="photo-exchange-pair__placeholder-text">{placeholder}</span>

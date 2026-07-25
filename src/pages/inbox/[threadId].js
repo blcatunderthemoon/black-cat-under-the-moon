@@ -26,6 +26,7 @@ import MediaCaptureGuard from '../../components/MediaCaptureGuard.js';
 import ChannelStatusLine from '../../components/ChannelStatusLine.js';
 import PixelMixedLabel from '../../components/PixelMixedLabel.js';
 import { markInboxThreadReadLocally } from '../../lib/inbox-read-sync.js';
+import { SystemNoticeIcon, HeaderMailIcon, stripLeadingNoticeDecor } from '../../components/HeaderNavIcons.js';
 
 function isLetterMessage(msg) {
   if (isSystemMessage(msg)) return false;
@@ -470,17 +471,18 @@ function stickyNoteTilt(seed) {
 }
 
 const GATHERING_NOTICE_META = {
-  gathering_application: { icon: '🙋‍♀️', tone: 'apply', title: '有人申請加入你的聚會', cta: '查看申請 →' },
-  gathering_joined: { icon: '🎉', tone: 'ok', title: '有新成員加入聚會', cta: '查看申請 →' },
-  gathering_applied: { icon: '📨', tone: 'apply', title: '申請已送出', cta: '查看聚會 →' },
-  gathering_approved: { icon: '✅', tone: 'ok', title: '申請已獲批准', cta: '查看聚會 →' },
-  gathering_rejected: { icon: '🌙', tone: 'muted', title: '申請未獲批准', cta: '查看聚會 →' },
-  gathering_moderation_alert: { icon: '🛡️', tone: 'warn', title: '月光守護者通知', cta: '前往處理 →' },
-  forum_post_liked: { icon: '💜', tone: 'ok', title: '有人對你的貼文按讚', cta: '查看貼文 →' },
-  forum_post_commented: { icon: '💬', tone: 'apply', title: '有人回應你的貼文', cta: '查看回覆 →' },
-  forum_comment_reply: { icon: '↩️', tone: 'apply', title: '有人回覆你的留言', cta: '查看回覆 →' },
-  forum_comment_liked: { icon: '✨', tone: 'ok', title: '有人對你的留言按讚', cta: '查看貼文 →' },
-  forum_moderation_alert: { icon: '🛡️', tone: 'warn', title: '月光守護者通知', cta: '前往處理 →' },
+  gathering_application: { tone: 'apply', title: '有人申請加入你的聚會', cta: '查看申請 →' },
+  gathering_joined: { tone: 'ok', title: '有新成員加入聚會', cta: '查看申請 →' },
+  gathering_applied: { tone: 'apply', title: '申請已送出', cta: '查看聚會 →' },
+  gathering_approved: { tone: 'ok', title: '申請已獲批准', cta: '查看聚會 →' },
+  gathering_rejected: { tone: 'muted', title: '申請未獲批准', cta: '查看聚會 →' },
+  gathering_cancelled: { tone: 'danger', title: '聚會已取消', cta: '查看聚會 →' },
+  gathering_moderation_alert: { tone: 'warn', title: '月光守護者通知', cta: '前往處理 →' },
+  forum_post_liked: { tone: 'ok', title: '有人對你的貼文按讚', cta: '查看貼文 →' },
+  forum_post_commented: { tone: 'apply', title: '有人回應你的貼文', cta: '查看回覆 →' },
+  forum_comment_reply: { tone: 'apply', title: '有人回覆你的留言', cta: '查看回覆 →' },
+  forum_comment_liked: { tone: 'ok', title: '有人對你的留言按讚', cta: '查看貼文 →' },
+  forum_moderation_alert: { tone: 'warn', title: '月光守護者通知', cta: '前往處理 →' },
 };
 
 function SystemNoticeItem({ msg, stackIndex = 0 }) {
@@ -493,8 +495,7 @@ function SystemNoticeItem({ msg, stackIndex = 0 }) {
     : (typeof p.forum_url === 'string' ? p.forum_url : null);
 
   const meta = GATHERING_NOTICE_META[kind] || {
-    icon: isGathering ? '🌙' : (isForum ? '🐈‍⬛' : '🔔'),
-    tone: 'default',
+    tone: kind === 'gathering_cancelled' ? 'danger' : 'default',
     title: isGathering ? '月光聚會通知' : (isForum ? '黑貓樹洞通知' : '系統通知'),
     cta: url ? '查看詳情 →' : null,
   };
@@ -505,11 +506,12 @@ function SystemNoticeItem({ msg, stackIndex = 0 }) {
     && typeof p.applicant_name === 'string' ? p.applicant_name : null;
   const knock = typeof p.knock_message === 'string' && p.knock_message ? p.knock_message : null;
   const whenLabel = typeof p.when_label === 'string' ? p.when_label : null;
-  const hasStructured = isGathering && (gTitle || applicant);
+  const hasStructured = isGathering && (gTitle || applicant || kind === 'gathering_cancelled');
   const showNewTag = Boolean(msg.was_unread);
   const newTagLabel = (kind === 'gathering_application' || kind === 'gathering_joined')
     ? '新申請'
     : 'NEW';
+  const bodyText = stripLeadingNoticeDecor(msg.content);
 
   return (
     <div
@@ -529,9 +531,13 @@ function SystemNoticeItem({ msg, stackIndex = 0 }) {
           </span>
         )}
         <header className="inbox-system-notice__head">
-          <span className="inbox-system-notice__icon" aria-hidden="true">{meta.icon}</span>
+          <span className="inbox-system-notice__icon" aria-hidden="true">
+            <SystemNoticeIcon kind={kind} size={18} />
+          </span>
           <div className="inbox-system-notice__headings">
-            <p className="inbox-system-notice__eyebrow">{eyebrow}</p>
+            <p className="inbox-system-notice__eyebrow">
+              <span className="inbox-channel-tag">{eyebrow}</span>
+            </p>
             <p className="inbox-system-notice__title">{meta.title}</p>
           </div>
         </header>
@@ -543,6 +549,9 @@ function SystemNoticeItem({ msg, stackIndex = 0 }) {
                 「{gTitle}」{whenLabel && <span className="inbox-system-notice__when">{whenLabel}</span>}
               </p>
             )}
+            {kind === 'gathering_cancelled' && bodyText && (
+              <p className="inbox-system-notice__body inbox-system-notice__body--compact">{bodyText}</p>
+            )}
             {applicant && (
               <p className="inbox-system-notice__meta-row">
                 <span className="inbox-system-notice__chip">申請人：{applicant}</span>
@@ -550,13 +559,13 @@ function SystemNoticeItem({ msg, stackIndex = 0 }) {
             )}
             {knock && (
               <blockquote className="inbox-system-notice__knock">
-                <span className="inbox-system-notice__knock-label">🐾 敲門暗號</span>
+                <span className="inbox-system-notice__knock-label">敲門暗號</span>
                 {knock}
               </blockquote>
             )}
           </div>
         ) : (
-          <p className="inbox-system-notice__body">{msg.content}</p>
+          <p className="inbox-system-notice__body">{bodyText}</p>
         )}
 
         {url && meta.cta && (
@@ -653,7 +662,9 @@ function MessageItem({ msg, isMine, otherName, mirrorCardHref, stackIndex = 0 })
           )}
 
           <div className="inbox-match-card__hint">
-            <span className="inbox-match-card__hint-icon" aria-hidden="true">🌙</span>
+            <span className="inbox-match-card__hint-icon" aria-hidden="true">
+              <SystemNoticeIcon kind="gathering_applied" size={14} />
+            </span>
             <p className="inbox-match-card__hint-text">
               {mirrorCardHref
                 ? '連線通知已寄至你的電郵信箱；亦可點擊下方查看對方鏡像卡。'
@@ -666,7 +677,9 @@ function MessageItem({ msg, isMine, otherName, mirrorCardHref, stackIndex = 0 })
             </Link>
           ) : (
             <p className="inbox-match-card__footnote">
-              <span className="inbox-match-card__footnote-icon" aria-hidden="true">✉</span>
+              <span className="inbox-match-card__footnote-icon" aria-hidden="true">
+                <HeaderMailIcon size={14} />
+              </span>
               對方尚未註冊網站帳號，可先透過 Email 配對卡聯繫
             </p>
           )}

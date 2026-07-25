@@ -39,6 +39,16 @@ import {
 } from '../../lib/forum-post-cache.js';
 import { absoluteUrl } from '../../lib/site-seo.js';
 import { breadcrumbJsonLd } from '../../lib/structured-data.js';
+import {
+  ForumMoonIcon,
+  ForumLockIcon,
+  ForumPinIcon,
+  ForumSparkleIcon,
+  HeaderHeartIcon,
+  HeaderChatIcon,
+  HeaderBookmarkIcon,
+} from '../../components/ForumIcons.js';
+import { UiFlagIcon } from '../../components/UiIcons.js';
 
 function mergeStoryPostFields(prevPost, nextPost) {
   if (!prevPost || !nextPost) return nextPost || prevPost;
@@ -145,7 +155,7 @@ function ForumReportConfirmOverlay({ open, title, sub, onConfirm, onCancel, conf
   return (
     <div className="forum-report-overlay show" role="dialog" aria-modal="true" aria-labelledby="forum-report-confirm-title">
       <div className="forum-report-overlay__box">
-        <span className="forum-report-overlay__icon" aria-hidden="true">⚑</span>
+        <span className="forum-report-overlay__icon" aria-hidden="true"><UiFlagIcon size={28} /></span>
         <div className="forum-report-overlay__title" id="forum-report-confirm-title">{title}</div>
         <div className="forum-report-overlay__sub">{sub}</div>
         <button type="button" className="forum-report-overlay__confirm" onClick={onConfirm} disabled={confirming}>
@@ -249,7 +259,7 @@ export default function ForumPostPage({ seo = null }) {
 
   const redirectPath = postId ? `/forum/${postId}` : '/forum';
   const breadcrumbs = [
-    { href: '/forum', label: `🌙 ${FORUM_DISPLAY_NAME}` },
+    { href: '/forum', label: FORUM_DISPLAY_NAME },
     { label: '貼文詳情' },
   ];
 
@@ -473,8 +483,8 @@ export default function ForumPostPage({ seo = null }) {
       id,
       title: type === 'comment' ? '確認檢舉留言？' : '確認檢舉？',
       sub: type === 'comment'
-        ? '確認後，我哋會審核呢條留言。感謝你維護社區安全 🙏'
-        : '確認後，我哋會審核呢條內容。感謝你維護社區安全 🙏',
+        ? '確認後，我哋會審核呢條留言。感謝你維護社區安全'
+        : '確認後，我哋會審核呢條內容。感謝你維護社區安全',
     });
   }
 
@@ -823,7 +833,7 @@ export default function ForumPostPage({ seo = null }) {
           <div className={`pixel-empty${(isMembersOnly || isMatureLoginRequired) ? ' forum-members-gate' : ''}`}>
             {isMatureLoginRequired ? (
               <>
-                <span className="forum-members-gate__icon" aria-hidden="true">🌙</span>
+                <span className="forum-members-gate__icon" aria-hidden="true"><ForumMoonIcon size={28} /></span>
                 <h2 className="forum-members-gate__title">{MATURE_FORUM_TOPIC}</h2>
                 <p className="pixel-subtitle forum-members-gate__text">
                   此貼文屬於成熟話題版塊，僅供已登入會員閱讀。請先登入並確認年齡。
@@ -837,7 +847,7 @@ export default function ForumPostPage({ seo = null }) {
               </>
             ) : isMembersOnly ? (
               <>
-                <span className="forum-members-gate__icon" aria-hidden="true">🔒</span>
+                <span className="forum-members-gate__icon" aria-hidden="true"><ForumLockIcon size={28} /></span>
                 <h2 className="forum-members-gate__title">會員限定內容</h2>
                 <p className="pixel-subtitle forum-members-gate__text">
                   這篇貼文只供已登入會員閱讀。登入後即可查看全文與留言。
@@ -990,7 +1000,7 @@ export default function ForumPostPage({ seo = null }) {
                       title="檢舉"
                       aria-label="檢舉"
                     >
-                      {reportedKeys.has(`post:${post.id}`) ? '已檢舉' : '⚑'}
+                      {reportedKeys.has(`post:${post.id}`) ? '已檢舉' : <UiFlagIcon size={14} />}
                     </button>
                   ) : null}
                 />
@@ -1001,20 +1011,28 @@ export default function ForumPostPage({ seo = null }) {
                   <span className="pixel-tag" style={{ color: 'var(--purple-light)' }}>{forumTopicLabel(post.topic)}</span>
                   <ForumPostTags tags={post.tags} tagLabels={data?.tag_labels} variant="detail" />
                   {post.visibility === 'members_only' && (
-                    <span className="forum-visibility-badge">🔒 會員限定</span>
+                    <span className="forum-visibility-badge">
+                      <ForumLockIcon size={11} /> 會員限定
+                    </span>
                   )}
                   {post.hide_username && (
-                    <span className="forum-visibility-badge">🎭 匿名</span>
+                    <span className="forum-visibility-badge">匿名</span>
                   )}
                   {post.is_hidden && (
-                    <span className="forum-visibility-badge">🌑 夜幕降臨</span>
+                    <span className="forum-visibility-badge">
+                      <ForumMoonIcon size={11} /> 夜幕降臨
+                    </span>
                   )}
                   {post.is_pinned && (
-                    <span className="forum-visibility-badge">📌 圍爐置頂</span>
+                    <span className="forum-visibility-badge">
+                      <ForumPinIcon size={11} /> 圍爐置頂
+                    </span>
                   )}
                   {post.is_highlighted && (
                     <span className="forum-crown-badge" aria-label="月光加冕">
-                      <span className="forum-crown-badge__sigil" aria-hidden="true">✨</span>
+                      <span className="forum-crown-badge__sigil" aria-hidden="true">
+                        <ForumSparkleIcon size={12} />
+                      </span>
                       <span className="forum-crown-badge__text">月光加冕</span>
                     </span>
                   )}
@@ -1028,7 +1046,7 @@ export default function ForumPostPage({ seo = null }) {
                     title="檢舉"
                     aria-label="檢舉"
                   >
-                    {reportedKeys.has(`post:${post.id}`) ? '已檢舉' : '⚑'}
+                    {reportedKeys.has(`post:${post.id}`) ? '已檢舉' : <UiFlagIcon size={14} />}
                   </button>
                 )}
               </div>
@@ -1068,11 +1086,11 @@ export default function ForumPostPage({ seo = null }) {
                   disabled={post.viewer_liked || likingPost}
                   className={`forum-stat-btn forum-stat-btn--like${post.viewer_liked ? ' forum-stat-btn--liked' : ''}`}
                 >
-                  <span aria-hidden="true">💗</span>
+                  <span aria-hidden="true"><HeaderHeartIcon size={14} /></span>
                   <span>{post.like_count}</span>
                 </button>
                 <button type="button" onClick={scrollToComments} className="forum-stat-btn forum-stat-btn--comment">
-                  <span aria-hidden="true">💬</span>
+                  <span aria-hidden="true"><HeaderChatIcon size={14} /></span>
                   <span>{commentCount}</span>
                 </button>
                 <button
@@ -1081,7 +1099,7 @@ export default function ForumPostPage({ seo = null }) {
                   disabled={bookmarking}
                   className={`forum-stat-btn forum-stat-btn--bookmark${post.viewer_bookmarked ? ' forum-stat-btn--bookmarked' : ''}`}
                 >
-                  <span aria-hidden="true">🔖</span>
+                  <span aria-hidden="true"><HeaderBookmarkIcon size={14} /></span>
                   <span>{post.viewer_bookmarked ? '已收藏' : '收藏'}</span>
                 </button>
               </div>
@@ -1119,7 +1137,7 @@ export default function ForumPostPage({ seo = null }) {
                 </div>
               ) : comments.length === 0 ? (
                 <div className="forum-comments-empty">
-                  這裡還冷清清的… 扔個留言進來一起取暖吧！💬
+                  這裡還冷清清的… 扔個留言進來一起取暖吧！
                 </div>
               ) : visibleComments.length === 0 ? (
                 <div className="forum-comments-empty">
@@ -1148,7 +1166,7 @@ export default function ForumPostPage({ seo = null }) {
                             title="檢舉留言"
                             aria-label="檢舉留言"
                           >
-                            {reportedKeys.has(`comment:${c.id}`) ? '✓' : '⚑'}
+                            {reportedKeys.has(`comment:${c.id}`) ? '✓' : <UiFlagIcon size={12} />}
                           </button>
                         )}
                       </div>
@@ -1169,11 +1187,13 @@ export default function ForumPostPage({ seo = null }) {
                             aria-label="讚好留言"
                             aria-pressed={!!c.viewer_liked}
                           >
-                            ♥ <span>{c.like_count || 0}</span>
+                            <span aria-hidden="true"><HeaderHeartIcon size={12} /></span>
+                            <span className="forum-btn-like-comment__count">{c.like_count || 0}</span>
                           </button>
                         ) : (c.like_count > 0 && (
                           <span className="forum-comment-like-count" aria-label={`${c.like_count} 個讚`}>
-                            ♥ {c.like_count}
+                            <span aria-hidden="true"><HeaderHeartIcon size={12} /></span>
+                            <span className="forum-comment-like-count__num">{c.like_count}</span>
                           </span>
                         ))}
                       </div>

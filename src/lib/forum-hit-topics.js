@@ -26,34 +26,34 @@ export const DEFAULT_FORUM_HIT_TOPICS = [
   // 徵友
   {
     id: 'recruit-intro-1',
-    text: '今日話題：用三句介紹自己——你係邊種貓？',
+    text: '今日話題：用三句報到自介——你係邊種貓？',
     icon: '🌸',
     topic: '徵友',
-    tag: '介紹自己',
+    tag: '報到自介',
     compose: true,
   },
   {
     id: 'recruit-same-clan',
-    text: '尋找同族：有冇 Mirror 同家族想傾下近況？',
+    text: '搵同族：有冇 Mirror 同家族想傾下近況？',
     icon: '🐈‍⬛',
     topic: '徵友',
-    tag: '尋找同族',
+    tag: '搵同族',
     compose: true,
   },
   {
     id: 'recruit-weekend',
-    text: '週末想識人？寫低你想去邊、想傾咩～',
+    text: '週末想出 pool？寫低你想去邊、想傾咩～',
     icon: '☕',
     topic: '徵友',
-    tag: '徵友',
+    tag: '出pool',
     compose: true,
   },
   {
     id: 'recruit-offline',
-    text: '線下聚會：有冇想約咖啡／行山／睇展嘅？',
+    text: '約出街：有冇想飲咖啡／行山／睇展嘅？',
     icon: '📍',
     topic: '徵友',
-    tag: '線下聚會',
+    tag: '約出街',
     compose: true,
   },
   {
@@ -61,7 +61,7 @@ export const DEFAULT_FORUM_HIT_TOPICS = [
     text: '你鍾意慢熱定直球？留言認親同族～',
     icon: '🌙',
     topic: '徵友',
-    tag: '介紹自己',
+    tag: '慢熱',
     compose: true,
   },
   {
@@ -69,7 +69,7 @@ export const DEFAULT_FORUM_HIT_TOPICS = [
     text: '收到 Inbox 第一句，你最想見到咩開場白？',
     icon: '✉️',
     topic: '徵友',
-    tag: '徵友',
+    tag: '認真交往',
   },
 
   // 感情
@@ -99,10 +99,10 @@ export const DEFAULT_FORUM_HIT_TOPICS = [
   },
   {
     id: 'love-partner',
-    text: '伴侶小事：佢做過咩令你覺得「就係你」？',
+    text: '拍拖小事：佢做過咩令你覺得「就係你」？',
     icon: '💗',
     topic: '感情',
-    tag: '伴侶',
+    tag: '拍拖',
     compose: true,
   },
   {
@@ -133,7 +133,7 @@ export const DEFAULT_FORUM_HIT_TOPICS = [
     text: '已讀不回 vs 慢回：你嘅底線係？',
     icon: '📱',
     topic: '感情',
-    tag: '曖昧',
+    tag: '已讀不回',
   },
 
   // 社群
@@ -150,7 +150,7 @@ export const DEFAULT_FORUM_HIT_TOPICS = [
     text: '今日樹洞：用一句講你而家嘅心情',
     icon: '🔥',
     topic: '社群',
-    tag: '日常',
+    tag: '樹洞',
     compose: true,
   },
   {
@@ -158,15 +158,15 @@ export const DEFAULT_FORUM_HIT_TOPICS = [
     text: '上班好累？傾下女同志職場小日常',
     icon: '💼',
     topic: '社群',
-    tag: '工作',
+    tag: '上班',
     compose: true,
   },
   {
     id: 'community-rant',
-    text: '吐槽專區：今日最想呻一句…',
+    text: '呻嘢專區：今日最想呻一句…',
     icon: '💢',
     topic: '社群',
-    tag: '吐槽',
+    tag: '呻嘢',
     compose: true,
   },
   {
@@ -174,7 +174,7 @@ export const DEFAULT_FORUM_HIT_TOPICS = [
     text: '香港 Les 日常：你最鍾意邊個 hangout 位？',
     icon: '🏙️',
     topic: '社群',
-    tag: '日常',
+    tag: 'hangout',
     compose: true,
   },
   {
@@ -182,7 +182,7 @@ export const DEFAULT_FORUM_HIT_TOPICS = [
     text: 'Chosen family：邊個朋友令你覺得有家？',
     icon: '🏠',
     topic: '社群',
-    tag: '日常',
+    tag: '樹洞',
   },
 
   // 命理 / Mirror
@@ -220,17 +220,17 @@ export const DEFAULT_FORUM_HIT_TOPICS = [
   },
   {
     id: 'ent-movie-date',
-    text: '約會電影：女同向／百合向你會揀邊套？',
+    text: '約會睇戲：女同向／百合向你會揀邊套？',
     icon: '🍿',
     topic: '娛樂',
-    tag: '電影',
+    tag: '睇戲',
   },
   {
     id: 'hobby-food',
     text: '今晚食咩好？分享你嘅治癒食堂',
     icon: '🍜',
     topic: '興趣',
-    tag: '美食',
+    tag: '飲茶食嘢',
     compose: true,
   },
   {
@@ -238,31 +238,31 @@ export const DEFAULT_FORUM_HIT_TOPICS = [
     text: '想計劃一趟兩女旅行——目的地投票！',
     icon: '✈️',
     topic: '興趣',
-    tag: '旅遊',
+    tag: '去旅行',
   },
 
   // 親密話題（溫和引導，唔過火）
   {
     id: 'intimacy-boundary',
-    text: '親密話題：你點樣同對方講清楚界線？',
+    text: '親密話題：你點樣同對方講清楚同意同界線？',
     icon: '🌙',
     topic: '親密話題',
-    tag: '界線與同意',
+    tag: '同意界線',
     compose: true,
   },
   {
     id: 'intimacy-desire',
-    text: '慾望探索：你第一次敢講出喜好係幾時？',
+    text: '探索喜好：你第一次敢講出喜好係幾時？',
     icon: '🕯️',
     topic: '親密話題',
-    tag: '慾望探索',
+    tag: '探索喜好',
   },
   {
     id: 'intimacy-consent',
     text: '同意與節奏：點樣問先至舒服？',
     icon: '🤝',
     topic: '親密話題',
-    tag: '界線與同意',
+    tag: '同意界線',
   },
 
   // 寫故事 / 綜合 hook
@@ -278,15 +278,15 @@ export const DEFAULT_FORUM_HIT_TOPICS = [
     text: '愛情語言：你最需要被點樣對待？',
     icon: '🗣️',
     topic: '感情',
-    tag: '伴侶',
+    tag: '拍拖',
     compose: true,
   },
   {
     id: 'recruit-voice-note',
-    text: '若可以聽一段語音自我介紹——你會講咩？',
+    text: '若可以聽一段語音報到——你會講咩？',
     icon: '🎤',
     topic: '徵友',
-    tag: '介紹自己',
+    tag: '報到自介',
     compose: true,
   },
   {
@@ -294,21 +294,21 @@ export const DEFAULT_FORUM_HIT_TOPICS = [
     text: 'Soft launch：你會點樣喺朋友圈「暗示」有對象？',
     icon: '📱',
     topic: '感情',
-    tag: '伴侶',
+    tag: '拍拖',
   },
   {
     id: 'recruit-age-gap',
     text: '年齡差、生活方式差——你點睇？',
     icon: '⏳',
     topic: '徵友',
-    tag: '徵友',
+    tag: '認真交往',
   },
   {
     id: 'love-long-distance',
     text: '異地戀／兩地生活：最難同最甜嘅係？',
     icon: '🌏',
     topic: '感情',
-    tag: '伴侶',
+    tag: '異地戀',
     compose: true,
   },
 ];

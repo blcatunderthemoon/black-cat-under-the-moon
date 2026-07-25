@@ -1,5 +1,5 @@
-/**
- * My Cat room furniture — Phase 3 (§12, docs/MY-CAT-GAME-DESIGN.md).
+﻿/**
+ * My Cat room furniture — Phase 3 (§12, docs/my-cat/MY-CAT-GAME-DESIGN.md).
  * Client-safe item catalog + defaults.
  */
 

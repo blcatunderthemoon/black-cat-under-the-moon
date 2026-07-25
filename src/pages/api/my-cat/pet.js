@@ -1,5 +1,5 @@
-/**
- * POST /api/my-cat/pet — Tap to Meow (§4.1, docs/MY-CAT-GAME-DESIGN.md).
+﻿/**
+ * POST /api/my-cat/pet — Tap to Meow (§4.1, docs/my-cat/MY-CAT-GAME-DESIGN.md).
  * First 5 taps per HK day: +2 affection each. Always returns a cat line.
  * Body (optional): { last_line: string } to avoid repeating the same line.
  */

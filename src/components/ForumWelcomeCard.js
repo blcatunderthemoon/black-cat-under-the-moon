@@ -8,11 +8,12 @@ import {
   WELCOME_TITLE_MAX,
 } from '../lib/forum-welcome-store.js';
 import { forumModFetch } from '../lib/forum-mod-api.js';
+import { ForumTopicIcon, ForumPinIcon } from './ForumIcons.js';
 
 function welcomeBadgeLabel(moodTag) {
-  if (moodTag === '版規') return '📌 版規';
-  if (moodTag === '指南') return '📌 指南';
-  return '📌 官方';
+  if (moodTag === '版規') return '版規';
+  if (moodTag === '指南') return '指南';
+  return '官方';
 }
 
 export function canEditWelcomeTopic(profile, topic) {
@@ -244,7 +245,8 @@ export default function ForumWelcomeCard({
           >
             <h3 className="forum-welcome-card__title">
               <span className="forum-welcome-card__title-text">
-                {ts.emoji} {welcome.title}
+                <ForumTopicIcon topic={topic} size={14} className="forum-welcome-card__topic-icon" />
+                {' '}{welcome.title}
               </span>
               <span className="forum-welcome-card__chevron" aria-hidden="true">{open ? '▾' : '▸'}</span>
             </h3>
@@ -257,10 +259,12 @@ export default function ForumWelcomeCard({
                 onClick={handleEditClick}
                 title="編輯版規"
               >
-                ✏️ 編輯
+                編輯
               </button>
             )}
-            <span className="forum-welcome-card__badge">{welcomeBadgeLabel(welcome.mood_tag)}</span>
+            <span className="forum-welcome-card__badge">
+              <ForumPinIcon size={11} /> {welcomeBadgeLabel(welcome.mood_tag)}
+            </span>
           </div>
         </div>
         <div

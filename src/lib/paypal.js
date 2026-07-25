@@ -1,6 +1,6 @@
-/**
+﻿/**
  * PayPal Subscriptions API helpers (Moonlight Passport).
- * Docs: docs/paypal-onboarding.md
+ * Docs: docs/billing/paypal-onboarding.md
  */
 
 import { getAdminClient } from './server-auth.js';

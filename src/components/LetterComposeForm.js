@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import PixelMixedLabel from './PixelMixedLabel.js';
 import ChannelStatusLine from './ChannelStatusLine.js';
 import LetterGameplayPicker from './LetterGameplayPicker.js';
+import { ForumPawIcon } from './UiIcons.js';
 import { CHANNEL_MAX_ROUND_TRIPS } from '../lib/inbox-channel.js';
 import {
   DEFAULT_LETTER_PREFS,
@@ -107,7 +108,9 @@ export default function LetterComposeForm({
             <div className="letter-compose__head-meta scroll-message__head-meta">
               {mode === 'reply' && (
                 <span className="scroll-message__wax-seal scroll-message__wax-seal--inline" aria-hidden="true" title="黑貓火漆">
-                  <span className="scroll-message__wax-seal__icon">🐈</span>
+                  <span className="scroll-message__wax-seal__icon">
+                    <ForumPawIcon size={12} />
+                  </span>
                 </span>
               )}
               <span className="letter-compose__count pixel-char-count">

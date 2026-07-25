@@ -4,6 +4,7 @@
 
 import Link from 'next/link';
 import { MOONLIGHT_PASSPORT_BRAND } from '../lib/premium.js';
+import { UiCameraIcon } from './UiIcons.js';
 
 function OwnerPhotoPreview({ ownerPhoto, ownerName }) {
   if (!ownerPhoto) return null;
@@ -55,7 +56,7 @@ export default function PhotoExchangePanel({
     return (
       <div className="photo-exchange-panel photo-exchange-panel--owner">
         <h3 className="photo-exchange-panel__title">
-          <span className="photo-exchange-panel__icon" aria-hidden="true">📷</span>
+          <span className="photo-exchange-panel__icon" aria-hidden="true"><UiCameraIcon size={16} /></span>
           交換相
         </h3>
         <p className="photo-exchange-panel__hint pixel-subtitle">
@@ -100,7 +101,7 @@ export default function PhotoExchangePanel({
   return (
     <div className="photo-exchange-panel">
       <h3 className="photo-exchange-panel__title">
-        <span className="photo-exchange-panel__icon" aria-hidden="true">📷</span>
+        <span className="photo-exchange-panel__icon" aria-hidden="true"><UiCameraIcon size={16} /></span>
         交換相
       </h3>
 

@@ -66,6 +66,14 @@
   text-align: center;
   color: var(--text-dim, #a89480);
   padding: 2rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+.guides-empty__icon {
+  display: inline-flex;
+  color: var(--accent, #ff8c42);
 }
 
 /* — Article detail — */
@@ -158,8 +166,8 @@
   width: 52px;
   height: 52px;
   margin: 0 auto 0.75rem;
-  font-size: 1.6rem;
   line-height: 1;
+  color: var(--accent, #ff8c42);
   border-radius: 50%;
   background: rgba(255, 159, 67, 0.12);
   border: 1px solid var(--border-accent, rgba(255, 159, 67, 0.35));

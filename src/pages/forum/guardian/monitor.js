@@ -38,7 +38,7 @@ export default function ForumGuardianMonitorPage() {
   }, [authLoading, profileHydrated, session, isAdmin, router]);
 
   const breadcrumbs = [
-    { href: '/forum', label: `🌙 ${FORUM_DISPLAY_NAME}` },
+    { href: '/forum', label: FORUM_DISPLAY_NAME },
     { href: '/forum/guardian', label: '月光守護者' },
     { label: '內容監控' },
   ];
@@ -67,7 +67,7 @@ export default function ForumGuardianMonitorPage() {
     >
       <div className="forum-admin-page">
         <header className="forum-admin-page__hero">
-          <h1 className="forum-admin-page__title">🔍 內容監控</h1>
+          <h1 className="forum-admin-page__title">內容監控</h1>
           <p className="forum-admin-page__subtitle">高檢舉數貼文與留言，可隱藏或恢復</p>
           <Link href="/forum/guardian" className="forum-guardian-page__back">
             <span className="forum-guardian-page__back-icon" aria-hidden="true">←</span>

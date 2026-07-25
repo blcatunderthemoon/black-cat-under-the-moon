@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import ExchangePhotoUpload from './ExchangePhotoUpload.js';
+import { UiCameraIcon } from './UiIcons.js';
 
 function PhotoExchangeCloseConfirm({ open, mode, onConfirm, onCancel, busy }) {
   if (!open) return null;
@@ -127,7 +128,7 @@ export default function PhotoExchangeOverlay({
             >
               ✕
             </button>
-          <span className="mirror-report-overlay__icon" aria-hidden="true">📷</span>
+          <span className="mirror-report-overlay__icon" aria-hidden="true"><UiCameraIcon size={28} /></span>
           <div className="mirror-report-overlay__title" id="photo-exchange-overlay-title">
             {title}
           </div>
@@ -206,7 +207,7 @@ export default function PhotoExchangeOverlay({
           >
             ✕
           </button>
-        <span className="mirror-report-overlay__icon" aria-hidden="true">📷</span>
+        <span className="mirror-report-overlay__icon" aria-hidden="true"><UiCameraIcon size={28} /></span>
         <div className="mirror-report-overlay__title" id="photo-exchange-overlay-title">
           {prepareTitle}
         </div>
