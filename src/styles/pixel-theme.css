@@ -1747,16 +1747,6 @@
   flex-shrink: 0;
 }
 
-.inbox-letter-row--system .inbox-letter-row__new-badge--applicant {
-  color: #061820;
-  background: #00e5ff;
-  border-color: rgba(170, 245, 255, 0.95);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.35) inset,
-    0 0 0 1px rgba(0, 40, 50, 0.35),
-    0 0 10px rgba(0, 229, 255, 0.28);
-}
-
 .inbox-system-notice--new .inbox-system-notice__head {
   padding-right: 4.5rem;
 }
@@ -1929,26 +1919,6 @@
   margin-top: 0.6rem;
   font-size: 0.72rem;
   color: rgba(232, 228, 240, 0.45);
-}
-
-.inbox-letter-row--system .inbox-letter-row__new-badge--system {
-  top: 6px;
-  right: 6px;
-  padding: 4px 6px 3px;
-  font-family: 'Zpix', 'Noto Sans TC', sans-serif;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  line-height: 1;
-  color: #1a1200;
-  background: #ffe066;
-  border: 2px solid #1a1200;
-  box-shadow:
-    2px 2px 0 0 rgba(0, 0, 0, 0.55),
-    0 0 10px rgba(255, 224, 102, 0.35);
-  text-shadow: none;
-  -webkit-font-smoothing: none;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 .inbox-match-card-row {
@@ -7752,9 +7722,10 @@
 .inbox-letter-row {
   position: relative;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 14px;
   width: 100%;
+  min-height: 88px;
   padding: 14px 14px 13px;
   text-decoration: none;
   color: inherit;
@@ -7768,7 +7739,8 @@
 
 .inbox-letter-row > .letter-icon {
   flex-shrink: 0;
-  margin-top: 1px;
+  align-self: center;
+  margin-top: 0;
 }
 
 .inbox-letter-row:hover {
@@ -7798,16 +7770,6 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
-.inbox-letter-row__stack--match {
-  gap: 8px;
-}
-
-.inbox-letter-row__stack--match .inbox-letter-row__top {
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-}
-
 .inbox-letter-row__match-flag {
   flex-shrink: 0;
   align-self: flex-start;
@@ -7817,16 +7779,6 @@
   line-height: 1.5;
   letter-spacing: 0.06em;
   color: rgba(168, 160, 192, 0.62);
-}
-
-.inbox-letter-row__stack--match .inbox-letter-row__name {
-  flex: 1;
-}
-
-.inbox-letter-row__stack--match .inbox-letter-row__bottom {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 6px;
 }
 
 .inbox-letter-row__main {
@@ -7849,15 +7801,12 @@
   color: rgba(0, 229, 255, 0.55);
 }
 
-.inbox-letter-row__stack--match .inbox-letter-row__aside {
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-end;
-  width: 100%;
-  margin-left: 0;
-}
-
-.inbox-letter-row__stack--match .inbox-letter-row__title--match {
+.inbox-letter-row__title--match {
+  font-family: var(--font-zh);
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(186, 178, 210, 0.82);
+  letter-spacing: 0.01em;
   white-space: normal;
   overflow: visible;
   text-overflow: unset;
@@ -7937,33 +7886,12 @@
 }
 
 
+/* Shared unread chip — color variants only differ by accent */
 .inbox-letter-row__new-badge {
   position: absolute;
   top: 6px;
   right: 6px;
   z-index: 3;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Press Start 2P', monospace;
-  font-size: 6px;
-  letter-spacing: 0.06em;
-  line-height: 1;
-  color: #fff;
-  background: linear-gradient(135deg, #ff6b9d 0%, #c44d8a 100%);
-  border: 2px solid rgba(255, 224, 240, 0.9);
-  padding: 3px 5px 2px;
-  box-shadow: 2px 2px 0 0 rgba(0, 0, 0, 0.5), 0 0 12px rgba(255, 107, 157, 0.5);
-  -webkit-font-smoothing: none;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: geometricPrecision;
-  pointer-events: none;
-}
-
-/* Match「連線」badge — clear solid chip, no glow haze on text */
-.inbox-letter-row__new-badge.inbox-letter-row__new-badge--match {
-  top: 6px;
-  right: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -7975,28 +7903,49 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   line-height: 1.2;
-  color: #061820;
-  background: #00e5ff;
-  border: 1px solid rgba(170, 245, 255, 0.95);
+  color: #2a1018;
+  background: #ff6b9d;
+  border: 1px solid rgba(255, 224, 240, 0.95);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.35) inset,
-    0 0 0 1px rgba(0, 40, 50, 0.35),
-    0 0 10px rgba(0, 229, 255, 0.28);
+    0 0 0 1px rgba(50, 10, 25, 0.35),
+    0 0 10px rgba(255, 107, 157, 0.28);
   text-shadow: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  animation: none;
+  pointer-events: none;
 }
 
-.inbox-letter-row__new-badge.inbox-letter-row__new-badge--match::before {
+.inbox-letter-row__new-badge::before {
   content: '';
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: #061820;
+  background: currentColor;
   opacity: 0.85;
   flex-shrink: 0;
+}
+
+.inbox-letter-row__new-badge.inbox-letter-row__new-badge--match,
+.inbox-letter-row__new-badge.inbox-letter-row__new-badge--applicant {
+  color: #061820;
+  background: #00e5ff;
+  border-color: rgba(170, 245, 255, 0.95);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.35) inset,
+    0 0 0 1px rgba(0, 40, 50, 0.35),
+    0 0 10px rgba(0, 229, 255, 0.28);
+}
+
+.inbox-letter-row__new-badge.inbox-letter-row__new-badge--system {
+  color: #1a1200;
+  background: #ffe066;
+  border-color: rgba(255, 236, 170, 0.95);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.35) inset,
+    0 0 0 1px rgba(40, 30, 0, 0.35),
+    0 0 10px rgba(255, 224, 102, 0.28);
 }
 
 @keyframes inbox-match-badge-pulse {
@@ -8035,23 +7984,19 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 8px;
   padding-top: 1px;
 }
 
-/* Keep corner badge clear of the name row only — never pad the whole stack
-   (that shoved meta/time out of place). */
+/* Keep corner badge clear of the name row — shared for all unread chips */
 .inbox-letter-row:has(.inbox-letter-row__new-badge) .inbox-letter-row__top {
-  padding-right: 2.75em;
-}
-
-.inbox-letter-row:has(.inbox-letter-row__new-badge--match) .inbox-letter-row__top {
-  padding-right: 3.75em;
+  padding-right: 4.25rem;
 }
 
 .inbox-letter-row__top {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: space-between;
   width: 100%;
   min-width: 0;
   gap: 8px;
@@ -8059,9 +8004,9 @@
 
 .inbox-letter-row__bottom {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 10px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
   width: 100%;
   min-width: 0;
 }
@@ -8069,11 +8014,17 @@
 .inbox-letter-row__aside {
   flex-shrink: 0;
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  flex-direction: row;
+  align-items: center;
   justify-content: flex-end;
   gap: 5px;
+  width: 100%;
+  margin-left: 0;
+}
+
+.inbox-letter-row__aside .inbox-letter-row__time {
   margin-left: auto;
+  flex-shrink: 0;
 }
 
 .inbox-letter-row__trail {
@@ -8083,19 +8034,31 @@
   justify-content: flex-end;
 }
 
-/* System / 月光聚會 rows — channel · title on one line, time on the right (no duplicate meta) */
-.inbox-letter-row__stack--system .inbox-letter-row__top {
-  align-items: center;
+.inbox-letter-row__trail--under-title {
+  justify-content: flex-start;
+  align-self: flex-start;
+  max-width: 100%;
+}
+
+.inbox-letter-row__trail--under-title .inbox-letter-row__opportunity {
+  white-space: normal;
+  max-width: 100%;
+}
+
+/* System / 月光聚會 — accent only; layout matches shared card rhythm */
+.inbox-letter-row--system {
+  border: 1px solid rgba(189, 147, 249, 0.14);
 }
 
 .inbox-letter-row__sys-icon {
   flex: 0 0 auto;
+  align-self: center;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
-  margin: 2px 2px 2px 0;
+  width: 56px;
+  height: 56px;
+  margin: 0;
   color: #cbb6ff;
   background:
     linear-gradient(165deg, rgba(189, 147, 249, 0.14) 0%, rgba(20, 16, 36, 0.85) 100%);
@@ -8153,31 +8116,24 @@
   white-space: nowrap;
 }
 
-.inbox-letter-row:has(.inbox-letter-row__new-badge) .inbox-letter-row__time--inline {
-  padding-right: 2.75em; /* clear unread corner chip */
-}
-
-.inbox-letter-row__stack--system .inbox-letter-row__name {
+.inbox-letter-row--system .inbox-letter-row__name {
   flex: 1 1 auto;
   min-width: 0;
   align-items: baseline;
   column-gap: 0;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 
-.inbox-letter-row__stack--system .inbox-letter-row__en--name {
+.inbox-letter-row--system .inbox-letter-row__en--name {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow: visible;
+  text-overflow: unset;
+  white-space: normal;
+  word-break: break-word;
   transform: none;
 }
 
-.inbox-letter-row__stack--system .inbox-letter-row__bottom {
-  align-items: flex-start;
-}
-
-.inbox-letter-row__stack--system .inbox-letter-row__title {
+.inbox-letter-row--system .inbox-letter-row__title {
   color: rgba(216, 210, 232, 0.88);
 }
 
@@ -8208,9 +8164,13 @@
 
 .inbox-letter-list .inbox-letter-row__en--name {
   font-size: 10px;
-  line-height: 1;
+  line-height: 1.25;
   /* Press Start 2P sits optically higher than Zpix — nudge onto the same midline */
   transform: translateY(1px);
+  overflow: visible;
+  text-overflow: unset;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .inbox-letter-row__name {
@@ -8260,14 +8220,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   text-shadow: 0 0 12px rgba(180, 170, 210, 0.12);
-}
-
-.inbox-letter-row__title--match {
-  font-family: var(--font-zh);
-  font-size: 11px;
-  font-weight: 500;
-  color: rgba(186, 178, 210, 0.82);
-  letter-spacing: 0.01em;
 }
 
 .inbox-letter-row--match-unread .inbox-letter-row__title--match {
@@ -24710,7 +24662,7 @@ button.forum-tag-chip:hover {
   }
 }
 
-/* ── Header entry (§1.3 唯一主入口) — 真·像素貓 sprite 按鈕 ── */
+/* ── Header entry (§1.3) — transparent + moon glow, same on every page ── */
 .header-my-cat-link {
   position: relative;
   display: inline-flex;
@@ -24719,84 +24671,100 @@ button.forum-tag-chip:hover {
   flex-shrink: 0;
   box-sizing: border-box;
   overflow: visible;
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
   padding: 0;
   border-radius: 8px;
-  /* Cool moonlight plate — warm gold was tinting the black cat brown */
-  background:
-    radial-gradient(circle at 50% 38%, #fbfcff 0%, #e8ecf4 48%, #c5cedc 100%);
-  box-shadow:
-    inset 0 0 0 1px rgba(230, 236, 248, 0.95),
-    inset 0 1px 0 rgba(255, 255, 255, 0.7),
-    0 0 0 1px rgba(40, 50, 70, 0.4),
-    0 0 10px rgba(180, 200, 255, 0.22);
-  transition: background 0.2s, box-shadow 0.2s, filter 0.2s;
+  background: transparent !important;
+  box-shadow: none !important;
+  transition: filter 0.15s;
 }
 
 .header-my-cat-link::before {
   content: '';
   position: absolute;
-  inset: 2px;
-  border-radius: 6px;
-  background: radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.4), transparent 62%);
+  inset: 1px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 42%,
+    rgba(255, 244, 210, 0.34) 0%,
+    rgba(210, 220, 255, 0.16) 42%,
+    transparent 70%
+  );
   pointer-events: none;
   z-index: 0;
 }
 
 .header-my-cat-link:hover {
-  background:
-    radial-gradient(circle at 50% 38%, #ffffff 0%, #f0f3fa 48%, #d4dce8 100%);
-  box-shadow:
-    inset 0 0 0 1px rgba(240, 244, 255, 1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8),
-    0 0 0 1px rgba(50, 60, 85, 0.45),
-    0 0 14px rgba(190, 210, 255, 0.35);
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.header-my-cat-link:hover::before {
+  background: radial-gradient(
+    circle at 50% 42%,
+    rgba(255, 236, 160, 0.42) 0%,
+    rgba(220, 200, 255, 0.18) 45%,
+    transparent 72%
+  );
 }
 
 .header-my-cat-link__sprite {
   position: relative;
   z-index: 1;
   display: block;
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
   overflow: visible;
   background: url('/catset_extra_assets/cat05_header_icon.png?v=20260725black') no-repeat center / contain;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
-  filter: drop-shadow(0 1px 0 rgba(20, 24, 36, 0.35));
+  filter:
+    drop-shadow(0 0 0.8px rgba(255, 248, 230, 0.95))
+    drop-shadow(0 0 1.5px rgba(255, 224, 102, 0.55))
+    drop-shadow(0 0 4px rgba(180, 200, 255, 0.4));
   transition: filter 0.15s ease-out;
+  opacity: 1;
 }
 
 .header-my-cat-link:hover .header-my-cat-link__sprite {
   transform: none;
-  filter: drop-shadow(0 1px 0 rgba(20, 24, 36, 0.45));
+  filter:
+    drop-shadow(0 0 0.9px rgba(255, 248, 220, 1))
+    drop-shadow(0 0 2px rgba(255, 224, 102, 0.75))
+    drop-shadow(0 0 6px rgba(255, 210, 120, 0.45));
 }
 
 .header-my-cat-link__sprite--strip {
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
   background-repeat: no-repeat;
-  filter: drop-shadow(0 1px 0 rgba(20, 24, 36, 0.35));
+  filter:
+    drop-shadow(0 0 0.8px rgba(255, 248, 230, 0.95))
+    drop-shadow(0 0 1.5px rgba(255, 224, 102, 0.55))
+    drop-shadow(0 0 4px rgba(180, 200, 255, 0.4));
 }
 
 .header-my-cat-link--forum {
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  max-width: 36px;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  max-width: 32px;
   padding: 0;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
-/* Avoid icon-slot max-width clipping the cat button */
 .auth-nav-badge__item--icon.header-my-cat-link {
-  width: 36px;
-  min-width: 36px;
-  max-width: 36px;
-  height: 36px;
+  width: 32px;
+  min-width: 32px;
+  max-width: 32px;
+  height: 32px;
   overflow: visible;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .header-my-cat-link__dot {
@@ -24812,36 +24780,14 @@ button.forum-tag-chip:hover {
   pointer-events: none;
 }
 
-.header-my-cat-link--hungry {
-  background:
-    radial-gradient(circle at 50% 40%, #ffe8dc 0%, #ffc4a8 45%, #f0a078 100%);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 210, 180, 0.95),
-    inset 0 1px 0 rgba(255, 255, 255, 0.45),
-    0 0 0 1px rgba(120, 50, 30, 0.4),
-    0 0 10px rgba(255, 140, 100, 0.35);
-}
-
+.header-my-cat-link--hungry,
 .header-my-cat-link--hungry:hover {
-  background:
-    radial-gradient(circle at 50% 40%, #fff0e8 0%, #ffd0b8 48%, #f8b090 100%);
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .header-my-cat-link--hungry .header-my-cat-link__sprite {
-  animation: my-cat-paw-nudge 2.4s ease-in-out infinite;
-}
-
-/* 肚餓提醒：小貓跳兩下（保持像素感，唔用旋轉） */
-@keyframes my-cat-paw-nudge {
-  0%, 80%, 100% { transform: none; }
-  84%, 92% { transform: translateY(-2px); }
-  88%, 96% { transform: translateY(0); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .header-my-cat-link--hungry .header-my-cat-link__sprite {
-    animation: none;
-  }
+  animation: none;
 }
 
 /* ── 離家出走（飽腹 0） ── */

@@ -254,7 +254,10 @@
 .wishes-sort {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
+  flex: 0 0 auto;
+  width: max-content;
+  max-width: 100%;
   font-family: 'Noto Sans TC', sans-serif;
   font-size: 12px;
   color: var(--wish-dim);
@@ -263,24 +266,32 @@
 .wishes-sort__label {
   opacity: 0.75;
   white-space: nowrap;
+  flex: 0 0 auto;
+  line-height: 1;
 }
 
 .wishes-sort__select {
   appearance: none;
   -webkit-appearance: none;
   box-sizing: border-box;
+  flex: 0 0 auto;
+  width: max-content;
+  min-width: 5.75rem;
+  max-width: 100%;
+  field-sizing: content;
   border: 1px solid rgba(255, 190, 120, 0.32);
   background-color: rgba(18, 12, 20, 0.78);
   color: var(--wish-cream);
   border-radius: 999px;
-  /* Equal L/R padding so short labels (e.g. 最新) sit centered; caret overlays right side */
-  padding: 0 1.7rem;
+  /* Left-aligned value; extra right pad for caret */
+  padding: 0 1.75rem 0 0.85rem;
   min-height: 0;
   height: 30px;
   font: inherit;
+  font-weight: 600;
   line-height: 28px;
-  text-align: center;
-  text-align-last: center;
+  text-align: left;
+  text-align-last: left;
   cursor: pointer;
   box-shadow: none;
   background-image: linear-gradient(45deg, transparent 50%, rgba(255, 224, 102, 0.8) 50%),
@@ -392,10 +403,12 @@
 }
 
 .wishes-toolbar__aside .wishes-sort__select {
-  padding: 0 1.7rem;
+  padding: 0 1.75rem 0 0.85rem;
   line-height: 28px;
-  text-align: center;
-  text-align-last: center;
+  text-align: left;
+  text-align-last: left;
+  width: max-content;
+  min-width: 5.75rem;
   background-position: calc(100% - 11px) 50%, calc(100% - 6px) 50%;
 }
 
@@ -698,21 +711,37 @@
 }
 
 .wish-card__cheer-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-grid;
+  place-items: center;
+  place-content: center;
+  flex-shrink: 0;
   box-sizing: border-box;
-  min-width: 1.25rem;
+  width: 18px;
   height: 18px;
-  padding: 0 5px;
-  border-radius: 999px;
+  min-width: 18px;
+  min-height: 18px;
+  padding: 0;
+  margin: 0;
+  border-radius: 50%;
   background: rgba(0, 0, 0, 0.35);
   border: 1px solid rgba(255, 224, 102, 0.28);
+  font-family: var(--font-zh, 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif);
   font-variant-numeric: tabular-nums;
-  font-size: 11px;
+  font-feature-settings: 'tnum' 1;
+  font-size: 10px;
+  font-weight: 700;
   line-height: 1;
+  letter-spacing: 0;
   text-align: center;
   color: #ffe066;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wish-card__cheer-count[data-digits='2'] {
+  width: auto;
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
 }
 
 .wish-card__cheer-btn.is-cheered .wish-card__cheer-count {
@@ -3078,22 +3107,25 @@ button.wish-moon__stamp:hover:not(:disabled) .wish-moon__stamp-paw {
     width: 100%;
   }
 
-  /* Compact sort on its own row — hug content; don't stretch into an empty full-width pill */
+  /* Compact sort — hug label + select; never stretch into a full-width empty pill */
   .wishes-toolbar__aside .wishes-sort {
-    flex: 0 0 100%;
-    width: auto;
+    flex: 0 0 auto;
+    width: max-content;
     max-width: 100%;
     justify-content: flex-start;
   }
 
   .wishes-toolbar__aside .wishes-sort__select {
-    width: auto;
-    min-width: 4.75rem;
-    max-width: 11rem;
+    flex: 0 0 auto;
+    width: max-content;
+    min-width: 5.75rem;
+    max-width: min(100%, 12rem);
     height: 36px;
     min-height: 36px;
     line-height: 34px;
-    padding: 0 1.85rem;
+    padding: 0 1.85rem 0 0.9rem;
+    text-align: left;
+    text-align-last: left;
   }
 
   .wishes-toolbar__aside .wishes-btn,

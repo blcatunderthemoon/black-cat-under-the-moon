@@ -120,7 +120,12 @@ export default function WishCard({
               {cheered ? <HeaderHeartIcon size={12} /> : <ForumSparkleIcon size={12} />}
             </span>
             <span className="wish-card__cheer-label">{cheered ? '已打氣' : '打氣'}</span>
-            <span className="wish-card__cheer-count">{localCount}</span>
+            <span
+              className="wish-card__cheer-count"
+              data-digits={String(localCount).length >= 2 ? '2' : '1'}
+            >
+              {localCount}
+            </span>
           </button>
         ) : (
           <span className="wish-card__cheers">

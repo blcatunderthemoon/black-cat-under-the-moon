@@ -309,7 +309,15 @@ export default function InboxPage() {
                     >
                       {hasUnread && (
                         <span
-                          className={`inbox-letter-row__new-badge${isMatch ? ' inbox-letter-row__new-badge--match' : ''}${isSystem ? ' inbox-letter-row__new-badge--system' : ''}${isGatheringApplicantNotice ? ' inbox-letter-row__new-badge--applicant' : ''}`}
+                          className={`inbox-letter-row__new-badge${
+                            isMatch
+                              ? ' inbox-letter-row__new-badge--match'
+                              : isGatheringApplicantNotice
+                                ? ' inbox-letter-row__new-badge--applicant'
+                                : isSystem
+                                  ? ' inbox-letter-row__new-badge--system'
+                                  : ''
+                          }`}
                           aria-label={unreadBadgeAria}
                         >
                           {unreadBadgeLabel}
@@ -322,12 +330,12 @@ export default function InboxPage() {
                           className={`inbox-letter-row__sys-icon${isGatheringCancelled ? ' inbox-letter-row__sys-icon--danger' : ''}${hasUnread ? ' inbox-letter-row__sys-icon--unread' : ''}`}
                           aria-hidden="true"
                         >
-                          <SystemNoticeIcon kind={systemKind} size={22} />
+                          <SystemNoticeIcon kind={systemKind} size={26} />
                         </span>
                       ) : (
                         <PixelSealedLetterIcon variant={iconVariant} size={56} />
                       )}
-                      <div className={`inbox-letter-row__stack${isMatch ? ' inbox-letter-row__stack--match' : ''}${isSystem ? ' inbox-letter-row__stack--system' : ''}`}>
+                      <div className="inbox-letter-row__stack">
                         <div className="inbox-letter-row__top">
                           <span className="inbox-letter-row__name">
                             {isSystem && gatheringTitle && systemChannel ? (
@@ -349,11 +357,6 @@ export default function InboxPage() {
                           {isMatchRead && (
                             <span className="inbox-letter-row__match-flag">已查看</span>
                           )}
-                          {isSystem && (
-                            <span className="inbox-letter-row__time inbox-letter-row__time--inline">
-                              {timeAgo(thread.last_message_at)}
-                            </span>
-                          )}
                         </div>
                         <div className="inbox-letter-row__bottom">
                           <div className="inbox-letter-row__main">
@@ -372,14 +375,14 @@ export default function InboxPage() {
                                 <span className="inbox-match-score-pill__max">/100</span>
                               </span>
                             )}
+                            {!isMatch && !isSystem && metaText ? (
+                              <div className="inbox-letter-row__trail inbox-letter-row__trail--under-title">
+                                <InboxListMetaText text={metaText} badge={isOpportunityMeta} />
+                              </div>
+                            ) : null}
                           </div>
-                          {!isMirrorClosed && !isSystem && (
+                          {!isMirrorClosed && (
                             <div className="inbox-letter-row__aside">
-                              {!isMatch && metaText ? (
-                                <div className="inbox-letter-row__trail">
-                                  <InboxListMetaText text={metaText} badge={isOpportunityMeta} />
-                                </div>
-                              ) : null}
                               <span className="inbox-letter-row__time">
                                 {timeAgo(thread.last_message_at)}
                               </span>
