@@ -2026,7 +2026,12 @@ async function openMyAnswersPanel() {
   setMyAnswersEntryVisible(false);
   if ($already) $already.classList.remove('overlay-screen--match-results');
   showMyAnswersPanelEl();
-  if (list) list.innerHTML = '<p class="my-answers-loading">載入中…</p>';
+  if (list) {
+    list.innerHTML = window.MoonLoadingHtml
+      ? window.MoonLoadingHtml('載入中...', { size: 36 })
+      : '<p class="my-answers-loading">載入中…</p>';
+    if (window.initMoonLoadingIn) window.initMoonLoadingIn(list);
+  }
   if (errEl) {
     errEl.textContent = '';
     errEl.setAttribute('hidden', '');

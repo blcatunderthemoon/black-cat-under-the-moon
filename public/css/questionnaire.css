@@ -2514,6 +2514,10 @@ body:has(#already-screen.active) #site-footer {
   font-size: 0.88rem;
   color: rgba(200, 190, 220, 0.7);
 }
+.my-answers-list > .loading-send-stack {
+  margin: 36px auto 28px;
+  min-height: 96px;
+}
 .match-results-count {
   text-align: center;
   margin: 0;
@@ -5558,31 +5562,40 @@ body:has(.mode-select-screen.active) {
   margin: 20px auto 0;
   box-sizing: border-box;
 }
-.mirror-actions__btns,
-.mirror-actions__btn-row {
+.mirror-actions__btns {
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+.mirror-actions__row,
+.mirror-actions__btn-row {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: center;
   gap: 8px;
   width: 100%;
   min-width: 0;
 }
 .mirror-families-btn,
-.mirror-download-btn,
-.mirror-share-btn {
+.mirror-download-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 5px;
+  flex: 0 0 auto;
   width: fit-content;
   max-width: 100%;
   min-width: 0;
   margin: 0;
-  padding: 10px 18px;
+  padding: 11px 10px;
   border-radius: 999px;
-  font-size: 8px;
-  line-height: 1.4;
-  letter-spacing: 0.04em;
+  font-size: 7px;
+  line-height: 1.35;
+  letter-spacing: 0.03em;
   text-align: center;
   text-decoration: none;
   cursor: pointer;
@@ -5591,54 +5604,78 @@ body:has(.mode-select-screen.active) {
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: grayscale;
 }
+.mirror-actions__row > .mirror-families-btn,
+.mirror-actions__row > .mirror-download-btn,
+.mirror-actions__btn-row > .mirror-families-btn,
+.mirror-actions__btn-row > .mirror-download-btn {
+  flex: 1 1 0;
+  width: auto;
+}
 .mirror-families-btn {
   font-family: 'Press Start 2P', monospace;
-  background: color-mix(in srgb, #ffe066 18%, rgba(12, 10, 20, 0.88));
-  border: 1px solid rgba(255, 224, 102, 0.55);
+  background: color-mix(in srgb, #ffe066 16%, rgba(12, 10, 20, 0.9));
+  border: 1px solid rgba(255, 224, 102, 0.5);
   color: #ffe066;
 }
 .mirror-families-btn:hover {
   background: #ffe066;
   color: #0a0914;
-  box-shadow: 0 0 16px rgba(255, 224, 102, 0.28);
+  box-shadow: 0 0 14px rgba(255, 224, 102, 0.25);
   transform: translateY(-1px);
 }
 .mirror-download-btn {
   font-family: 'Zpix', 'Press Start 2P', monospace;
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.26);
   color: rgba(245, 242, 255, 0.92);
 }
 .mirror-download-btn__label {
   font-family: 'Zpix', 'Press Start 2P', monospace;
-  font-size: 8px;
-  line-height: 1.4;
-  letter-spacing: 0.04em;
+  font-size: 7px;
+  line-height: 1.35;
+  letter-spacing: 0.03em;
 }
 .mirror-download-btn__icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-family: 'Press Start 2P', monospace;
-  font-size: 10px;
+  font-size: 9px;
   line-height: 1;
   flex-shrink: 0;
   transform: translateY(1px);
 }
 .mirror-download-btn:hover {
   background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.48);
+  border-color: rgba(255, 255, 255, 0.45);
   color: #fff;
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.06);
   transform: translateY(-1px);
 }
 .mirror-download-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 .mirror-share-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 999px;
   font-family: 'Zpix', 'Press Start 2P', monospace;
+  font-size: 7px;
+  line-height: 1.35;
+  letter-spacing: 0.03em;
   background: transparent;
   border: 1px solid transparent;
-  color: rgba(200, 195, 215, 0.72);
-  padding: 8px 14px;
+  color: rgba(200, 195, 215, 0.68);
+  text-decoration: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
 }
 .mirror-share-btn__label {
   font-family: inherit;
@@ -5648,13 +5685,13 @@ body:has(.mode-select-screen.active) {
 }
 .mirror-share-btn__icon {
   font-family: 'Press Start 2P', monospace;
-  font-size: 10px;
+  font-size: 9px;
   line-height: 1;
   flex-shrink: 0;
 }
 .mirror-share-btn:hover:not(:disabled) {
   background: rgba(189, 147, 249, 0.08);
-  border-color: rgba(189, 147, 249, 0.28);
+  border-color: rgba(189, 147, 249, 0.22);
   color: var(--purple-light);
   box-shadow: none;
 }
@@ -5808,11 +5845,17 @@ body:has(.mode-select-screen.active) {
   color: rgba(255, 224, 102, 0.82);
 }
 @media (max-width: 420px) {
+  .mirror-actions__row {
+    gap: 6px;
+  }
   .mirror-families-btn,
-  .mirror-download-btn,
-  .mirror-share-btn {
-    padding-left: 16px;
-    padding-right: 16px;
+  .mirror-download-btn {
+    padding: 10px 6px;
+    font-size: 6.5px;
+    letter-spacing: 0.02em;
+  }
+  .mirror-download-btn__label {
+    font-size: 6.5px;
   }
   .mirror-download-meta-toggle {
     grid-template-columns: auto minmax(0, 1fr);
