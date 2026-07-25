@@ -360,8 +360,7 @@
   function fetchGatheringCount() {
     var meta = root && root.querySelector('[data-gathering-count]');
     if (!meta) return;
-    /* Always show 進行中 tag — including when open count is 0 */
-    meta.hidden = false;
+    meta.hidden = true;
     fetch('/api/gatherings?open_only=1&limit=40', {
       credentials: 'same-origin',
       headers: { Accept: 'application/json' },
@@ -373,12 +372,15 @@
       .then(function (data) {
         var n = typeof data.total === 'number' ? data.total : (data.gatherings || []).length;
         if (typeof n !== 'number' || n < 0 || !isFinite(n)) n = 0;
+        if (n <= 0) {
+          meta.hidden = true;
+          return;
+        }
         meta.textContent = '進行中 (' + n + ')';
         meta.hidden = false;
       })
       .catch(function () {
-        meta.textContent = '進行中 (0)';
-        meta.hidden = false;
+        meta.hidden = true;
       });
   }
 

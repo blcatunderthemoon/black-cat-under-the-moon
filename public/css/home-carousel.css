@@ -408,32 +408,17 @@ body.home-landing-active:has(#live-activity:not([hidden])) {
   margin: 0;
   padding: 2px 12px 0;
   font-family: var(--font-zh, "Noto Sans TC", sans-serif);
-  font-size: clamp(14px, 3.2vw, 17px);
+  font-size: clamp(13px, 3vw, 16px);
   font-weight: 500;
   letter-spacing: 0.04em;
-  line-height: 1.45;
+  line-height: 1.4;
   color: #f4f0ff;
   text-align: center;
-  text-shadow: 0 0 18px rgba(255, 255, 255, 0.22);
+  text-shadow: 0 0 14px rgba(255, 255, 255, 0.16);
 }
 
 .home-landing__sub {
-  margin: 0;
-  padding: 0 8px;
-  max-width: 780px;
-  font-family: 'Zpix', 'Press Start 2P', monospace !important;
-  font-size: clamp(9px, 1.9vw, 11px);
-  font-weight: normal;
-  color: rgba(214, 206, 232, 0.82);
-  line-height: 1.5;
-  letter-spacing: 0.03em;
-  text-align: center;
-  text-shadow: none;
-  opacity: 1;
-  flex: 0 0 auto;
-  -webkit-font-smoothing: none;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: geometricPrecision;
+  display: none;
 }
 
 /* ——— Carousel ——— */
@@ -1120,15 +1105,15 @@ body.home-landing-active:has(#live-activity:not([hidden])) {
   pointer-events: none;
 }
 
-/* Soft round dots — inactive ○ · active 🌙 */
+/* Soft round dots — inactive ○ · active CSS crescent (no emoji) */
 .home-carousel__dots {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 11px;
   width: auto;
-  margin: 8px auto 0;
-  padding: 6px 0;
+  margin: 6px auto 0;
+  padding: 4px 0;
   list-style: none;
   position: relative;
   z-index: 2;
@@ -1150,13 +1135,13 @@ body.home-landing-active:has(#live-activity:not([hidden])) {
 .home-carousel__dot {
   position: relative;
   z-index: 1;
-  width: 9px;
-  height: 9px;
+  width: 6px;
+  height: 6px;
   padding: 0;
   margin: 0;
-  border: 1.5px solid rgba(240, 235, 216, 0.42);
+  border: 1px solid rgba(240, 235, 216, 0.4);
   border-radius: 50% !important;
-  background: rgba(10, 8, 18, 0.55);
+  background: transparent;
   cursor: pointer;
   box-shadow: none;
   transform: none !important;
@@ -1167,36 +1152,34 @@ body.home-landing-active:has(#live-activity:not([hidden])) {
 }
 
 .home-carousel__dot[aria-current="true"] {
-  width: 18px;
-  height: 18px;
+  width: 11px;
+  height: 11px;
   border: none;
-  border-radius: 0 !important;
-  background: transparent;
-  box-shadow: none;
+  border-radius: 50% !important;
+  background: #ffe066;
+  box-shadow: inset -3.5px 0 0 0 #0a0914;
   transform: none !important;
-  font-size: 15px;
-  line-height: 1;
-  color: #ffe066;
-  text-shadow: 0 0 10px rgba(255, 224, 102, 0.45);
+  font-size: 0;
+  line-height: 0;
+  color: transparent;
+  text-shadow: none;
 }
 
 .home-carousel__dot[aria-current="true"]::before {
-  content: '🌙';
-  display: block;
-  font-size: 15px;
-  line-height: 1;
-  filter: drop-shadow(0 0 6px rgba(255, 224, 102, 0.4));
+  content: none;
+  display: none;
 }
 
 .home-carousel__dot:hover,
 .home-carousel__dot:focus-visible {
-  border-color: rgba(240, 235, 216, 0.8);
+  border-color: rgba(240, 235, 216, 0.75);
+  background: rgba(240, 235, 216, 0.12);
 }
 
 .home-carousel__dot[aria-current="true"]:hover,
 .home-carousel__dot[aria-current="true"]:focus-visible {
   border: none;
-  filter: brightness(1.08);
+  filter: brightness(1.06);
 }
 
 .home-landing__bottom {
@@ -1602,16 +1585,15 @@ body.home-landing-active:has(#live-activity:not([hidden])) {
   }
 
   .home-landing__headline {
-    font-size: 14px;
+    font-size: 13px;
     margin: 0;
     padding: 0 12px;
-    line-height: 1.45;
+    line-height: 1.4;
     text-align: center;
   }
 
   .home-landing__sub {
-    font-size: clamp(9px, 2.8vw, 11px);
-    letter-spacing: 0.03em;
+    display: none;
   }
 
   .home-carousel {
@@ -1625,22 +1607,24 @@ body.home-landing-active:has(#live-activity:not([hidden])) {
   }
 
   .home-carousel__dots {
-    gap: 18px;
-    margin-top: 10px;
+    gap: 12px;
+    margin-top: 8px;
   }
 
   .home-carousel__dot {
-    width: 10px;
-    height: 10px;
+    width: 6px;
+    height: 6px;
   }
 
   .home-carousel__dot[aria-current="true"] {
-    width: 20px;
-    height: 20px;
+    width: 11px;
+    height: 11px;
+    box-shadow: inset -3.5px 0 0 0 #0a0914;
   }
 
   .home-carousel__dot[aria-current="true"]::before {
-    font-size: 16px;
+    content: none;
+    display: none;
   }
 
   .home-carousel__card {
