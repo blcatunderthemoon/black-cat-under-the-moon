@@ -70,11 +70,11 @@ export default function MyWishesPage() {
 
         <div className="wishes-toolbar wishes-toolbar--mine">
           <div className="wishes-toolbar__aside">
-            <Link href="/wishes/new" className="wishes-btn wishes-btn--primary wishes-btn--create">
-              + 設立新心願
-            </Link>
             <Link href="/wishes" className="wishes-btn wishes-btn--ghost">
               ← 心願牆
+            </Link>
+            <Link href="/wishes/new" className="wishes-btn wishes-btn--primary wishes-btn--create">
+              + 設立新心願
             </Link>
           </div>
         </div>

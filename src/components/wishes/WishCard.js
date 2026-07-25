@@ -113,8 +113,8 @@ export default function WishCard({
             className={`wish-card__cheer-btn${cheered ? ' is-cheered' : ''}`}
             onClick={handleCheer}
             disabled={busy || cheered}
-            aria-label={cheered ? '已打氣' : '為他打氣'}
-            title={cheered ? '已打氣' : '為他打氣'}
+            aria-label={cheered ? '已打氣' : '為她打氣'}
+            title={cheered ? '已打氣' : '為她打氣'}
           >
             <span className="wish-card__cheer-emoji" aria-hidden="true">
               {cheered ? <HeaderHeartIcon size={12} /> : <ForumSparkleIcon size={12} />}

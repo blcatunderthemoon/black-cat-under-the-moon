@@ -374,7 +374,7 @@ export default function WishDetailPage() {
                   onClick={handleCheer}
                 >
                   <ForumSparkleIcon size={14} />
-                  {wish.cheered_by_me ? '已打氣' : '為他打氣'}
+                  {wish.cheered_by_me ? '已打氣' : '為她打氣'}
                 </button>
               )}
               {!session && wish.status === 'active' && (
@@ -383,7 +383,7 @@ export default function WishDetailPage() {
                   className="wishes-btn wishes-btn--primary wish-detail__cheer-cta"
                 >
                   <ForumSparkleIcon size={14} />
-                  登入後為他打氣
+                  登入後為她打氣
                 </Link>
               )}
 
@@ -510,7 +510,7 @@ export default function WishDetailPage() {
                       onClick={handleCheer}
                     >
                       <ForumSparkleIcon size={14} />
-                      為他打氣
+                      為她打氣
                     </button>
                   )}
                 </div>

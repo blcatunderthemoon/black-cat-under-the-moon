@@ -117,9 +117,14 @@ export default function WishesIndexPage() {
                 </select>
               </label>
               {session && (
-                <Link href="/wishes/my" className="wishes-btn wishes-btn--mine">我的心願</Link>
+                <Link href="/wishes/my" className="wishes-btn wishes-btn--mine">
+                  <span className="wishes-btn--mine__ico" aria-hidden="true">
+                    <ForumMoonIcon size={14} />
+                  </span>
+                  我的心願
+                </Link>
               )}
-              <Link href="/wishes/new" className="wishes-btn wishes-btn--primary wishes-btn--create">
+              <Link href="/wishes/new" className="wishes-btn wishes-btn--primary wishes-btn--create wishes-btn--create-inline">
                 + 許下心願
               </Link>
             </div>
@@ -153,6 +158,11 @@ export default function WishesIndexPage() {
             ))}
           </div>
         )}
+
+        <Link href="/wishes/new" className="wish-fab" aria-label="許下心願">
+          <span className="wish-fab__icon" aria-hidden="true">+</span>
+          <span className="wish-fab__text">許下心願</span>
+        </Link>
       </WishShell>
     </>
   );

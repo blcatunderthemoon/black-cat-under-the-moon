@@ -58,8 +58,8 @@ function WishQuestCard({
               className={`forum-wish-quest__cheer-btn forum-wish-quest__cheer-btn--top${wish.cheered_by_me ? ' is-cheered' : ''}`}
               onClick={() => onCheer(wish)}
               disabled={!!wish.cheered_by_me || busyId === wish.id}
-              title={wish.cheered_by_me ? '已打氣' : '為他打氣'}
-              aria-label={wish.cheered_by_me ? '已打氣' : '為他打氣'}
+              title={wish.cheered_by_me ? '已打氣' : '為她打氣'}
+              aria-label={wish.cheered_by_me ? '已打氣' : '為她打氣'}
             >
               <ForumSparkleIcon size={11} />
               {wish.cheered_by_me ? '已打氣' : '打氣'}
