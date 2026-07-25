@@ -357,6 +357,29 @@
     return DEFAULT_INDEX;
   }
 
+  function setCarouselLabelCount(meta, labelText, n) {
+    if (!meta) return;
+    var textEl = meta.querySelector('.home-carousel__label-text');
+    var countEl = meta.querySelector('.home-carousel__label-count[data-count], [data-count]');
+    // Always restore chip markup — never fall back to plain "標籤 (n)" text.
+    if (!textEl || !countEl) {
+      meta.textContent = '';
+      textEl = document.createElement('span');
+      textEl.className = 'home-carousel__label-text';
+      textEl.textContent = labelText;
+      countEl = document.createElement('span');
+      countEl.className = 'home-carousel__label-count';
+      countEl.setAttribute('data-count', '');
+      meta.appendChild(textEl);
+      meta.appendChild(countEl);
+    } else if (textEl.textContent !== labelText) {
+      textEl.textContent = labelText;
+    }
+    var value = String(n);
+    countEl.textContent = value;
+    countEl.setAttribute('data-digits', value.length >= 2 ? '2' : '1');
+  }
+
   function fetchGatheringCount() {
     var meta = root && root.querySelector('[data-gathering-count]');
     if (!meta) return;
@@ -376,9 +399,7 @@
           meta.hidden = true;
           return;
         }
-        var countEl = meta.querySelector('[data-count]');
-        if (countEl) countEl.textContent = String(n);
-        else meta.textContent = '進行中 ' + n;
+        setCarouselLabelCount(meta, '進行中', Math.floor(n));
         meta.hidden = false;
       })
       .catch(function () {
@@ -404,15 +425,7 @@
           meta.hidden = true;
           return;
         }
-        var countEl = meta.querySelector('[data-count]');
-        if (countEl) countEl.textContent = String(Math.floor(n));
-        else {
-          meta.innerHTML =
-            '<span class="home-carousel__label-text">等你拾起</span>' +
-            '<span class="home-carousel__label-count" data-count>' +
-            Math.floor(n) +
-            '</span>';
-        }
+        setCarouselLabelCount(meta, '等你拾起', Math.floor(n));
         meta.hidden = false;
       })
       .catch(function () {

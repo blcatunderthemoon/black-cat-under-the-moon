@@ -7,11 +7,14 @@
 import { TYPE_ORDER, getFamilyNameZh } from './mirror-personality.js';
 import { normalizeGatheringTags, gatheringTagLabels, GATHERING_TAG_LABEL_BY_ID, isGatheringTagAllowedForMode } from './gathering-tags.js';
 import { normalizeGatheringPublicLocation } from './gathering-districts.js';
+import { normalizeGatheringPrivateLocation } from './gathering-private-location.js';
 import { parseGatheringContact } from './gathering-contact.js';
 import { HK_TZ, databaseNowIso } from './hong-kong-time.js';
 import { filterContent } from './content-filter.js';
 import { isBlocked } from './permissions.js';
 import { getMoonJourneyForUser } from './moon-journey.js';
+
+export { normalizeGatheringPrivateLocation } from './gathering-private-location.js';
 
 /** @deprecated Platform no longer gates hosting by level — any logged-in member may host. */
 export const GATHERING_HOST_MIN_LEVEL = 1;
@@ -25,16 +28,6 @@ export const GATHERING_STATUSES = ['draft', 'open', 'full', 'completed', 'cancel
 export const ATTENDEE_STATUSES = ['pending', 'approved', 'rejected', 'withdrawn', 'waitlist'];
 
 const FAMILY_SET = new Set(TYPE_ORDER);
-
-/** Treat empty / dummy placeholders as “not filled” (≠ filled-but-hidden). */
-const PRIVATE_LOCATION_PLACEHOLDER_RE = /^(no\s*link|n\/?a|暫無|未定|无|none|null|nil|-|—|－|\.+)$/i;
-
-export function normalizeGatheringPrivateLocation(raw) {
-  if (raw == null) return null;
-  const text = String(raw).trim();
-  if (!text || PRIVATE_LOCATION_PLACEHOLDER_RE.test(text)) return null;
-  return text;
-}
 
 export function normalizeMirrorFamilies(input) {
   if (input == null) return null;

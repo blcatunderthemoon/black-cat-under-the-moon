@@ -21,7 +21,7 @@ import {
   UiUnlockIcon,
 } from '../../components/UiIcons.js';
 import { useAuth } from '../../lib/auth-context.js';
-import { normalizeGatheringPrivateLocation } from '../../lib/gatherings.js';
+import { normalizeGatheringPrivateLocation } from '../../lib/gathering-private-location.js';
 
 const STATUS_LABEL = {
   open: '招募中',
