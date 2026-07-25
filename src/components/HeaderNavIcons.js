@@ -43,6 +43,17 @@ export function HeaderCalendarIcon({ className, size } = {}) {
   );
 }
 
+/** Moonlight wishes */
+export function HeaderWishIcon({ className, size } = {}) {
+  return (
+    <Icon className={className} size={size}>
+      <path d="M6 4.5v15" {...STROKE} />
+      <path d="M6 5.5h10.5l-2 3.2 2 3.2H6" {...STROKE} />
+      <path d="M16.5 15.2l1.2 2.4 2.6.3-2 1.8.5 2.5-2.3-1.4-2.3 1.4.5-2.5-2-1.8 2.6-.3z" {...STROKE} />
+    </Icon>
+  );
+}
+
 /** Inbox */
 export function HeaderMailIcon({ className, size } = {}) {
   return (
@@ -53,13 +64,13 @@ export function HeaderMailIcon({ className, size } = {}) {
   );
 }
 
-/** Account / settings */
+/** Account / settings — gear (not sun/brightness) */
 export function HeaderSettingsIcon({ className, size } = {}) {
   return (
     <Icon className={className} size={size}>
       <circle cx="12" cy="12" r="3" {...STROKE} />
       <path
-        d="M12 3.5v2.2M12 18.3v2.2M3.5 12h2.2M18.3 12h2.2M6.1 6.1l1.6 1.6M16.3 16.3l1.6 1.6M17.9 6.1l-1.6 1.6M7.7 16.3l-1.6 1.6"
+        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
         {...STROKE}
       />
     </Icon>
@@ -176,6 +187,7 @@ export function SystemNoticeIcon({ kind = '', size = 18, className } = {}) {
   }
   if (k === 'forum_post_liked' || k === 'forum_comment_liked') return <HeaderHeartIcon {...props} />;
   if (k === 'forum_post_commented' || k === 'forum_comment_reply') return <HeaderChatIcon {...props} />;
+  if (k === 'wish_cheer' || k === 'wish_completed' || k.startsWith('wish_')) return <HeaderWishIcon {...props} />;
   if (k.startsWith('forum_')) return <HeaderForumIcon {...props} />;
   if (k.startsWith('gathering_')) return <HeaderCalendarIcon {...props} />;
   return <HeaderBellIcon {...props} />;
@@ -198,7 +210,7 @@ export const HEADER_NAV_ICON_SVG = {
   settings:
     '<svg class="header-nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">'
     + '<circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.75"/>'
-    + '<path d="M12 3.5v2.2M12 18.3v2.2M3.5 12h2.2M18.3 12h2.2M6.1 6.1l1.6 1.6M16.3 16.3l1.6 1.6M17.9 6.1l-1.6 1.6M7.7 16.3l-1.6 1.6" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>'
+    + '<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>'
     + '</svg>',
 };
 

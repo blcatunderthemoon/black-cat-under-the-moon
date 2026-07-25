@@ -170,11 +170,17 @@ body.home-landing-active:has(#live-activity:not([hidden])) {
   z-index: 1;
   border: none;
   flex: 0 0 auto;
-  min-height: 64px;
+  min-height: 0;
 }
 
 .home-landing__live.live-activity[hidden] {
   display: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  border: none !important;
 }
 
 .home-landing__live .live-activity__rail {
@@ -902,9 +908,9 @@ body.home-landing-active:has(#live-activity:not([hidden])) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 6px;
   max-width: calc(100% - 16px);
-  padding: 3px 8px;
+  padding: 3px 6px 3px 8px;
   border-radius: 999px;
   border: 1px solid rgba(80, 250, 123, 0.4);
   background: rgba(8, 18, 14, 0.82);
@@ -926,6 +932,62 @@ body.home-landing-active:has(#live-activity:not([hidden])) {
   image-rendering: pixelated;
 }
 
+.home-carousel__label-text {
+  min-width: 0;
+}
+
+.home-carousel__label-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 1.4em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  font-size: 11px;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+.home-carousel__label--live .home-carousel__label-count {
+  background: rgba(80, 250, 123, 0.16);
+  border: 1px solid rgba(80, 250, 123, 0.5);
+  color: #7dff9a;
+  text-shadow: 0 0 6px rgba(80, 250, 123, 0.35);
+}
+
+.home-carousel__label--drift .home-carousel__label-text {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+.home-carousel__label--drift .home-carousel__label-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35em;
+  min-height: 1.35em;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(138, 180, 255, 0.18);
+  border: 1px solid rgba(168, 200, 255, 0.55);
+  color: #eaf2ff;
+  font-family: var(--font-zh, 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif);
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  line-height: 1;
+  letter-spacing: 0;
+  text-shadow: none;
+  -webkit-font-smoothing: antialiased;
+}
+
 /* Drift weekly wait tag — corner overlay, does not affect card flex layout */
 .home-carousel__label--drift {
   position: absolute;
@@ -936,9 +998,9 @@ body.home-landing-active:has(#live-activity:not([hidden])) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  max-width: min(72%, 168px);
-  padding: 4px 8px;
+  gap: 6px;
+  max-width: min(78%, 180px);
+  padding: 4px 6px 4px 8px;
   border-radius: 999px;
   border: 1px solid rgba(138, 180, 255, 0.55);
   background: rgba(8, 14, 28, 0.88);
@@ -949,7 +1011,7 @@ body.home-landing-active:has(#live-activity:not([hidden])) {
   line-height: 1.35;
   letter-spacing: 0.02em;
   text-align: center;
-  white-space: normal;
+  white-space: nowrap;
   box-shadow: 0 0 10px rgba(138, 180, 255, 0.18);
   pointer-events: none;
   -webkit-font-smoothing: antialiased;
@@ -1423,6 +1485,7 @@ body.home-landing-active:has(#live-activity:not([hidden])) {
 }
 
 .mode-top-bar--index .auth-nav-badge__item--name,
+.mode-top-bar--index .auth-nav-badge__item--login,
 .mode-top-bar--index .auth-nav-badge__item--signup,
 .mode-top-bar--index .auth-nav-badge__item--name .auth-nav-badge__zh,
 .mode-top-bar--index .auth-nav-badge__item--name .auth-nav-badge__en {
@@ -1437,6 +1500,7 @@ body.home-landing-active:has(#live-activity:not([hidden])) {
 }
 
 .mode-top-bar--index .auth-nav-badge__item--name,
+.mode-top-bar--index .auth-nav-badge__item--login,
 .mode-top-bar--index .auth-nav-badge__item--signup {
   padding: 5px 12px !important;
   border: none !important;
@@ -1461,6 +1525,7 @@ body.home-landing-active:has(#live-activity:not([hidden])) {
 }
 
 .mode-top-bar--index .auth-nav-badge__item--name:hover,
+.mode-top-bar--index .auth-nav-badge__item--login:hover,
 .mode-top-bar--index .auth-nav-badge__item--signup:hover {
   filter: none;
   transform: none;
@@ -1558,6 +1623,7 @@ body.home-landing-active:has(#live-activity:not([hidden])) {
   }
 
   .mode-top-bar--index .auth-nav-badge__item--name,
+  .mode-top-bar--index .auth-nav-badge__item--login,
   .mode-top-bar--index .auth-nav-badge__item--signup,
   .mode-top-bar--index .auth-nav-badge__item--name .auth-nav-badge__zh,
   .mode-top-bar--index .auth-nav-badge__item--name .auth-nav-badge__en {

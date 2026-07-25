@@ -67,7 +67,9 @@ export async function notifyForumModerators({
 
   const content = targetType === 'post'
     ? `🛡️ 有貼文收到 ${reportCount} 次檢舉，待月光守護者處理。${postTitle ? `「${String(postTitle).slice(0, 40)}」` : ''}`
-    : `🛡️ 有留言收到 ${reportCount} 次檢舉，待月光守護者處理。`;
+    : targetType === 'wish'
+      ? `有心願收到 ${reportCount} 次檢舉，待月光守護者處理。${postTitle ? `「${String(postTitle).slice(0, 40)}」` : ''}`
+      : `🛡️ 有留言收到 ${reportCount} 次檢舉，待月光守護者處理。`;
 
   let sent = false;
 

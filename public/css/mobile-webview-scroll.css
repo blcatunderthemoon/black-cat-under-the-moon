@@ -488,8 +488,9 @@ body:has(#already-screen.active) #site-footer {
     }
 
     .auth-nav-badge__item--logout,
+    .auth-nav-badge__item--login,
     .auth-nav-badge__item--signup {
-      font-size: 11px;
+      font-size: 12px;
     }
 
     .mode-select-title.pixel-font {

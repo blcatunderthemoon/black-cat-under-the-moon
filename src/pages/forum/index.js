@@ -27,6 +27,7 @@ import ForumWelcomeCard, { canEditWelcomeTopic } from '../../components/ForumWel
 import {
   getOfficialTagKeysForTopic,
   mergePresetTagsWithCounts,
+  RETIRED_FORUM_TAG_KEYS,
 } from '../../lib/forum-categories.js';
 import MirrorFamilyBadge from '../../components/MirrorFamilyBadge.js';
 import ForumComposeField from '../../components/ForumComposeField.js';
@@ -36,6 +37,7 @@ import ForumStoryBookshelf from '../../components/ForumStoryBookshelf.js';
 import ForumStorySearchBar from '../../components/ForumStorySearchBar.js';
 import ForumStoryComposeFields from '../../components/ForumStoryComposeFields.js';
 import ForumPostTags from '../../components/ForumPostTags.js';
+import WishSidebarPanel from '../../components/wishes/WishSidebarPanel.js';
 import { formatForumTagLabel, canonicalForumTagKey } from '../../lib/forum-tags.js';
 import { isStoryTopic, isStoryPost, storyFeedPreviewText, STORY_CONTENT_MAX } from '../../lib/forum-story.js';
 import { STORY_CHAPTER_TITLE_MAX } from '../../lib/forum-story-chapters.js';
@@ -539,9 +541,32 @@ export default function ForumPage() {
 
   const userHotTagsDisplay = useMemo(() => {
     if (!metaMatchesTopic) return [];
-    if (topic === '全部') return meta?.hot_tags || [];
+    if (topic === '全部') {
+      return (meta?.hot_tags || []).filter(
+        (h) => h?.tag && !RETIRED_FORUM_TAG_KEYS.has(canonicalForumTagKey(h.tag))
+      );
+    }
+    // Topic selected: fold community tags into the official 標籤 row (one scroll on mobile).
     return meta?.user_hot_tags || [];
   }, [topic, meta, metaMatchesTopic]);
+
+  const topicFilterTagsDisplay = useMemo(() => {
+    if (topic === '全部' || isStoryTopic(topic)) return [];
+    const seen = new Set(presetTagsDisplay.map((t) => t.tag));
+    const extras = userHotTagsDisplay
+      .filter((h) => h?.tag && !seen.has(h.tag) && !RETIRED_FORUM_TAG_KEYS.has(canonicalForumTagKey(h.tag)))
+      .map((h) => ({
+        tag: h.tag,
+        display_label: h.display_label || h.tag,
+        count: h.count || 0,
+        official: false,
+      }));
+    const base = [...presetTagsDisplay, ...extras];
+    if (activeTag && !base.some((t) => t.tag === activeTag)) {
+      return [{ tag: activeTag, display_label: tagLabels[activeTag] || activeTag, count: 0, official: false }, ...base];
+    }
+    return base;
+  }, [topic, presetTagsDisplay, userHotTagsDisplay, activeTag, tagLabels]);
 
   useEffect(() => {
     if (!isStoryTopic(topic)) {
@@ -1132,39 +1157,34 @@ export default function ForumPage() {
               </div>
 
               <div className="forum-filters-panel__tools">
-              {(topic !== '全部' && !isStoryTopic(topic) && (presetTagsDisplay.length > 0 || activeTag)) && (
+              {(topic !== '全部' && !isStoryTopic(topic) && topicFilterTagsDisplay.length > 0) && (
                 <div className="forum-preset-tags-row" role="group" aria-label="官方標籤">
                   <span className="forum-preset-tags-row__label">標籤</span>
                   <ForumHorizontalScroll className="forum-preset-tags-row__scroll">
-                    {(() => {
-                      const displayTags = activeTag && !presetTagsDisplay.some((t) => t.tag === activeTag)
-                        ? [{ tag: activeTag, display_label: tagLabels[activeTag] || activeTag, count: 0, official: false }, ...presetTagsDisplay]
-                        : presetTagsDisplay;
-                      return displayTags.map(({ tag, display_label: displayLabel, count, official }) => {
-                        const isActive = activeTag === tag;
-                        return (
-                          <button
-                            key={tag}
-                            type="button"
-                            className={`forum-tag-chip forum-tag-chip--preset${official ? ' forum-tag-chip--official' : ''}${isActive ? ' forum-tag-chip--active' : ''}`}
-                            aria-pressed={isActive}
-                            onClick={() => setActiveTag((prev) => (prev === tag ? null : tag))}
-                          >
-                            <span>{formatForumTagLabel(tag, displayLabel, tagLabels)}</span>
-                            {count > 0 && (
-                              <span className="forum-tag-chip__count">{count}</span>
-                            )}
-                          </button>
-                        );
-                      });
-                    })()}
+                    {topicFilterTagsDisplay.map(({ tag, display_label: displayLabel, count, official }) => {
+                      const isActive = activeTag === tag;
+                      return (
+                        <button
+                          key={tag}
+                          type="button"
+                          className={`forum-tag-chip${official ? ' forum-tag-chip--preset forum-tag-chip--official' : ' forum-tag-chip--hot'}${isActive ? ' forum-tag-chip--active' : ''}`}
+                          aria-pressed={isActive}
+                          onClick={() => setActiveTag((prev) => (prev === tag ? null : tag))}
+                        >
+                          <span>{formatForumTagLabel(tag, displayLabel, tagLabels)}</span>
+                          {count > 0 && (
+                            <span className="forum-tag-chip__count">{count}</span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </ForumHorizontalScroll>
                 </div>
               )}
 
-              {userHotTagsDisplay.length > 0 && !isStoryTopic(topic) && (
+              {topic === '全部' && userHotTagsDisplay.length > 0 && !isStoryTopic(topic) && (
                 <div className="forum-hot-tags-row" role="group" aria-label="熱門標籤">
-                  <span className="forum-hot-tags-row__label">{topic === '全部' ? '熱門' : '社群'}</span>
+                  <span className="forum-hot-tags-row__label">熱門</span>
                   <ForumHorizontalScroll className="forum-hot-tags-row__scroll">
                     {userHotTagsDisplay.map(({ tag, display_label: displayLabel, count }) => {
                       const isActive = activeTag === tag;
@@ -1223,13 +1243,20 @@ export default function ForumPage() {
             </div>
 
             {topic === '全部' && (
-              <div className="forum-treehole-panels forum-treehole-panels--mobile">
-                <GatheringPanel
-                  membersTotal={meta?.members_total}
-                />
-                <FeaturedPostsPanel featuredPosts={featuredPosts} />
-                <HotTopicsPanel hotPosts={meta?.hot_posts} sparksMode={meta?.sparks_mode} />
-              </div>
+              <>
+                <div className="forum-treehole-panels forum-treehole-panels--mobile">
+                  <WishSidebarPanel
+                    compact
+                    accessToken={session?.access_token}
+                    viewerId={session?.user?.id || null}
+                  />
+                  <GatheringPanel
+                    membersTotal={meta?.members_total}
+                  />
+                  <FeaturedPostsPanel featuredPosts={featuredPosts} />
+                  <HotTopicsPanel hotPosts={meta?.hot_posts} sparksMode={meta?.sparks_mode} />
+                </div>
+              </>
             )}
 
             <div className={`forum-feed${feedRefreshing ? ' forum-feed--refreshing' : ''}`}>
@@ -1438,10 +1465,22 @@ export default function ForumPage() {
                 載入更多
               </button>
             )}
+
+            {!hasMore && !feedLoading && !loadError && Array.isArray(posts) && posts.length > 0 && (
+              <p className="forum-feed-end" role="status">
+                <span className="forum-feed-end__line" aria-hidden="true" />
+                <span className="forum-feed-end__text">已經到盡頭了 · 暫時未有新貼文</span>
+                <span className="forum-feed-end__line" aria-hidden="true" />
+              </p>
+            )}
             </div>
           </div>
 
           <div className="forum-sidebar forum-sidebar--right">
+            <WishSidebarPanel
+              accessToken={session?.access_token}
+              viewerId={session?.user?.id || null}
+            />
             <FeaturedPostsPanel featuredPosts={featuredPosts} />
             <HotTopicsPanel hotPosts={meta?.hot_posts} sparksMode={meta?.sparks_mode} />
           </div>

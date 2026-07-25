@@ -11,6 +11,7 @@ import { HeaderShieldIcon } from './HeaderNavIcons.js';
 
 export {
   HeaderCalendarIcon,
+  HeaderWishIcon,
   HeaderMailIcon,
   HeaderSettingsIcon,
   HeaderBookmarkIcon,

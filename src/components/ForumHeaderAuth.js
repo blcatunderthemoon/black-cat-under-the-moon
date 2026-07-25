@@ -11,9 +11,11 @@ import { NavLink } from './AppShell.js';
 import ForumBookmarksPanel from './ForumBookmarksPanel.js';
 import HeaderPremiumMoon from './HeaderPremiumMoon.js';
 import HeaderMyCatLink from './HeaderMyCatLink.js';
+import HeaderIconScrollGroup from './HeaderIconScrollGroup.js';
 import {
   HeaderBookmarkIcon,
   HeaderCalendarIcon,
+  HeaderWishIcon,
   HeaderMailIcon,
   HeaderSettingsIcon,
   HeaderShieldIcon,
@@ -81,7 +83,7 @@ export default function ForumHeaderAuth({ extra = null, moonJourney = null, redi
         )}
       </span>
       <span className="forum-header-actions">
-        <span className="forum-header-icon-group">
+        <HeaderIconScrollGroup>
           {isForumStaff && (
             <Link
               href="/forum/guardian"
@@ -112,6 +114,14 @@ export default function ForumHeaderAuth({ extra = null, moonJourney = null, redi
             <span className="app-header__nav-icon" aria-hidden="true"><HeaderCalendarIcon /></span>
           </Link>
           <Link
+            href="/wishes"
+            className="app-header__nav-link app-header__nav-link--icon"
+            title="月光心願"
+            aria-label="月光心願"
+          >
+            <span className="app-header__nav-icon" aria-hidden="true"><HeaderWishIcon /></span>
+          </Link>
+          <Link
             href="/inbox"
             className={`app-header__nav-link app-header__nav-link--icon${unread > 0 ? ' app-header__nav-link--inbox-unread' : ''}`}
             title={unread > 0 ? `收件箱（${unread > 99 ? '99+' : unread}）未讀` : '收件箱'}
@@ -126,7 +136,7 @@ export default function ForumHeaderAuth({ extra = null, moonJourney = null, redi
           </Link>
           {moonJourney}
           <HeaderMyCatLink variant="forum" needsFeedBadge={meData?.my_cat?.needs_feed_badge === true} skinId={meData?.my_cat?.skin_id} />
-        </span>
+        </HeaderIconScrollGroup>
         {extra}
       </span>
       <button type="button" className="app-header__action forum-header-logout-btn" onClick={handleLogout}>

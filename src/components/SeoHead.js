@@ -25,7 +25,9 @@ export default function SeoHead({
   ogImageAlt,
   jsonLd,
 }) {
-  const pageTitle = title ? `${title} — ${SITE_NAME}` : `${SITE_NAME}`;
+  const rawTitle = title ? `${title} — ${SITE_NAME}` : `${SITE_NAME}`;
+  // Keep tab titles emoji-free (brand mark lives in the favicon).
+  const pageTitle = String(rawTitle).replace(/^[\s\p{Extended_Pictographic}\uFE0F\u200D]+/u, '').trim();
   const canonical = path ? absoluteUrl(path) : undefined;
   const image = ogImage.startsWith('http') ? ogImage : absoluteUrl(ogImage);
   const imageAlt = ogImageAlt || pageTitle;

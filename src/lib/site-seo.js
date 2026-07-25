@@ -5,7 +5,7 @@
 
 export const SITE_NAME = 'Black Cat Under The Moon';
 
-export const DEFAULT_TITLE = '香港Les交友・香港女同志交友｜Black Cat Under The Moon｜配對・討論區・匿名';
+export const DEFAULT_TITLE = 'Black Cat Under The Moon｜香港Les交友・香港女同志交友';
 
 export const DEFAULT_DESCRIPTION =
   '香港Les交友／香港女同志交友平台 Black Cat Under The Moon：香港Les配對、香港Les討論區、匿名交友漂流瓶與性格測驗，幫香港女同志認識朋友、交流同建立連結。';

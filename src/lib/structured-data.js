@@ -7,7 +7,7 @@ export function organizationJsonLd() {
     '@type': 'Organization',
     name: SITE_NAME,
     url,
-    logo: `${url}/favicon.svg`,
+    logo: `${url}/blackcatunderthemoonlogo.png`,
     sameAs: [
       'https://www.instagram.com/blackcatunderthemoonhk/',
       'https://www.threads.net/@blackcatunderthemoonhk',

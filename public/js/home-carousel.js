@@ -376,7 +376,9 @@
           meta.hidden = true;
           return;
         }
-        meta.textContent = '進行中 (' + n + ')';
+        var countEl = meta.querySelector('[data-count]');
+        if (countEl) countEl.textContent = String(n);
+        else meta.textContent = '進行中 ' + n;
         meta.hidden = false;
       })
       .catch(function () {
@@ -402,7 +404,15 @@
           meta.hidden = true;
           return;
         }
-        meta.textContent = '等你拾起 (' + Math.floor(n) + ')';
+        var countEl = meta.querySelector('[data-count]');
+        if (countEl) countEl.textContent = String(Math.floor(n));
+        else {
+          meta.innerHTML =
+            '<span class="home-carousel__label-text">等你拾起</span>' +
+            '<span class="home-carousel__label-count" data-count>' +
+            Math.floor(n) +
+            '</span>';
+        }
         meta.hidden = false;
       })
       .catch(function () {

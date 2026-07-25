@@ -1,0 +1,3225 @@
+/* Moonlight Wishes — warm pixel / campfire surface (align with forum) */
+
+.app-page--wishes {
+  --wish-cream: #f0ebd8;
+  --wish-dim: rgba(232, 224, 208, 0.78);
+  --wish-muted: rgba(232, 224, 208, 0.52);
+  --wish-gold: #ffe066;
+  --wish-orange: #ff9f43;
+  --wish-twilight: #7b8cff;
+  --wish-lilac: #b8a0ff;
+  --wish-line: rgba(180, 160, 255, 0.28);
+  --wish-surface: #16141f;
+  --wish-surface-lift: #1e1a2a;
+  --wish-ink: #1a1008;
+  background: #0c0a14;
+  color: var(--wish-cream);
+  min-height: 100vh;
+  image-rendering: auto;
+  --bg-deep: #0c0a14;
+  --border: rgba(180, 160, 255, 0.24);
+  --border-glow: rgba(255, 179, 71, 0.4);
+}
+
+.app-page--wishes .app-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-width: 760px;
+}
+
+.app-page--wishes::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 50% 38% at 82% 8%, rgba(123, 140, 255, 0.16) 0%, transparent 58%),
+    radial-gradient(ellipse 42% 30% at 12% 22%, rgba(255, 224, 102, 0.1) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 36% at 50% 100%, rgba(80, 50, 120, 0.28) 0%, transparent 62%),
+    radial-gradient(circle at 20% 70%, rgba(255, 255, 255, 0.035) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 70% 40%, rgba(255, 255, 255, 0.03) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 45% 25%, rgba(255, 255, 255, 0.025) 0 1px, transparent 1.5px);
+}
+
+.app-page--wishes > .app-header,
+.app-page--wishes > .app-main,
+.app-page--wishes > .site-footer.site-footer--app {
+  position: relative;
+  z-index: 1;
+}
+
+.app-page--wishes > .app-main {
+  padding-bottom: 5.5rem;
+  z-index: 2;
+}
+
+.app-page--wishes .app-header--account,
+.app-page--wishes .mode-top-bar--app {
+  background: linear-gradient(180deg, rgba(255, 100, 40, 0.1) 0%, rgba(15, 10, 6, 0.96) 100%);
+  border-bottom: 1px solid rgba(255, 120, 50, 0.28);
+  backdrop-filter: none;
+}
+
+@keyframes wishes-fade-rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Hero ── */
+.wishes-hero {
+  margin: 0 0 1.25rem;
+  padding: 1.1rem 0 1.2rem;
+  animation: wishes-fade-rise 0.45s ease both;
+  border-bottom: 2px solid rgba(255, 140, 66, 0.28);
+  box-shadow: 0 2px 0 rgba(255, 224, 102, 0.08);
+}
+
+.wishes-hero__eyebrow {
+  margin: 0 0 0.5rem;
+  font-family: 'Press Start 2P', 'Zpix', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 224, 102, 0.88);
+  line-height: 1.7;
+  -webkit-font-smoothing: none;
+}
+
+.wishes-hero__title {
+  margin: 0 0 0.55rem;
+  font-family: 'Zpix', 'Noto Sans TC', sans-serif;
+  font-size: clamp(1.55rem, 4.5vw, 2.1rem);
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  line-height: 1.25;
+  color: var(--wish-cream);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-shadow: 0 0 18px rgba(255, 159, 67, 0.22);
+  -webkit-font-smoothing: none;
+}
+
+.wishes-hero__title-icon {
+  display: inline-flex;
+  color: var(--wish-gold);
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 6px rgba(255, 224, 102, 0.35));
+}
+
+.wishes-hero__lead {
+  margin: 0;
+  max-width: none;
+  font-family: 'Noto Sans TC', sans-serif;
+  color: var(--wish-dim);
+  line-height: 1.65;
+  font-size: 0.92rem;
+  text-wrap: pretty;
+}
+
+.wishes-hero--compact {
+  padding-top: 0.85rem;
+}
+
+/* ── Toolbar: categories vs sort ── */
+.wishes-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0 0 1.25rem;
+}
+
+.wishes-toolbar--mine {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.wishes-toolbar--mine .wishes-toolbar__aside {
+  width: auto;
+}
+
+.wishes-toolbar--mine .wishes-btn {
+  width: auto;
+  flex: 0 0 auto;
+}
+
+.wishes-toolbar__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.wishes-toolbar__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.wishes-toolbar__aside {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.wishes-chip {
+  appearance: none;
+  border: 1px solid rgba(180, 160, 255, 0.28);
+  background: rgba(18, 16, 28, 0.72);
+  color: rgba(230, 224, 245, 0.82);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.wishes-chip.is-active,
+.wishes-chip:hover {
+  color: #100e18;
+  border-color: rgba(255, 224, 102, 0.75);
+  background: linear-gradient(180deg, #ffe066 0%, #ffc46a 100%);
+  box-shadow: 0 0 12px rgba(255, 200, 120, 0.22);
+}
+
+/* Category chips — distinct tint even when idle */
+.wishes-chip--cat[data-cat='習慣'] {
+  color: #b8ecd0;
+  border-color: rgba(127, 212, 168, 0.42);
+  background: rgba(127, 212, 168, 0.1);
+}
+.wishes-chip--cat[data-cat='學習'] {
+  color: #b8d0ff;
+  border-color: rgba(142, 182, 255, 0.45);
+  background: rgba(142, 182, 255, 0.1);
+}
+.wishes-chip--cat[data-cat='健康'] {
+  color: #c4f0a8;
+  border-color: rgba(154, 223, 122, 0.45);
+  background: rgba(154, 223, 122, 0.1);
+}
+.wishes-chip--cat[data-cat='創作'] {
+  color: #ffc8e0;
+  border-color: rgba(245, 160, 200, 0.45);
+  background: rgba(245, 160, 200, 0.1);
+}
+.wishes-chip--cat[data-cat='感情成長'] {
+  color: #ffc0d4;
+  border-color: rgba(240, 144, 184, 0.45);
+  background: rgba(240, 144, 184, 0.1);
+}
+.wishes-chip--cat[data-cat='社群'] {
+  color: #d0c4ff;
+  border-color: rgba(176, 160, 255, 0.45);
+  background: rgba(176, 160, 255, 0.1);
+}
+.wishes-chip--cat[data-cat='其他'] {
+  color: #e8dcc8;
+  border-color: rgba(220, 190, 140, 0.4);
+  background: rgba(220, 190, 140, 0.1);
+}
+
+.wishes-chip--cat[data-cat='習慣'].is-active,
+.wishes-chip--cat[data-cat='習慣']:hover { background: linear-gradient(180deg, #c8f0d8, #7fd4a8); border-color: rgba(127, 212, 168, 0.85); color: #102018; }
+.wishes-chip--cat[data-cat='學習'].is-active,
+.wishes-chip--cat[data-cat='學習']:hover { background: linear-gradient(180deg, #d0e4ff, #8eb6ff); border-color: rgba(142, 182, 255, 0.85); color: #101828; }
+.wishes-chip--cat[data-cat='健康'].is-active,
+.wishes-chip--cat[data-cat='健康']:hover { background: linear-gradient(180deg, #d8f8c8, #9adf7a); border-color: rgba(154, 223, 122, 0.85); color: #142010; }
+.wishes-chip--cat[data-cat='創作'].is-active,
+.wishes-chip--cat[data-cat='創作']:hover { background: linear-gradient(180deg, #ffe0f0, #f5a0c8); border-color: rgba(245, 160, 200, 0.85); color: #281018; }
+.wishes-chip--cat[data-cat='感情成長'].is-active,
+.wishes-chip--cat[data-cat='感情成長']:hover { background: linear-gradient(180deg, #ffd8e8, #f090b8); border-color: rgba(240, 144, 184, 0.85); color: #281018; }
+.wishes-chip--cat[data-cat='社群'].is-active,
+.wishes-chip--cat[data-cat='社群']:hover { background: linear-gradient(180deg, #e0d8ff, #b0a0ff); border-color: rgba(176, 160, 255, 0.85); color: #181028; }
+.wishes-chip--cat[data-cat='其他'].is-active,
+.wishes-chip--cat[data-cat='其他']:hover { background: linear-gradient(180deg, #f0e4d0, #d4b896); border-color: rgba(220, 190, 140, 0.85); color: #201810; }
+
+.wishes-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 12px;
+  color: var(--wish-dim);
+}
+
+.wishes-sort__label {
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
+.wishes-sort__select {
+  appearance: none;
+  border: 1px solid rgba(255, 190, 120, 0.32);
+  background-color: rgba(18, 12, 20, 0.78);
+  color: var(--wish-cream);
+  border-radius: 999px;
+  padding: 5px 26px 5px 10px;
+  min-height: 0;
+  height: 30px;
+  font: inherit;
+  cursor: pointer;
+  box-shadow: none;
+  background-image: linear-gradient(45deg, transparent 50%, rgba(255, 224, 102, 0.8) 50%),
+    linear-gradient(135deg, rgba(255, 224, 102, 0.8) 50%, transparent 50%);
+  background-position: calc(100% - 12px) calc(50% - 2px), calc(100% - 7px) calc(50% - 2px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+.wishes-sort__select:hover,
+.wishes-sort__select:focus-visible {
+  border-color: rgba(255, 210, 140, 0.5);
+  outline: none;
+}
+
+/* ── Buttons ── */
+.wishes-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border-radius: 0;
+  padding: 10px 14px;
+  min-height: 36px;
+  font-family: 'Zpix', 'Noto Sans TC', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  cursor: pointer;
+  border: 2px solid transparent;
+  box-sizing: border-box;
+  line-height: 1.2;
+  -webkit-font-smoothing: none;
+  transition: filter 0.15s, box-shadow 0.15s, background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.wishes-btn--primary {
+  background: linear-gradient(180deg, #ffe066 0%, #ffb347 52%, #ff9f43 100%);
+  border-color: rgba(255, 210, 140, 0.9);
+  color: var(--wish-ink);
+  box-shadow:
+    0 0 14px rgba(255, 159, 67, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.18);
+}
+
+.wishes-btn--primary:hover {
+  filter: brightness(1.06);
+  box-shadow:
+    0 0 18px rgba(255, 179, 71, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.32);
+}
+
+.wishes-btn--ghost {
+  background: rgba(15, 10, 6, 0.65);
+  border-color: rgba(255, 140, 66, 0.38);
+  color: var(--wish-cream);
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.35);
+}
+
+.wishes-btn--ghost:hover {
+  border-color: rgba(255, 179, 71, 0.65);
+  color: var(--wish-gold);
+  background: rgba(255, 140, 66, 0.1);
+}
+
+.wishes-btn--danger {
+  background: rgba(40, 12, 12, 0.65);
+  border-color: rgba(220, 100, 100, 0.45);
+  color: #f0c0c0;
+}
+
+.wishes-btn--danger:hover {
+  border-color: rgba(255, 140, 140, 0.65);
+  color: #ffe0e0;
+}
+
+.wishes-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: none;
+}
+
+/* Toolbar aside: compact controls to match left category chips */
+.wishes-toolbar__aside .wishes-sort__select,
+.wishes-toolbar__aside .wishes-btn--mine,
+.wishes-toolbar__aside .wishes-btn--create,
+.wishes-toolbar__aside .wishes-btn--ghost {
+  box-sizing: border-box;
+  min-height: 0;
+  height: 30px;
+  border-radius: 999px;
+  border-width: 1px;
+  border-style: solid;
+  padding: 0 11px;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wishes-toolbar__aside .wishes-sort__select {
+  padding: 0 26px 0 10px;
+}
+
+.wishes-toolbar__aside .wishes-btn--mine {
+  background: rgba(18, 12, 20, 0.78);
+  border-color: rgba(255, 190, 120, 0.32);
+  color: #ffe8c8;
+  box-shadow: none;
+}
+
+.wishes-toolbar__aside .wishes-btn--mine:hover {
+  border-color: rgba(255, 210, 140, 0.5);
+  color: #fff3d0;
+  background: rgba(28, 18, 28, 0.9);
+}
+
+.wishes-toolbar__aside .wishes-btn--mine.is-active {
+  border-color: rgba(255, 224, 102, 0.7);
+  background: linear-gradient(180deg, rgba(255, 224, 102, 0.22), rgba(255, 159, 67, 0.12));
+  color: #ffe066;
+  box-shadow: none;
+  cursor: default;
+  pointer-events: none;
+}
+
+.wishes-toolbar__aside .wishes-btn--create {
+  background: linear-gradient(180deg, #ffe066 0%, #ffb347 55%, #ff9f43 100%);
+  border-color: rgba(255, 210, 140, 0.75);
+  color: var(--wish-ink);
+  box-shadow: none;
+}
+
+.wishes-toolbar__aside .wishes-btn--create:hover {
+  filter: brightness(1.05);
+  border-color: rgba(255, 224, 160, 0.9);
+  box-shadow: none;
+}
+
+.wishes-toolbar__aside .wishes-btn--ghost {
+  background: rgba(18, 12, 20, 0.78);
+  border-color: rgba(255, 190, 120, 0.32);
+  color: #ffe8c8;
+  box-shadow: none;
+}
+
+.wishes-toolbar__aside .wishes-btn--ghost:hover {
+  border-color: rgba(255, 210, 140, 0.5);
+  color: #fff3d0;
+  background: rgba(28, 18, 28, 0.9);
+}
+
+/* ── Wish wall masonry ── */
+.wishes-grid {
+  column-count: 1;
+  column-gap: 14px;
+}
+
+@media (min-width: 640px) {
+  .wishes-grid { column-count: 2; }
+}
+
+@media (min-width: 1024px) {
+  .wishes-grid { column-count: 3; }
+}
+
+.wish-card {
+  position: relative;
+  break-inside: avoid;
+  display: flex;
+  flex-direction: column;
+  margin: 0 0 14px;
+  padding: 0;
+  border: 1px solid rgba(180, 160, 255, 0.28);
+  border-radius: 12px;
+  background:
+    linear-gradient(165deg, rgba(123, 140, 255, 0.1) 0%, transparent 42%),
+    linear-gradient(180deg, rgba(255, 200, 120, 0.08) 0%, transparent 36%),
+    var(--wish-surface);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  animation: wishes-fade-rise 0.4s ease both;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.wish-card:hover {
+  border-color: rgba(255, 210, 150, 0.55);
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 26px rgba(0, 0, 0, 0.36),
+    0 0 16px rgba(180, 150, 255, 0.18),
+    0 0 22px rgba(255, 200, 120, 0.1);
+}
+
+.wish-card__main {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  padding: 12px 12px 8px;
+}
+
+.wish-card__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+  align-items: center;
+}
+
+.wish-card__category,
+.wish-card__eta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 26px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  gap: 0.2rem;
+}
+
+.wish-card__category {
+  color: #d8d0ff;
+  background: rgba(123, 140, 255, 0.14);
+  border: 1px solid rgba(180, 160, 255, 0.35);
+}
+
+.wish-card[data-category='創作'] .wish-card__category { color: #ffd0e4; background: rgba(245, 160, 200, 0.14); border-color: rgba(245, 160, 200, 0.35); }
+.wish-card[data-category='學習'] .wish-card__category { color: #c8dcff; background: rgba(142, 182, 255, 0.14); border-color: rgba(142, 182, 255, 0.35); }
+.wish-card[data-category='習慣'] .wish-card__category { color: #c8f0d8; background: rgba(127, 212, 168, 0.14); border-color: rgba(127, 212, 168, 0.35); }
+.wish-card[data-category='感情成長'] .wish-card__category { color: #ffd0e0; background: rgba(240, 144, 184, 0.14); border-color: rgba(240, 144, 184, 0.35); }
+.wish-card[data-category='健康'] .wish-card__category { color: #c8f0b0; background: rgba(154, 223, 122, 0.14); border-color: rgba(154, 223, 122, 0.35); }
+.wish-card[data-category='社群'] .wish-card__category { color: #d4caff; background: rgba(176, 160, 255, 0.14); border-color: rgba(176, 160, 255, 0.35); }
+.wish-card[data-category='其他'] .wish-card__category { color: #e8dcc8; background: rgba(220, 190, 140, 0.12); border-color: rgba(220, 190, 140, 0.35); }
+
+.wish-card__eta {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #ffe8b0;
+  border: 1px solid rgba(255, 210, 120, 0.4);
+  background: rgba(255, 200, 100, 0.14);
+  box-shadow: 0 0 8px rgba(255, 200, 100, 0.12);
+  white-space: nowrap;
+}
+
+.wish-card__title {
+  margin: 0;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 0.98rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.4;
+  color: var(--wish-cream);
+}
+
+.wish-card__excerpt {
+  margin: 0.4rem 0 0;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--wish-dim);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.wish-card__owner {
+  margin: 0;
+  min-width: 0;
+  flex: 1 1 auto;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 0.74rem;
+  line-height: 1.3;
+  color: var(--wish-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wish-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 10px 8px;
+  border-top: 1px solid rgba(180, 160, 255, 0.14);
+  background: rgba(8, 6, 16, 0.35);
+}
+
+.wish-card__cheers {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 0.74rem;
+  color: rgba(220, 210, 255, 0.85);
+}
+
+.wish-card__cheer-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  margin: 0;
+  border: 1px solid rgba(255, 210, 140, 0.5);
+  background: linear-gradient(180deg, rgba(255, 200, 100, 0.16), rgba(40, 24, 12, 0.85));
+  color: #ffe8b8;
+  border-radius: 999px;
+  padding: 5px 10px 5px 8px;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.12s;
+}
+
+.wish-card__cheer-btn:hover:not(:disabled) {
+  border-color: rgba(255, 224, 102, 0.8);
+  color: #fff3d0;
+  box-shadow: 0 0 14px rgba(255, 200, 120, 0.28);
+  transform: translateY(-1px);
+}
+
+.wish-card__cheer-btn.is-cheered {
+  border-color: rgba(180, 160, 255, 0.45);
+  background: rgba(40, 32, 64, 0.75);
+  color: #d8d0ff;
+}
+
+.wish-card__cheer-btn.is-cheered:disabled {
+  opacity: 0.9;
+  cursor: default;
+}
+
+.wish-card__cheer-btn:disabled:not(.is-cheered) {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.wish-card__cheer-emoji {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.wish-card__cheer-label {
+  letter-spacing: 0.02em;
+}
+
+.wish-card__cheer-count {
+  min-width: 1.25rem;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 224, 102, 0.28);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  text-align: center;
+  color: #ffe066;
+}
+
+.wish-card__cheer-btn.is-cheered .wish-card__cheer-count {
+  border-color: rgba(180, 160, 255, 0.35);
+  color: #c4b5fd;
+}
+
+.wish-card__sparkles {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 70% 80%, rgba(255, 224, 102, 0.45) 0 2px, transparent 3px),
+    radial-gradient(circle at 55% 70%, rgba(180, 160, 255, 0.5) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 80% 65%, rgba(255, 255, 255, 0.55) 0 1px, transparent 2px);
+  animation: wish-cheer-sparkle 0.7s ease-out both;
+}
+
+@keyframes wish-cheer-sparkle {
+  from { opacity: 0; transform: translateY(6px) scale(0.92); }
+  35% { opacity: 1; }
+  to { opacity: 0; transform: translateY(-10px) scale(1.08); }
+}
+
+.wishes-empty,
+.wishes-status,
+.wishes-error {
+  padding: 2rem 1rem;
+  font-family: 'Noto Sans TC', sans-serif;
+  color: var(--wish-dim);
+  text-align: center;
+  border: 1px dashed rgba(180, 160, 255, 0.35);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(123, 140, 255, 0.08) 0%, transparent 55%),
+    rgba(18, 16, 28, 0.65);
+}
+
+.wishes-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.wishes-empty__icon {
+  display: inline-flex;
+  color: var(--wish-gold);
+  filter: drop-shadow(0 0 10px rgba(255, 224, 102, 0.35));
+  margin-bottom: 0.25rem;
+}
+
+.wishes-empty__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--wish-cream);
+}
+
+.wishes-empty__hint {
+  margin: 0 0 0.65rem;
+  font-size: 0.9rem;
+  color: var(--wish-dim);
+}
+
+.wishes-error {
+  color: #f0b0b0;
+  border-color: rgba(220, 100, 100, 0.4);
+}
+
+/* ── Detail ── */
+.wish-detail {
+  animation: wishes-fade-rise 0.4s ease both;
+}
+
+.wish-detail__back {
+  display: inline-flex;
+  margin: 0 0 0.85rem;
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.82rem;
+  color: var(--wish-dim);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.wish-detail__back:hover {
+  color: var(--wish-gold);
+}
+
+.wish-detail__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 0.65rem;
+}
+
+.wish-detail__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  border: 1px solid rgba(255, 180, 100, 0.3);
+  background: rgba(255, 160, 80, 0.08);
+  color: var(--wish-dim);
+}
+
+.wish-detail__chip--cat {
+  border-color: rgba(196, 181, 253, 0.4);
+  background: rgba(140, 110, 220, 0.14);
+  color: #ddd6fe;
+}
+
+.wish-detail__chip--cat[data-cat='習慣'] { color: #c8f0d8; background: rgba(127, 212, 168, 0.14); border-color: rgba(127, 212, 168, 0.4); }
+.wish-detail__chip--cat[data-cat='學習'] { color: #c8dcff; background: rgba(142, 182, 255, 0.14); border-color: rgba(142, 182, 255, 0.4); }
+.wish-detail__chip--cat[data-cat='健康'] { color: #c8f0b0; background: rgba(154, 223, 122, 0.14); border-color: rgba(154, 223, 122, 0.4); }
+.wish-detail__chip--cat[data-cat='創作'] { color: #ffd0e4; background: rgba(245, 160, 200, 0.14); border-color: rgba(245, 160, 200, 0.4); }
+.wish-detail__chip--cat[data-cat='感情成長'] { color: #ffd0e0; background: rgba(240, 144, 184, 0.14); border-color: rgba(240, 144, 184, 0.4); }
+.wish-detail__chip--cat[data-cat='社群'] { color: #d4caff; background: rgba(176, 160, 255, 0.14); border-color: rgba(176, 160, 255, 0.4); }
+.wish-detail__chip--cat[data-cat='其他'] { color: #e8dcc8; background: rgba(220, 190, 140, 0.12); border-color: rgba(220, 190, 140, 0.4); }
+
+.wish-detail__chip--time {
+  border-color: rgba(255, 210, 120, 0.4);
+  background: rgba(255, 200, 100, 0.12);
+  color: #ffe8b0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.wish-detail__chip--status {
+  border-color: rgba(180, 180, 180, 0.3);
+  color: var(--wish-muted);
+}
+
+.wish-detail__title {
+  margin: 0 0 0.55rem;
+  font-family: "Zpix", "Noto Sans TC", sans-serif;
+  font-size: clamp(1.35rem, 3.5vw, 1.75rem);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+  -webkit-font-smoothing: none;
+}
+
+.wish-detail__owner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.55rem;
+  margin: 0 0 1rem;
+  font-family: "Noto Sans TC", sans-serif;
+  color: var(--wish-dim);
+  font-size: 0.9rem;
+  line-height: 1.3;
+}
+
+.wish-detail__owner-name {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.wish-detail__owner-sep {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(232, 224, 208, 0.4);
+  line-height: 1;
+}
+
+.wish-detail__cheers {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0;
+  color: rgba(220, 210, 255, 0.85);
+  line-height: 1;
+}
+
+.wish-detail__cheers svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+.wish-detail__body {
+  margin: 0 0 1.25rem;
+  font-family: "Noto Sans TC", sans-serif;
+  line-height: 1.7;
+  color: var(--wish-cream);
+  white-space: pre-wrap;
+  padding: 12px;
+  border: 2px solid rgba(255, 140, 66, 0.22);
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.wish-detail__body--note {
+  border-color: rgba(255, 224, 102, 0.28);
+  background: rgba(255, 200, 80, 0.06);
+}
+
+/* Moonlight stamp card (habit journal feel) */
+.wish-moon {
+  margin: 0 0 1.5rem;
+  padding: 16px;
+  border: 2px solid rgba(160, 130, 255, 0.28);
+  background:
+    linear-gradient(180deg, rgba(120, 90, 200, 0.1) 0%, transparent 55%),
+    rgba(8, 5, 10, 0.55);
+}
+
+.wish-moon__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 0.9rem;
+}
+
+.wish-moon__copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.wish-moon__copy strong {
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--wish-cream);
+}
+
+.wish-moon__copy span {
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.78rem;
+  color: var(--wish-muted);
+}
+
+.wish-moon__stamp-count {
+  flex-shrink: 0;
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.72rem;
+  color: rgba(196, 181, 253, 0.85);
+  letter-spacing: 0.02em;
+}
+
+/* CSS moon-phase discs (no emoji) */
+.wish-moon__phase-ico {
+  display: inline-block;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 50%;
+  border: 1.5px solid rgba(196, 181, 253, 0.55);
+  background: #1a1228;
+  box-shadow: inset -4px 0 0 0 #c4b5fd;
+  vertical-align: middle;
+}
+
+.wish-moon__phase-ico--new {
+  box-shadow: none;
+  background: #2a2038;
+  border-color: rgba(196, 181, 253, 0.7);
+}
+
+.wish-moon__phase-ico--half {
+  background: linear-gradient(90deg, #c4b5fd 50%, #1a1228 50%);
+  box-shadow: none;
+}
+
+.wish-moon__phase-ico--gibbous {
+  background: #c4b5fd;
+  box-shadow: inset -3px 0 0 0 #1a1228;
+}
+
+.wish-moon__phase-ico--full {
+  background: #ffe066;
+  border-color: rgba(255, 210, 120, 0.8);
+  box-shadow: 0 0 6px rgba(255, 210, 120, 0.35);
+}
+
+.wish-moon__stamp-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.wish-moon__stamp-grid--days {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.wish-moon__stamp {
+  appearance: none;
+  display: grid;
+  gap: 5px;
+  justify-items: center;
+  margin: 0;
+  padding: 2px 0;
+  border: 0;
+  background: transparent;
+  color: var(--wish-muted);
+  cursor: default;
+  font: inherit;
+}
+
+button.wish-moon__stamp {
+  cursor: pointer;
+}
+
+button.wish-moon__stamp:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.wish-moon__stamp-pad {
+  position: relative;
+  width: 2.55rem;
+  height: 2.55rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 1.5px solid rgba(196, 181, 253, 0.22);
+  background:
+    radial-gradient(circle at 40% 35%, rgba(255, 255, 255, 0.05), transparent 55%),
+    rgba(255, 255, 255, 0.03);
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s, transform 0.2s, color 0.2s;
+}
+
+.wish-moon__stamp-grid--days .wish-moon__stamp-pad {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 10px;
+}
+
+.wish-moon__stamp-paw {
+  display: block;
+  color: rgba(196, 181, 253, 0.38);
+  transition: color 0.2s, filter 0.2s, transform 0.2s;
+}
+
+.wish-moon__stamp-paw.is-inked,
+.wish-moon__stamp.is-stamped .wish-moon__stamp-paw {
+  color: #ffe066;
+  filter: drop-shadow(0 0 5px rgba(255, 200, 100, 0.45));
+}
+
+.wish-moon__stamp.is-today:not(.is-stamped) .wish-moon__stamp-paw {
+  color: rgba(255, 224, 102, 0.72);
+}
+
+.wish-moon__stamp.is-stamped .wish-moon__stamp-pad {
+  border-style: solid;
+  border-color: rgba(255, 210, 140, 0.55);
+  background:
+    radial-gradient(circle at 40% 30%, rgba(255, 224, 102, 0.2), transparent 55%),
+    rgba(40, 28, 60, 0.72);
+  box-shadow:
+    0 0 12px rgba(255, 190, 100, 0.22),
+    inset 0 0 10px rgba(196, 181, 253, 0.12);
+}
+
+.wish-moon__stamp.is-today .wish-moon__stamp-pad {
+  border-color: rgba(255, 224, 102, 0.7);
+  box-shadow:
+    0 0 0 1px rgba(255, 210, 120, 0.16),
+    0 0 12px rgba(255, 179, 71, 0.24);
+}
+
+.wish-moon__stamp.is-future {
+  opacity: 0.42;
+}
+
+.wish-moon__stamp.is-burst .wish-moon__stamp-pad {
+  animation: wish-stamp-press 0.65s ease-out;
+}
+
+button.wish-moon__stamp:hover:not(:disabled) .wish-moon__stamp-pad {
+  border-color: rgba(255, 210, 140, 0.55);
+  transform: translateY(-1px);
+}
+
+button.wish-moon__stamp:hover:not(:disabled) .wish-moon__stamp-paw {
+  color: rgba(255, 224, 102, 0.9);
+}
+
+.wish-moon__stamp-label {
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.62rem;
+  line-height: 1.2;
+  text-align: center;
+  color: rgba(232, 224, 208, 0.5);
+}
+
+.wish-moon__stamp.is-stamped .wish-moon__stamp-label,
+.wish-moon__stamp.is-today .wish-moon__stamp-label {
+  color: var(--wish-cream);
+}
+
+.wish-moon__stamp-hint {
+  margin: 0.85rem 0 0;
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.78rem;
+  color: var(--wish-muted);
+  text-align: center;
+}
+
+@keyframes wish-stamp-press {
+  0% { transform: scale(0.82); filter: brightness(1.4); }
+  45% { transform: scale(1.08); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+.wish-detail__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  margin: 0.25rem 0 1.5rem;
+  padding-top: 0.35rem;
+}
+
+.wish-detail__owner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.wish-detail__secondary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.wish-detail__secondary-actions .wish-share {
+  flex: 0 1 auto;
+  display: flex;
+  align-items: stretch;
+}
+
+.wish-detail__report-btn {
+  flex: 0 0 auto;
+  min-height: 48px;
+  padding: 8px 14px;
+  border-color: rgba(200, 160, 160, 0.28);
+  color: rgba(232, 200, 200, 0.78);
+  font-weight: 600;
+}
+
+.wish-detail__report-btn:hover:not(:disabled) {
+  border-color: rgba(240, 170, 170, 0.45);
+  color: #f0c0c0;
+  background: rgba(40, 16, 18, 0.55);
+}
+
+.wish-detail__report-btn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.wish-detail__owner-actions .wish-detail__complete-cta {
+  flex: 1 1 12rem;
+}
+
+.wish-detail__owner-actions .wish-detail__forum-btn,
+.wish-detail__owner-actions .wish-share {
+  flex: 0 1 auto;
+  display: flex;
+  align-items: stretch;
+}
+
+.wish-detail__action-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  margin: 0;
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 190, 120, 0.32);
+  border-radius: 10px;
+  background: rgba(18, 12, 20, 0.78);
+  color: #ffe8c8;
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.25;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: none;
+  -webkit-font-smoothing: antialiased;
+  transition: border-color 0.15s, background 0.15s, color 0.15s, transform 0.12s;
+}
+
+.wish-detail__action-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(255, 210, 140, 0.5);
+}
+
+.wish-detail__action-btn:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.wish-detail__action-btn svg {
+  flex-shrink: 0;
+  display: block;
+}
+
+.wish-detail__complete-cta {
+  justify-content: flex-start;
+  text-align: left;
+  gap: 10px;
+}
+
+.wish-detail__complete-cta svg {
+  color: rgba(255, 210, 140, 0.75);
+}
+
+.wish-detail__complete-cta-copy {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.wish-detail__complete-cta-title {
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #fff4dc;
+}
+
+.wish-detail__complete-cta-sub {
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: rgba(232, 224, 208, 0.58);
+}
+
+.wish-detail__complete-cta.is-soft {
+  border-color: rgba(180, 160, 255, 0.3);
+  background: rgba(18, 14, 28, 0.72);
+}
+
+.wish-detail__complete-cta.is-soft svg {
+  color: rgba(196, 181, 253, 0.65);
+}
+
+.wish-detail__complete-cta.is-ready {
+  border-color: rgba(255, 210, 140, 0.55);
+  background: linear-gradient(180deg, rgba(255, 200, 100, 0.14), rgba(40, 24, 16, 0.9));
+}
+
+.wish-detail__complete-cta.is-ready svg {
+  color: #ffe066;
+}
+
+.wish-detail__complete-cta.is-ready .wish-detail__complete-cta-sub {
+  color: rgba(255, 224, 160, 0.82);
+}
+
+.wish-detail__share-btn {
+  height: 100%;
+  min-width: 7.5rem;
+  color: #ffe8c8;
+}
+
+.wish-detail__share-btn svg {
+  color: rgba(255, 200, 140, 0.85);
+}
+
+.wish-detail__abandon-btn {
+  flex: 0 0 auto;
+  min-width: 5.5rem;
+  color: rgba(200, 190, 210, 0.72);
+  border-color: rgba(255, 190, 120, 0.22);
+  background: rgba(14, 10, 16, 0.55);
+  font-weight: 500;
+}
+
+.wish-detail__abandon-btn:hover:not(:disabled) {
+  color: rgba(240, 170, 170, 0.95);
+  border-color: rgba(240, 160, 160, 0.35);
+  background: rgba(40, 16, 18, 0.55);
+}
+
+.wish-detail__cheer-cta {
+  min-height: 42px;
+  box-shadow:
+    0 0 12px rgba(255, 179, 71, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28) !important;
+}
+
+.wish-detail__cheer-cta.is-cheered,
+.wish-detail__cheer-cta:disabled.is-cheered {
+  opacity: 0.85;
+  cursor: default;
+  box-shadow: none !important;
+  border-color: rgba(180, 160, 255, 0.4) !important;
+  background: rgba(40, 32, 64, 0.85) !important;
+  color: #d8d0ff !important;
+}
+
+.wish-detail__forum-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 44px;
+}
+
+.wish-share {
+  position: relative;
+  flex: 0 1 auto;
+}
+
+.wish-share__backdrop {
+  display: none;
+}
+
+.wish-share__menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);
+  z-index: 30;
+  min-width: 11.5rem;
+  padding: 6px;
+  border: 1px solid rgba(255, 180, 100, 0.35);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(40, 28, 20, 0.98), rgba(16, 10, 8, 0.98));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  display: grid;
+  gap: 2px;
+}
+
+.wish-share__menu-title {
+  display: none;
+}
+
+.wish-share__cancel {
+  display: none;
+}
+
+.wish-share__item {
+  appearance: none;
+  margin: 0;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #f0ebd8;
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.88rem;
+  text-align: left;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.wish-share__item:hover {
+  background: rgba(255, 200, 100, 0.12);
+  color: #ffe8b0;
+}
+
+.wish-detail__text-link {
+  appearance: none;
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.8rem;
+  color: var(--wish-muted);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.wish-detail__text-link:hover {
+  color: var(--wish-dim);
+}
+
+.wish-detail__text-link--danger {
+  color: #f0a0a0;
+  margin: 0 0.5rem;
+}
+
+.wish-detail__abandon-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.15rem;
+  width: 100%;
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.8rem;
+  color: var(--wish-muted);
+}
+
+.wish-form--complete {
+  margin-bottom: 1.5rem;
+}
+
+.wish-cheers {
+  border-top: 2px solid rgba(255, 140, 66, 0.28);
+  padding-top: 1.1rem;
+}
+
+.wish-cheers__title {
+  margin: 0 0 0.75rem;
+  font-family: "Zpix", "Noto Sans TC", sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: var(--wish-gold);
+  -webkit-font-smoothing: none;
+}
+
+.wish-cheers__empty {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  padding: 16px;
+  border: 1px solid rgba(160, 130, 255, 0.16);
+  border-radius: 10px;
+  background:
+    radial-gradient(ellipse 80% 70% at 20% 0%, rgba(140, 110, 220, 0.1), transparent 60%),
+    rgba(8, 5, 14, 0.45);
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--wish-dim);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.wish-cheers__empty p {
+  margin: 0;
+}
+
+.wish-cheers__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.wish-cheers__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 180, 100, 0.22);
+  border-radius: 12px;
+  background:
+    linear-gradient(135deg, rgba(255, 200, 100, 0.08), rgba(140, 110, 220, 0.08));
+  box-shadow: 0 0 12px rgba(255, 180, 100, 0.06);
+}
+
+.wish-cheers__bubble {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 224, 102, 0.14);
+  color: #ffe066;
+  font-size: 0.75rem;
+}
+
+.wish-cheers__content {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.wish-cheers__name {
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--wish-cream);
+}
+
+.wish-cheers__note {
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.8rem;
+  color: var(--wish-dim);
+}
+
+@media (max-width: 520px) {
+  .wish-moon__stamp-grid--days {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .wish-moon__stamp-grid--days .wish-moon__stamp-pad {
+    width: 1.85rem;
+    height: 1.85rem;
+    border-radius: 9px;
+  }
+
+  .wish-moon__stamp-paw {
+    width: 14px !important;
+    height: 14px !important;
+  }
+
+  .wish-detail__owner-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .wish-detail__owner-actions .wish-detail__complete-cta {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .wish-detail__owner-actions .wish-share,
+  .wish-detail__owner-actions .wish-detail__share-btn {
+    width: 100%;
+  }
+
+  .wish-detail__owner-actions .wish-detail__abandon-btn {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .wish-detail__owner-actions .wish-detail__abandon-confirm {
+    grid-column: 1 / -1;
+  }
+
+  .wish-detail__secondary-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .wish-detail__secondary-actions .wish-share,
+  .wish-detail__secondary-actions .wish-detail__share-btn,
+  .wish-detail__secondary-actions .wish-detail__report-btn {
+    width: 100%;
+  }
+}
+
+/* ── Form ── */
+.wish-form {
+  display: grid;
+  gap: 1rem;
+  max-width: 32rem;
+  animation: wishes-fade-rise 0.4s ease both;
+  padding: 14px;
+  border: 2px solid var(--wish-line);
+  background:
+    linear-gradient(180deg, rgba(255, 100, 30, 0.08) 0%, transparent 30%),
+    var(--wish-surface);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35);
+}
+
+.wish-form label {
+  display: grid;
+  gap: 0.4rem;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  letter-spacing: 0.05em;
+  line-height: 1.6;
+  color: var(--wish-gold);
+  -webkit-font-smoothing: none;
+}
+
+.wish-form input,
+.wish-form textarea,
+.wish-form select {
+  width: 100%;
+  border: 2px solid rgba(255, 140, 66, 0.35);
+  border-radius: 0;
+  background: rgba(8, 5, 3, 0.85);
+  color: var(--wish-cream);
+  padding: 0.6rem 0.7rem;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 0.9rem;
+  box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.35);
+}
+
+.wish-form input:focus,
+.wish-form textarea:focus,
+.wish-form select:focus {
+  outline: none;
+  border-color: rgba(255, 224, 102, 0.65);
+  box-shadow:
+    inset 0 2px 0 rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(255, 224, 102, 0.2);
+}
+
+.wish-form textarea {
+  min-height: 6rem;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.wish-form__hint {
+  margin: 0;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 0.78rem;
+  color: var(--wish-muted);
+}
+
+.wish-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 0.2rem;
+}
+
+.wish-complete-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 1rem;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 224, 102, 0.45);
+  background: linear-gradient(135deg, rgba(255, 200, 80, 0.16), rgba(255, 140, 66, 0.1));
+  color: var(--wish-cream);
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.45;
+  box-shadow: 0 0 14px rgba(255, 200, 80, 0.18);
+  animation: wishes-fade-rise 0.35s ease both;
+}
+
+.wish-complete-toast--under-cal {
+  margin: 0.75rem 0 1.1rem;
+}
+
+.wish-complete-toast--success {
+  border-color: rgba(127, 212, 168, 0.55);
+  background: linear-gradient(135deg, rgba(90, 200, 140, 0.22), rgba(255, 200, 80, 0.12));
+  color: #e8ffe8;
+  box-shadow: 0 0 16px rgba(90, 200, 140, 0.2);
+}
+
+.wish-complete-toast--muted {
+  border-color: rgba(180, 160, 255, 0.35);
+  background: rgba(40, 32, 64, 0.55);
+  color: rgba(232, 224, 208, 0.85);
+  box-shadow: none;
+  font-weight: 500;
+}
+
+.wish-complete-toast__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 999px;
+  background: rgba(255, 224, 102, 0.22);
+  color: #ffe066;
+}
+
+.wish-complete-toast--success .wish-complete-toast__badge {
+  background: rgba(127, 212, 168, 0.28);
+  color: #b8f5d0;
+}
+
+.wish-complete-toast__msg {
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .wishes-toolbar__row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .wishes-toolbar__filters {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 0.2rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .wishes-toolbar__aside {
+    justify-content: flex-start;
+  }
+
+  .wishes-chip {
+    flex-shrink: 0;
+  }
+
+  .wishes-btn--create {
+    flex: 1;
+  }
+}
+
+/* ── Forum topic-row portal badge (not a post category) ── */
+.forum-topic-badge.forum-topic-badge--wishes {
+  gap: 5px;
+  border-radius: 0;
+  border: 2px solid rgba(255, 210, 140, 0.55);
+  color: #ffe066;
+  background:
+    linear-gradient(180deg, rgba(255, 159, 67, 0.22) 0%, rgba(26, 16, 8, 0.92) 100%);
+  box-shadow:
+    2px 2px 0 rgba(0, 0, 0, 0.35),
+    0 0 14px rgba(255, 159, 67, 0.18);
+  text-decoration: none;
+  font-family: 'Zpix', 'Noto Sans TC', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  -webkit-font-smoothing: none;
+}
+
+.forum-topic-badge.forum-topic-badge--wishes:hover {
+  color: #fff3c4;
+  border-color: rgba(255, 224, 102, 0.85);
+  background: linear-gradient(180deg, rgba(255, 179, 71, 0.32) 0%, rgba(40, 22, 10, 0.95) 100%);
+  box-shadow:
+    2px 2px 0 rgba(0, 0, 0, 0.4),
+    0 0 18px rgba(255, 224, 102, 0.28);
+  transform: translateY(-1px);
+  filter: none;
+}
+
+.forum-topic-badge.forum-topic-badge--wishes .forum-topic-badge__icon {
+  color: #ffe066;
+  flex-shrink: 0;
+}
+
+/* ── Forum sidebar quest board ── */
+.forum-panel--wishes {
+  position: relative;
+  overflow: visible;
+  background:
+    radial-gradient(ellipse 80% 50% at 100% 0%, rgba(255, 160, 60, 0.16) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(140, 110, 255, 0.12) 0%, transparent 50%),
+    linear-gradient(180deg, rgba(255, 100, 30, 0.1) 0%, #1a1210 38%) !important;
+  border: 1px solid rgba(255, 180, 100, 0.42) !important;
+  border-radius: 0 !important;
+  box-shadow:
+    0 4px 0 rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 224, 102, 0.08);
+}
+
+.forum-panel--wishes::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  background-size: 100% 4px;
+  opacity: 0.35;
+}
+
+.forum-wish-quest__back {
+  flex: 1 1 0;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  margin: 0;
+  padding: 6px 8px;
+  border: 1px solid rgba(255, 180, 100, 0.32);
+  border-radius: 8px;
+  background: rgba(15, 10, 6, 0.65);
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffe8c8;
+  text-decoration: none;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+  transition: color 0.15s, border-color 0.15s, filter 0.12s, transform 0.12s;
+}
+
+.forum-wish-quest__back:hover {
+  color: #fff4dc;
+  border-color: rgba(255, 200, 120, 0.5);
+  filter: brightness(1.06);
+  transform: translate(-1px, -1px);
+}
+
+.forum-wish-quest__banner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px 8px;
+}
+
+.forum-wish-quest__banner--centered {
+  justify-content: center;
+  text-align: center;
+  padding-top: 6px;
+  padding-bottom: 10px;
+}
+
+.forum-wish-quest__banner--centered .forum-wish-quest__banner-copy {
+  display: grid;
+  justify-items: center;
+}
+
+.forum-wish-quest__banner--centered .forum-wish-quest__title {
+  justify-content: center;
+}
+
+.forum-wish-quest__banner--toggle {
+  appearance: none;
+  width: 100%;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  position: relative;
+  padding-right: 2rem;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.forum-wish-quest__banner--toggle:hover .forum-wish-quest__title,
+.forum-wish-quest__banner--toggle:focus-visible .forum-wish-quest__title {
+  color: #ffe8c8;
+}
+
+.forum-wish-quest__chevron {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid rgba(255, 224, 208, 0.65);
+  border-bottom: 2px solid rgba(255, 224, 208, 0.65);
+  transform: translateY(-70%) rotate(45deg);
+  transition: transform 0.18s ease;
+}
+
+.forum-panel--wishes-compact.is-folded .forum-wish-quest__chevron {
+  transform: translateY(-30%) rotate(-135deg);
+}
+
+.forum-wish-quest__body.is-collapsed {
+  display: none;
+}
+
+.forum-wish-quest__banner-copy {
+  min-width: 0;
+}
+
+.forum-wish-quest__title {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: "Zpix", "Noto Sans TC", sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  color: #ffe8c8;
+  -webkit-font-smoothing: none;
+}
+
+.forum-wish-quest__title svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+.forum-wish-quest__tagline {
+  margin: 6px 0 0;
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.75rem;
+  color: rgba(232, 224, 208, 0.55);
+}
+
+.forum-wish-quest__list {
+  position: relative;
+  z-index: 1;
+  list-style: none;
+  margin: 0;
+  padding: 0 10px 4px;
+  display: grid;
+  gap: 8px;
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.forum-wish-quest__card {
+  position: relative;
+  border: 1px solid rgba(180, 160, 255, 0.28);
+  border-radius: 10px;
+  background:
+    linear-gradient(145deg, rgba(123, 140, 255, 0.1) 0%, transparent 42%),
+    rgba(10, 8, 16, 0.72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.forum-wish-quest__card:hover,
+.forum-wish-quest__card:focus-within,
+.forum-wish-quest__card:active {
+  border-color: rgba(255, 210, 140, 0.45);
+  box-shadow:
+    0 0 14px rgba(180, 150, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.forum-wish-quest__card.is-burst {
+  animation: wish-cheer-sparkle 0.65s ease-out;
+}
+
+.forum-wish-quest__card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 8px 8px 0;
+}
+
+.forum-wish-quest__card-top-end {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.forum-wish-quest__cat,
+.forum-wish-quest__eta,
+.forum-wish-quest__cheer-btn--top {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 26px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  gap: 4px;
+}
+
+.forum-wish-quest__cat {
+  border: 1px solid rgba(180, 160, 255, 0.35);
+  background: rgba(123, 140, 255, 0.12);
+  color: #d8d0ff;
+}
+
+.forum-wish-quest__card[data-cat="學習"] .forum-wish-quest__cat {
+  color: #c8dcff;
+  background: rgba(142, 182, 255, 0.14);
+  border-color: rgba(142, 182, 255, 0.35);
+}
+
+.forum-wish-quest__card[data-cat="習慣"] .forum-wish-quest__cat {
+  color: #c8f0d8;
+  background: rgba(127, 212, 168, 0.14);
+  border-color: rgba(127, 212, 168, 0.35);
+}
+
+.forum-wish-quest__card[data-cat="健康"] .forum-wish-quest__cat {
+  color: #c8f0b0;
+  background: rgba(154, 223, 122, 0.14);
+  border-color: rgba(154, 223, 122, 0.35);
+}
+
+.forum-wish-quest__card[data-cat="創作"] .forum-wish-quest__cat {
+  color: #ffd0e4;
+  background: rgba(245, 160, 200, 0.14);
+  border-color: rgba(245, 160, 200, 0.35);
+}
+
+.forum-wish-quest__card[data-cat="感情成長"] .forum-wish-quest__cat {
+  color: #ffd0e0;
+  background: rgba(240, 144, 184, 0.14);
+  border-color: rgba(240, 144, 184, 0.35);
+}
+
+.forum-wish-quest__card[data-cat="社群"] .forum-wish-quest__cat {
+  color: #d4caff;
+  background: rgba(176, 160, 255, 0.14);
+  border-color: rgba(176, 160, 255, 0.35);
+}
+
+.forum-wish-quest__card[data-cat="其他"] .forum-wish-quest__cat {
+  color: #e8dcc8;
+  background: rgba(220, 190, 140, 0.12);
+  border-color: rgba(220, 190, 140, 0.35);
+}
+
+.forum-wish-quest__card-body {
+  display: grid;
+  gap: 6px;
+  padding: 6px 8px 8px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.forum-wish-quest__card-title {
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #f0ebd8;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.forum-wish-quest__phase {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px 8px;
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.72rem;
+  color: rgba(232, 224, 208, 0.7);
+}
+
+.forum-wish-quest__phase .wish-moon__phase-ico {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-width: 1px;
+}
+
+.forum-wish-quest__eta {
+  border: 1px solid rgba(255, 210, 120, 0.35);
+  background: rgba(255, 200, 100, 0.12);
+  color: #ffe8b0;
+  font-weight: 600;
+}
+
+.forum-wish-quest__eta svg {
+  flex-shrink: 0;
+}
+
+.forum-wish-quest__bar {
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(196, 181, 253, 0.22);
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.25),
+    0 0 8px rgba(140, 110, 220, 0.12);
+}
+
+.forum-wish-quest__bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #c4b5fd, #ffe066 55%, #ff9f43);
+  box-shadow: 0 0 8px rgba(255, 200, 100, 0.45);
+  transition: width 0.3s ease;
+}
+
+.forum-wish-quest__card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px 8px;
+  border-top: 1px solid rgba(180, 160, 255, 0.14);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.forum-wish-quest__cheers {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.75rem;
+  color: rgba(220, 210, 255, 0.85);
+}
+
+.forum-wish-quest__cheer-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 4px 9px;
+  border: 1px solid rgba(255, 210, 140, 0.5);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 200, 100, 0.2), rgba(40, 24, 12, 0.85));
+  color: #ffe8b8;
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: box-shadow 0.15s, border-color 0.15s, transform 0.12s;
+}
+
+.forum-wish-quest__cheer-btn--top {
+  flex-shrink: 0;
+  padding: 0 9px;
+  min-height: 26px;
+}
+
+.forum-wish-quest__cheer-btn--top svg {
+  flex-shrink: 0;
+}
+
+.forum-wish-quest__cheer-btn:hover:not(:disabled) {
+  border-color: rgba(255, 224, 102, 0.8);
+  box-shadow: 0 0 10px rgba(255, 200, 120, 0.28);
+  transform: translateY(-1px);
+}
+
+.forum-wish-quest__cheer-btn.is-cheered,
+.forum-wish-quest__cheer-btn:disabled {
+  border-color: rgba(180, 160, 255, 0.35);
+  background: rgba(40, 32, 64, 0.7);
+  color: #c8c0e8;
+  cursor: default;
+  transform: none;
+  box-shadow: none;
+}
+
+.forum-wish-quest__own {
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.7rem;
+  color: rgba(255, 224, 102, 0.65);
+}
+
+.forum-wish-quest__empty {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  text-align: center;
+  padding: 14px 12px 8px;
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.82rem;
+  color: rgba(232, 224, 208, 0.65);
+}
+
+.forum-wish-quest__loading {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  padding: 16px 14px 10px;
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: rgba(232, 224, 208, 0.65);
+  text-align: center;
+}
+
+.forum-wish-quest__empty-moon.wish-moon__phase-ico {
+  width: 1.6rem;
+  height: 1.6rem;
+  border-width: 2px;
+  filter: drop-shadow(0 0 8px rgba(196, 181, 253, 0.35));
+}
+
+.forum-wish-quest__empty p {
+  margin: 0;
+}
+
+.forum-wish-quest__cta-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px 10px 12px;
+  border-top: none;
+}
+
+.forum-wish-quest__cta-row .forum-wish-quest__btn,
+.forum-wish-quest__cta-row .forum-wish-quest__back {
+  flex: 1 1 0;
+  min-width: 0;
+  gap: 5px;
+}
+
+.forum-wish-quest__btn {
+  flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 6px 8px;
+  border: 1px solid rgba(255, 180, 100, 0.4);
+  border-radius: 8px;
+  background: rgba(15, 10, 6, 0.75);
+  color: #ffe8c8;
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35);
+  transition: filter 0.12s, transform 0.12s;
+}
+
+.forum-wish-quest__btn--primary {
+  border-color: rgba(255, 220, 150, 0.75);
+  background: linear-gradient(180deg, #ffe066 0%, #ffb347 55%, #ff9f43 100%);
+  color: #1a1008;
+  box-shadow: 2px 2px 0 rgba(90, 40, 0, 0.35);
+}
+
+.forum-wish-quest__btn:hover {
+  filter: brightness(1.06);
+  transform: translate(-1px, -1px);
+}
+
+.forum-wish-quest__btn:active {
+  transform: translate(1px, 1px);
+}
+
+.forum-panel__empty-block {
+  display: grid;
+  gap: 8px;
+  padding: 4px 12px 10px;
+  justify-items: start;
+}
+
+.forum-panel--wishes-compact {
+  display: none;
+}
+
+@media (max-width: 899px) {
+  .forum-panel--wishes-compact {
+    display: block;
+    grid-column: 1 / -1;
+    width: 100%;
+    margin: 0;
+    order: -1;
+  }
+
+  .forum-panel--wishes-compact.is-folded {
+    padding-bottom: 2px;
+  }
+
+  .forum-treehole-panels--mobile .forum-panel--wishes-compact {
+    height: auto;
+  }
+
+  .forum-panel--wishes-compact .forum-wish-quest__list {
+    max-height: none;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  .forum-panel--wishes-compact .forum-wish-quest__banner--toggle {
+    min-height: 48px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .forum-sidebar .forum-panel--wishes {
+    display: none;
+  }
+}
+
+.forum-wish-quest--compact .forum-wish-quest__banner {
+  padding-bottom: 4px;
+}
+
+.forum-wish-quest--compact .forum-wish-quest__cta-row {
+  border-top: none;
+  padding-top: 4px;
+  margin-top: 6px;
+}
+
+/* ── Compose / new wish ritual form ── */
+.wish-compose {
+  max-width: 40rem;
+  width: 100%;
+}
+
+.wish-compose__hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 16px;
+  margin: 0 0 1.1rem;
+  animation: wishes-fade-rise 0.35s ease both;
+}
+
+.wish-compose__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 0.4rem;
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  color: #c4b5fd;
+}
+
+.wish-compose__eyebrow svg {
+  flex-shrink: 0;
+  color: #ffe066;
+}
+
+.wish-compose__title {
+  margin: 0 0 0.45rem;
+  font-family: "Zpix", "Noto Sans TC", sans-serif;
+  font-size: clamp(1.35rem, 4vw, 1.75rem);
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  line-height: 1.35;
+  color: var(--wish-cream);
+  text-shadow: 0 0 16px rgba(255, 159, 67, 0.18);
+  -webkit-font-smoothing: none;
+}
+
+.wish-compose__lead {
+  margin: 0;
+  max-width: 34rem;
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--wish-dim);
+}
+
+.wish-compose__hero-text {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.wish-compose__quota {
+  flex-shrink: 0;
+  display: grid;
+  gap: 2px;
+  min-width: 4.6rem;
+  padding: 8px 10px;
+  border: 1px solid rgba(196, 181, 253, 0.4);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(120, 90, 200, 0.22) 0%, rgba(20, 12, 28, 0.9) 100%);
+  box-shadow: none;
+  text-align: center;
+}
+
+.wish-compose__quota.is-full {
+  border-color: rgba(255, 140, 100, 0.7);
+  background: linear-gradient(180deg, rgba(180, 60, 40, 0.28) 0%, rgba(28, 10, 8, 0.92) 100%);
+}
+
+.wish-compose__quota-label {
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: rgba(232, 224, 208, 0.65);
+}
+
+.wish-compose__quota-value {
+  font-family: "Zpix", "Noto Sans TC", sans-serif;
+  font-size: 1rem;
+  color: #ffe066;
+  letter-spacing: 0.04em;
+  -webkit-font-smoothing: none;
+}
+
+.wish-compose__quota-max {
+  color: rgba(232, 224, 208, 0.55);
+  font-size: 0.85rem;
+}
+
+.wish-form--compose {
+  max-width: none;
+  width: 100%;
+  gap: 1.15rem;
+  padding: 16px 16px 14px;
+  border: 1px solid rgba(160, 130, 255, 0.38);
+  border-radius: 12px;
+  box-shadow: none;
+  background:
+    linear-gradient(180deg, rgba(120, 80, 200, 0.1) 0%, transparent 28%),
+    linear-gradient(180deg, rgba(255, 100, 30, 0.06) 0%, transparent 40%),
+    var(--wish-surface);
+}
+
+/* Compose form: keep readable Noto for inputs; don't inherit crunchy pixel labels */
+.wish-form--compose label {
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wish-compose__field {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.wish-compose__field legend {
+  padding: 0;
+  margin: 0 0 0.2rem;
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  line-height: 1.4;
+  color: var(--wish-gold);
+}
+
+.wish-compose__optional {
+  margin-left: 0.35rem;
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--wish-muted);
+}
+
+.wish-compose__title-box {
+  position: relative;
+  border: 1px solid rgba(255, 140, 66, 0.4);
+  border-radius: 10px;
+  background: rgba(8, 5, 3, 0.88);
+  box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.35);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  overflow: hidden;
+}
+
+.wish-compose__title-box:focus-within {
+  border-color: rgba(255, 224, 102, 0.7);
+  box-shadow:
+    inset 0 2px 0 rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(255, 224, 102, 0.22),
+    0 0 18px rgba(180, 140, 255, 0.12);
+}
+
+.wish-compose__title-box.is-invalid {
+  border-color: rgba(255, 140, 100, 0.65);
+}
+
+.wish-compose__title-box.is-invalid:focus-within {
+  border-color: rgba(255, 150, 110, 0.85);
+  box-shadow:
+    inset 0 2px 0 rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(255, 140, 100, 0.25);
+}
+
+.wish-compose__field-error {
+  margin: 0;
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: #ffb090;
+}
+
+.wish-compose__title-input {
+  display: block;
+  width: 100%;
+  min-height: 4.2rem;
+  margin: 0;
+  padding: 0.75rem 0.8rem 1.55rem;
+  border: 0 !important;
+  border-radius: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--wish-cream);
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.55;
+  resize: none;
+}
+
+.wish-compose__title-input:focus {
+  outline: none;
+}
+
+.wish-compose__title-input::placeholder {
+  color: rgba(232, 224, 208, 0.38);
+  transition: opacity 0.35s ease;
+}
+
+.wish-compose__count {
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  color: rgba(232, 224, 208, 0.45);
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.wish-compose__count.is-short {
+  color: #ffb347;
+}
+
+.wish-compose__count.is-max {
+  color: #f09090;
+}
+
+.wish-compose__rotating-hint {
+  margin: 0;
+  min-height: 1.3em;
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--wish-muted);
+  animation: wish-hint-fade 0.45s ease;
+}
+
+@keyframes wish-hint-fade {
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.wish-compose__body-input {
+  min-height: 4.5rem;
+  border-radius: 10px;
+  border-width: 1px;
+}
+
+.wish-compose__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.wish-compose__pill {
+  appearance: none;
+  margin: 0;
+  padding: 8px 12px;
+  border: 2px solid rgba(255, 140, 66, 0.32);
+  border-radius: 999px;
+  background: rgba(8, 5, 3, 0.72);
+  color: var(--wish-dim);
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.82rem;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.12s;
+}
+
+.wish-compose__pill:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
+.wish-compose__pill.is-active {
+  border-color: rgba(255, 220, 150, 0.85);
+  background: linear-gradient(180deg, #ffe066 0%, #ffb347 100%);
+  color: var(--wish-ink);
+  box-shadow:
+    0 0 12px rgba(255, 159, 67, 0.28),
+    0 2px 0 rgba(0, 0, 0, 0.3);
+  font-weight: 600;
+}
+
+/* Deadline chips share the same lit gold active state as category default */
+.wish-compose__pills--deadline .wish-compose__pill.is-active {
+  border-color: rgba(255, 220, 150, 0.9);
+  background: linear-gradient(180deg, #ffe8a0 0%, #ffe066 45%, #ffb347 100%);
+  color: var(--wish-ink);
+  box-shadow:
+    0 0 14px rgba(255, 179, 71, 0.38),
+    0 2px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Category pills — unique tint idle + solid fill when selected */
+.wish-compose__pill[data-cat="習慣"] {
+  color: #b8ecd0;
+  border-color: rgba(127, 212, 168, 0.45);
+  background: rgba(127, 212, 168, 0.1);
+}
+.wish-compose__pill[data-cat="學習"] {
+  color: #b8d0ff;
+  border-color: rgba(142, 182, 255, 0.45);
+  background: rgba(142, 182, 255, 0.1);
+}
+.wish-compose__pill[data-cat="健康"] {
+  color: #c4f0a8;
+  border-color: rgba(154, 223, 122, 0.45);
+  background: rgba(154, 223, 122, 0.1);
+}
+.wish-compose__pill[data-cat="創作"] {
+  color: #ffc8e0;
+  border-color: rgba(245, 160, 200, 0.45);
+  background: rgba(245, 160, 200, 0.1);
+}
+.wish-compose__pill[data-cat="感情成長"] {
+  color: #ffc0d4;
+  border-color: rgba(240, 144, 184, 0.45);
+  background: rgba(240, 144, 184, 0.1);
+}
+.wish-compose__pill[data-cat="社群"] {
+  color: #d0c4ff;
+  border-color: rgba(176, 160, 255, 0.45);
+  background: rgba(176, 160, 255, 0.1);
+}
+.wish-compose__pill[data-cat="其他"] {
+  color: #e8dcc8;
+  border-color: rgba(220, 190, 140, 0.42);
+  background: rgba(220, 190, 140, 0.1);
+}
+
+.wish-compose__pill[data-cat="習慣"].is-active { background: linear-gradient(180deg, #c8f0d8, #7fd4a8); border-color: rgba(127, 212, 168, 0.9); color: #102018; }
+.wish-compose__pill[data-cat="學習"].is-active { background: linear-gradient(180deg, #d0e4ff, #8eb6ff); border-color: rgba(142, 182, 255, 0.9); color: #101828; }
+.wish-compose__pill[data-cat="健康"].is-active { background: linear-gradient(180deg, #d8f8c8, #9adf7a); border-color: rgba(154, 223, 122, 0.9); color: #142010; }
+.wish-compose__pill[data-cat="創作"].is-active { background: linear-gradient(180deg, #ffe0f0, #f5a0c8); border-color: rgba(245, 160, 200, 0.9); color: #281018; }
+.wish-compose__pill[data-cat="感情成長"].is-active { background: linear-gradient(180deg, #ffd8e8, #f090b8); border-color: rgba(240, 144, 184, 0.9); color: #281018; }
+.wish-compose__pill[data-cat="社群"].is-active { background: linear-gradient(180deg, #e0d8ff, #b0a0ff); border-color: rgba(176, 160, 255, 0.9); color: #181028; }
+.wish-compose__pill[data-cat="其他"].is-active { background: linear-gradient(180deg, #f0e4d0, #d4b896); border-color: rgba(220, 190, 140, 0.9); color: #201810; }
+
+.wish-compose__custom-date {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.15rem;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 180, 100, 0.28);
+  background: rgba(8, 5, 3, 0.55);
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.78rem;
+  color: var(--wish-muted);
+  animation: wish-hint-fade 0.28s ease;
+}
+
+.wish-compose__custom-date input[type="date"] {
+  max-width: 14rem;
+  color-scheme: dark;
+  font-family: "Noto Sans TC", sans-serif;
+  border: 2px solid rgba(255, 140, 66, 0.4);
+  border-radius: 0;
+  background: rgba(8, 5, 3, 0.88);
+  color: var(--wish-cream);
+  padding: 0.55rem 0.7rem;
+  box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.35);
+}
+
+.wish-compose__deadline-preview {
+  margin: 0;
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.78rem;
+  color: rgba(255, 224, 102, 0.72);
+}
+
+.wish-compose__vis {
+  display: grid;
+  gap: 8px;
+}
+
+@media (min-width: 560px) {
+  .wish-compose__vis {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.wish-compose__vis-card {
+  appearance: none;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 28px 11px 12px;
+  text-align: left;
+  border: 2px solid rgba(255, 140, 66, 0.3);
+  background: rgba(8, 5, 3, 0.72);
+  color: var(--wish-dim);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s, transform 0.12s;
+}
+
+.wish-compose__vis-card:hover {
+  border-color: rgba(196, 181, 253, 0.5);
+  transform: translateY(-1px);
+}
+
+.wish-compose__vis-card.is-active {
+  border-color: rgba(220, 200, 255, 0.9);
+  background:
+    linear-gradient(135deg, rgba(160, 120, 255, 0.32), rgba(255, 160, 80, 0.14));
+  box-shadow:
+    0 0 18px rgba(160, 120, 255, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: var(--wish-cream);
+}
+
+.wish-compose__vis-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #ffe066, #ffb347);
+  color: #1a1008;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  box-shadow: 0 0 8px rgba(255, 179, 71, 0.45);
+}
+
+.wish-compose__vis-card.is-active .wish-compose__vis-check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.wish-compose__vis-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 224, 102, 0.28);
+  background: rgba(255, 224, 102, 0.08);
+  color: #ffe066;
+}
+
+.wish-compose__vis-card.is-active .wish-compose__vis-icon {
+  border-color: rgba(220, 200, 255, 0.65);
+  background: rgba(180, 150, 255, 0.28);
+  color: #f3e8ff;
+}
+
+.wish-compose__vis-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.wish-compose__vis-copy strong {
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--wish-cream);
+}
+
+.wish-compose__vis-copy span {
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--wish-muted);
+}
+
+.wish-compose__actions {
+  justify-content: flex-end;
+  margin-top: 0.35rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(255, 140, 66, 0.22);
+}
+
+.wish-compose__actions .wishes-btn,
+.wish-compose__cta {
+  border-radius: 10px;
+  font-family: "Noto Sans TC", sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wish-compose__actions .wishes-btn--ghost {
+  border-width: 1px;
+  border-color: rgba(255, 190, 120, 0.32);
+  background: rgba(18, 12, 20, 0.78);
+  box-shadow: none;
+  color: #ffe8c8;
+}
+
+.wish-compose__cta {
+  position: relative;
+  overflow: visible;
+  min-width: 11.5rem;
+  border-width: 1px;
+  filter: saturate(0.72) brightness(0.82);
+  opacity: 0.72;
+  box-shadow: none !important;
+  transition:
+    transform 0.16s ease,
+    filter 0.16s ease,
+    opacity 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.wish-compose__cta.is-ready {
+  filter: none;
+  opacity: 1;
+  background: linear-gradient(180deg, #ffe066 0%, #ffc14d 48%, #ff9f43 100%) !important;
+  border-color: rgba(255, 230, 160, 0.95) !important;
+  color: #1a1008 !important;
+  box-shadow: 0 0 10px rgba(255, 179, 71, 0.22) !important;
+}
+
+.wish-compose__cta.is-ready:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+  box-shadow:
+    0 0 14px rgba(255, 179, 71, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+}
+
+.wish-compose__cta:active:not(:disabled) {
+  transform: translateY(1px) scale(0.98);
+}
+
+.wish-compose__cta:disabled {
+  cursor: not-allowed;
+}
+
+.wish-compose__cta-note {
+  margin: -0.35rem 0 0;
+  text-align: right;
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(232, 224, 208, 0.38);
+}
+
+.wish-spark-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 80;
+  overflow: hidden;
+}
+
+.wish-spark {
+  position: fixed;
+  width: 5px;
+  height: 5px;
+  margin: -2px 0 0 -2px;
+  border-radius: 1px;
+  background: #ffe066;
+  box-shadow: 0 0 6px rgba(255, 224, 102, 0.9);
+  animation: wish-spark-fly 0.75s ease-out forwards;
+  animation-delay: var(--delay, 0ms);
+  opacity: 0;
+}
+
+.wish-spark:nth-child(3n) {
+  width: 3px;
+  height: 3px;
+  background: #e9d5ff;
+  box-shadow: 0 0 6px rgba(196, 181, 253, 0.9);
+}
+
+.wish-spark:nth-child(4n) {
+  background: #ffb347;
+}
+
+@keyframes wish-spark-fly {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.4);
+  }
+  18% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(0.15);
+  }
+}
+
+@media (max-width: 560px) {
+  .wish-compose__hero {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .wish-compose__quota {
+    margin-left: 0;
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    text-align: left;
+    padding: 10px 12px;
+  }
+
+  .wish-compose__quota-value {
+    margin-left: auto;
+  }
+
+  .wish-compose__actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .wish-compose__cta,
+  .wish-compose__actions .wishes-btn--ghost {
+    width: 100%;
+  }
+
+  .wish-compose__cta-note {
+    text-align: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wish-compose__rotating-hint,
+  .wish-compose__cta,
+  .wish-spark {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .wish-compose__cta:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* ── Mobile web: all /wishes surfaces ── */
+@media (max-width: 640px) {
+  .app-page--wishes .app-main {
+    width: 100%;
+    max-width: 100%;
+    padding-left: max(0.85rem, env(safe-area-inset-left));
+    padding-right: max(0.85rem, env(safe-area-inset-right));
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+    box-sizing: border-box;
+  }
+
+  .wishes-hero {
+    margin-bottom: 1rem;
+    padding: 0.85rem 0 1rem;
+  }
+
+  .wishes-hero__title {
+    font-size: clamp(1.35rem, 7vw, 1.7rem);
+    gap: 0.4rem;
+  }
+
+  .wishes-hero__lead {
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+
+  .wishes-toolbar__row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+  }
+
+  .wishes-toolbar__filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 0.25rem;
+    margin: 0 -0.15rem;
+    padding-left: 0.15rem;
+    padding-right: 0.15rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .wishes-toolbar__filters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .wishes-chip {
+    flex-shrink: 0;
+    min-height: 36px;
+    padding: 7px 12px;
+  }
+
+  .wishes-toolbar__aside {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  /* Compact sort on its own row — hug content; don't stretch into an empty full-width pill */
+  .wishes-toolbar__aside .wishes-sort {
+    flex: 0 0 100%;
+    width: auto;
+    max-width: 100%;
+    justify-content: flex-start;
+  }
+
+  .wishes-toolbar__aside .wishes-sort__select {
+    width: auto;
+    min-width: 5.75rem;
+    max-width: 11rem;
+    height: 36px;
+    min-height: 36px;
+  }
+
+  .wishes-toolbar__aside .wishes-btn,
+  .wishes-toolbar__aside .wishes-btn--create,
+  .wishes-toolbar__aside .wishes-btn--mine {
+    flex: 1 1 calc(50% - 4px);
+    width: auto;
+    min-width: calc(50% - 4px);
+    height: 40px;
+    min-height: 40px;
+  }
+
+  /* Logged-out: only create CTA — full width under sort */
+  .wishes-toolbar__aside > .wishes-btn--create:last-child:nth-child(2) {
+    flex: 1 1 100%;
+    min-width: 100%;
+  }
+
+  .wishes-toolbar--mine {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .wishes-toolbar--mine .wishes-toolbar__aside {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+
+  .wishes-grid {
+    gap: 10px;
+  }
+
+  .wish-card {
+    border-radius: 12px;
+    margin-bottom: 10px;
+  }
+
+  .wish-card__title {
+    font-size: 0.95rem;
+    line-height: 1.35;
+  }
+
+  .wish-card__eta {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+  }
+
+  .wish-card__cheer-btn {
+    min-height: 0;
+    padding: 5px 10px 5px 8px;
+  }
+
+  .wish-card__cheer-emoji {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .wish-detail__back {
+    display: inline-flex;
+    min-height: 36px;
+    align-items: center;
+  }
+
+  .wish-detail__meta {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .wish-detail__title {
+    font-size: clamp(1.25rem, 6.5vw, 1.55rem);
+    word-break: break-word;
+  }
+
+  .wish-detail__actions {
+    gap: 10px;
+  }
+
+  .wish-detail__cheer-cta,
+  .wish-detail__complete-cta,
+  .wish-detail__share-btn {
+    width: 100%;
+    min-height: 46px;
+  }
+
+  .wish-moon {
+    padding: 12px;
+  }
+
+  .wish-moon__header {
+    flex-wrap: wrap;
+    gap: 6px 10px;
+  }
+
+  .wish-moon__stamp-count {
+    width: 100%;
+    text-align: left;
+  }
+
+  .wish-form,
+  .wish-form--compose,
+  .wish-form--complete {
+    max-width: 100%;
+    padding: 12px;
+    box-sizing: border-box;
+  }
+
+  .wish-form input,
+  .wish-form textarea,
+  .wish-form select,
+  .wish-compose__title-input,
+  .wish-compose__body-input,
+  .wish-compose__custom-date input[type="date"] {
+    font-size: 16px; /* avoid iOS zoom on focus */
+  }
+
+  .wish-compose {
+    max-width: 100%;
+  }
+
+  .wish-compose__hero {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .wish-compose__title {
+    font-size: clamp(1.15rem, 5.6vw, 1.4rem);
+    line-height: 1.4;
+    letter-spacing: 0.03em;
+  }
+
+  .wish-compose__lead {
+    font-size: 0.84rem;
+    line-height: 1.55;
+  }
+
+  .wish-compose__quota {
+    margin-left: 0;
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    text-align: left;
+    padding: 10px 12px;
+  }
+
+  .wish-compose__quota-value {
+    margin-left: auto;
+  }
+
+  .wish-compose__pills {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    padding-bottom: 0;
+  }
+
+  .wish-compose__pill {
+    flex-shrink: 0;
+    min-height: 36px;
+  }
+
+  .wish-compose__vis {
+    grid-template-columns: 1fr;
+  }
+
+  .wish-compose__actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .wish-compose__cta,
+  .wish-compose__actions .wishes-btn--ghost {
+    width: 100%;
+    min-height: 46px;
+    min-width: 0;
+  }
+
+  /* Share sheet on mobile */
+  .wish-share {
+    width: 100%;
+  }
+
+  .wish-share__backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: rgba(0, 0, 0, 0.55);
+  }
+
+  .wish-share__menu {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 90;
+    min-width: 0;
+    max-width: none;
+    margin: 0;
+    padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px));
+    border-radius: 16px 16px 0 0;
+    border: 1px solid rgba(255, 180, 100, 0.3);
+    border-bottom: 0;
+    gap: 4px;
+  }
+
+  .wish-share__menu-title {
+    display: block;
+    margin: 2px 4px 8px;
+    font-family: "Noto Sans TC", sans-serif;
+    font-size: 0.82rem;
+    color: rgba(232, 224, 208, 0.65);
+  }
+
+  .wish-share__item {
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    text-align: center;
+    font-size: 0.95rem;
+  }
+
+  .wish-share__cancel {
+    display: block;
+    appearance: none;
+    width: 100%;
+    margin: 4px 0 0;
+    padding: 12px;
+    min-height: 48px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: rgba(232, 224, 208, 0.6);
+    font-family: "Noto Sans TC", sans-serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+
+  .forum-wish-quest__cta-row {
+    flex-wrap: nowrap;
+  }
+
+  .forum-wish-quest__back,
+  .forum-wish-quest__btn {
+    min-height: 42px;
+    font-size: 11px;
+    padding: 6px 6px;
+  }
+}

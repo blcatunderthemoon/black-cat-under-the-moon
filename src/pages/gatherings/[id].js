@@ -432,12 +432,6 @@ export default function GatheringDetailPage({ seo = null }) {
               <p className="gathering-detail__safety-msg" role="status">{safetyMsg}</p>
             )}
 
-            {gathering.status === 'cancelled' && (
-              <p className="gathering-detail__msg gathering-detail__msg--cancel" role="status">
-                聚會已取消。申請審批與報名已關閉。
-              </p>
-            )}
-
             {msg && gathering.status !== 'cancelled' && !gathering.my_attendance?.status && (
               <p
                 className={`gathering-detail__msg${/取消/.test(msg) ? ' gathering-detail__msg--cancel' : ''}`}
@@ -467,7 +461,8 @@ export default function GatheringDetailPage({ seo = null }) {
                   </>
                 )}
               </section>
-            ) : (
+            ) : gathering.status === 'cancelled'
+              && !(gathering.my_attendance?.status && gathering.my_attendance.status !== 'withdrawn') ? null : (
               <section className="gathering-detail__rsvp">
                 {gathering.my_attendance?.status
                   && gathering.my_attendance.status !== 'withdrawn' ? (

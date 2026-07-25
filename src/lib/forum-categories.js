@@ -84,7 +84,6 @@ export const PRESET_TAGS_BY_TOPIC = {
     { key: '呻嘢', label: '呻嘢' },
     { key: '出櫃', label: '出櫃' },
     { key: '上班', label: '上班' },
-    { key: 'hangout', label: 'Hangout 位' },
   ],
   興趣: [
     { key: '飲茶食嘢', label: '飲茶食嘢' },
@@ -105,10 +104,10 @@ export const PRESET_TAGS_BY_TOPIC = {
   親密話題: [
     { key: '探索喜好', label: '探索喜好' },
     { key: '開放關係', label: '開放關係' },
-    { key: '玩法', label: '玩法／RP' },
+    { key: '玩法', label: '玩法' },
     { key: '癖好', label: '癖好' },
     { key: '玩具', label: '玩具' },
-    { key: '同意界線', label: '同意同界線' },
+    { key: '同意界線', label: '界線' },
   ],
 };
 
@@ -165,6 +164,9 @@ export function getOfficialTagKeysForTopic(topic) {
   return new Set(getPresetTagsForTopic(topic).map((t) => t.tag));
 }
 
+/** Tags retired from official presets — hide from filter chips even if still on old posts. */
+export const RETIRED_FORUM_TAG_KEYS = new Set(['hangout']);
+
 /** Merge preset tags with usage counts; presets always shown in catalog order. */
 export function mergePresetTagsWithCounts(topic, hotTags = []) {
   const presets = getPresetTagsForTopic(topic);
@@ -178,5 +180,7 @@ export function mergePresetTagsWithCounts(topic, hotTags = []) {
 /** User-driven hot tags excluding official presets for the topic. */
 export function filterUserHotTags(topic, hotTags = []) {
   const official = getOfficialTagKeysForTopic(topic);
-  return (hotTags || []).filter((h) => !official.has(h.tag));
+  return (hotTags || []).filter(
+    (h) => h?.tag && !official.has(h.tag) && !RETIRED_FORUM_TAG_KEYS.has(canonicalForumTagKey(h.tag))
+  );
 }

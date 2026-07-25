@@ -239,3 +239,70 @@ export async function awardBottleSoul(admin, userId) {
     deltaSoul: BOTTLE_SOUL_GAIN,
   });
 }
+
+/** 月光心願 — 完成獎 +3；首次公開設立 +1；打氣里程碑。 */
+export const WISH_COMPLETE_SHARDS = 3;
+export const WISH_FIRST_CREATE_SHARDS = 1;
+export const WISH_CHEER_MILESTONE_SHARDS = { 10: 1, 30: 2 };
+
+/**
+ * 完成心願 +3 碎屑。每個心願冪等發放一次（source_id = wishId）。
+ * @returns {{ awarded: boolean, soul_gained: number, shards_gained: number, reason?: string }}
+ */
+export async function awardWishCompleteShards(admin, userId, wishId) {
+  const result = await awardCatCare(admin, userId, {
+    actionType: 'wish_complete',
+    sourceId: String(wishId),
+    shardsDelta: WISH_COMPLETE_SHARDS,
+  });
+  return { ...result, reason: result.awarded ? undefined : 'already_awarded' };
+}
+
+/** 首次設立公開心願 +1（終身一次；source_id = first）。 */
+export async function awardWishFirstCreateShards(admin, userId) {
+  return awardCatCare(admin, userId, {
+    actionType: 'wish_first_create',
+    sourceId: 'first',
+    shardsDelta: WISH_FIRST_CREATE_SHARDS,
+  });
+}
+
+/** 是否已領過「首次公開設立」+1 碎屑。 */
+export async function hasClaimedWishFirstCreate(admin, userId) {
+  const { data } = await admin
+    .from('cat_economy_events')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('action_type', 'wish_first_create')
+    .eq('source_id', 'first')
+    .maybeSingle();
+  return Boolean(data);
+}
+
+/**
+ * 收到打氣里程碑（10／30）發碎屑給心願主人。
+ * source_id = `${wishId}#cheers_${n}`
+ */
+export async function awardWishCheerMilestone(admin, userId, wishId, cheerCount) {
+  const milestones = Object.keys(WISH_CHEER_MILESTONE_SHARDS)
+    .map(Number)
+    .sort((a, b) => a - b);
+  let total = { awarded: false, soul_gained: 0, shards_gained: 0 };
+  for (const n of milestones) {
+    if (cheerCount < n) continue;
+    const shards = WISH_CHEER_MILESTONE_SHARDS[n];
+    const result = await awardCatCare(admin, userId, {
+      actionType: 'wish_cheer_milestone',
+      sourceId: `${wishId}#cheers_${n}`,
+      shardsDelta: shards,
+    });
+    if (result.awarded) {
+      total = {
+        awarded: true,
+        soul_gained: total.soul_gained + result.soul_gained,
+        shards_gained: total.shards_gained + result.shards_gained,
+      };
+    }
+  }
+  return total;
+}

@@ -3,6 +3,7 @@ import '../styles/pixel-theme.css';
 import '../styles/mobile.css';
 import '../styles/gatherings.css';
 import '../styles/guides.css';
+import '../styles/wishes.css';
 import '../styles/dashboard/globals.css';
 import Head from 'next/head';
 import Script from 'next/script';
@@ -193,7 +194,7 @@ export default function App({ Component, pageProps }) {
             content={process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION}
           />
         )}
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20260725cat11" />
         <link rel="preload" href="/js/zpix.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
       </Head>
       <MobileKeyboardGuard />

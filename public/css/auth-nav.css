@@ -797,6 +797,23 @@ html:has(.mode-top-bar--quiz) {
   padding: 0 8px;
 }
 
+/* Guest 登入 / 註冊 — shared Chinese label size (not the tiny display-name scale) */
+.auth-nav-badge__item--login,
+.auth-nav-badge__item--signup {
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.auth-nav-badge__item--login {
+  color: #f0ebd8;
+  padding: 0 8px;
+}
+
 .auth-nav-badge__item--logout,
 .app-header-logout-btn {
   display: inline-flex;
@@ -1067,8 +1084,9 @@ html:has(.mode-top-bar--quiz) {
     height: 32px;
     flex-shrink: 0;
   }
+  .auth-nav-badge__item--login,
   .auth-nav-badge__item--signup {
-    font-size: 9px;
+    font-size: 12px;
     padding: 0 6px;
   }
   .auth-nav-badge__item--logout {

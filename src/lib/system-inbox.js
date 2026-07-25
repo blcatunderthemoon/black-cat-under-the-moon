@@ -27,6 +27,10 @@ export const SYSTEM_CHANNELS = {
     email: 'forum-activity-inbox@internal.blackcatunderthemoon.com',
     name: '黑貓樹洞',
   },
+  wishes: {
+    email: 'wishes-inbox@internal.blackcatunderthemoon.com',
+    name: '月光心願',
+  },
 };
 
 const anchorIdCache = {};

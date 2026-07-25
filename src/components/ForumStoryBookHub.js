@@ -604,22 +604,32 @@ export default function ForumStoryBookHub({
           onClick={onLike}
           disabled={post.viewer_liked || likingPost}
           className={`forum-stat-btn forum-stat-btn--like${post.viewer_liked ? ' forum-stat-btn--liked' : ''}`}
+          aria-label={`讚好 ${post.like_count}`}
+          title="讚好"
         >
           <span aria-hidden="true"><HeaderHeartIcon size={14} /></span>
-          <span>{post.like_count}</span>
+          <span className="forum-stat-btn__count">{post.like_count}</span>
         </button>
-        <button type="button" onClick={onScrollToComments} className="forum-stat-btn forum-stat-btn--comment">
+        <button
+          type="button"
+          onClick={onScrollToComments}
+          className="forum-stat-btn forum-stat-btn--comment"
+          aria-label={`留言 ${post.comment_count}`}
+          title="留言"
+        >
           <span aria-hidden="true"><HeaderChatIcon size={14} /></span>
-          <span>{post.comment_count}</span>
+          <span className="forum-stat-btn__count">{post.comment_count}</span>
         </button>
         <button
           type="button"
           onClick={onBookmark}
           disabled={bookmarking}
           className={`forum-stat-btn forum-stat-btn--bookmark${post.viewer_bookmarked ? ' forum-stat-btn--bookmarked' : ''}`}
+          aria-label={post.viewer_bookmarked ? '已收藏' : '收藏'}
+          aria-pressed={!!post.viewer_bookmarked}
+          title={post.viewer_bookmarked ? '已收藏' : '收藏'}
         >
           <span aria-hidden="true"><HeaderBookmarkIcon size={14} /></span>
-          <span>{post.viewer_bookmarked ? '已收藏' : '收藏'}</span>
         </button>
         {reportButton}
       </footer>

@@ -137,16 +137,19 @@
   }
 
   function renderEmpty() {
-    if (!emptyEl || !flipEl) return;
+    if (!root) return;
     if (!items.length) {
-      emptyEl.hidden = false;
-      flipEl.hidden = true;
+      // No news — hide the whole block so socials/footer sit up with no blank gap.
+      root.hidden = true;
+      if (emptyEl) emptyEl.hidden = true;
+      if (flipEl) flipEl.hidden = true;
       if (rail) rail.hidden = true;
       if (metaEl) metaEl.hidden = true;
       return;
     }
-    emptyEl.hidden = true;
-    flipEl.hidden = false;
+    root.hidden = false;
+    if (emptyEl) emptyEl.hidden = true;
+    if (flipEl) flipEl.hidden = false;
     if (rail) rail.hidden = false;
   }
 
@@ -243,9 +246,9 @@
     items = Array.isArray(nextItems) ? nextItems : [];
     flipIndex = 0;
 
-    if (root) root.hidden = false;
     renderEmpty();
-    startFlip();
+    if (items.length) startFlip();
+    else clearFlipTimer();
 
     var seenAt = getSeenAt();
     var toastedAt = getToastedAt();
@@ -374,9 +377,9 @@
 
     if (!root) return;
 
-    /* Visible with the page — do not wait for fetch to unhide */
-    root.hidden = false;
-    if (rail) rail.hidden = false;
+    /* Stay collapsed until feed has items — avoid empty "最新動態" blank. */
+    root.hidden = true;
+    if (rail) rail.hidden = true;
     if (emptyEl) emptyEl.hidden = true;
 
     bindRail();

@@ -9,7 +9,7 @@ import { NavLink } from './AppShell.js';
 import PixelMixedLabel from './PixelMixedLabel.js';
 import HeaderPremiumMoon from './HeaderPremiumMoon.js';
 import HeaderMyCatLink from './HeaderMyCatLink.js';
-import { HeaderCalendarIcon, HeaderMailIcon, HeaderSettingsIcon } from './HeaderNavIcons.js';
+import { HeaderCalendarIcon, HeaderWishIcon, HeaderMailIcon, HeaderSettingsIcon } from './HeaderNavIcons.js';
 import { readMeCache } from '../lib/me-cache.js';
 import { isPremiumUser } from '../lib/premium.js';
 
@@ -74,6 +74,14 @@ export default function AppHeaderAuth({ redirectPath, hideInbox: hideInboxProp, 
               aria-label="月光聚會"
             >
               <span className="auth-nav-badge__icon" aria-hidden="true"><HeaderCalendarIcon /></span>
+            </Link>
+            <Link
+              href="/wishes"
+              className="auth-nav-badge__item auth-nav-badge__item--icon"
+              title="月光心願"
+              aria-label="月光心願"
+            >
+              <span className="auth-nav-badge__icon" aria-hidden="true"><HeaderWishIcon /></span>
             </Link>
             {!hideInbox && (
               <Link
