@@ -82,17 +82,6 @@
   box-shadow: 0 2px 0 rgba(255, 224, 102, 0.08);
 }
 
-.wishes-hero__eyebrow {
-  margin: 0 0 0.5rem;
-  font-family: 'Press Start 2P', 'Zpix', monospace;
-  font-size: 0.55rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(255, 224, 102, 0.88);
-  line-height: 1.7;
-  -webkit-font-smoothing: none;
-}
-
 .wishes-hero__title {
   margin: 0 0 0.55rem;
   font-family: 'Zpix', 'Noto Sans TC', sans-serif;
@@ -2990,11 +2979,6 @@ button.wish-moon__stamp:hover:not(:disabled) .wish-moon__stamp-paw {
   .wishes-hero {
     margin: 0.15rem 0 0.85rem;
     padding: 0.35rem 0 0.85rem;
-  }
-
-  .wishes-hero__eyebrow {
-    margin-bottom: 0.35rem;
-    font-size: 0.5rem;
   }
 
   .wishes-hero__title {

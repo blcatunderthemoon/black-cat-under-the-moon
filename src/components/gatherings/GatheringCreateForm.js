@@ -10,7 +10,9 @@ import {
   GATHERING_CUSTOM_TAG_MAX_LEN,
   GATHERING_MAX_TAGS,
   gatheringTagLabel,
+  gatheringTagsForMode,
   isPresetGatheringTag,
+  filterGatheringTagsForMode,
   normalizeGatheringTagToken,
 } from '../../lib/gathering-tags.js';
 import {
@@ -64,9 +66,10 @@ export default function GatheringCreateForm({ meta, onDateChange }) {
   useEffect(() => {
     if (isOnline) {
       setLocationPublic(onlineLabel);
-      return;
+    } else {
+      setLocationPublic((prev) => (prev === onlineLabel ? '' : prev));
     }
-    setLocationPublic((prev) => (prev === onlineLabel ? '' : prev));
+    setTags((prev) => filterGatheringTagsForMode(prev, isOnline));
   }, [isOnline, onlineLabel]);
 
   useEffect(() => {
@@ -188,9 +191,14 @@ export default function GatheringCreateForm({ meta, onDateChange }) {
       </label>
 
       <fieldset className="gathering-form__field">
-        <legend>活動標籤（最多 {GATHERING_MAX_TAGS} 個）</legend>
+        <legend>
+          活動標籤（{isOnline ? '線上' : '線下'}・最多 {GATHERING_MAX_TAGS} 個）
+        </legend>
         <div className="gathering-form__chips">
-          {(meta?.tags || []).map((tag) => (
+          {(meta
+            ? (isOnline ? meta.tags_online : meta.tags_offline) || gatheringTagsForMode(isOnline)
+            : gatheringTagsForMode(isOnline)
+          ).map((tag) => (
             <button
               key={tag.id}
               type="button"

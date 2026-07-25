@@ -63,6 +63,14 @@ export default async function handler(req, res) {
   if (row.require_knock_message && (!knockMessage || knockMessage.length < 1)) {
     return res.status(400).json({ error: '請回答敲門問題。', code: 'knock_required' });
   }
+
+  const riskAccepted = req.body?.risk_accepted === true || req.body?.risk_accepted === 'true' || req.body?.risk_accepted === 1;
+  if (!riskAccepted) {
+    return res.status(400).json({
+      error: '請先確認你明白平台只係中介渠道，並同意自行承擔參加聚會的風險。',
+      code: 'risk_ack_required',
+    });
+  }
   if (knockMessage && knockMessage.length > 200) {
     return res.status(400).json({ error: '敲門回答最多 200 字。' });
   }

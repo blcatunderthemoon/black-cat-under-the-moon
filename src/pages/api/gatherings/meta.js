@@ -7,7 +7,7 @@ import {
   GATHERING_MONTHLY_HOST_LIMIT,
   GATHERING_DEFAULT_MAX_PARTICIPANTS,
 } from '../../../lib/gatherings.js';
-import { GATHERING_TAGS } from '../../../lib/gathering-tags.js';
+import { GATHERING_TAGS, GATHERING_TAGS_ONLINE, GATHERING_TAGS_OFFLINE } from '../../../lib/gathering-tags.js';
 import {
   HK_DISTRICTS,
   GATHERING_LOCATION_ONLINE,
@@ -20,6 +20,8 @@ export default async function handler(req, res) {
 
   return res.status(200).json({
     tags: GATHERING_TAGS,
+    tags_online: GATHERING_TAGS_ONLINE,
+    tags_offline: GATHERING_TAGS_OFFLINE,
     districts: HK_DISTRICTS,
     locations: GATHERING_PUBLIC_LOCATIONS,
     location_online: GATHERING_LOCATION_ONLINE,

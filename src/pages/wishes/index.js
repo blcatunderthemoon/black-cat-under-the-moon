@@ -71,7 +71,6 @@ export default function WishesIndexPage() {
       />
       <WishShell title="月光心願" hideHeaderTitle redirectPath="/wishes" maxWidth="1080px">
         <header className="wishes-hero">
-          <p className="wishes-hero__eyebrow">MOONLIGHT WISHES</p>
           <h1 className="wishes-hero__title">
             <span className="wishes-hero__title-icon" aria-hidden="true"><UiFlagIcon size={32} /></span>
             月光心願

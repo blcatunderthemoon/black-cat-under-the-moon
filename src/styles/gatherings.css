@@ -1329,6 +1329,10 @@
   font-weight: 600;
 }
 
+.gathering-detail__seats-head strong.is-full {
+  color: #ff9aab;
+}
+
 .gathering-detail__seats-track {
   height: 4px;
   background: rgba(255, 255, 255, 0.08);
@@ -1359,10 +1363,52 @@
 }
 
 .gathering-detail__private-value {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
   margin: 0;
   color: var(--gathering-cream);
+  line-height: 1.55;
+  width: 100%;
+}
+
+.gathering-detail__private-pin {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0.2rem 0 0;
+  line-height: 0;
+  color: var(--gathering-accent);
+}
+
+.gathering-detail__private-pin svg {
+  display: block;
+}
+
+.gathering-detail__private-text,
+.gathering-detail__private-link {
+  flex: 1 1 auto;
+  min-width: 0;
   word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.gathering-detail__private-link {
+  color: #c8b8ff;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.gathering-detail__private-link:hover {
+  color: #e4dcff;
+}
+
+.gathering-detail__private-empty {
+  margin: 0;
+  font-size: 0.86rem;
   line-height: 1.5;
+  color: var(--gathering-dim);
 }
 
 .gathering-detail__msg {
@@ -1440,6 +1486,19 @@
   font-size: 1.05rem;
   color: var(--gathering-cream);
   font-weight: 600;
+}
+
+.gathering-detail__host-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0 0 0.85rem;
+}
+
+.gathering-detail__host-head h2 {
+  margin: 0;
+  min-width: 0;
 }
 
 .gathering-detail__host-closed,
@@ -1632,26 +1691,30 @@
   border-radius: 2px;
 }
 
-/* Host cancel — quiet secondary, not competing with applicant actions */
+/* Host cancel — top-right of host panel */
 .gathering-detail__cancel {
   display: inline-flex;
   align-items: center;
-  margin-top: 1rem;
-  padding: 0.4rem 0.15rem;
-  border: none;
-  border-bottom: 1px dashed rgba(186, 178, 210, 0.35);
-  border-radius: 0;
-  background: transparent;
-  color: rgba(186, 178, 210, 0.62);
+  justify-content: center;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid rgba(255, 138, 154, 0.45);
+  border-radius: 4px;
+  background: rgba(255, 107, 157, 0.1);
+  color: #ff9aab;
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 700;
   letter-spacing: 0.04em;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
 
 .gathering-detail__cancel:hover:not(:disabled) {
-  color: #ff9aab;
-  border-bottom-color: rgba(255, 154, 171, 0.55);
+  color: #ffc0cb;
+  border-color: rgba(255, 154, 171, 0.75);
+  background: rgba(255, 107, 157, 0.18);
 }
 
 .gathering-detail__cancel:disabled {
@@ -1816,6 +1879,41 @@
   opacity: 0.55;
   cursor: not-allowed;
   filter: grayscale(0.2);
+}
+
+.gathering-detail__risk-check {
+  align-items: flex-start;
+  margin-top: 0.35rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid rgba(255, 140, 66, 0.28);
+  background: rgba(255, 107, 157, 0.06);
+  border-radius: 6px;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--gathering-dim);
+}
+
+.gathering-detail__risk-check input[type='checkbox'] {
+  margin-top: 0.15rem;
+}
+
+.gathering-detail__risk-em {
+  color: var(--gathering-cream);
+  font-weight: 700;
+}
+
+.gathering-detail__risk-check a {
+  color: var(--gathering-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.gathering-confirm__sub p {
+  margin: 0 0 0.55rem;
+}
+
+.gathering-confirm__sub p:last-child {
+  margin-bottom: 0;
 }
 
 @media (max-width: 560px) {
@@ -2858,6 +2956,102 @@
   white-space: pre-wrap;
 }
 
+.gathering-detail--simple .gathering-detail__desc-block {
+  margin: 0.85rem 0 1.1rem;
+}
+
+.gathering-detail--simple .gathering-detail__desc-block .gathering-detail__desc {
+  margin: 0;
+}
+
+.gathering-detail--simple .gathering-detail__desc--empty {
+  color: var(--gathering-dim);
+  font-style: italic;
+}
+
+.gathering-detail__desc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0 0 0.45rem;
+}
+
+.gathering-detail__desc-head .gathering-detail__desc-label {
+  margin: 0;
+}
+
+.gathering-detail__desc-edit {
+  flex-shrink: 0;
+  padding: 0.28rem 0.65rem;
+  border: 1px solid rgba(255, 224, 102, 0.35);
+  border-radius: 2px;
+  background: rgba(255, 224, 102, 0.08);
+  color: rgba(255, 224, 102, 0.95);
+  font: inherit;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.gathering-detail__desc-edit:hover:not(:disabled) {
+  background: rgba(255, 224, 102, 0.16);
+  border-color: rgba(255, 224, 102, 0.55);
+}
+
+.gathering-detail__desc-edit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.gathering-detail__desc-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 1rem 1.05rem;
+  border: 1px solid rgba(255, 224, 102, 0.28);
+  border-left: 2px solid rgba(255, 224, 102, 0.5);
+  border-radius: 2px;
+  background: rgba(8, 7, 16, 0.55);
+  color: #cfcbc0;
+  font: inherit;
+  line-height: 1.75;
+  resize: vertical;
+  min-height: 7.5rem;
+}
+
+.gathering-detail__desc-input::placeholder {
+  color: rgba(207, 203, 192, 0.45);
+}
+
+.gathering-detail__desc-input:focus {
+  outline: none;
+  border-color: rgba(255, 224, 102, 0.55);
+  box-shadow: 0 0 0 1px rgba(255, 224, 102, 0.18);
+}
+
+.gathering-detail__desc-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 0.65rem;
+}
+
+.gathering-detail__desc-count {
+  margin-right: auto;
+  font-size: 0.72rem;
+  color: var(--gathering-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.gathering-detail__desc-save {
+  padding: 0.45rem 1rem;
+  font-size: 0.85rem;
+}
+
 .gathering-detail--simple .gathering-detail__seats {
   margin: 0;
 }
@@ -2889,27 +3083,21 @@
   animation: none;
 }
 
-/* Segmented, glowing capacity gauge */
-.gathering-detail__seats-cells {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+.gathering-detail__seats-remain {
+  margin: 0.4rem 0 0;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #7ddea0;
 }
 
-.gathering-detail__seat-cell {
-  flex: 1 1 14px;
-  min-width: 14px;
-  height: 12px;
-  border: 1px solid rgba(255, 224, 102, 0.28);
-  background: rgba(0, 0, 0, 0.4);
-  border-radius: 2px;
-  transition: background 0.2s ease, box-shadow 0.2s ease;
+.gathering-detail__seats-remain.is-full {
+  color: #ff9aab;
 }
 
-.gathering-detail__seat-cell.is-filled {
-  border-color: rgba(255, 224, 102, 0.85);
-  background: linear-gradient(180deg, #fff0b0, #ffe066);
-  box-shadow: 0 0 8px rgba(255, 224, 102, 0.6), inset 0 0 2px rgba(255, 255, 255, 0.5);
+.gathering-detail__seats-fill.is-full {
+  background: linear-gradient(90deg, #ff8a9a, #ffb0bc);
+  box-shadow: 0 0 10px rgba(255, 138, 154, 0.35);
+  animation: none;
 }
 
 /* ── Private location card ── */
@@ -2929,7 +3117,9 @@
 }
 
 .gathering-detail__private-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   margin-bottom: 0.5rem;
   padding: 0.18rem 0.55rem;
   border: 1px solid rgba(180, 160, 255, 0.6);
@@ -2940,10 +3130,37 @@
   font-weight: 700;
   letter-spacing: 0.03em;
   text-shadow: 0 0 10px rgba(150, 140, 235, 0.5);
+  line-height: 1.2;
+}
+
+.gathering-detail__private-badge svg {
+  flex-shrink: 0;
+  display: block;
 }
 
 .gathering-detail__private-pin {
-  margin-right: 0.35rem;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0.2rem 0 0;
+  line-height: 0;
+  color: var(--gathering-accent);
+}
+
+.gathering-detail__private-pin svg {
+  display: block;
+}
+
+.gathering-detail__private--host {
+  border-color: rgba(255, 224, 102, 0.28);
+}
+
+.gathering-detail__private--host .gathering-detail__private-badge {
+  border-color: rgba(255, 224, 102, 0.45);
+  background: rgba(255, 224, 102, 0.1);
+  color: #ffe9a8;
+  text-shadow: none;
 }
 
 /* Approved attendee — a glowing green "access pass" */
@@ -3478,32 +3695,49 @@
    ═══════════════════════════════════════════ */
 .gathering-board {
   margin-top: 1rem;
-  padding: 1.1rem 1.15rem 1.2rem;
-  border: 1px solid rgba(150, 140, 235, 0.4);
+  padding: 1rem 1.1rem 1.1rem;
+  border: 1px solid rgba(150, 140, 235, 0.38);
   border-radius: 8px;
   background:
-    radial-gradient(120% 80% at 0% 0%, rgba(138, 110, 226, 0.12) 0%, transparent 55%),
-    rgba(16, 14, 30, 0.7);
+    radial-gradient(100% 70% at 0% 0%, rgba(138, 110, 226, 0.14) 0%, transparent 50%),
+    rgba(16, 14, 30, 0.72);
   box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35), inset 0 0 26px rgba(120, 100, 210, 0.06);
   animation: gatherings-fade-rise 0.6s ease both;
 }
 
 .gathering-board__head {
-  margin-bottom: 0.9rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(150, 140, 235, 0.18);
 }
 
 .gathering-board__title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
   margin: 0 0 0.35rem;
   font-family: 'Zpix', 'Noto Sans TC', sans-serif;
-  font-size: 1.05rem;
+  font-size: 1.02rem;
   font-weight: 700;
   color: #d9d2ff;
   text-shadow: 0 0 16px rgba(150, 140, 235, 0.35);
+  line-height: 1.2;
+}
+
+.gathering-board__title-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  line-height: 0;
+  color: #c8b8ff;
+}
+
+.gathering-board__title-icon svg {
+  display: block;
 }
 
 .gathering-board__lead {
   margin: 0;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   line-height: 1.5;
   color: #b7b0d8;
 }
@@ -3511,15 +3745,63 @@
 .gathering-board__list {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
-  max-height: 26rem;
+  gap: 0.55rem;
+  margin-bottom: 0.85rem;
+}
+
+.gathering-board__list.is-empty {
+  max-height: none;
+  overflow: visible;
+  padding: 0;
+}
+
+.gathering-board__list.has-msgs {
+  max-height: 20rem;
   overflow-y: auto;
-  padding-right: 0.2rem;
-  margin-bottom: 0.9rem;
+  padding-right: 0.15rem;
+}
+
+.gathering-board__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 1.1rem 0.85rem;
+  border: 1px dashed rgba(150, 140, 235, 0.28);
+  border-radius: 6px;
+  background: rgba(8, 7, 16, 0.35);
+  text-align: center;
+}
+
+.gathering-board__empty-icon {
+  display: inline-flex;
+  margin-bottom: 0.15rem;
+  color: rgba(255, 180, 120, 0.9);
+  line-height: 0;
+}
+
+.gathering-board__empty-icon svg {
+  display: block;
+}
+
+.gathering-board__empty-title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--gathering-cream);
+}
+
+.gathering-board__empty-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--gathering-dim);
 }
 
 .gathering-board__muted {
-  margin: 0.6rem 0;
+  margin: 0.4rem 0;
   font-size: 0.85rem;
   color: var(--gathering-dim);
   text-align: center;
@@ -3658,24 +3940,33 @@
 .gathering-board__compose {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.45rem;
+  padding-top: 0.15rem;
+  border-top: 1px solid rgba(150, 140, 235, 0.14);
+}
+
+.gathering-board__compose-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #a89fd4;
 }
 
 .gathering-board__compose textarea {
   width: 100%;
   box-sizing: border-box;
-  padding: 0.6rem 0.7rem;
+  padding: 0.65rem 0.75rem;
   border: 1px solid rgba(150, 140, 235, 0.35);
-  border-radius: 4px;
+  border-radius: 6px;
   background: rgba(8, 7, 16, 0.6);
   color: var(--gathering-cream);
   font: inherit;
   resize: vertical;
-  min-height: 3rem;
+  min-height: 4rem;
 }
 
 .gathering-board__compose textarea::placeholder {
-  color: #666;
+  color: rgba(150, 145, 170, 0.75);
 }
 
 .gathering-board__compose textarea:focus {
@@ -3692,8 +3983,8 @@
 }
 
 .gathering-board__count {
-  font-size: 0.72rem;
-  color: var(--gathering-muted);
+  font-size: 0.74rem;
+  color: rgba(186, 178, 210, 0.75);
   font-variant-numeric: tabular-nums;
 }
 
@@ -3765,9 +4056,14 @@
   text-shadow: none;
 }
 
-.gathering-detail--cancelled .gathering-detail__seat-cell.is-filled {
-  background: rgba(150, 135, 130, 0.7);
+.gathering-detail--cancelled .gathering-detail__seats-fill {
+  background: rgba(150, 135, 130, 0.75);
   box-shadow: none;
+  animation: none;
+}
+
+.gathering-detail--cancelled .gathering-detail__seats-remain {
+  color: #c9b8b0;
 }
 
 .gathering-detail--cancelled .gathering-detail__tag {
@@ -3791,6 +4087,309 @@
 
 .gathering-detail__private--cancelled .gathering-detail__private-label {
   color: #c8aea8;
+}
+
+/* ═══════════════════════════════════════════
+   Mobile polish — detail / apply / board / confirm
+   (covers recent seats, private, host cancel, risk, tags)
+   ═══════════════════════════════════════════ */
+@media (max-width: 640px) {
+  .gathering-detail--simple .gathering-detail__sheet {
+    padding: 0.95rem 0.85rem 1.1rem;
+  }
+
+  .gathering-detail--simple .gathering-detail__title {
+    font-size: clamp(1.2rem, 6vw, 1.45rem);
+    line-height: 1.3;
+  }
+
+  .gathering-detail--simple .gathering-detail__facts {
+    gap: 0.55rem;
+  }
+
+  .gathering-detail--simple .gathering-detail__fact {
+    gap: 0.15rem 0.5rem;
+  }
+
+  .gathering-detail--simple .gathering-detail__fact dt,
+  .gathering-detail--simple .gathering-detail__fact dd {
+    font-size: 0.86rem;
+  }
+
+  /* Seats gauge */
+  .gathering-detail__seats,
+  .gathering-hud--gauge {
+    margin-bottom: 0.85rem;
+  }
+
+  .gathering-detail__seats-head {
+    margin-bottom: 0.4rem;
+    font-size: 0.78rem;
+  }
+
+  .gathering-detail__seats-head strong,
+  .gathering-detail--simple .gathering-detail__seats-head strong {
+    font-size: 0.88rem;
+  }
+
+  .gathering-detail__seats-track {
+    height: 7px;
+  }
+
+  .gathering-detail__desc-head {
+    align-items: flex-start;
+  }
+
+  .gathering-detail__desc-actions {
+    gap: 0.45rem;
+  }
+
+  .gathering-detail__desc-input {
+    min-height: 6.5rem;
+    padding: 0.85rem 0.9rem;
+  }
+
+  /* Private location card */
+  .gathering-detail__private,
+  .gathering-detail--simple .gathering-detail__private {
+    padding: 0.8rem 0.85rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .gathering-detail__private-badge {
+    max-width: 100%;
+    flex-wrap: wrap;
+    font-size: 0.64rem;
+    line-height: 1.35;
+    padding: 0.22rem 0.5rem;
+  }
+
+  .gathering-detail__private-value {
+    gap: 0.4rem;
+  }
+
+  .gathering-detail__private-text,
+  .gathering-detail__private-link,
+  .gathering-detail__private-empty {
+    font-size: 0.86rem;
+    line-height: 1.5;
+  }
+
+  .gathering-detail__private-locked-note {
+    font-size: 0.8rem;
+    line-height: 1.45;
+  }
+
+  /* Host panel cancel btn — keep top-right, shrink gracefully */
+  .gathering-detail__host-head {
+    align-items: flex-start;
+    gap: 0.55rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .gathering-detail__host-head h2 {
+    font-size: 0.98rem;
+    line-height: 1.3;
+    padding-top: 0.15rem;
+  }
+
+  .gathering-detail__cancel {
+    min-height: 36px;
+    padding: 0.35rem 0.7rem;
+    font-size: 0.72rem;
+  }
+
+  .gathering-detail--simple .gathering-detail__host-panel,
+  .gathering-detail--simple .gathering-detail__rsvp {
+    padding: 0.95rem 0.85rem 1.05rem;
+  }
+
+  /* Apply + risk acknowledgement */
+  .gathering-detail__apply-lead {
+    font-size: 0.8rem;
+  }
+
+  .gathering-detail__risk-check {
+    align-items: flex-start;
+    gap: 0.55rem;
+    padding: 0.7rem 0.75rem;
+    font-size: 0.78rem;
+    line-height: 1.55;
+  }
+
+  .gathering-detail__risk-check input[type='checkbox'] {
+    width: 1.2rem;
+    height: 1.2rem;
+    margin-top: 0.12rem;
+  }
+
+  .gathering-detail__apply-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .gathering-detail__apply-cta,
+  .gathering-detail__login-panel .gatherings-hero__cta {
+    width: 100%;
+    min-height: 48px;
+  }
+
+  .gathering-detail__attendance-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .gathering-detail__rsvp-ghost {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  /* Safety notice + actions */
+  .gathering-detail__safety-actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 0.45rem;
+  }
+
+  .gathering-detail__safety-btn {
+    min-height: 36px;
+    padding: 0.35rem 0.75rem;
+  }
+
+  /* Comment board */
+  .gathering-board {
+    margin-top: 0.85rem;
+    padding: 0.9rem 0.85rem 1rem;
+  }
+
+  .gathering-board__title {
+    font-size: 0.95rem;
+  }
+
+  .gathering-board__lead {
+    font-size: 0.78rem;
+  }
+
+  .gathering-board__empty {
+    padding: 0.95rem 0.7rem;
+  }
+
+  .gathering-board__empty-title {
+    font-size: 0.86rem;
+  }
+
+  .gathering-board__empty-hint {
+    font-size: 0.74rem;
+  }
+
+  .gathering-board__list.has-msgs {
+    max-height: 16rem;
+  }
+
+  .gathering-board__msg {
+    padding: 0.55rem 0.65rem 0.6rem;
+  }
+
+  .gathering-board__msg-name {
+    font-size: 0.8rem;
+  }
+
+  .gathering-board__msg-body {
+    font-size: 0.86rem;
+  }
+
+  .gathering-board__compose textarea {
+    min-height: 4.25rem;
+    font-size: 16px; /* avoid iOS zoom */
+    padding: 0.7rem 0.75rem;
+  }
+
+  .gathering-board__compose-foot {
+    gap: 0.55rem;
+  }
+
+  .gathering-board__send {
+    min-height: 42px;
+    padding: 0.5rem 1.05rem;
+    font-size: 0.84rem;
+  }
+
+  /* Confirm overlay (risk / cancel / report) */
+  .gathering-confirm {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .gathering-confirm__box {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    border-radius: 12px 12px 0 0;
+    padding: 1.15rem 1rem calc(1.15rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .gathering-confirm__title {
+    font-size: 1.02rem;
+  }
+
+  .gathering-confirm__sub {
+    font-size: 0.84rem;
+  }
+
+  .gathering-confirm__actions {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+  }
+
+  .gathering-confirm__btn {
+    width: 100%;
+    min-height: 48px;
+  }
+
+  /* Create form: mode toggle full-width pills */
+  .gathering-form__mode-options {
+    width: 100%;
+  }
+
+  .gathering-form__mode-opt {
+    flex: 1 1 0;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .gathering-form__chips {
+    max-height: none;
+  }
+
+  .gathering-host-queue__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+
+  .gathering-host-queue__actions button {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 380px) {
+  .gathering-detail__host-head {
+    flex-wrap: wrap;
+  }
+
+  .gathering-detail__cancel {
+    margin-left: auto;
+  }
+
+  .gathering-detail__private-badge {
+    font-size: 0.6rem;
+  }
+
+  .gathering-board__title {
+    font-size: 0.9rem;
+  }
 }
 
 

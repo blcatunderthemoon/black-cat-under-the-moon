@@ -5,7 +5,7 @@
  */
 
 import { TYPE_ORDER, getFamilyNameZh } from './mirror-personality.js';
-import { normalizeGatheringTags, gatheringTagLabels, GATHERING_TAG_LABEL_BY_ID } from './gathering-tags.js';
+import { normalizeGatheringTags, gatheringTagLabels, GATHERING_TAG_LABEL_BY_ID, isGatheringTagAllowedForMode } from './gathering-tags.js';
 import { normalizeGatheringPublicLocation } from './gathering-districts.js';
 import { parseGatheringContact } from './gathering-contact.js';
 import { HK_TZ, databaseNowIso } from './hong-kong-time.js';
@@ -166,6 +166,18 @@ export function validateGatheringInput(body = {}, { partial = false } = {}) {
 
   if (!partial || body.is_online !== undefined) {
     out.is_online = !!body.is_online;
+  }
+
+  if (out.tags) {
+    const isOnline = out.is_online != null
+      ? out.is_online
+      : (body.is_online !== undefined ? !!body.is_online : null);
+    if (isOnline != null) {
+      const mismatched = out.tags.filter((tag) => !isGatheringTagAllowedForMode(tag, isOnline));
+      if (mismatched.length) {
+        errors.push('所選標籤與此聚會形式（線上／線下）不符。');
+      }
+    }
   }
 
   if (!partial || body.starts_at !== undefined) {

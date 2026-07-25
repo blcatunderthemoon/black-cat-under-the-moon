@@ -7,6 +7,8 @@ import { isMatureForumTopic } from './forum-mature.js';
 import { resolveForumPostAuthorDisplayName } from './forum-author-names.js';
 import { DISPLAY_NAME_MAX_LENGTH } from './display-name-policy.js';
 import { getHongKongDayStart } from './hong-kong-time.js';
+import { isSystemChannelDisplayName } from './system-inbox.js';
+import { SOLO_MATCH_ANCHOR_DISPLAY_NAME } from './inbox-solo-anchor.js';
 
 export const ACTIVITY_FEED_LIMIT = 8;
 export const ACTIVITY_SOURCE_LIMIT = 8;
@@ -37,6 +39,12 @@ function clip(text, max) {
 function safeMemberName(raw) {
   const name = String(raw || '').trim().slice(0, DISPLAY_NAME_MAX_LENGTH);
   return name || '一位新旅人';
+}
+
+function isInternalSystemMemberName(raw) {
+  const name = String(raw || '').trim();
+  if (!name) return false;
+  return isSystemChannelDisplayName(name) || name === SOLO_MATCH_ANCHOR_DISPLAY_NAME;
 }
 
 /**
@@ -108,6 +116,7 @@ export async function loadPublicActivityFeed(admin) {
     if (!row?.id) continue;
     const status = String(row.status || '').toLowerCase();
     if (status === 'banned' || status === 'suspended' || status === 'deleted') continue;
+    if (isInternalSystemMemberName(row.display_name)) continue;
     const joinedAt = new Date(row.created_at).getTime();
     if (!Number.isFinite(joinedAt) || joinedAt < hkDayStartMs) continue;
     const name = safeMemberName(row.display_name);

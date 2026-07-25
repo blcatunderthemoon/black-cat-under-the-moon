@@ -41,26 +41,31 @@
 
 .social-link-icon svg,
 .feature-link__icon svg {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   display: block;
 }
 
 .social-link-icon .ui-ico,
 .feature-link__icon .ui-ico {
-  width: 20px;
-  height: 20px;
-}
-
-/* Optical match: filled brand marks vs stroke cup */
-.social-link-icon svg[viewBox='0 0 192 192'] {
   width: 18px;
   height: 18px;
 }
 
-.social-link-icon .ui-ico--coffee {
-  width: 22px;
-  height: 22px;
+/* Optical match: filled IG/cup vs Threads @ (fills its viewBox more) */
+.social-link-icon svg[viewBox='0 0 24 24'] {
+  width: 17px;
+  height: 17px;
+}
+
+.social-link-icon svg[viewBox='0 0 192 192'] {
+  width: 16px;
+  height: 16px;
+}
+
+.social-link--kofi .social-link-icon svg {
+  width: 18px;
+  height: 18px;
 }
 
 .btn-submit {

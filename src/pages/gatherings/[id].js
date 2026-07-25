@@ -54,10 +54,14 @@ export default function GatheringDetailPage({ seo = null }) {
   const [phone, setPhone] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
-  const [confirmKind, setConfirmKind] = useState(null); // 'withdraw' | 'cancel' | 'report' | 'block' | null
+  const [confirmKind, setConfirmKind] = useState(null); // 'apply' | 'withdraw' | 'cancel' | 'report' | 'block' | null
   const [cancelReason, setCancelReason] = useState('');
   const [reportReason, setReportReason] = useState('');
   const [safetyMsg, setSafetyMsg] = useState('');
+  const [riskAccepted, setRiskAccepted] = useState(false);
+  const [editingDesc, setEditingDesc] = useState(false);
+  const [descDraft, setDescDraft] = useState('');
+  const [savingDesc, setSavingDesc] = useState(false);
 
   useEffect(() => {
     if (session?.user?.email && !email) setEmail(session.user.email);
@@ -93,9 +97,29 @@ export default function GatheringDetailPage({ seo = null }) {
     load();
   }, [router.isReady, authLoading, load]);
 
+  useEffect(() => {
+    setEditingDesc(false);
+    setDescDraft('');
+    setSavingDesc(false);
+  }, [id]);
+
   async function apply() {
     if (!session?.access_token) {
       router.push(`/login?redirect=${encodeURIComponent(`/gatherings/${id}`)}`);
+      return;
+    }
+    if (!riskAccepted) {
+      setMsg('請先勾選風險確認，同意自行承擔參加聚會的風險。');
+      return;
+    }
+    setConfirmKind('apply');
+  }
+
+  async function runApply() {
+    if (!session?.access_token) return;
+    if (!riskAccepted) {
+      setMsg('請先勾選風險確認，同意自行承擔參加聚會的風險。');
+      setConfirmKind(null);
       return;
     }
     setBusy(true);
@@ -111,6 +135,7 @@ export default function GatheringDetailPage({ seo = null }) {
           knock_message: knock || null,
           email,
           phone,
+          risk_accepted: true,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -119,6 +144,8 @@ export default function GatheringDetailPage({ seo = null }) {
         return;
       }
       setMsg(data.attendance?.status === 'approved' ? '已直接獲邀！' : '申請已送出，等候主辦人審核。');
+      setConfirmKind(null);
+      setRiskAccepted(false);
       await load();
     } catch {
       setMsg('網絡錯誤');
@@ -261,6 +288,57 @@ export default function GatheringDetailPage({ seo = null }) {
   const phoneValid = isValidHkPhone(phone);
   const phoneError = phoneProvided && !phoneValid ? '電話號碼應為 8 位數字。' : '';
 
+  const canEditDescription = isHost
+    && gathering
+    && gathering.status !== 'cancelled'
+    && gathering.status !== 'completed'
+    && new Date(gathering.starts_at).getTime() > Date.now();
+
+  function startEditDesc() {
+    setDescDraft(gathering?.description || '');
+    setEditingDesc(true);
+    setMsg('');
+  }
+
+  function cancelEditDesc() {
+    setEditingDesc(false);
+    setDescDraft('');
+  }
+
+  async function saveDesc() {
+    if (!session?.access_token || !id) return;
+    setSavingDesc(true);
+    setMsg('');
+    try {
+      const trimmed = descDraft.trim();
+      const res = await fetch(`/api/gatherings/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ description: trimmed || null }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setMsg(data.error || '更新說明失敗');
+        return;
+      }
+      if (data.gathering) {
+        setGathering((prev) => (prev ? { ...prev, ...data.gathering } : data.gathering));
+      } else {
+        await load();
+      }
+      setEditingDesc(false);
+      setDescDraft('');
+      setMsg('說明已更新。');
+    } catch {
+      setMsg('網絡錯誤');
+    } finally {
+      setSavingDesc(false);
+    }
+  }
+
   return (
     <>
       <SeoHead
@@ -338,63 +416,174 @@ export default function GatheringDetailPage({ seo = null }) {
                 </div>
               )}
 
-              {gathering.description && (
-                <p className="gathering-detail__desc">{gathering.description}</p>
+              {(gathering.description || canEditDescription || editingDesc) && (
+                <div className="gathering-detail__desc-block">
+                  {canEditDescription && (
+                    <div className="gathering-detail__desc-head">
+                      <p className="gathering-detail__desc-label">聚會說明</p>
+                      {!editingDesc && (
+                        <button
+                          type="button"
+                          className="gathering-detail__desc-edit"
+                          disabled={busy || savingDesc}
+                          onClick={startEditDesc}
+                        >
+                          {gathering.description ? '編輯說明' : '新增說明'}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  {editingDesc ? (
+                    <>
+                      <textarea
+                        className="gathering-detail__desc-input"
+                        value={descDraft}
+                        onChange={(e) => setDescDraft(e.target.value)}
+                        maxLength={800}
+                        rows={5}
+                        placeholder="寫下聚會詳情、注意事項……"
+                        disabled={savingDesc}
+                        aria-label="聚會說明"
+                      />
+                      <div className="gathering-detail__desc-actions">
+                        <span className="gathering-detail__desc-count">
+                          {descDraft.trim().length}/800
+                        </span>
+                        <button
+                          type="button"
+                          className="gathering-detail__rsvp-ghost"
+                          disabled={savingDesc}
+                          onClick={cancelEditDesc}
+                        >
+                          取消
+                        </button>
+                        <button
+                          type="button"
+                          className="gatherings-hero__cta gathering-detail__desc-save"
+                          disabled={savingDesc}
+                          onClick={saveDesc}
+                        >
+                          {savingDesc ? '儲存中…' : '儲存'}
+                        </button>
+                      </div>
+                    </>
+                  ) : gathering.description ? (
+                    <p className="gathering-detail__desc">{gathering.description}</p>
+                  ) : (
+                    <p className="gathering-detail__desc gathering-detail__desc--empty">
+                      尚未填寫說明。點「新增說明」寫畀參加者睇。
+                    </p>
+                  )}
+                </div>
               )}
 
-              <div
-                className="gathering-detail__seats"
-                aria-label={`人數 ${gathering.approved_count}/${gathering.max_participants}`}
-              >
-                <div className="gathering-detail__seats-head">
-                  <span>人數</span>
-                  <strong>{gathering.approved_count}/{gathering.max_participants}</strong>
-                </div>
-                <div
-                  className="gathering-detail__seats-cells"
-                  role="img"
-                  aria-label={`已報名 ${gathering.approved_count} 人，共 ${gathering.max_participants} 個位`}
-                >
-                  {Array.from({ length: Math.max(0, Math.min(30, gathering.max_participants || 0)) }).map((_, i) => (
-                    <span
-                      key={i}
-                      className={`gathering-detail__seat-cell${i < (gathering.approved_count || 0) ? ' is-filled' : ''}`}
-                    />
-                  ))}
-                </div>
-              </div>
+              {(() => {
+                const approved = gathering.approved_count || 0;
+                const max = gathering.max_participants || 0;
+                const remaining = Math.max(0, max - approved);
+                const pct = max > 0 ? Math.min(100, Math.round((approved / max) * 100)) : 0;
+                const seatsFull = max > 0 && remaining === 0;
+                return (
+                  <div
+                    className="gathering-detail__seats gathering-hud gathering-hud--gauge"
+                    aria-label={`人數 ${approved}/${max}`}
+                  >
+                    <div className="gathering-hud__corners" aria-hidden="true" />
+                    <div className="gathering-detail__seats-head">
+                      <span>人數</span>
+                      <strong className={seatsFull ? 'is-full' : undefined}>
+                        {seatsFull ? `已滿額 · ${approved}/${max}` : `${approved}/${max || '—'}`}
+                      </strong>
+                    </div>
+                    <div
+                      className="gathering-detail__seats-track"
+                      role="progressbar"
+                      aria-valuenow={approved}
+                      aria-valuemin={0}
+                      aria-valuemax={max || 0}
+                      aria-label={
+                        seatsFull
+                          ? `已滿額，共 ${max} 個位`
+                          : `已報名 ${approved} 人，共 ${max} 個位，仲有 ${remaining} 個位`
+                      }
+                    >
+                      <div
+                        className={`gathering-detail__seats-fill${seatsFull ? ' is-full' : ''}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })()}
 
               {gathering.location_private != null && gathering.location_private !== '' ? (
-                <div className={`gathering-detail__private gathering-detail__private--unlocked${gathering.status === 'cancelled' ? ' gathering-detail__private--cancelled' : (!isHost && gathering.my_attendance?.status === 'approved' ? ' gathering-detail__private--pass' : '')}`}>
-                  <span className="gathering-detail__private-badge">
-                    {gathering.status === 'cancelled'
-                      ? '聚會已取消'
-                      : (!isHost && gathering.my_attendance?.status === 'approved' ? (
-                        <>
-                          <UiUnlockIcon size={11} /> 已解鎖 · 專屬通行證
-                        </>
+                (() => {
+                  const raw = String(gathering.location_private).trim();
+                  const isPlaceholder = /^(no\s*link|n\/?a|暫無|未定|无|none|null|nil|-|—|－|\.+)$/i.test(raw);
+                  const isUrl = /^https?:\/\/\S+/i.test(raw);
+                  const isApprovedGuest = !isHost && gathering.my_attendance?.status === 'approved';
+                  const isCancelled = gathering.status === 'cancelled';
+                  return (
+                    <div
+                      className={[
+                        'gathering-detail__private',
+                        'gathering-detail__private--unlocked',
+                        isCancelled ? 'gathering-detail__private--cancelled' : '',
+                        isApprovedGuest ? 'gathering-detail__private--pass' : '',
+                        isHost ? 'gathering-detail__private--host' : '',
+                      ].filter(Boolean).join(' ')}
+                    >
+                      <span className="gathering-detail__private-badge">
+                        {isCancelled ? (
+                          '聚會已取消'
+                        ) : isHost ? (
+                          <>
+                            <ForumLockIcon size={11} /> 主辦可見 · 批准後參加者可睇
+                          </>
+                        ) : isApprovedGuest ? (
+                          <>
+                            <UiUnlockIcon size={11} /> 已解鎖 · 專屬通行證
+                          </>
+                        ) : (
+                          <>
+                            <ForumLockIcon size={11} /> 僅獲批准者可見
+                          </>
+                        )}
+                      </span>
+                      <p className="gathering-detail__private-label">私密地點／連結</p>
+                      {isPlaceholder ? (
+                        <p className="gathering-detail__private-empty">
+                          尚未填寫具體地址或連結
+                          {isHost ? ' — 可喺發起時補上，方便獲批參加者赴約。' : '。請向主辦確認。'}
+                        </p>
                       ) : (
-                        <>
-                          <ForumLockIcon size={11} /> 僅獲批准者可見
-                        </>
-                      ))}
-                  </span>
-                  <p className="gathering-detail__private-label">私密地點／連結</p>
-                  <p className="gathering-detail__private-value">
-                    <span className="gathering-detail__private-pin" aria-hidden="true">
-                      <ForumPinIcon size={14} />
-                    </span>
-                    {gathering.location_private}
-                  </p>
-                </div>
+                        <div className="gathering-detail__private-value">
+                          <span className="gathering-detail__private-pin" aria-hidden="true">
+                            <ForumPinIcon size={14} />
+                          </span>
+                          {isUrl ? (
+                            <a
+                              className="gathering-detail__private-link"
+                              href={raw}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {raw}
+                            </a>
+                          ) : (
+                            <span className="gathering-detail__private-text">{raw}</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()
               ) : gathering.has_private_location && !isHost ? (
                 <div className="gathering-detail__private gathering-detail__private--locked" aria-label="私密地點未解鎖">
-                  <p className="gathering-detail__private-label">
-                    <span className="gathering-detail__private-lock" aria-hidden="true">
-                      <ForumLockIcon size={14} />
-                    </span>
-                    私密地點／連結
-                  </p>
+                  <span className="gathering-detail__private-badge">
+                    <ForumLockIcon size={11} /> 僅獲批准者可見
+                  </span>
+                  <p className="gathering-detail__private-label">私密地點／連結</p>
                   <div className="gathering-detail__private-locked-body">
                     <p className="gathering-detail__private-blur" aria-hidden="true">████ ██████ ███ ██</p>
                     <p className="gathering-detail__private-locked-note">
@@ -435,7 +624,7 @@ export default function GatheringDetailPage({ seo = null }) {
               <p className="gathering-detail__safety-msg" role="status">{safetyMsg}</p>
             )}
 
-            {msg && gathering.status !== 'cancelled' && !gathering.my_attendance?.status && (
+            {msg && gathering.status !== 'cancelled' && (isHost || !gathering.my_attendance?.status) && (
               <p
                 className={`gathering-detail__msg${/取消/.test(msg) ? ' gathering-detail__msg--cancel' : ''}`}
                 role="status"
@@ -452,15 +641,22 @@ export default function GatheringDetailPage({ seo = null }) {
                   <p className="gathering-detail__host-closed">聚會已結束，審批已關閉。</p>
                 ) : (
                   <>
-                    <h2>主辦人審批</h2>
+                    <div className="gathering-detail__host-head">
+                      <h2>主辦人審批</h2>
+                      <button
+                        type="button"
+                        className="gathering-detail__cancel"
+                        disabled={busy}
+                        onClick={cancelGathering}
+                      >
+                        取消聚會
+                      </button>
+                    </div>
                     <GatheringHostQueue
                       gatheringId={gathering.id}
                       knockQuestion={gathering.knock_question}
                       onChanged={() => load()}
                     />
-                    <button type="button" className="gathering-detail__cancel" disabled={busy} onClick={cancelGathering}>
-                      取消聚會
-                    </button>
                   </>
                 )}
               </section>
@@ -586,11 +782,34 @@ export default function GatheringDetailPage({ seo = null }) {
                       </label>
                     )}
 
+                    <label className="gathering-form__field gathering-form__check gathering-detail__risk-check">
+                      <input
+                        type="checkbox"
+                        checked={riskAccepted}
+                        onChange={(e) => setRiskAccepted(e.target.checked)}
+                        required
+                      />
+                      <span>
+                        我明白本平台只係聚會資訊與申請的<span className="gathering-detail__risk-em">中介渠道</span>，
+                        唔係主辦方；我已閱讀
+                        {' '}
+                        <Link href="/tos.html" target="_blank" rel="noopener noreferrer">使用條款</Link>
+                        ，並<span className="gathering-detail__risk-em">自行承擔</span>
+                        參加此聚會（含線上／線下）的一切風險與後果。平台不作任何後果承擔。
+                      </span>
+                    </label>
+
                     <div className="gathering-detail__apply-actions">
                       <button
                         type="submit"
                         className="gatherings-hero__cta gathering-detail__apply-cta"
-                        disabled={busy || !email.trim() || (!gathering.is_online && !phoneValid) || (phoneProvided && !phoneValid)}
+                        disabled={
+                          busy
+                          || !riskAccepted
+                          || !email.trim()
+                          || (!gathering.is_online && !phoneValid)
+                          || (phoneProvided && !phoneValid)
+                        }
                       >
                         {busy ? '提交中…' : '申請加入'}
                       </button>
@@ -618,6 +837,23 @@ export default function GatheringDetailPage({ seo = null }) {
             )}
           </article>
         )}
+
+        <GatheringConfirmOverlay
+          open={confirmKind === 'apply'}
+          title="確認自行承擔風險？"
+          sub={(
+            <>
+              <p>本平台只係中介渠道，唔係呢場聚會嘅主辦方。</p>
+              <p>聚會期間同前後發生嘅任何糾紛、人身／財物風險或其他後果，由你同相關用戶自行承擔；平台不作任何後果承擔。</p>
+              <p>按確認即表示你同意繼續申請，並接受使用條款中關於月光聚會的規定。</p>
+            </>
+          )}
+          confirmLabel="明白，繼續申請"
+          cancelLabel="返回修改"
+          busy={busy}
+          onConfirm={runApply}
+          onCancel={() => { if (!busy) setConfirmKind(null); }}
+        />
 
         <GatheringConfirmOverlay
           open={confirmKind === 'withdraw'}

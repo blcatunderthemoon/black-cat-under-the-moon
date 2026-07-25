@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5, viewport-fit=cover, interactive-widget=resizes-content">
-  <meta name="description" content="Black Cat Under The Moon 使用條款 — 月光漂流瓶、黑貓樹洞、Mirror Mode、Echo Mode、收件箱、Moonlight Passport 與月光旅程服務規範。">
+  <meta name="description" content="Black Cat Under The Moon 使用條款 — 漂流瓶、Mirror／Echo、論壇、收件箱、月光聚會、月光心願、我的月光貓、Moonlight Passport 與相關免責規範。">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://www.blackcatunderthemoon.com/tos.html">
   <title>使用條款 · Black Cat Under The Moon</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20260725cat11">
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/auth-nav.css?v=20260725hdrfix">
-<link rel="stylesheet" href="css/mobile-webview-scroll.css?v=20260713echo">
+  <link rel="stylesheet" href="css/mobile-webview-scroll.css?v=20260713echo">
   <link rel="stylesheet" href="css/legal-ui-icons.css?v=20260725icons">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -30,12 +30,10 @@
     }
     html, body { min-height: 100vh; background: var(--bg); color: var(--cream); font-family: var(--font-main); line-height: 1.85; }
 
-    /* stars */
     .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
     .star  { position: absolute; border-radius: 50%; background: #fff; animation: twinkle var(--d,3s) infinite ease-in-out; opacity: 0; }
     @keyframes twinkle { 0%,100%{opacity:0;transform:scale(.8)} 50%{opacity:var(--op,.6);transform:scale(1.1)} }
 
-    /* layout */
     .page {
       position: relative; z-index: 1;
       max-width: 720px; margin: 0 auto;
@@ -65,9 +63,10 @@
     .section-body ul { padding-left: 1.4rem; margin-bottom: .7rem; }
     .section-body li { margin-bottom: .35rem; }
     .highlight { color: var(--yellow); font-weight: 700; }
-    .danger    { color: var(--pink);   font-weight: 700; display: flex; align-items: flex-start; gap: .4rem; }
+    .danger    { color: var(--pink);   font-weight: 700; }
+    .danger.inline-flex { display: flex; align-items: flex-start; gap: .4rem; }
+    a { color: var(--purple-l); }
 
-    /* hotlines */
     .hotlines { display: flex; flex-direction: column; gap: .5rem; margin-top: .8rem; }
     .hotline  {
       display: flex; justify-content: space-between; align-items: center;
@@ -89,7 +88,6 @@
       margin-left: .5rem;
     }
 
-    /* footer */
     .tos-footer {
       text-align: center;
       font-size: .72rem;
@@ -102,7 +100,6 @@
     .tos-footer a { color: var(--purple-l); text-decoration: none; }
     .tos-footer a:hover { text-decoration: underline; }
 
-    /* ── Language toggle ── */
     .en { display: none; }
     body.lang-en .zh { display: none; }
     body.lang-en span.en { display: inline; }
@@ -126,269 +123,328 @@
   </div>
 
   <div class="page">
-    <!-- 1. Disclaimer -->
+
     <div class="section">
-      <div class="section-title"><span class="ui-ico ui-ico--clipboard" aria-hidden="true"></span><span class="zh">免責聲明</span><span class="en">Disclaimer</span></div>
+      <div class="section-title"><span class="ui-ico ui-ico--clipboard" aria-hidden="true"></span><span class="zh">概述與同意</span><span class="en">Overview &amp; Acceptance</span></div>
       <div class="section-body zh">
-        <ul>
-          <li>本平台不對用戶發佈的任何內容承擔責任。</li>
-          <li>本平台以「現狀」提供服務，不保證服務的持續可用性。</li>
-          <li>本平台保留隨時修改、暫停或終止服務的權利，恕不另行通知。</li>
-          <li>本條款隨時可能更新，繼續使用本平台即表示接受最新條款。</li>
-        </ul>
-        <p>如對本條款有任何疑問，請透過平台舉報功能與我們聯繫。</p>
+        <p>歡迎使用 Black Cat Under The Moon（「本平台」「我們」）。本平台主要為香港 Les／女同志社群及盟友提供心靈交流、自我探索與社群連結服務。</p>
+        <p>使用本平台（包括瀏覽、註冊、登入、投瓶、填寫問卷、發佈內容、收發訊息、發起或參加聚會、許願、養貓咪、訂閱或聯絡我們），即表示你已閱讀、理解並同意本使用條款及<a href="privacy.html">私隱政策</a>。若不同意，請立即停止使用。</p>
+        <p>我們可不時更新本條款；頁面會標示「最後更新」日期。繼續使用即視為接受更新後的條款。法律強制規定不可免除或限制的責任，不受本條款影響。</p>
       </div>
       <div class="section-body en">
-        <ul>
-          <li>This platform bears no responsibility for any content posted by users.</li>
-          <li>This platform provides its service "as is" without guaranteeing continuous availability.</li>
-          <li>This platform reserves the right to modify, suspend, or terminate the service at any time without prior notice.</li>
-          <li>These terms may be updated at any time; continued use constitutes acceptance of the latest version.</li>
-        </ul>
-        <p>For questions about these terms, please contact us through the platform's report function.</p>
+        <p>Welcome to Black Cat Under The Moon ("the Platform", "we"). The Platform primarily serves Hong Kong lesbian / queer women communities and allies with space for reflection, self-exploration and community connection.</p>
+        <p>By using the Platform (including browsing, registering, logging in, throwing bottles, submitting questionnaires, posting, messaging, hosting or joining gatherings, making wishes, caring for your cat, subscribing, or contacting us), you confirm that you have read, understood and agree to these Terms and the <a href="privacy.html">Privacy Policy</a>. If you do not agree, stop using the Platform immediately.</p>
+        <p>We may update these Terms from time to time; the “Last updated” date will change. Continued use constitutes acceptance. Liability that cannot be excluded or limited under applicable law remains unaffected.</p>
       </div>
     </div>
 
-    <!-- 2. Resonance Analysis Disclaimer -->
     <div class="section">
-      <div class="section-title"><span class="ui-ico ui-ico--sparkle" aria-hidden="true"></span><span class="zh">靈魂共鳴分析免責聲明</span><span class="en">Resonance Analysis Disclaimer</span></div>
+      <div class="section-title"><span class="ui-ico ui-ico--warn" aria-hidden="true"></span><span class="zh">免責聲明（現狀服務）</span><span class="en">Disclaimer (As-Is Service)</span></div>
       <div class="section-body zh">
-        <p>靈魂共鳴分析功能由系統演算法根據問卷答案進行心靈契合度評估，<span class="highlight">結果僅供參考，並不構成任何形式的推薦或保證。</span></p>
         <ul>
-          <li>共鳴分析結果不代表雙方在性格、價值觀或生活方式上必然相容。</li>
-          <li>本平台<span class="highlight">僅提供線上匿名心靈交流與文化討論</span>，並不提供任何形式的線下見面功能。</li>
-          <li>用戶因個人行為進行的私下互動，本平台<span class="danger">概不負責</span>。</li>
-          <li>參加者須自行評估風險，對自身安全及行為負全部責任。</li>
-          <li>平台不會主動要求用戶提供個人聯絡資料；如有人以平台名義索取，請提高警惕。</li>
+          <li>本平台以「現狀」及「現有」基礎提供服務，<span class="highlight">不保證</span>不中斷、無錯誤、絕對安全或符合你的特定期望。</li>
+          <li>用戶發佈的任何內容（漂流瓶、論壇、心願、聚會說明、訊息、照片等）由該用戶自行負責；本平台<span class="highlight">不對用戶內容承擔責任</span>。</li>
+          <li>測驗、共鳴分析、家族標籤、遊戲獎勵、配對結果等僅供<span class="highlight">娛樂／自我探索參考</span>，不構成醫療、心理、法律、配對成功或人身安全保證。</li>
+          <li>我們保留隨時修改、暫停、限制或終止全部或部分服務之權利，並可能不作個別通知。</li>
+          <li>你與其他用戶的私下互動、線上／線下見面、或對方如何使用你自願分享的資料，本平台<span class="danger">概不負責</span>；請自行評估風險。</li>
         </ul>
-        <p class="danger"><span class="ui-ico ui-ico--warn" aria-hidden="true"></span> 請保護自身安全。如遇到任何令你感到不適的情況，請立即停止聯繫並向相關機構舉報。</p>
+        <p>疑問可透過<a href="contact.html">聯絡我們</a>或平台舉報功能反映。</p>
       </div>
       <div class="section-body en">
-        <p>The Resonance Analysis feature uses an algorithm to assess compatibility between platform members based on questionnaire answers. <span class="highlight">Results are for reference only and do not constitute any recommendation or guarantee.</span></p>
         <ul>
-          <li>Resonance analysis results do not imply compatibility in personality, values, or lifestyle.</li>
-          <li>This platform <span class="highlight">provides online anonymous treehole connection and cultural discussion only</span> and does not offer any form of offline meeting functionality.</li>
-          <li>The platform accepts <span class="danger">no responsibility</span> for any private interactions undertaken by users at their own discretion.</li>
-          <li>Members must independently assess risks and take full responsibility for their own safety and actions.</li>
-          <li>The platform will never proactively request users' personal contact details; be vigilant if anyone claims to represent this platform and asks for such information.</li>
+          <li>The Platform is provided on an “as is” and “as available” basis and <span class="highlight">does not guarantee</span> uninterrupted, error-free or absolutely secure service, or that it will meet your particular expectations.</li>
+          <li>Users are solely responsible for content they publish (bottles, forum, wishes, gathering details, messages, photos, etc.); the Platform <span class="highlight">is not responsible for user content</span>.</li>
+          <li>Quizzes, resonance analysis, family labels, game rewards and match results are for <span class="highlight">entertainment / self-exploration only</span> and are not medical, psychological, legal, matching-success or personal-safety guarantees.</li>
+          <li>We may modify, suspend, limit or terminate all or part of the service at any time, possibly without individual notice.</li>
+          <li>Private interactions between users, online/offline meetings, and how others use information you voluntarily share are <span class="danger">at your own risk</span>; the Platform accepts no responsibility for them.</li>
         </ul>
-        <p class="danger"><span class="ui-ico ui-ico--warn" aria-hidden="true"></span> Please protect your safety. If you encounter any situation that makes you uncomfortable, cease contact immediately and report to the relevant authorities.</p>
+        <p>Questions may be raised via <a href="contact.html">Contact</a> or the Platform’s report tools.</p>
       </div>
     </div>
 
-    <!-- 3. Compatibility Assessment Data Use -->
     <div class="section">
-      <div class="section-title"><span class="ui-ico ui-ico--clipboard" aria-hidden="true"></span><span class="zh">契合度評估資料使用聲明</span><span class="en">Compatibility Assessment Data — Use Statement</span></div>
+      <div class="section-title"><span class="ui-ico ui-ico--sparkle" aria-hidden="true"></span><span class="zh">平台功能總覽</span><span class="en">Platform Features Overview</span></div>
       <div class="section-body zh">
-        <p>參加者於填寫 Echo Mode 問卷時所提供的資料（以下稱「契合度評估數據」），<span class="highlight">僅作共鳴分析與社群連線運算用途</span>，不會用於任何其他商業目的。</p>
+        <p>本平台功能包括但不限於（部分需登入或 Moonlight Passport）：</p>
         <ul>
-          <li>契合度評估數據包括但不限於：問卷答案、Instagram 帳號、電子郵件地址。</li>
-          <li>契合度評估數據存儲於受保護的資料庫，僅供平台管理員在社群連線運作期間存取。</li>
-          <li>平台不會主動向任何第三方出售、出租或披露參加者的契合度評估數據。</li>
+          <li><span class="highlight">月光漂流瓶</span>：匿名投瓶與回聲（可不註冊）。</li>
+          <li><span class="highlight">Mirror Mode（靈魂鏡像）</span>：問卷生成性格卡／貓咪家族；可下載、分享或發佈 Mirror Card。</li>
+          <li><span class="highlight">Echo Mode（月下緣份）</span>：心靈契合度問卷與連線運算；已登入可重訪查看自己的答案（只讀）。</li>
+          <li><span class="highlight">黑貓樹洞（論壇）</span>：發文、留言、按讚、書籤、標籤、投票、@提及、寫故事（多章節）；可有流動橫幅／話題提示。</li>
+          <li><span class="highlight">月光旅程</span>：論壇互動累積 EXP／等級；每日打卡（香港時間）。</li>
+          <li><span class="highlight">收件箱</span>：私信、緣份卡、系統通知（聚會／心願等）、神秘通道匿名往返。</li>
+          <li><span class="highlight">真人相片交換</span>：會員功能；雙方同意後交換真實照片，完成後限時可閱覽。</li>
+          <li><span class="highlight">月光聚會</span>：用戶自發線上／香港地區聚會的中介刊登與申請渠道（平台非主辦）。</li>
+          <li><span class="highlight">月光心願</span>：公開心願牆、打氣、每日蓋印、完成領取虛擬碎屑。</li>
+          <li><span class="highlight">我的月光貓</span>：虛擬寵物養成、餵食／摸摸、商店與房間佈置（虛擬貨幣「月光碎屑」）。</li>
+          <li><span class="highlight">Moonlight Passport</span>：付費會員解鎖進階配額與功能。</li>
         </ul>
-        <p><span class="highlight">連線通知：</span>當系統計算出符合條件的共鳴結果後，平台將以電子郵件形式，向已連線雙方各自傳送對方的 <span class="highlight">Instagram／Telegram 帳號、姓名／暱稱、電郵地址、年齡及其他於問卷所填寫之個人資料</span>，以供雙方於線上社群自行決定是否進一步交流。</p>
-        <p><span class="danger">重要：</span>參加者一經提交問卷，即表示已閱讀、理解並<span class="highlight">默認同意</span>以下事項：</p>
-        <ul>
-          <li>授權本平台將其 Instagram／Telegram 帳號及問卷資料用於共鳴分析與社群連線運算；</li>
-          <li>若成功連線，授權本平台將其 Instagram／Telegram 帳號、姓名／暱稱、電郵地址、年齡及其他於問卷所填寫之個人資料披露予契合的社群成員；</li>
-          <li>接受本聲明所載之全部資料使用條款。</li>
-        </ul>
-        <p>如參加者希望撤回同意或要求刪除其契合度評估數據，請透過平台提供之聯繫方式提出申請。</p>
+        <p>各功能規則、配額與限制以下文及站內說明為準；我們可調整功能而不保證永久提供某一特性。</p>
       </div>
       <div class="section-body en">
-        <p>Information provided by participants when completing the Echo Mode questionnaire (hereinafter "Compatibility Assessment Data") is collected and used <span class="highlight">solely for resonance analysis and connection operations</span>, and will not be used for any other commercial purpose.</p>
+        <p>Features include (without limitation; some require login or Moonlight Passport):</p>
         <ul>
-          <li>Compatibility Assessment Data includes, but is not limited to: questionnaire responses, Instagram/Telegram handle, and email address.</li>
-          <li>Compatibility Assessment Data is stored in a secured database and is accessible only to platform administrators during connection operations.</li>
-          <li>The platform will not sell, rent, or otherwise disclose participants' Compatibility Assessment Data to any third party.</li>
+          <li><span class="highlight">Moonlight Drift Bottle</span>: anonymous bottles and echoes (no account required).</li>
+          <li><span class="highlight">Mirror Mode</span>: questionnaire → personality card / cat family; download, share or publish a Mirror Card.</li>
+          <li><span class="highlight">Echo Mode</span>: compatibility questionnaire and connection operations; signed-in users may revisit their own answers (read-only).</li>
+          <li><span class="highlight">Black Cat Treehole (Forum)</span>: posts, comments, likes, bookmarks, tags, polls, @mentions, multi-chapter stories; optional banner / topic prompts.</li>
+          <li><span class="highlight">Moon Journey</span>: EXP / levels from forum activity; daily check-in (Hong Kong time).</li>
+          <li><span class="highlight">Inbox</span>: DMs, match cards, system notices (gatherings / wishes, etc.), anonymous mystic-channel round-trips.</li>
+          <li><span class="highlight">Photo Exchange</span>: premium feature; mutual consent, time-limited viewing after completion.</li>
+          <li><span class="highlight">Moonlight Gatherings</span>: intermediary listing / application channel for user-hosted online or Hong Kong-area gatherings (Platform is not the organiser).</li>
+          <li><span class="highlight">Moonlight Wishes</span>: public wish wall, cheers, daily stamps, completion rewards in virtual shards.</li>
+          <li><span class="highlight">My Moon Cat</span>: virtual pet care, shop and room décor (virtual “moon shards”).</li>
+          <li><span class="highlight">Moonlight Passport</span>: paid membership for advanced quotas and features.</li>
         </ul>
-        <p><span class="highlight">Connection Notification:</span> Upon identification of a qualifying resonance result, the platform will notify both connected users by email, sharing each participant's <span class="highlight">Instagram/Telegram handle, name/nickname, email address, age, and other information submitted in the questionnaire</span> with their respective compatible match, enabling both parties to independently decide whether to initiate further online contact on the platform.</p>
-        <p><span class="danger">Important:</span> By submitting the questionnaire, participants confirm that they have read, understood, and <span class="highlight">implicitly consent</span> to the following:</p>
-        <ul>
-          <li>Authorising the platform to use their Instagram/Telegram handle and questionnaire data for resonance analysis and connection operations;</li>
-          <li>Authorising the platform to disclose their Instagram/Telegram handle, name/nickname, email address, age, and other information submitted in the questionnaire to their compatible match upon a successful connection;</li>
-          <li>Accepting all data use terms set out in this statement.</li>
-        </ul>
-        <p>Participants who wish to withdraw consent or request deletion of their Compatibility Assessment Data may do so by contacting the platform through the provided channels.</p>
+        <p>Rules, quotas and limits follow the sections below and in-product copy; we may change features and do not guarantee any feature forever.</p>
       </div>
     </div>
 
-    <!-- 4. Platform Services -->
     <div class="section">
-      <div class="section-title"><span class="ui-ico ui-ico--mirror" aria-hidden="true"></span><span class="zh">平台功能</span><span class="en">Platform Services</span></div>
+      <div class="section-title"><span class="ui-ico ui-ico--crystal" aria-hidden="true"></span><span class="zh">Echo Mode 與契合度評估資料</span><span class="en">Echo Mode &amp; Compatibility Data</span></div>
       <div class="section-body zh">
-        <p>除匿名漂流瓶外，本平台提供以下需註冊帳號的功能（詳見<a href="privacy.html" style="color:var(--purple-l)">私隱政策</a>）：</p>
-        <ul>
-          <li><span class="highlight">Mirror Mode（鏡像測驗）</span>：完成問卷後生成個人 Mirror Card（性格卡），結果提交後鎖定；可公開分享連結或下載圖片。</li>
-          <li><span class="highlight">Echo Mode（月下緣份）</span>：依相容度列出社群成員；免費會員可查看部分配對，Moonlight Passport 會員可查看相容度達 60% 以上的完整列表。</li>
-          <li><span class="highlight">黑貓樹洞（論壇）</span>：發文、留言、按讚、書籤、標籤、投票與 @ 提及；內容須遵守樹洞規範。</li>
-          <li><span class="highlight">收件箱</span>：透過 Mirror Card 發送私信、緣份卡與相片交換邀請；支援「神秘通道」匿名往返對話。</li>
-          <li><span class="highlight">月光旅程</span>：於樹洞互動累積經驗值與等級；每日可打卡一次。</li>
-          <li><span class="highlight">真人相片交換</span>：Moonlight Passport 專屬功能，雙方同意後交換真實照片，完成後限時可閱覽。</li>
-        </ul>
-        <p>各功能之使用配額、會員權益與限制見下文及 Moonlight Passport 條款。</p>
+        <p>靈魂共鳴／契合度由演算法根據問卷答案評估，<span class="highlight">結果僅供參考，不構成推薦或保證</span>。不代表雙方必然相容。</p>
+        <p>參加者於 Echo Mode 提交的「契合度評估數據」（包括但不限於問卷答案、暱稱、年齡、Instagram／Telegram、電郵等）<span class="highlight">主要用於共鳴分析與社群連線運算</span>，不會為廣告而向無關第三方出售。</p>
+        <p><span class="highlight">連線通知：</span>當出現符合條件的連線結果時，平台可能以電郵及／或收件箱通知雙方，並在你已同意的範圍內，向對方披露問卷中的聯絡方式及其他相關資料，以便雙方自行決定是否繼續交流。</p>
+        <p><span class="danger">重要：</span>一經提交問卷，即表示你已閱讀並同意：授權平台將相關資料用於共鳴分析與連線；若成功連線，授權向契合對象披露你於問卷填寫之聯絡與相關資料；並接受本條款與<a href="privacy.html">私隱政策</a>。</p>
+        <p>如需要求刪除相關資料，請電郵 <a href="mailto:blcatunderthemoon@gmail.com">blcatunderthemoon@gmail.com</a>；處理需要時間，詳見私隱政策。</p>
       </div>
       <div class="section-body en">
-        <p>Beyond anonymous drift bottles, the platform offers registered-account features (see our <a href="privacy.html" style="color:var(--purple-l)">Privacy Policy</a>):</p>
-        <ul>
-          <li><span class="highlight">Mirror Mode</span>: Complete a questionnaire to generate your Mirror Card; results are locked after submission. You may share a public link or download an image.</li>
-          <li><span class="highlight">Echo Mode</span>: Browse platform members by compatibility. Free members see a limited list; Moonlight Passport members see the full list of matches at 60% compatibility or above.</li>
-          <li><span class="highlight">Black Cat Treehole</span>: Posts, comments, likes, bookmarks, tags, polls, and @mentions — all subject to treehole rules.</li>
-          <li><span class="highlight">Inbox</span>: Send direct messages, match cards, and photo-exchange invites via Mirror Card; includes anonymous "Mystic Channel" round-trip conversations.</li>
-          <li><span class="highlight">Moon Journey</span>: Earn experience and levels through treehole activity; one daily check-in available.</li>
-          <li><span class="highlight">Photo Exchange</span>: Moonlight Passport feature — exchange real photos by mutual consent, with time-limited viewing after completion.</li>
-        </ul>
-        <p>Quotas, membership benefits, and limits for each feature are set out below and under Moonlight Passport terms.</p>
+        <p>Resonance / compatibility scores are algorithmic estimates based on questionnaire answers. <span class="highlight">Results are for reference only and are not a recommendation or guarantee</span> of compatibility.</p>
+        <p>“Compatibility Assessment Data” submitted in Echo Mode (including without limitation answers, nickname, age, Instagram/Telegram, email) is used <span class="highlight">primarily for resonance analysis and connection operations</span> and is not sold to unrelated third parties for advertising.</p>
+        <p><span class="highlight">Connection notice:</span> When a qualifying connection is identified, we may notify both parties by email and/or inbox and, within the scope you agreed, disclose questionnaire contact details and related data to the other party so both may decide whether to continue contact.</p>
+        <p><span class="danger">Important:</span> By submitting the questionnaire you agree to authorise use of your data for analysis and connections; if connected, disclosure of questionnaire contact and related data to your match; and acceptance of these Terms and the <a href="privacy.html">Privacy Policy</a>.</p>
+        <p>To request deletion, email <a href="mailto:blcatunderthemoon@gmail.com">blcatunderthemoon@gmail.com</a>; processing takes time — see the Privacy Policy.</p>
       </div>
     </div>
 
-    <!-- 5. Moonlight Passport -->
+    <div class="section">
+      <div class="section-title"><span class="ui-ico ui-ico--mirror" aria-hidden="true"></span><span class="zh">Mirror Mode 與 Mirror Card</span><span class="en">Mirror Mode &amp; Mirror Card</span></div>
+      <div class="section-body zh">
+        <ul>
+          <li>完成問卷後可生成性格卡與貓咪家族結果；結果提交後可能鎖定，請謹慎填寫。</li>
+          <li>你可選擇下載圖片、分享至外部平台，或發佈公開 Mirror Card。一經公開，其他人可能閱覽你選擇公開的內容。</li>
+          <li>Mirror Card 內容須遵守平台規則；遭舉報達門檻或違規者，平台可下架或限制顯示。</li>
+          <li>結果僅供自我探索，不構成專業鑑定。</li>
+        </ul>
+      </div>
+      <div class="section-body en">
+        <ul>
+          <li>After the questionnaire you may receive a personality card and cat-family result; results may lock after submission — fill carefully.</li>
+          <li>You may download an image, share externally, or publish a public Mirror Card. Once public, others may see what you chose to publish.</li>
+          <li>Mirror Card content must follow Platform rules; we may unpublish or limit display after report thresholds or violations.</li>
+          <li>Results are for self-exploration only, not professional assessment.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="ui-ico ui-ico--tree" aria-hidden="true"></span><span class="zh">黑貓樹洞與月光旅程</span><span class="en">Forum &amp; Moon Journey</span></div>
+      <div class="section-body zh">
+        <p>黑貓樹洞為註冊會員討論區（含寫故事章節）。內容須合法、尊重他人、不得侵權。平台可因舉報或主動審核隱藏、刪除內容，並暫停或終止帳號。</p>
+        <p>親密／敏感話題請遵守站內提示與界線；請以尊重與知情同意為前提互動。</p>
+        <p><span class="highlight">月光旅程</span>：發文、留言、互動與每日打卡可獲 EXP；每日上限與防刷規則由平台制定，可調整。刷分、重複濫用不予計分。等級與獎勵為虛擬權益，無現金價值。</p>
+        <p>論壇內容不代表平台立場，亦非專業心理／醫療／法律建議。</p>
+      </div>
+      <div class="section-body en">
+        <p>The forum (including multi-chapter stories) is for registered members. Content must be lawful, respectful and non-infringing. We may hide or remove content and suspend or terminate accounts after reports or review.</p>
+        <p>Intimate / sensitive topics must follow in-product notices and boundaries; interact with respect and informed consent.</p>
+        <p><span class="highlight">Moon Journey</span>: posts, comments, interactions and daily check-ins may award EXP; daily caps and anti-abuse rules are set by us and may change. Farming does not count. Levels and rewards are virtual and have no cash value.</p>
+        <p>Forum content does not represent the Platform and is not professional advice.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="ui-ico ui-ico--calendar" aria-hidden="true"></span><span class="zh">月光聚會</span><span class="en">Moonlight Gatherings</span></div>
+      <div class="section-body zh">
+        <p>月光聚會功能僅為用戶之間提供<span class="highlight">資訊刊登與申請／審批的中介渠道</span>。本平台<span class="highlight">不是</span>聚會主辦方、共同主辦、擔保人、代理人或保險提供者（除非另行以書面明確標示由平台主辦）。聚會由用戶自行發起、審批與進行；平台不保證任何場次必然舉行、安全或符合期望。</p>
+        <ul>
+          <li>主辦須提供準確資訊、敲門問題（如有）及聯絡方式；申請人亦須提供聯絡與敲門答案（如適用）。</li>
+          <li>聯絡資料與私人場地僅在功能必要範圍內向主辦／已批准參加者顯示，請勿濫用於騷擾或公開散播。</li>
+          <li>主辦可批准、婉拒或取消；平台不保證聚會必然舉行、人數充足或體驗滿意。</li>
+          <li>申請加入聚會前，你須勾選並確認自行承擔風險之聲明；一經申請即表示你已閱讀並同意本條款中關於聚會之全部規定。</li>
+          <li class="danger">無論線上或線下，聚會期間及前後發生的任何糾紛、傷害、財物損失、違法行為、人身安全事故或其他後果，均由相關用戶自行承擔。在法律允許的最大範圍內，本平台<span class="highlight">不作任何後果承擔</span>，亦不就用戶之間的行為或協議負責。</li>
+          <li>禁止利用聚會進行詐騙、性剝削、非法活動或未經同意收集／公開他人資料。</li>
+        </ul>
+      </div>
+      <div class="section-body en">
+        <p>Moonlight Gatherings is only an <span class="highlight">intermediary channel</span> for listing and application / approval between users. The Platform is <span class="highlight">not</span> the organiser, co-organiser, guarantor, agent or insurer of gatherings (unless expressly stated in writing that the Platform is the host). Gatherings are created, approved and run by users; we do not guarantee that any event will occur, be safe or meet expectations.</p>
+        <ul>
+          <li>Hosts must provide accurate details, knock questions (if any) and contact info; applicants must provide contact and knock answers where required.</li>
+          <li>Contact details and private venues are shown only as needed to hosts / approved attendees — do not misuse them for harassment or public disclosure.</li>
+          <li>Hosts may approve, decline or cancel; we do not guarantee that an event will occur, fill seats or meet expectations.</li>
+          <li>Before applying, you must tick and confirm a risk acknowledgement; applying means you have read and agree to all gathering-related terms herein.</li>
+          <li class="danger">Whether online or offline, any dispute, injury, property loss, illegal act, personal-safety incident or other consequence before, during or after a gathering is solely the responsibility of the users involved. To the maximum extent permitted by law, the Platform <span class="highlight">accepts no liability for such consequences</span> and is not responsible for users’ conduct or private agreements.</li>
+          <li>Gatherings must not be used for fraud, sexual exploitation, illegal activity, or collecting/publishing others’ data without consent.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="ui-ico ui-ico--paw" aria-hidden="true"></span><span class="zh">月光心願</span><span class="en">Moonlight Wishes</span></div>
+      <div class="section-body zh">
+        <p>月光心願讓登入用戶公開（或僅會員可見）設立近期小事／心事，其他人可打氣；主人可每日蓋印並標記完成。</p>
+        <ul>
+          <li>同時進行中的心願數量、完成最短時間、打氣日上限等規則以站內說明為準。</li>
+          <li>打氣一經送出<span class="highlight">不可撤回</span>；請勿濫用打氣或發表不當短註。</li>
+          <li>完成獎勵、首次設立或打氣里程碑所獲「月光碎屑」為<span class="highlight">虛擬獎勵</span>，無現金價值、不可兌換法定貨幣。</li>
+          <li>心願內容屬用戶發表，須遵守平台規則；違規可被隱藏、舉報處理或限制帳號。</li>
+          <li>心願與打氣名單可能顯示顯示名稱並連結公開 Mirror Card（如有）；請勿冒用他人身份。</li>
+        </ul>
+      </div>
+      <div class="section-body en">
+        <p>Moonlight Wishes lets signed-in users create recent goals/wishes (public or members-only); others may cheer; owners may stamp daily and mark complete.</p>
+        <ul>
+          <li>Active-wish limits, minimum time before completion, daily cheer caps and similar rules follow in-product copy.</li>
+          <li>Cheers are <span class="highlight">irreversible</span> once sent; do not abuse cheers or leave inappropriate notes.</li>
+          <li>Completion, first-create or cheer-milestone “moon shards” are <span class="highlight">virtual rewards</span> with no cash value and are not redeemable for money.</li>
+          <li>Wish content is user-generated and must follow Platform rules; we may hide, act on reports or restrict accounts.</li>
+          <li>Wishes and cheer lists may show display names and link to a published Mirror Card (if any); do not impersonate others.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="ui-ico ui-ico--heart" aria-hidden="true"></span><span class="zh">我的月光貓</span><span class="en">My Moon Cat</span></div>
+      <div class="section-body zh">
+        <p>「我的月光貓」為虛擬寵物養成功能（餵食、摸摸、商店、房間等）。屬娛樂性質；飽腹、好感、靈魂值、碎屑、外觀與傢俬均為虛擬數值／道具，<span class="highlight">無現金價值</span>，規則與價格可由平台調整。</p>
+        <p>貓咪「離家／召喚」等敘事為遊戲體驗，不構成真實服務義務。因裝置、網路或第三方故障導致的進度異常，我們會在合理範圍內協助，但不保證可還原所有狀態。</p>
+      </div>
+      <div class="section-body en">
+        <p>“My Moon Cat” is a virtual pet feature (feeding, petting, shop, room, etc.) for entertainment. Hunger, affection, soul, shards, skins and furniture are virtual values/items with <span class="highlight">no cash value</span>; rules and prices may change.</p>
+        <p>Away / summon narratives are gameplay, not real-world service obligations. We may help reasonably with progress issues caused by device, network or third-party faults, but do not guarantee full restoration of state.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="ui-ico ui-ico--mail" aria-hidden="true"></span><span class="zh">收件箱、神秘通道與相片交換</span><span class="en">Inbox, Mystic Channel &amp; Photo Exchange</span></div>
+      <div class="section-body zh">
+        <p><span class="highlight">收件箱</span>用於會員通訊，包括私信、緣份卡、相片交換邀請，以及系統通知（例如聚會申請結果、心願打氣／完成提示）。系統通知由平台發送，通常不可當作一般用戶對話回覆。</p>
+        <ul>
+          <li>私信長度與發送頻率受平台限制（例如每則字數上限與速率限制）。</li>
+          <li><span class="highlight">神秘通道</span>為匿名往返對話，雙方回覆輪次有上限；主動開啟次數見會員配額。</li>
+          <li>禁止騷擾、威脅、詐騙、未經同意的色情內容或濫發訊息。</li>
+        </ul>
+        <p><span class="highlight">真人相片交換</span>僅 Moonlight Passport 可發起；對方接受後雙方上傳，完成後通常約 <span class="highlight">7 日</span>內可閱覽。你須上傳本人真實照片，並自行承擔分享真實影像的風險。平台不對線下見面或第三方濫用照片負責。</p>
+      </div>
+      <div class="section-body en">
+        <p>The <span class="highlight">Inbox</span> is for member communication: DMs, match cards, photo-exchange invites, and system notices (e.g. gathering outcomes, wish cheer/completion). System notices are sent by the Platform and are generally not ordinary user chat threads.</p>
+        <ul>
+          <li>Message length and send frequency are limited (e.g. character caps and rate limits).</li>
+          <li>The <span class="highlight">Mystic Channel</span> is an anonymous round-trip conversation with a reply-round cap; initiating uses premium quotas.</li>
+          <li>No harassment, threats, scams, non-consensual sexual content or spam.</li>
+        </ul>
+        <p><span class="highlight">Photo Exchange</span> may only be initiated by Moonlight Passport members. After acceptance both upload photos; completed exchanges are typically viewable for about <span class="highlight">7 days</span>. Upload genuine photos of yourself and accept the risks of sharing real images. The Platform is not responsible for offline meetings or third-party misuse of photos.</p>
+      </div>
+    </div>
+
     <div class="section">
       <div class="section-title"><span class="ui-ico ui-ico--gem" aria-hidden="true"></span><span class="zh">Moonlight Passport 會員</span><span class="en">Moonlight Passport Membership</span></div>
       <div class="section-body zh">
-        <p>Moonlight Passport 為<span class="highlight">虛擬數位會員服務</span>，可透過 PayPal 訂閱或 PayMe／FPS 人手付款開通。訂閱成功後即解鎖進階功能；<span class="danger">數位內容一經開通恕不退款</span>，詳見<a href="refund.html" style="color:var(--purple-l)">退款與取消訂閱政策</a>。</p>
-        <p>會員與免費帳號主要差異（每月配額，香港時間重置）：</p>
+        <p>Moonlight Passport 為<span class="highlight">虛擬數位會員服務</span>，可透過 PayPal 訂閱或 PayMe／FPS 等人手付款開通。開通後即解鎖進階功能；<span class="danger">數位內容一經開通原則上恕不退款</span>，詳見<a href="refund.html">退款與取消訂閱政策</a>。</p>
+        <p>與免費帳號的主要差異（配額以香港時間及站內最新說明為準，可能調整）：</p>
         <ul>
-          <li>樹洞發文：免費每日 3 篇／會員不限</li>
-          <li>月下緣份：會員可查看相容度 ≥60% 的完整配對列表</li>
-          <li>主動私信（神秘通道）：會員每月 3 次</li>
-          <li>真人相片交換：會員每月 3 次（對方接受時扣除配額）</li>
+          <li>樹洞發文：免費每日有上限／會員通常不限</li>
+          <li>月下緣份：會員可查看較完整的連線結果</li>
+          <li>主動私信（神秘通道）：會員每月有限次數</li>
+          <li>真人相片交換：會員每月有限次數（通常於對方接受時扣配額）</li>
         </ul>
-        <p>若你違反本條款而被封鎖帳號，已付費用不予退還。我們保留調整會員權益與定價之權利，並於合理範圍內提前通知。</p>
+        <p>因違反本條款被封鎖或終止者，已付費用不予退還。我們保留調整權益與定價之權利，並於合理範圍內通知。</p>
       </div>
       <div class="section-body en">
-        <p>Moonlight Passport is a <span class="highlight">virtual digital membership</span>, available via PayPal subscription or manual PayMe/FPS payment. Features unlock upon activation; <span class="danger">digital content is non-refundable once activated</span> — see our <a href="refund.html" style="color:var(--purple-l)">Refund & Cancellation Policy</a>.</p>
-        <p>Key differences from free accounts (monthly quotas, reset in Hong Kong time):</p>
+        <p>Moonlight Passport is a <span class="highlight">virtual digital membership</span> via PayPal or manual PayMe/FPS payment. Features unlock on activation; <span class="danger">digital content is generally non-refundable once activated</span> — see the <a href="refund.html">Refund &amp; Cancellation Policy</a>.</p>
+        <p>Key differences from free accounts (quotas in Hong Kong time; subject to change per in-product copy):</p>
         <ul>
-          <li>Forum posts: 3/day free · unlimited for premium</li>
-          <li>Echo Mode: premium members see the full match list at ≥60% compatibility</li>
-          <li>Active mystic-channel letters: 3/month for premium</li>
-          <li>Photo exchange: 3/month for premium (quota deducted when the recipient accepts)</li>
+          <li>Forum posts: daily free cap · typically unlimited for premium</li>
+          <li>Echo Mode: fuller connection results for premium</li>
+          <li>Active mystic-channel letters: limited per month for premium</li>
+          <li>Photo exchange: limited per month for premium (often deducted when the recipient accepts)</li>
         </ul>
-        <p>If your account is suspended for violating these terms, fees already paid are non-refundable. We reserve the right to adjust membership benefits and pricing with reasonable notice.</p>
+        <p>Fees are non-refundable if your account is suspended or terminated for violating these Terms. We may adjust benefits and pricing with reasonable notice.</p>
       </div>
     </div>
 
-    <!-- 6. Forum & Moon Journey -->
     <div class="section">
-      <div class="section-title"><span class="ui-ico ui-ico--tree" aria-hidden="true"></span><span class="zh">黑貓樹洞與月光旅程</span><span class="en">Forum & Moon Journey</span></div>
+      <div class="section-title"><span class="ui-ico ui-ico--moon" aria-hidden="true"></span><span class="zh">平台行為規則</span><span class="en">Conduct Rules</span></div>
       <div class="section-body zh">
-        <p>黑貓樹洞為註冊會員的公開討論區。你發佈的內容須合法、尊重他人，且不得侵犯他人權利。平台可因舉報或主動審核隱藏、刪除違規內容，並暫停或終止違規帳號。</p>
-        <p><span class="highlight">月光旅程</span>為論壇互動的成長系統：發文、留言、獲讚、書籤與每日打卡可獲得經驗值（EXP），累積升級。每日留言 EXP 有上限；重複或刷分行為不予計分。等級與 EXP 規則由平台制定，可能調整。</p>
-        <p>論壇內容不代表平台立場。請勿將樹洞內容視為專業心理、醫療或法律建議。</p>
+        <p>使用漂流瓶、論壇、收件箱、聚會、心願、Mirror Card 等任何功能，即表示你同意：</p>
+        <ul>
+          <li>以善意與尊重對待其他用戶與內容。</li>
+          <li>禁止人身攻擊、騷擾、仇恨、歧視或欺凌。</li>
+          <li>禁止色情、性交易／援交招攬，或未經同意的露骨內容。</li>
+          <li>禁止垃圾訊息、廣告濫發或惡意重複內容。</li>
+          <li>禁止未經同意公開他人可識別身分的資料；漂流瓶須保持匿名。</li>
+          <li>禁止詐騙、勒索、冒充他人或平台職員、干擾系統或規避限制。</li>
+          <li>禁止利用任何功能從事違法活動。</li>
+        </ul>
+        <p><span class="highlight">漂流瓶：</span>每小時最多約 <span class="highlight">5</span> 個瓶子（每則最多約 200 字）；回聲每小時最多約 <span class="highlight">10</span> 條（每則最多約 100 字）。實際限制以系統為準。</p>
+        <p>違規內容（含漂流瓶、論壇、心願、Mirror Card 等）可能在累計舉報達門檻後自動隱藏並經審核。短時間大量請求或情節嚴重者，可封禁 IP 或帳號（例如 24 小時起或更長）。</p>
       </div>
       <div class="section-body en">
-        <p>The Black Cat Tree Hollow is a public discussion area for registered members. Your posts must be lawful, respectful, and must not infringe others' rights. We may hide, remove, or moderate content following reports or proactive review, and suspend or terminate violating accounts.</p>
-        <p><span class="highlight">Moon Journey</span> is a growth system tied to forum activity: posts, comments, likes received, bookmarks, and daily check-ins award experience (EXP) toward level-ups. Daily comment EXP is capped; duplicate or abusive farming does not count. Level and EXP rules are set by the platform and may change.</p>
-        <p>Forum content does not represent the platform's views. Do not treat forum posts as professional psychological, medical, or legal advice.</p>
+        <p>By using bottles, the forum, inbox, gatherings, wishes, Mirror Cards or any feature, you agree to:</p>
+        <ul>
+          <li>Treat others and content with kindness and respect.</li>
+          <li>No personal attacks, harassment, hate, discrimination or bullying.</li>
+          <li>No porn, sex-work solicitation, or non-consensual explicit content.</li>
+          <li>No spam, ad flooding or abusive repetitive content.</li>
+          <li>No publishing others’ identifiable data without consent; bottles must stay anonymous.</li>
+          <li>No fraud, extortion, impersonation of users or staff, system abuse or limit evasion.</li>
+          <li>No illegal activity through any feature.</li>
+        </ul>
+        <p><span class="highlight">Drift bottles:</span> up to about <span class="highlight">5</span> bottles per hour (about 200 characters each); up to about <span class="highlight">10</span> echoes per hour (about 100 characters each). Exact limits follow the live system.</p>
+        <p>Violating content may auto-hide after report thresholds and be reviewed. Burst requests or serious cases may lead to IP or account bans (e.g. 24 hours or longer).</p>
       </div>
     </div>
 
-    <!-- 7. Inbox & Photo Exchange -->
     <div class="section">
-      <div class="section-title"><span class="ui-ico ui-ico--mail" aria-hidden="true"></span><span class="zh">收件箱、神秘通道與相片交換</span><span class="en">Inbox, Mystic Channel & Photo Exchange</span></div>
+      <div class="section-title"><span class="ui-ico ui-ico--scales" aria-hidden="true"></span><span class="zh">法律聲明與責任限制</span><span class="en">Legal Statement &amp; Liability Limits</span></div>
       <div class="section-body zh">
-        <p><span class="highlight">收件箱</span>讓你透過 Mirror Card 與其他會員通訊，包括一般私信、緣份卡投遞與相片交換邀請。</p>
+        <p>本平台根據香港特別行政區適用法律運營，包括但不限於《個人資料（私隱）條例》。個人資料處理詳見<a href="privacy.html">私隱政策</a>。</p>
         <ul>
-          <li>私信每則最多 <span class="highlight">200 字</span>；發送頻率受平台限制。</li>
-          <li><span class="highlight">神秘通道</span>為匿名往返對話，雙方各最多 <span class="highlight">10 輪</span>回覆；會員每月主動開啟次數見 Moonlight Passport 配額。</li>
-          <li>請勿透過收件箱騷擾、威脅、發送色情或詐騙內容；違規將導致內容移除與帳號處分。</li>
+          <li>嚴禁發佈違反適用法律的內容；我們可依法向執法機構提供必要資料。</li>
+          <li>漂流瓶／回聲以匿名方式處理為原則；註冊功能會儲存帳號與你提交的資料。</li>
+          <li>為防濫用，系統可能記錄 IP、裝置資訊與日誌；保留期視安全與營運需要而定。</li>
         </ul>
-        <p><span class="highlight">真人相片交換</span>僅 Moonlight Passport 會員可發起；對方接受後雙方上傳照片，完成交換後照片僅在 <span class="highlight">7 日</span>內可閱覽。你須確認上傳的是本人真實照片，並自行承擔分享真實影像的風險。平台不對線下見面或第三方使用你照片的行為負責。</p>
+        <p>在法律允許的最大範圍內，本平台及營運者對間接、附帶、特殊、懲罰性或衍生損害（包括利潤、商譽、資料或機會損失）<span class="highlight">概不負責</span>。若依法仍須承擔直接損害，總責任額以你在索償前十二個月內就相關付費服務實際支付予本平台的金額為上限（若無付費則為零），法律禁止限制者除外。</p>
+        <p>本條款受香港法律管轄；在法律允許範圍內，爭議提交香港法院非專屬管轄。中英文如有歧義，就香港用戶及香港法適用範圍以<span class="highlight">中文版本為準</span>。</p>
+        <p class="danger">如發現違法或違規內容，請使用「舉報」功能或聯絡我們。</p>
       </div>
       <div class="section-body en">
-        <p>The <span class="highlight">Inbox</span> lets you communicate with other members via Mirror Card, including direct messages, match-card delivery, and photo-exchange invites.</p>
+        <p>The Platform operates under the laws of the Hong Kong SAR, including without limitation the Personal Data (Privacy) Ordinance. Data practices are described in the <a href="privacy.html">Privacy Policy</a>.</p>
         <ul>
-          <li>Messages are limited to <span class="highlight">200 characters</span> each; sending frequency is rate-limited.</li>
-          <li>The <span class="highlight">Mystic Channel</span> is an anonymous back-and-forth conversation with up to <span class="highlight">10 round-trips</span> per side; premium monthly limits for initiating apply as stated under Moonlight Passport.</li>
-          <li>Do not use the inbox for harassment, threats, sexual content, or scams; violations may result in content removal and account action.</li>
+          <li>Illegal content is prohibited; we may provide necessary information to law enforcement when required by law.</li>
+          <li>Bottles/echoes are handled anonymously in principle; registered features store account and user-submitted data.</li>
+          <li>We may log IPs, device data and access logs for abuse prevention; retention depends on security and operations.</li>
         </ul>
-        <p><span class="highlight">Photo Exchange</span> may only be initiated by Moonlight Passport members. After the other party accepts, both upload photos; completed exchanges remain viewable for <span class="highlight">7 days</span>. You must upload genuine photos of yourself and accept the risks of sharing real images. The platform is not responsible for offline meetings or third-party misuse of your photos.</p>
+        <p>To the maximum extent permitted by law, the Platform and its operators are not liable for indirect, incidental, special, punitive or consequential damages (including loss of profits, goodwill, data or opportunity). Where direct damages remain recoverable, aggregate liability is capped at amounts you actually paid us for the relevant paid services in the twelve months before the claim (or zero if unpaid), except where limitation is prohibited by law.</p>
+        <p>These Terms are governed by Hong Kong law; subject to mandatory law, disputes are submitted to the non-exclusive jurisdiction of the Hong Kong courts. If Chinese and English conflict, the <span class="highlight">Chinese version prevails</span> for Hong Kong users and Hong Kong-law matters.</p>
+        <p class="danger">Report illegal or violating content via the Report tools or Contact.</p>
       </div>
     </div>
 
-    <!-- 8. Platform Rules -->
-    <div class="section">
-      <div class="section-title"><span class="ui-ico ui-ico--moon" aria-hidden="true"></span><span class="zh">平台規則</span><span class="en">Platform Rules</span></div>
-      <div class="section-body zh">
-        <p>月光漂流瓶是一個完全匿名的心靈漂流空間；黑貓樹洞、收件箱等註冊功能亦須遵守相同行為準則。使用本平台即表示你同意以下規則：</p>
-        <ul>
-          <li>請以善意與尊重對待每一只漂流瓶、回聲、樹洞貼文、留言與私信。</li>
-          <li>禁止發佈任何形式的人身攻擊、騷擾或仇恨內容。</li>
-          <li>禁止發佈色情、性交易或援交相關內容。</li>
-          <li>禁止發佈垃圾訊息、廣告連結或重複性內容。</li>
-          <li>禁止發佈任何可識別他人身份的個人資料（漂流瓶須匿名；註冊功能中請勿未經同意公開他人資料）。</li>
-          <li>禁止利用論壇、收件箱或相片交換進行詐騙、勒索或違法活動。</li>
-        </ul>
-        <p><span class="highlight">投瓶限制：</span>每小時最多投出 <span class="highlight">5 個</span>漂流瓶，每個瓶子最多 <span class="highlight">200 字</span>。</p>
-        <p><span class="highlight">回聲限制：</span>每小時最多留下 <span class="highlight">10 條</span>回聲，每條最多 <span class="highlight">100 字</span>。</p>
-        <p>違反規則的內容（含漂流瓶、論壇貼文、留言、Mirror Card 舉報）將在收到 <span class="highlight">3 次舉報</span>後自動隱藏，並由管理員審核。短時間內大量請求（2 秒內超過 5 次）或情節嚴重者將封禁 IP 或帳號 <span class="highlight">24 小時</span>起。</p>
-      </div>
-      <div class="section-body en">
-        <p>Moonlight Drift Bottle is a fully anonymous space for sharing thoughts; registered features such as the forum and inbox are subject to the same conduct standards. By using this platform, you agree to the following rules:</p>
-        <ul>
-          <li>Please treat every drift bottle, echo, forum post, comment, and private message with kindness and respect.</li>
-          <li>Prohibited: personal attacks, harassment, or hate speech of any kind.</li>
-          <li>Prohibited: pornographic, sex work, or escort-related content.</li>
-          <li>Prohibited: spam, advertisement links, or repetitive content.</li>
-          <li>Prohibited: personally identifiable information about others without consent (drift bottles must stay anonymous).</li>
-          <li>Prohibited: using the forum, inbox, or photo exchange for fraud, extortion, or illegal activity.</li>
-        </ul>
-        <p><span class="highlight">Bottle limit:</span> up to <span class="highlight">5 bottles</span> per hour, max <span class="highlight">200 characters</span> each.</p>
-        <p><span class="highlight">Echo limit:</span> up to <span class="highlight">10 echoes</span> per hour, max <span class="highlight">100 characters</span> each.</p>
-        <p>Content violating these rules (including drift bottles, forum posts, comments, and Mirror Card reports) will be automatically hidden after <span class="highlight">3 reports</span> and reviewed by administrators. Burst requests (more than 5 within 2 seconds) or severe violations may result in a <span class="highlight">24-hour or longer</span> IP or account ban.</p>
-      </div>
-    </div>
-
-    <!-- 9. Legal Statement -->
-    <div class="section">
-      <div class="section-title"><span class="ui-ico ui-ico--scales" aria-hidden="true"></span><span class="zh">法律聲明</span><span class="en">Legal Statement</span></div>
-      <div class="section-body zh">
-        <p>本平台根據香港適用法律運營，包括但不限於《個人資料（私隱）條例》。</p>
-        <ul>
-          <li>嚴禁發佈任何違反香港本地法律的內容。</li>
-          <li>我們保留在法律要求下向相關執法機構提供必要資料的權利。</li>
-          <li>漂流瓶及回聲以匿名方式儲存；註冊帳號功能（Mirror Card、論壇、收件箱、相片交換等）則會儲存帳號與你主動提交的資料，詳見<a href="privacy.html" style="color:var(--purple-l)">私隱政策</a>。</li>
-          <li>為防止濫用，系統會記錄請求 IP 地址以進行速率限制；匿名漂流瓶相關 IP 資料不會超過 24 小時保留。</li>
-        </ul>
-        <p class="danger">如發現任何違法內容，請透過「舉報」功能向我們反映。</p>
-      </div>
-      <div class="section-body en">
-        <p>This platform operates in accordance with applicable Hong Kong laws, including but not limited to the Personal Data (Privacy) Ordinance.</p>
-        <ul>
-          <li>Prohibited: any content that violates applicable Hong Kong laws.</li>
-          <li>We reserve the right to provide necessary information to relevant law enforcement agencies when required by law.</li>
-          <li>Drift bottles and echoes are stored anonymously; registered features (Mirror Card, forum, inbox, photo exchange, etc.) store account and user-submitted data as described in our <a href="privacy.html" style="color:var(--purple-l)">Privacy Policy</a>.</li>
-          <li>To prevent misuse, the system logs request IP addresses for rate-limiting; IP data for anonymous drift bottles is not retained for more than 24 hours.</li>
-        </ul>
-        <p class="danger">If you discover any illegal content, please report it using the "Report" function.</p>
-      </div>
-    </div>
-
-    <!-- 10. Crisis Intervention -->
     <div class="section">
       <div class="section-title"><span class="ui-ico ui-ico--heart" aria-hidden="true"></span><span class="zh">危機介入聲明</span><span class="en">Crisis Intervention</span></div>
       <div class="section-body zh">
-        <p>如果你或你身邊的人正在經歷困難，請記住：你並不孤單。</p>
-        <p>當系統偵測到內容可能涉及心理危機時，會自動顯示危機介入横幅，提供以下緊急支援熱線：</p>
+        <p>如果你或身邊的人正在經歷困難，請記住：你並不孤單。本平台<span class="highlight">不是</span>緊急救援或醫療服務；危急時請即時聯絡當地緊急服務或以下熱線。</p>
+        <p>當系統偵測到內容可能涉及心理危機時，可能顯示介入提示並提供支援資訊：</p>
         <div class="hotlines">
           <a class="hotline" href="tel:23892222"><span>撒瑪利亞防止自殺會</span><span class="hotline-num">2389 2222</span></a>
           <a class="hotline" href="tel:23820000"><span>生命熱線</span><span class="hotline-num">2382 0000</span></a>
           <a class="hotline" href="tel:53824343"><span>陪我講 Shall We Talk</span><span class="hotline-num">5382 4343</span></a>
           <a class="hotline" href="tel:24400"><span>醫管局精神健康直通車</span><span class="hotline-num">24400</span></a>
         </div>
-        <p style="margin-top:.9rem;font-size:.8rem;color:#7a7590">以上熱線均由香港本地機構提供，24 小時服務（部分熱線服務時間請向各機構查詢）。</p>
+        <p style="margin-top:.9rem;font-size:.8rem;color:#7a7590">以上熱線由香港本地機構提供；服務時間請向各機構查詢。自動提示不保證能識別所有危機情況。</p>
       </div>
       <div class="section-body en">
-        <p>If you or someone around you is going through a difficult time, remember: you are not alone.</p>
-        <p>When the system detects content that may involve a mental health crisis, a crisis intervention banner will automatically appear with the following emergency hotlines:</p>
+        <p>If you or someone near you is struggling, you are not alone. The Platform is <span class="highlight">not</span> emergency or medical care; in a crisis contact local emergency services or the hotlines below.</p>
+        <p>When content may indicate a mental-health crisis, we may show a notice with support information:</p>
         <div class="hotlines">
           <a class="hotline" href="tel:23892222"><span>Samaritans Hong Kong</span><span class="hotline-num">2389 2222</span></a>
           <a class="hotline" href="tel:23820000"><span>Samaritan Befrienders HK</span><span class="hotline-num">2382 0000</span></a>
           <a class="hotline" href="tel:53824343"><span>Shall We Talk</span><span class="hotline-num">5382 4343</span></a>
           <a class="hotline" href="tel:24400"><span>HA Mental Health Direct</span><span class="hotline-num">24400</span></a>
         </div>
-        <p style="margin-top:.9rem;font-size:.8rem;color:#7a7590">All hotlines are provided by Hong Kong-based organisations. (Please check individual organisations for service hours.)</p>
+        <p style="margin-top:.9rem;font-size:.8rem;color:#7a7590">Hotlines are provided by Hong Kong organisations; check their hours. Automated notices cannot guarantee detection of every crisis.</p>
       </div>
     </div>
 
@@ -399,8 +455,7 @@
         <a href="privacy.html"><span class="zh">私隱政策</span><span class="en">Privacy</span></a> ·
         <a href="refund.html"><span class="zh">退款與取消</span><span class="en">Refund</span></a>
       </p>
-      <p><span class="zh">最後更新：2026年7月 · Black Cat Under The Moon</span><span class="en">Last updated: July 2026 (Mirror Mode, Forum, Inbox, Moon Journey &amp; Moonlight Passport) · Black Cat Under The Moon</span></p>
-
+      <p><span class="zh">最後更新：2026年7月 · Black Cat Under The Moon</span><span class="en">Last updated: July 2026 · Black Cat Under The Moon</span></p>
     </div>
   </div>
 
@@ -428,8 +483,8 @@
       }
     })();
   </script>
-<script src="/js/mobile-document-scroll.js"></script>
-<script src="js/me-cache.js?v=20260706name"></script>
-<script src="js/auth-nav.js?v=20260725catglow"></script>
+  <script src="/js/mobile-document-scroll.js"></script>
+  <script src="js/me-cache.js?v=20260706name"></script>
+  <script src="js/auth-nav.js?v=20260725catglow"></script>
 </body>
 </html>

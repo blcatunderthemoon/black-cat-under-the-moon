@@ -182,20 +182,30 @@ export default function GatheringCommentBoard({ gatheringId }) {
     <section className="gathering-board">
       <header className="gathering-board__head">
         <h2 className="gathering-board__title">
-          <ForumPawIcon size={16} /> 聚會圍爐房
+          <span className="gathering-board__title-icon" aria-hidden="true">
+            <ForumPawIcon size={16} />
+          </span>
+          聚會圍爐房
         </h2>
         <p className="gathering-board__lead">
-          對呢個活動有問題？想同其他參加者相認？即刻喺下面留言傾吓！
+          對呢個活動有問題？想同其他參加者相認？喺下面留言傾吓。
         </p>
       </header>
 
-      <div className="gathering-board__list" ref={listRef}>
+      <div
+        className={`gathering-board__list${loading || comments.length === 0 ? ' is-empty' : ' has-msgs'}`}
+        ref={listRef}
+      >
         {loading ? (
           <LoadingText className="gathering-board__muted" />
         ) : comments.length === 0 ? (
-          <p className="gathering-board__muted">
-            <ForumFlameIcon size={14} /> 仲未有留言 —— 做第一個開火煲嘅人啦
-          </p>
+          <div className="gathering-board__empty">
+            <span className="gathering-board__empty-icon" aria-hidden="true">
+              <ForumFlameIcon size={20} />
+            </span>
+            <p className="gathering-board__empty-title">仲未有留言</p>
+            <p className="gathering-board__empty-hint">做第一個開火煲嘅人啦</p>
+          </div>
         ) : (
           comments.map((c) => (
             <article
@@ -266,12 +276,16 @@ export default function GatheringCommentBoard({ gatheringId }) {
       {error && <p className="gathering-board__error" role="alert">{error}</p>}
 
       <form className="gathering-board__compose" onSubmit={post}>
+        <label className="gathering-board__compose-label" htmlFor={`gathering-board-draft-${gatheringId}`}>
+          寫留言
+        </label>
         <textarea
+          id={`gathering-board-draft-${gatheringId}`}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           maxLength={MAX_BODY}
-          rows={2}
-          placeholder="留言畀主辦人同其他參加者…（例如：使唔使自備嘢？）"
+          rows={3}
+          placeholder="例如：使唔使自備嘢？準時準到？"
           aria-label="留言內容"
         />
         <div className="gathering-board__compose-foot">

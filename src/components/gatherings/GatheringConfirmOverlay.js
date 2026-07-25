@@ -56,7 +56,7 @@ export default function GatheringConfirmOverlay({
         <div className="gathering-hud__corners" aria-hidden="true" />
         <p className="gathering-confirm__eyebrow">SYSTEM CHECK</p>
         <h2 className="gathering-confirm__title" id={titleId}>{title}</h2>
-        {sub ? <p className="gathering-confirm__sub">{sub}</p> : null}
+        {sub ? <div className="gathering-confirm__sub">{sub}</div> : null}
 
         {showNote && (
           <label className="gathering-confirm__note-wrap">

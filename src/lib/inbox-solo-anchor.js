@@ -7,6 +7,7 @@
 import { ensureProfile, getAdminClient } from './server-auth.js';
 
 const SOLO_ANCHOR_EMAIL = 'solo-match-anchor@internal.blackcatunderthemoon.com';
+export const SOLO_MATCH_ANCHOR_DISPLAY_NAME = '月影連線';
 
 let cachedAnchorId = null;
 
@@ -49,7 +50,7 @@ export async function ensureSoloMatchAnchorUserId(admin = getAdminClient()) {
     const { data: created, error: createError } = await admin.auth.admin.createUser({
       email: SOLO_ANCHOR_EMAIL,
       email_confirm: true,
-      user_metadata: { display_name: '月影連線' },
+      user_metadata: { display_name: SOLO_MATCH_ANCHOR_DISPLAY_NAME },
     });
     if (createError) throw createError;
     anchorId = created.user.id;
@@ -57,7 +58,7 @@ export async function ensureSoloMatchAnchorUserId(admin = getAdminClient()) {
 
   const { data: existingProfile } = await admin.from('profiles').select('id').eq('id', anchorId).maybeSingle();
   if (!existingProfile) {
-    await ensureProfile({ id: anchorId, email: SOLO_ANCHOR_EMAIL, user_metadata: { display_name: '月影連線' } });
+    await ensureProfile({ id: anchorId, email: SOLO_ANCHOR_EMAIL, user_metadata: { display_name: SOLO_MATCH_ANCHOR_DISPLAY_NAME } });
   }
 
   cachedAnchorId = anchorId;

@@ -33,6 +33,15 @@ export const SYSTEM_CHANNELS = {
   },
 };
 
+/** Display names used by internal system inbox anchors (not real members). */
+export const SYSTEM_CHANNEL_DISPLAY_NAMES = new Set(
+  Object.values(SYSTEM_CHANNELS).map((cfg) => cfg.name),
+);
+
+export function isSystemChannelDisplayName(name) {
+  return SYSTEM_CHANNEL_DISPLAY_NAMES.has(String(name || '').trim());
+}
+
 const anchorIdCache = {};
 
 /**
