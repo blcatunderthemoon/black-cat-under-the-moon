@@ -16,6 +16,8 @@
   --site-safe-top: env(safe-area-inset-top, 0px);
   --mode-top-bar-row-pad-y: 16px;
   --mode-top-bar-clearance: calc(var(--site-safe-top) + var(--mode-top-bar-h) + var(--mode-top-bar-row-pad-y));
+  /* Shared header chip / back-btn corner radius (主頁、lang、etc.) */
+  --mode-header-chip-radius: 8px;
 }
 
 html.in-app-webview {
@@ -262,7 +264,7 @@ html:has(.mode-top-bar--quiz) {
   align-items: center;
   justify-content: center;
   min-height: 32px;
-  max-width: 100%;
+  max-width: none;
   padding: 0 12px;
   font-family: 'Press Start 2P', monospace;
   font-size: 6px;
@@ -272,8 +274,8 @@ html:has(.mode-top-bar--quiz) {
   border: 1px solid rgba(61, 56, 112, 0.55);
   box-shadow: inset 0 0 12px rgba(189, 147, 249, 0.04);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 /* ── Shared chip chrome (home btn + auth nav container) ── */
@@ -295,6 +297,7 @@ html:has(.mode-top-bar--quiz) {
   cursor: pointer;
   background: linear-gradient(165deg, rgba(15, 14, 34, 0.97) 0%, rgba(7, 6, 14, 0.98) 100%);
   border: 1px solid rgba(189, 147, 249, 0.38);
+  border-radius: var(--mode-header-chip-radius, 8px);
   box-shadow:
     0 0 0 1px rgba(189, 147, 249, 0.06),
     0 0 14px rgba(100, 80, 200, 0.12),
@@ -315,6 +318,7 @@ html:has(.mode-top-bar--quiz) {
   left: 0;
   right: 0;
   height: 1px;
+  border-radius: var(--mode-header-chip-radius, 8px) var(--mode-header-chip-radius, 8px) 0 0;
   background: linear-gradient(
     90deg,
     transparent 0%,
@@ -672,6 +676,7 @@ html:has(.mode-top-bar--quiz) {
   box-sizing: border-box;
   background: linear-gradient(165deg, rgba(15, 14, 34, 0.98) 0%, rgba(7, 6, 14, 0.99) 100%);
   border: 1px solid rgba(189, 147, 249, 0.42);
+  border-radius: var(--mode-header-chip-radius, 8px);
   box-shadow:
     0 0 0 1px rgba(189, 147, 249, 0.08),
     0 6px 20px rgba(0, 0, 0, 0.45),
@@ -790,12 +795,16 @@ html:has(.mode-top-bar--quiz) {
   justify-content: center;
   align-self: center;
   min-height: 32px;
+  font-family: 'Zpix', 'Press Start 2P', monospace;
   font-size: 10px;
   font-weight: normal;
+  letter-spacing: 0.02em;
   line-height: 1;
   color: #7a7590;
   padding: 0 8px;
   box-sizing: border-box;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .auth-nav-badge__item:hover {
@@ -942,14 +951,14 @@ html:has(.mode-top-bar--quiz) {
   }
 
   .mode-top-bar--index.mode-top-bar--greeting .header-my-cat-link {
-    width: 26px;
-    min-width: 26px;
-    height: 26px;
+    width: 32px;
+    min-width: 32px;
+    height: 32px;
   }
 
   .mode-top-bar--index.mode-top-bar--greeting .header-my-cat-link__sprite--strip {
-    width: 18px;
-    height: 18px;
+    width: 26px;
+    height: 26px;
   }
 
   .mode-header-chip {
@@ -967,10 +976,12 @@ html:has(.mode-top-bar--quiz) {
     font-size: 6px;
     letter-spacing: 0.03em;
     max-width: none;
+    overflow: visible;
   }
   .mode-top-bar--result #progress-text.mode-top-bar__center--zh {
-    font-size: 9px;
+    font-size: clamp(10px, 3.2vw, 12px);
     max-width: none;
+    overflow: visible;
   }
   /* Prefer fitting icons + truncated name over a nested horizontal scroll */
   .mode-top-bar__nav-slot {
@@ -1042,9 +1053,9 @@ html:has(.mode-top-bar--quiz) {
   }
 
   .header-my-cat-link {
-    width: 28px;
-    min-width: 28px;
-    height: 28px;
+    width: 32px;
+    min-width: 32px;
+    height: 32px;
     flex-shrink: 0;
   }
   .auth-nav-badge__item--signup {
@@ -1256,19 +1267,24 @@ body[data-automode="mirror"]:not(.quiz-viewport) #q-answers {
 
 .mode-top-bar--result .progress-label.mode-top-bar__row {
   position: relative;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
-/* Sit in the center grid column (not absolute) so the wide auth nav
-   cannot cover / clip the mode name, and true horizontal centering holds. */
+/* True viewport center — never ellipsize short mode titles (鏡像結果 / 月下緣份). */
 .mode-top-bar--result #progress-text {
-  position: static;
-  left: auto;
-  top: auto;
-  transform: none;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   z-index: 1;
-  grid-column: 2;
+  grid-column: auto;
   justify-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: max-content;
+  min-width: max-content;
+  max-width: none;
   font-family: 'Press Start 2P', monospace;
   font-size: 7px;
   letter-spacing: 0.04em;
@@ -1278,7 +1294,6 @@ body[data-automode="mirror"]:not(.quiz-viewport) #q-answers {
   box-shadow: none;
   padding: 0;
   min-height: 0;
-  max-width: none;
   overflow: visible;
   text-overflow: clip;
   white-space: nowrap;
@@ -1287,9 +1302,11 @@ body[data-automode="mirror"]:not(.quiz-viewport) #q-answers {
 
 .mode-top-bar--result #progress-text.mode-top-bar__center--zh {
   font-family: 'Zpix', 'Press Start 2P', monospace;
-  font-size: 11px;
+  font-size: clamp(10px, 3.1vw, 12px);
   letter-spacing: 0.02em;
   color: #ffe066;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .mode-top-bar--result .home-back-btn,
@@ -1301,7 +1318,7 @@ body[data-automode="mirror"]:not(.quiz-viewport) #q-answers {
 }
 
 .mode-top-bar--result .mode-top-bar__nav-slot {
-  grid-column: 3;
+  grid-column: 2;
   justify-self: end;
   position: relative;
   z-index: 2;
@@ -1317,13 +1334,21 @@ body[data-automode="mirror"]:not(.quiz-viewport) #q-answers {
     letter-spacing: 0.03em;
   }
   .mode-top-bar--result #progress-text.mode-top-bar__center--zh {
-    font-size: 10px;
+    font-size: clamp(10px, 3.2vw, 12px);
   }
   .mode-top-bar--result .mode-top-bar__row,
   .mode-top-bar--result .progress-label.mode-top-bar__row {
     gap: 8px;
     padding-left: 10px;
     padding-right: 10px;
+  }
+
+  /* Free center space: hide greeting name (+ moon) on quiz/result so titles stay full & centered */
+  .mode-top-bar--quiz .auth-nav-badge__name-group,
+  .mode-top-bar--result .auth-nav-badge__name-group,
+  .mode-top-bar--quiz .auth-nav-badge__name-group + .auth-nav-badge__sep,
+  .mode-top-bar--result .auth-nav-badge__name-group + .auth-nav-badge__sep {
+    display: none;
   }
 }
 
@@ -1561,6 +1586,10 @@ body:has(.mode-top-bar--legal) .page {
   box-shadow: none;
   padding: 0 8px;
   min-height: 32px;
+  width: max-content;
+  max-width: none;
+  overflow: visible;
+  text-overflow: clip;
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: geometricPrecision;
@@ -1615,8 +1644,11 @@ body.lang-en .mode-top-bar--legal .home-back-btn .en {
 
 @media (max-width: 520px) {
   .mode-top-bar--legal .mode-top-bar__mode-tag {
-    font-size: 9px;
-    max-width: min(160px, 38vw);
+    font-size: clamp(8px, 2.6vw, 9px);
+    max-width: none;
+    width: max-content;
+    overflow: visible;
+    text-overflow: clip;
     min-height: 28px;
     padding: 0 6px;
   }
@@ -1874,47 +1906,45 @@ body.lang-en .mode-top-bar--legal .home-back-btn .en {
   flex-shrink: 0;
   box-sizing: border-box;
   overflow: hidden;
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
   padding: 0;
   border-radius: 8px;
-  background: linear-gradient(180deg, rgba(124, 92, 252, 0.26) 0%, rgba(52, 38, 100, 0.3) 100%);
+  background: linear-gradient(180deg, rgba(124, 92, 252, 0.2) 0%, rgba(52, 38, 100, 0.26) 100%);
   box-shadow:
-    inset 0 0 0 1px rgba(189, 147, 249, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 0 8px rgba(124, 92, 252, 0.28);
+    inset 0 0 0 1px rgba(189, 147, 249, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
   transition: background 0.2s, box-shadow 0.2s;
 }
 
-/* 月光照喺貓身上 */
+/* 月光照喺貓身上（輕量，避免搶眼） */
 .header-my-cat-link::before {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: radial-gradient(circle at 50% 30%, rgba(255, 224, 138, 0.2), transparent 62%);
+  background: radial-gradient(circle at 50% 28%, rgba(255, 224, 138, 0.08), transparent 58%);
   pointer-events: none;
 }
 
 .header-my-cat-link:hover {
-  background: linear-gradient(180deg, rgba(124, 92, 252, 0.42) 0%, rgba(70, 52, 130, 0.42) 100%);
+  background: linear-gradient(180deg, rgba(124, 92, 252, 0.32) 0%, rgba(70, 52, 130, 0.34) 100%);
   box-shadow:
-    inset 0 0 0 1px rgba(255, 224, 102, 0.75),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 0 12px rgba(255, 224, 102, 0.38);
+    inset 0 0 0 1px rgba(255, 224, 102, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 /* 遊戲入面同一隻 cat05（idle 第 0 幀），pixelated 保持像素質感 */
 .header-my-cat-link__sprite {
   display: block;
-  width: 19px;
-  height: 18px;
+  width: 24px;
+  height: 22px;
   flex-shrink: 0;
   overflow: hidden;
-  background: url('/catset_extra_assets/cat05_header_icon.png') no-repeat center / 19px 18px;
+  background: url('/catset_extra_assets/cat05_header_icon.png') no-repeat center / 24px 22px;
   image-rendering: pixelated;
-  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.55));
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.45));
   transition: transform 0.15s ease-out;
 }
 
@@ -1922,54 +1952,29 @@ body.lang-en .mode-top-bar--legal .home-back-btn .en {
   transform: translateY(-1px);
 }
 
-/* 換裝貓：idle strip 第一幀縮放入 icon，避免原生 40px 幀溢出頂欄 */
+/* 換裝貓：放大裁切 idle 第一幀，令其他皮膚更明顯 */
 .header-my-cat-link__sprite--strip {
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
   background-repeat: no-repeat;
   filter: none;
 }
 
 .header-my-cat-link__dot {
   position: absolute;
-  top: 1px;
-  right: 1px;
-  width: 8px;
-  height: 8px;
+  top: 2px;
+  right: 2px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: #ff6b6b;
-  box-shadow: 0 0 6px rgba(255, 107, 107, 0.9);
+  box-shadow: 0 0 0 1.5px rgba(12, 10, 24, 0.95);
   pointer-events: none;
 }
 
-/* Radar-style ping to draw the eye */
-.header-my-cat-link__dot::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: rgba(255, 107, 107, 0.7);
-  animation: header-dot-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
-}
-
-@keyframes header-dot-ping {
-  0% { transform: scale(1); opacity: 0.7; }
-  70%, 100% { transform: scale(2.6); opacity: 0; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .header-my-cat-link__dot::after {
-    animation: none;
-    display: none;
-  }
-}
-
 .header-my-cat-link--hungry {
-  background: linear-gradient(180deg, rgba(255, 122, 92, 0.3) 0%, rgba(120, 52, 46, 0.32) 100%);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 138, 92, 0.85),
-    0 0 12px rgba(255, 122, 92, 0.5);
-  animation: my-cat-entry-pulse 2s ease-in-out infinite;
+  background: linear-gradient(180deg, rgba(255, 122, 92, 0.16) 0%, rgba(120, 52, 46, 0.22) 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 138, 92, 0.55);
 }
 
 .header-my-cat-link--hungry .header-my-cat-link__sprite {
@@ -1983,13 +1988,7 @@ body.lang-en .mode-top-bar--legal .home-back-btn .en {
   88%, 96% { transform: translateY(0); }
 }
 
-@keyframes my-cat-entry-pulse {
-  0%, 100% { box-shadow: 0 0 10px rgba(255, 122, 92, 0.4); }
-  50% { box-shadow: 0 0 16px rgba(255, 122, 92, 0.7); }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .header-my-cat-link--hungry,
   .header-my-cat-link--hungry .header-my-cat-link__sprite {
     animation: none;
   }

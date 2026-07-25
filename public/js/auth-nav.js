@@ -164,9 +164,8 @@
     }
     var prefix = CAT_GIF_PREFIX[skinId];
     var url = '/catset_extra_assets/catset_extra_spritesheets/' + skinId + '_spritesheets/' + prefix + '_idle_slowblink_strip16.png';
-    // Scale 40px source frames down into the icon so the cat fits without overflow
-    // (keep in sync with src/components/HeaderMyCatLink.js).
-    var frameSize = 22, box = 22, frames = 16, catCx = 0.45, catCy = 0.58;
+    // Frame > box zooms into the cat so other skins read clearly (sync HeaderMyCatLink.js).
+    var frameSize = 34, box = 28, frames = 16, catCx = 0.45, catCy = 0.55;
     var posX = box / 2 - catCx * frameSize, posY = box / 2 - catCy * frameSize;
     var style = "background-image:url('" + url + "');background-size:" + (frames * frameSize) + "px " + frameSize + "px;background-position:" + posX + "px " + posY + "px;background-repeat:no-repeat;";
     return '<span class="header-my-cat-link__sprite header-my-cat-link__sprite--strip" style="' + style + '" aria-hidden="true"></span>';

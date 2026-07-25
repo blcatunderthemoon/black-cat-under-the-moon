@@ -112,6 +112,7 @@
   text-decoration: none;
   background: none;
   border: 1px solid var(--border-glow);
+  border-radius: var(--mode-header-chip-radius, 8px);
   padding: 8px 12px;
   white-space: nowrap;
   transition: all 0.2s;
@@ -4741,9 +4742,10 @@
   box-shadow: none;
   padding: 0 8px;
   min-height: 32px;
-  max-width: min(46vw, 168px);
-  overflow: hidden;
-  text-overflow: ellipsis;
+  width: max-content;
+  max-width: min(100%, calc(100vw - 168px));
+  overflow: visible;
+  text-overflow: clip;
   white-space: nowrap;
   gap: 0.12em;
   flex-wrap: nowrap;
@@ -4751,6 +4753,15 @@
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: geometricPrecision;
+}
+
+/* Long dynamic titles (threads / gathering names) may still need a soft clip */
+.app-header--account .app-header__title.mode-top-bar__mode-tag:has(.inbox-thread-title-link),
+.app-page--gatherings.app-page--gathering-detail .app-header--account .app-header__title.mode-top-bar__mode-tag,
+.app-page--mirror-card .app-header--account .app-header__title.mode-top-bar__mode-tag {
+  max-width: min(46vw, 168px);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Single-row desktop: optically center title between back + nav */
@@ -10324,7 +10335,7 @@
   border: 1px solid rgba(255, 159, 67, 0.35);
   background: rgba(255, 140, 66, 0.1);
   color: #ffe9b8;
-  border-radius: 999px;
+  border-radius: var(--mode-header-chip-radius, 8px);
 }
 
 .app-header--forum .app-header__back:hover {
@@ -23975,15 +23986,10 @@ button.forum-tag-chip:hover {
   gap: 12px;
 }
 
-/* ── 三個字（主頁／標題／登出）視覺同大：Noto 用基準 px，像素字加大補償 ──
-   Noto Sans（主頁）字面較滿，像素字（Zpix）同 px 下睇落細，
-   故像素字統一比 Noto 大 2px；登出強制用同一 Zpix 令右側同標題完全一致。 */
+/* ── my-cat header：與全站 header chip／登出字級一致 ── */
 .app-page--my-cat > .app-header > .app-header__back {
   grid-column: 1;
   justify-self: start;
-  font-family: var(--font-zh);
-  font-size: 12px;
-  line-height: 1.4;
 }
 
 .app-page--my-cat > .app-header > .app-header__title {
@@ -23991,7 +23997,7 @@ button.forum-tag-chip:hover {
   justify-self: center;
   flex: unset;
   font-family: 'Zpix', 'Press Start 2P', monospace;
-  font-size: 14px;
+  font-size: 11px;
   letter-spacing: 0.04em;
   line-height: 1.4;
   color: var(--purple-light);
@@ -24006,9 +24012,9 @@ button.forum-tag-chip:hover {
 
 .app-page--my-cat > .app-header .app-header-logout-btn {
   font-family: 'Zpix', 'Press Start 2P', monospace;
-  font-size: 14px;
-  letter-spacing: 0.04em;
-  line-height: 1.4;
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  line-height: 1;
   -webkit-font-smoothing: none;
   text-rendering: geometricPrecision;
 }
@@ -24022,23 +24028,19 @@ button.forum-tag-chip:hover {
     padding-right: 10px;
   }
 
-  /* 手機：保持三者視覺同大 — Noto 15px，像素字（標題／登出）18px */
-  .app-page--my-cat > .app-header > .app-header__back {
-    font-size: 15px;
-    padding: 8px 12px;
-  }
-
   .app-page--my-cat > .app-header > .app-header__title {
-    font-size: 18px;
-    letter-spacing: 0.04em;
+    font-size: 10px;
+    letter-spacing: 0.03em;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
+    overflow: visible;
+    text-overflow: clip;
+    max-width: none;
+    width: max-content;
   }
 
   .app-page--my-cat > .app-header .app-header-logout-btn {
-    font-size: 18px;
+    font-size: 9px;
+    padding: 0 6px;
   }
 
   /* 收窄右側：手機隱藏問候名同分隔線，淨低圖示按鈕 */
@@ -24066,48 +24068,45 @@ button.forum-tag-chip:hover {
   flex-shrink: 0;
   box-sizing: border-box;
   overflow: hidden;
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
   padding: 0;
   border-radius: 8px;
-  /* inset ring (唔會撐大盒子) + 柔和光暈 → 突出但唔破壞排版平衡 */
-  background: linear-gradient(180deg, rgba(124, 92, 252, 0.26) 0%, rgba(52, 38, 100, 0.3) 100%);
+  background: linear-gradient(180deg, rgba(124, 92, 252, 0.2) 0%, rgba(52, 38, 100, 0.26) 100%);
   box-shadow:
-    inset 0 0 0 1px rgba(189, 147, 249, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 0 8px rgba(124, 92, 252, 0.28);
+    inset 0 0 0 1px rgba(189, 147, 249, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
   transition: background 0.2s, box-shadow 0.2s;
 }
 
-/* 月光照喺貓身上 */
+/* 月光照喺貓身上（輕量，避免搶眼） */
 .header-my-cat-link::before {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: radial-gradient(circle at 50% 30%, rgba(255, 224, 138, 0.2), transparent 62%);
+  background: radial-gradient(circle at 50% 28%, rgba(255, 224, 138, 0.08), transparent 58%);
   pointer-events: none;
 }
 
 .header-my-cat-link:hover {
-  background: linear-gradient(180deg, rgba(124, 92, 252, 0.42) 0%, rgba(70, 52, 130, 0.42) 100%);
+  background: linear-gradient(180deg, rgba(124, 92, 252, 0.32) 0%, rgba(70, 52, 130, 0.34) 100%);
   box-shadow:
-    inset 0 0 0 1px rgba(255, 224, 102, 0.75),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 0 12px rgba(255, 224, 102, 0.38);
+    inset 0 0 0 1px rgba(255, 224, 102, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 /* 遊戲入面同一隻 cat05（idle 第 0 幀裁出嚟），pixelated 保持像素質感 */
 .header-my-cat-link__sprite {
   display: block;
-  width: 19px;
-  height: 18px;
+  width: 24px;
+  height: 22px;
   flex-shrink: 0;
   overflow: hidden;
-  background: url('/catset_extra_assets/cat05_header_icon.png') no-repeat center / 19px 18px;
+  background: url('/catset_extra_assets/cat05_header_icon.png') no-repeat center / 24px 22px;
   image-rendering: pixelated;
-  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.55));
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.45));
   transition: transform 0.15s ease-out;
 }
 
@@ -24115,38 +24114,35 @@ button.forum-tag-chip:hover {
   transform: translateY(-1px);
 }
 
-/* 換裝貓：idle strip 第一幀縮放入 icon，避免原生 40px 幀撐出頂欄 */
+/* 換裝貓：放大裁切 idle 第一幀，令其他皮膚更明顯 */
 .header-my-cat-link__sprite--strip {
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
   background-repeat: no-repeat;
   filter: none;
 }
 
 .header-my-cat-link--forum {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   padding: 0;
 }
 
 .header-my-cat-link__dot {
   position: absolute;
-  top: 1px;
-  right: 1px;
-  width: 8px;
-  height: 8px;
+  top: 2px;
+  right: 2px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: #ff6b6b;
-  box-shadow: 0 0 6px rgba(255, 107, 107, 0.9);
+  box-shadow: 0 0 0 1.5px rgba(12, 10, 24, 0.95);
   pointer-events: none;
 }
 
 .header-my-cat-link--hungry {
-  background: linear-gradient(180deg, rgba(255, 122, 92, 0.3) 0%, rgba(120, 52, 46, 0.32) 100%);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 138, 92, 0.85),
-    0 0 12px rgba(255, 122, 92, 0.5);
-  animation: my-cat-entry-pulse 2s ease-in-out infinite;
+  background: linear-gradient(180deg, rgba(255, 122, 92, 0.16) 0%, rgba(120, 52, 46, 0.22) 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 138, 92, 0.55);
 }
 
 .header-my-cat-link--hungry .header-my-cat-link__sprite {
@@ -24160,13 +24156,8 @@ button.forum-tag-chip:hover {
   88%, 96% { transform: translateY(0); }
 }
 
-@keyframes my-cat-entry-pulse {
-  0%, 100% { box-shadow: 0 0 10px rgba(255, 122, 92, 0.4); }
-  50% { box-shadow: 0 0 16px rgba(255, 122, 92, 0.7); }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .header-my-cat-link--hungry {
+  .header-my-cat-link--hungry .header-my-cat-link__sprite {
     animation: none;
   }
 }

@@ -5552,69 +5552,62 @@ body:has(.mode-select-screen.active) {
 .mirror-actions {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  gap: 10px;
+  align-items: center;
+  gap: 12px;
   width: min(100%, var(--mirror-card-width, 360px));
   margin: 20px auto 0;
   box-sizing: border-box;
 }
+.mirror-actions__btns,
 .mirror-actions__btn-row {
   display: flex;
-  align-items: stretch;
-  gap: 10px;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
   width: 100%;
   min-width: 0;
 }
-.mirror-actions__btn-row > :only-child {
-  flex: 1 1 auto;
-}
-.mirror-families-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Press Start 2P', monospace;
-  font-size: 8px;
-  line-height: 1.4;
-  background: transparent;
-  border: 1px solid rgba(189, 147, 249, 0.35);
-  border-radius: 10px;
-  color: var(--purple-light);
-  padding: 12px 8px;
-  cursor: pointer;
-  transition: all 0.25s;
-  letter-spacing: 0.04em;
-  flex: 1 1 0;
-  min-width: 0;
-  text-decoration: none;
-  text-align: center;
-  box-sizing: border-box;
-}
-.mirror-families-btn:hover {
-  background: var(--purple-light);
-  color: var(--bg-deep);
-  box-shadow: 0 0 14px rgba(189, 147, 249, 0.4);
-}
-.mirror-download-btn {
-  display: flex;
+.mirror-families-btn,
+.mirror-download-btn,
+.mirror-share-btn {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  font-family: 'Zpix', 'Press Start 2P', monospace;
+  width: fit-content;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 10px 18px;
+  border-radius: 999px;
   font-size: 8px;
   line-height: 1.4;
-  background: transparent;
-  border: 1px solid rgba(0, 229, 255, 0.35);
-  border-radius: 10px;
-  color: var(--cyan);
-  padding: 12px 8px;
-  cursor: pointer;
-  transition: all 0.25s;
   letter-spacing: 0.04em;
-  flex: 1 1 0;
-  min-width: 0;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
   box-sizing: border-box;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: grayscale;
+}
+.mirror-families-btn {
+  font-family: 'Press Start 2P', monospace;
+  background: color-mix(in srgb, #ffe066 18%, rgba(12, 10, 20, 0.88));
+  border: 1px solid rgba(255, 224, 102, 0.55);
+  color: #ffe066;
+}
+.mirror-families-btn:hover {
+  background: #ffe066;
+  color: #0a0914;
+  box-shadow: 0 0 16px rgba(255, 224, 102, 0.28);
+  transform: translateY(-1px);
+}
+.mirror-download-btn {
+  font-family: 'Zpix', 'Press Start 2P', monospace;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: rgba(245, 242, 255, 0.92);
 }
 .mirror-download-btn__label {
   font-family: 'Zpix', 'Press Start 2P', monospace;
@@ -5633,31 +5626,19 @@ body:has(.mode-select-screen.active) {
   transform: translateY(1px);
 }
 .mirror-download-btn:hover {
-  background: var(--cyan);
-  color: var(--bg-deep);
-  box-shadow: 0 0 14px rgba(0,229,255,0.4);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.48);
+  color: #fff;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
 }
-.mirror-download-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.mirror-download-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 .mirror-share-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: 100%;
   font-family: 'Zpix', 'Press Start 2P', monospace;
-  font-size: 8px;
-  line-height: 1.4;
   background: transparent;
-  border: 1px solid rgba(189, 147, 249, 0.45);
-  border-radius: 10px;
-  color: var(--purple-light);
-  padding: 12px 10px;
-  cursor: pointer;
-  transition: all 0.25s;
-  letter-spacing: 0.04em;
-  box-sizing: border-box;
-  -webkit-font-smoothing: none;
-  -moz-osx-font-smoothing: grayscale;
+  border: 1px solid transparent;
+  color: rgba(200, 195, 215, 0.72);
+  padding: 8px 14px;
 }
 .mirror-share-btn__label {
   font-family: inherit;
@@ -5672,9 +5653,10 @@ body:has(.mode-select-screen.active) {
   flex-shrink: 0;
 }
 .mirror-share-btn:hover:not(:disabled) {
-  background: var(--purple-light);
-  color: var(--bg-deep);
-  box-shadow: 0 0 14px rgba(189, 147, 249, 0.4);
+  background: rgba(189, 147, 249, 0.08);
+  border-color: rgba(189, 147, 249, 0.28);
+  color: var(--purple-light);
+  box-shadow: none;
 }
 .mirror-share-btn:disabled {
   opacity: 0.5;
@@ -5826,8 +5808,11 @@ body:has(.mode-select-screen.active) {
   color: rgba(255, 224, 102, 0.82);
 }
 @media (max-width: 420px) {
-  .mirror-actions__btn-row {
-    flex-direction: column;
+  .mirror-families-btn,
+  .mirror-download-btn,
+  .mirror-share-btn {
+    padding-left: 16px;
+    padding-right: 16px;
   }
   .mirror-download-meta-toggle {
     grid-template-columns: auto minmax(0, 1fr);

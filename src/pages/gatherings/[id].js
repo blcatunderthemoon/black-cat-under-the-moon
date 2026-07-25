@@ -398,22 +398,39 @@ export default function GatheringDetailPage({ seo = null }) {
               <p className="gathering-detail__safety-msg" role="status">{safetyMsg}</p>
             )}
 
-            {msg && !gathering.my_attendance?.status && (
-              <p className="gathering-detail__msg" role="status">{msg}</p>
+            {gathering.status === 'cancelled' && (
+              <p className="gathering-detail__msg gathering-detail__msg--cancel" role="status">
+                聚會已取消。申請審批與報名已關閉。
+              </p>
+            )}
+
+            {msg && gathering.status !== 'cancelled' && !gathering.my_attendance?.status && (
+              <p
+                className={`gathering-detail__msg${/取消/.test(msg) ? ' gathering-detail__msg--cancel' : ''}`}
+                role="status"
+              >
+                {msg}
+              </p>
             )}
 
             {isHost ? (
               <section className="gathering-detail__host-panel">
-                <h2>主辦人審批</h2>
-                <GatheringHostQueue
-                  gatheringId={gathering.id}
-                  knockQuestion={gathering.knock_question}
-                  onChanged={() => load()}
-                />
-                {gathering.status !== 'cancelled' && gathering.status !== 'completed' && (
-                  <button type="button" className="gathering-detail__cancel" disabled={busy} onClick={cancelGathering}>
-                    取消聚會
-                  </button>
+                {gathering.status === 'cancelled' ? (
+                  <p className="gathering-detail__host-closed">此聚會已取消，無法再審批申請。</p>
+                ) : gathering.status === 'completed' ? (
+                  <p className="gathering-detail__host-closed">聚會已結束，審批已關閉。</p>
+                ) : (
+                  <>
+                    <h2>主辦人審批</h2>
+                    <GatheringHostQueue
+                      gatheringId={gathering.id}
+                      knockQuestion={gathering.knock_question}
+                      onChanged={() => load()}
+                    />
+                    <button type="button" className="gathering-detail__cancel" disabled={busy} onClick={cancelGathering}>
+                      取消聚會
+                    </button>
+                  </>
                 )}
               </section>
             ) : (
@@ -450,7 +467,8 @@ export default function GatheringDetailPage({ seo = null }) {
                         <p className="gathering-detail__attendance-knock-body">{gathering.my_attendance.knock_message}</p>
                       </div>
                     )}
-                    {(gathering.my_attendance.status === 'pending' || gathering.my_attendance.status === 'approved') && (
+                    {(gathering.status !== 'cancelled' && gathering.status !== 'completed')
+                      && (gathering.my_attendance.status === 'pending' || gathering.my_attendance.status === 'approved') && (
                       <div className="gathering-detail__attendance-actions">
                         <button
                           type="button"
@@ -461,6 +479,9 @@ export default function GatheringDetailPage({ seo = null }) {
                           {busy ? '處理中…' : (gathering.my_attendance.status === 'approved' ? '取消參與' : '撤回申請')}
                         </button>
                       </div>
+                    )}
+                    {gathering.status === 'cancelled' && (
+                      <p className="gathering-detail__attendance-closed">聚會已取消，無需再處理申請。</p>
                     )}
                   </div>
                 ) : gathering.status === 'open' && session ? (

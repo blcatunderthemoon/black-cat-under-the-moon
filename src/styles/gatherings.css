@@ -565,10 +565,15 @@
   box-shadow: 0 0 10px rgba(80, 200, 120, 0.35);
 }
 
-.gathering-card__status--full,
+.gathering-card__status--full {
+  border-color: rgba(255, 160, 80, 0.4);
+  color: #ffb86b;
+}
+
 .gathering-card__status--cancelled {
-  border-color: rgba(255, 120, 140, 0.4);
-  color: #ff9aab;
+  border-color: rgba(150, 140, 135, 0.4);
+  color: #c4bbb2;
+  background: rgba(60, 52, 48, 0.45);
 }
 
 .gathering-card__mine-chip {
@@ -1134,10 +1139,15 @@
   color: #7ddea0;
 }
 
-.gathering-detail__badge--status-full,
+.gathering-detail__badge--status-full {
+  border-color: rgba(255, 160, 80, 0.45);
+  color: #ffb86b;
+}
+
 .gathering-detail__badge--status-cancelled {
-  border-color: rgba(255, 120, 140, 0.45);
-  color: #ff9aab;
+  border-color: rgba(160, 150, 145, 0.4);
+  color: #c4bbb2;
+  background: rgba(70, 60, 55, 0.35);
 }
 
 .gathering-detail__badge--status-completed {
@@ -1290,6 +1300,13 @@
   border: 1px solid rgba(80, 200, 120, 0.22);
 }
 
+.gathering-detail__msg--cancel,
+.gathering-detail__msg--muted {
+  color: #d8c8c4;
+  background: rgba(90, 70, 68, 0.28);
+  border: 1px solid rgba(180, 140, 135, 0.35);
+}
+
 .gathering-detail__safety-actions {
   display: flex;
   gap: 0.6rem;
@@ -1348,6 +1365,15 @@
   font-size: 1.05rem;
   color: var(--gathering-cream);
   font-weight: 600;
+}
+
+.gathering-detail__host-closed,
+.gathering-detail__attendance-closed {
+  margin: 0;
+  padding: 0.55rem 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #c4bbb2;
 }
 
 .gathering-detail__rsvp-status {
@@ -2582,7 +2608,7 @@
     min-height: 30px;
     height: 30px;
     padding: 0 10px;
-    border-radius: 7px;
+    border-radius: var(--mode-header-chip-radius, 8px);
     box-sizing: border-box;
   }
 
