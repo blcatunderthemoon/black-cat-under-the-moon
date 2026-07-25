@@ -880,7 +880,8 @@
     min-width: 0;
   }
 
-  .app-header--breadcrumbs.app-header--forum .forum-header-logout-btn {
+  .app-header--breadcrumbs.app-header--forum .forum-header-logout-btn,
+  .app-header--breadcrumbs.app-header--forum .app-header-logout-btn {
     grid-column: 2;
     grid-row: 1;
     position: static;
@@ -904,9 +905,27 @@
     background: rgba(15, 10, 6, 0.72);
     color: rgba(255, 235, 210, 0.94);
     z-index: 2;
+    flex-shrink: 0;
   }
 
-  .app-header--breadcrumbs.app-header--forum .app-header__nav > *:not(.forum-header-name-group):not(.forum-header-actions):not(.forum-header-icon-group):not(.forum-header-logout-btn):not(.forum-header-guest-group) {
+  .app-header--breadcrumbs.app-header--forum .auth-nav-badge {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+    padding-top: 8px;
+    align-self: center;
+  }
+
+  .app-header--breadcrumbs.app-header--forum .auth-nav-badge__inner {
+    width: 100%;
+    max-width: 100%;
+    justify-content: space-between;
+  }
+
+  .app-header--breadcrumbs.app-header--forum .app-header__nav > *:not(.forum-header-name-group):not(.forum-header-actions):not(.forum-header-icon-group):not(.forum-header-logout-btn):not(.forum-header-guest-group):not(.auth-nav-badge):not(.app-header-logout-btn) {
     grid-column: 1 / -1;
     grid-row: 3;
   }
@@ -1704,7 +1723,8 @@
     font-size: 0.75rem;
   }
 
-  .app-header--breadcrumbs.app-header--forum .forum-header-logout-btn {
+  .app-header--breadcrumbs.app-header--forum .forum-header-logout-btn,
+  .app-header--breadcrumbs.app-header--forum .app-header-logout-btn {
     padding: 0 8px;
     font-size: 11px;
   }

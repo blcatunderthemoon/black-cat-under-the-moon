@@ -444,6 +444,7 @@ export default function MirrorPersonalityCard({
               className="pcard-cat-img"
               src={catImg}
               alt={mainType || 'cat'}
+              draggable={false}
             />
           )}
         </div>

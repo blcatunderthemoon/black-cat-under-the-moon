@@ -4,7 +4,7 @@
 
 import Link from 'next/link';
 import AppShell from '../../components/AppShell.js';
-import AppHeaderAuth from '../../components/AppHeaderAuth.js';
+import ForumHeaderAuth from '../../components/ForumHeaderAuth.js';
 import ForumHeaderLogo from '../../components/ForumHeaderLogo.js';
 import SeoHead from '../../components/SeoHead.js';
 import { getAllGuides } from '../../lib/guides.js';
@@ -47,7 +47,7 @@ export default function GuidesIndexPage({ guides }) {
         warmBackground
         showStarfield={false}
         pageClassName="app-page--forum app-page--guides"
-        nav={<AppHeaderAuth redirectPath="/guides" />}
+        nav={<ForumHeaderAuth redirectPath="/guides" />}
       >
         <header className="guides-intro">
           <h1 className="guides-intro__title">香港Les・香港女同志文章與指南</h1>

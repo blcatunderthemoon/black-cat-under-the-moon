@@ -57,7 +57,9 @@ function PhotoFrame({
               className={`photo-exchange-pair__img${blurred ? ' photo-exchange-pair__img--blurred' : ''}`}
               decoding="async"
               fetchPriority="high"
+              draggable={false}
             />
+            <div className="media-capture-guard__shield" aria-hidden="true" />
             {blurred && <div className="photo-exchange-pair__blur-overlay" aria-hidden="true" />}
             {blurred && <div className="photo-exchange-pair__frame-scan" aria-hidden="true" />}
           </>

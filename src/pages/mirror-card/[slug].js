@@ -28,6 +28,7 @@ import PhotoExchangePanel from '../../components/PhotoExchangePanel.js';
 import PhotoExchangeOverlay from '../../components/PhotoExchangeOverlay.js';
 import MirrorVisitorPremiumUpsell, { buildMirrorVisitorPremiumPerks } from '../../components/MirrorVisitorPremiumUpsell.js';
 import MirrorVisitorDualActions from '../../components/MirrorVisitorDualActions.js';
+import MediaCaptureGuard from '../../components/MediaCaptureGuard.js';
 
 function MirrorOwnerBioSection({ bio, displayName, variant = 'default' }) {
   const text = String(bio || '').trim();
@@ -686,6 +687,7 @@ export default function MirrorCardSlugPage({ seo = null }) {
       <Head>
         <link rel="stylesheet" href="/css/questionnaire.css" />
       </Head>
+      <MediaCaptureGuard />
       <AppShell
         title={headerTitle}
         backHref="/index.html"
@@ -694,7 +696,7 @@ export default function MirrorCardSlugPage({ seo = null }) {
         maxWidth="480px"
         nav={<AppHeaderAuth redirectPath={redirect} />}
       >
-        <div className="mirror-card-wrap">
+        <div className="mirror-card-wrap media-capture-guard">
           <MirrorPersonalityCard
             card={card}
             owner={owner}

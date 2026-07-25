@@ -254,7 +254,52 @@ export function AuthProvider({ children }) {
 
   const signIn = async (email, password) => {
     const client = getBrowserClient();
-    return client.auth.signInWithPassword({ email, password });
+    if (!client) {
+      return {
+        data: { session: null, user: null },
+        error: { message: 'Auth client unavailable', status: 500, code: 'CLIENT_UNAVAILABLE' },
+      };
+    }
+
+    let res;
+    try {
+      res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+    } catch {
+      return {
+        data: { session: null, user: null },
+        error: { message: '無法連線，請稍後再試。', status: 0, code: 'NETWORK_ERROR' },
+      };
+    }
+
+    const payload = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return {
+        data: { session: null, user: null },
+        error: {
+          message: payload.error || 'Email 或密碼不正確，請再試。',
+          status: res.status,
+          code: payload.code || 'LOGIN_FAILED',
+          lockout_until: payload.lockout_until || null,
+          retry_after_seconds: payload.retry_after_seconds || null,
+        },
+      };
+    }
+
+    if (!payload.access_token || !payload.refresh_token) {
+      return {
+        data: { session: null, user: null },
+        error: { message: '登入回應無效，請稍後再試。', status: 500, code: 'INVALID_RESPONSE' },
+      };
+    }
+
+    return client.auth.setSession({
+      access_token: payload.access_token,
+      refresh_token: payload.refresh_token,
+    });
   };
 
   const signUp = async (email, password, displayName) => {

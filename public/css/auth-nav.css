@@ -1898,6 +1898,14 @@ body.lang-en .mode-top-bar--legal .home-back-btn .en {
 }
 
 /* ── 我的月光貓 header 入口（像素貓 sprite + 未餵食紅點）── */
+.auth-nav-badge__item--icon.header-my-cat-link {
+  width: 36px;
+  min-width: 36px;
+  max-width: 36px;
+  height: 36px;
+  overflow: visible;
+}
+
 .header-my-cat-link {
   position: relative;
   display: inline-flex;

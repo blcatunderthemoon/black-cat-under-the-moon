@@ -15,11 +15,13 @@ const API = {
 const BOTTLE_TURNSTILE = '#bottle-turnstile';
 const TURNSTILE_NOT_READY = '驗證未就緒，請重新整理頁面後再試。';
 const TURNSTILE_ACQUIRE_MS = 10000;
+const TURNSTILE_SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
 let _turnstileWidgetId = null;
 let _turnstileTokenCache = '';
 let _turnstileWidgetSize = 'flexible';
 let turnstileSiteKey = null;
 let _turnstileVerification = null; // 'required' | 'optional'
+let _turnstileScriptPromise = null;
 
 function turnstileTarget() {
   return _turnstileWidgetId || BOTTLE_TURNSTILE;
@@ -70,6 +72,27 @@ function waitForTurnstileApi(timeoutMs) {
   });
 }
 
+function loadTurnstileScript() {
+  if (isTurnstileApiAvailable()) return Promise.resolve(true);
+  if (_turnstileScriptPromise) return _turnstileScriptPromise;
+  _turnstileScriptPromise = new Promise(function (resolve) {
+    var existing = document.querySelector('script[data-bottle-turnstile]');
+    if (existing) {
+      waitForTurnstileApi(8000).then(resolve);
+      return;
+    }
+    var s = document.createElement('script');
+    s.src = TURNSTILE_SCRIPT_SRC;
+    s.async = true;
+    s.defer = true;
+    s.dataset.bottleTurnstile = '1';
+    s.onload = function () { waitForTurnstileApi(8000).then(resolve); };
+    s.onerror = function () { resolve(false); };
+    document.head.appendChild(s);
+  });
+  return _turnstileScriptPromise;
+}
+
 async function fetchTurnstileConfig() {
   if (turnstileSiteKey && _turnstileVerification) {
     return {
@@ -102,7 +125,10 @@ function turnstileOptional() {
 
 function showTurnstileSlot(show) {
   var slot = document.getElementById('bottle-turnstile-slot');
-  if (slot) slot.classList.toggle('bottle-turnstile-slot--active', !!show);
+  if (slot) {
+    slot.classList.toggle('bottle-turnstile-slot--active', !!show);
+    slot.setAttribute('aria-hidden', show ? 'false' : 'true');
+  }
 }
 
 async function ensureTurnstileWidget() {
@@ -114,21 +140,22 @@ async function ensureTurnstileWidget() {
   var config = await fetchTurnstileConfig();
   if (config.verification === 'optional') return true;
 
-  var apiOk = await waitForTurnstileApi(8000);
+  var apiOk = await loadTurnstileScript();
   if (!apiOk) return false;
 
   try {
+    // interaction-only: CF chrome stays hidden unless a real challenge is needed
     _turnstileWidgetId = window.turnstile.render(BOTTLE_TURNSTILE, {
       sitekey: config.siteKey,
       theme: 'dark',
       size: config.widgetSize || 'flexible',
+      appearance: 'interaction-only',
       callback: function (token) {
         _turnstileTokenCache = token || '';
         if (token) showTurnstileSlot(false);
       },
       'expired-callback': function () {
         _turnstileTokenCache = '';
-        warmTurnstileWidget();
       },
       'error-callback': function () {
         _turnstileTokenCache = '';
@@ -208,21 +235,24 @@ async function requestTurnstileToken(maxWaitMs) {
     return executeTurnstile(limit);
   }
 
+  // Silent wait first (interaction-only usually resolves without UI)
+  token = await waitForTurnstileToken(Math.min(limit, 2800));
+  if (token) return token;
+
+  // Only surface CF widget when a challenge is actually required
   showTurnstileSlot(true);
-  token = await waitForTurnstileToken(Math.min(limit, 5000));
-  if (!token) {
-    resetTurnstileWidget();
-    token = await waitForTurnstileToken(limit);
-  }
+  resetTurnstileWidget();
+  token = await waitForTurnstileToken(limit);
   if (token) showTurnstileSlot(false);
   return token;
 }
 
 function warmTurnstileWidget() {
+  // Silent background prep only — never flash the Cloudflare slot on page enter
   if (turnstileOptional()) return;
   ensureTurnstileWidget().then(function (ok) {
     if (!ok || getTurnstileToken()) return;
-    requestTurnstileToken(8000);
+    waitForTurnstileToken(8000);
   });
 }
 
@@ -242,11 +272,8 @@ async function acquireTurnstileToken(maxWaitMs) {
 }
 
 async function initTurnstileWidgets() {
+  // Prefetch config only — do not load/render Turnstile until the user submits
   await fetchTurnstileConfig();
-  if (turnstileOptional()) return;
-  await waitForTurnstileApi(8000);
-  await ensureTurnstileWidget();
-  warmTurnstileWidget();
 }
 
 async function postWithTurnstile(url, body) {

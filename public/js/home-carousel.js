@@ -402,7 +402,7 @@
           meta.hidden = true;
           return;
         }
-        meta.textContent = '🍾 等你拾起（' + Math.floor(n) + '）';
+        meta.textContent = '🍾等你拾起 (' + Math.floor(n) + ')';
         meta.hidden = false;
       })
       .catch(function () {

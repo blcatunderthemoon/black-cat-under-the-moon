@@ -15,6 +15,7 @@ function OwnerPhotoPreview({ ownerPhoto, ownerName }) {
           src={ownerPhoto.clear_url}
           alt={`${ownerName || '對方'}的交換相片`}
           className="photo-exchange-panel__photo photo-exchange-panel__photo--clear"
+          draggable={false}
         />
       </div>
     );
@@ -28,6 +29,7 @@ function OwnerPhotoPreview({ ownerPhoto, ownerName }) {
           alt=""
           aria-hidden="true"
           className="photo-exchange-panel__photo photo-exchange-panel__photo--blurred"
+          draggable={false}
         />
         <div className="photo-exchange-panel__blur-overlay" aria-hidden="true" />
       </div>

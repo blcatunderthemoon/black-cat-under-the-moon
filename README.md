@@ -5,7 +5,7 @@
 **Live：** [www.blackcatunderthemoon.com](https://www.blackcatunderthemoon.com)  
 參與本平台即表示同意[使用條款](/tos.html)與[私隱政策](/privacy.html)。
 
-本 README 以**開發者入門**為主。產品規格見 [docs/PRODUCT-COMMERCIALIZATION-PRD.md](docs/PRODUCT-COMMERCIALIZATION-PRD.md)；漂流瓶／安全機制見 [docs/SYSTEM-OVERVIEW.md](docs/SYSTEM-OVERVIEW.md)；配對計分見 [docs/SCORING.md](docs/SCORING.md)；**Mobile WebView 捲動與頁尾**見 [docs/MOBILE-WEBVIEW-SCROLL.md](docs/MOBILE-WEBVIEW-SCROLL.md)。
+本 README 以**開發者入門**為主。產品規格見 [docs/PRODUCT-COMMERCIALIZATION-PRD.md](docs/PRODUCT-COMMERCIALIZATION-PRD.md)；漂流瓶／安全機制見 [docs/SYSTEM-OVERVIEW.md](docs/SYSTEM-OVERVIEW.md)；登入密碼鎖定見 [docs/AUTH-LOGIN-LOCKOUT.md](docs/AUTH-LOGIN-LOCKOUT.md)；配對計分見 [docs/SCORING.md](docs/SCORING.md)；**Mobile WebView 捲動與頁尾**見 [docs/MOBILE-WEBVIEW-SCROLL.md](docs/MOBILE-WEBVIEW-SCROLL.md)。
 
 ---
 
@@ -56,6 +56,8 @@
 - 月光旅程監控、論壇／Inbox 監控、配對分析等
 
 **內容安全：** 關鍵字過濾、3 次舉報自動隱藏、Turnstile（漂流瓶）、Upstash 速率限制。
+
+**登入安全：** 15 分鐘內連續輸錯密碼 **10** 次會暫時凍結該 Email **30** 分鐘（`POST /api/auth/login` + Redis）；詳見 [docs/AUTH-LOGIN-LOCKOUT.md](docs/AUTH-LOGIN-LOCKOUT.md)。
 
 ---
 
@@ -225,7 +227,7 @@ npm run dev
 | 漂流瓶 | `/api/bottle/*` | 投瓶、撈瓶、回聲、舉報 |
 | Inbox | `/api/inbox/*` | 對話、發信、封鎖、用戶搜尋 |
 | 交換相 | `/api/photo-exchange/*`、`/api/profile/exchange-photo` | 邀請、回應、取消、上傳 |
-| 帳戶 | `/api/me`、`/api/auth/*` | Profile、init-profile、refresh-session |
+| 帳戶 | `/api/me`、`/api/auth/*` | Profile、**login（含密碼鎖定）**、init-profile、refresh-session、clear-login-lockout |
 | 付款 | `/api/billing/*` | PayPal 訂閱、webhook、人手核對 |
 | 聯絡 | `POST /api/contact-feedback` | 意見箱寫入 `contact_feedback` |
 
@@ -287,6 +289,19 @@ npm run dev
 
 ---
 
+## 登入密碼鎖定
+
+| 項目 | 設定 |
+|---|---|
+| 觸發條件 | 同一 Email 在 **15 分鐘**內密碼錯誤 **10** 次 |
+| 凍結時間 | **30 分鐘**（期間正確密碼亦無法登入） |
+| 解除方式 | 等待凍結結束；或完成「忘記密碼」重設（會清除鎖定） |
+| 實作 | `src/lib/login-lockout.js`、`POST /api/auth/login`（Upstash Redis；本地無 Redis 時用記憶體） |
+
+完整說明 → [docs/AUTH-LOGIN-LOCKOUT.md](docs/AUTH-LOGIN-LOCKOUT.md)
+
+---
+
 ## 配對系統
 
 1. **Hard Filter** — 身份、體型、身高差、年齡差四層雙向篩選（不通過即排除）
@@ -338,6 +353,7 @@ node scripts/create-admin-user.mjs        # 建立管理員帳號
 | `Cannot find module './chunks/...'` 或頁面 500 | 停止 dev server → 刪除 `.next` 資料夾 → `npm run dev` |
 | OneDrive 下路徑 hot reload 異常 | 專案已在 `next.config.js` 啟用 webpack polling；仍異常可移出 OneDrive 同步資料夾 |
 | 論壇／Inbox 401 | 確認已登入；檢查 `init-profile` 是否成功建立 `profiles` row |
+| 登入提示帳號已鎖定 | 15 分鐘內錯密 10 次會凍結 30 分鐘；可等鎖定結束或走「忘記密碼」；見 [docs/AUTH-LOGIN-LOCKOUT.md](docs/AUTH-LOGIN-LOCKOUT.md) |
 | 問卷提交失敗 | 確認 `SUPABASE_SERVICE_ROLE_KEY`；檢查 `responses` 表權限 |
 | Moonlight Passport 付款無反應 | 確認 `PAYPAL_*` 已設且 `PAYPAL_MODE=live`；正式站需設定 Webhook，見 [docs/paypal-onboarding.md](docs/paypal-onboarding.md) |
 | 意見箱提交失敗 | 確認已執行 `20250701000000_contact_feedback.sql`；API 路徑為 `POST /api/contact-feedback` |

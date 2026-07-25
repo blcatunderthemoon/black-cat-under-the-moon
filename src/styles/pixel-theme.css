@@ -10221,12 +10221,7 @@
 }
 
 .forum-panel--quick {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-  background: rgba(30, 24, 20, 0.94);
-  border: 1px solid rgba(255, 140, 66, 0.22);
+  display: none;
 }
 
 .forum-quick-link {
@@ -10316,8 +10311,15 @@
   align-items: center;
   flex-wrap: nowrap;
   min-width: 0;
-  gap: 4px;
+  gap: 6px;
   overflow: visible;
+}
+
+.app-header--forum .app-header__nav > .app-header-logout-btn,
+.app-header--forum .app-header__nav > .forum-header-logout-btn {
+  position: relative;
+  flex-shrink: 0;
+  z-index: 2;
 }
 
 .app-header--forum .app-header__inner,
@@ -24125,7 +24127,18 @@ button.forum-tag-chip:hover {
 .header-my-cat-link--forum {
   width: 36px;
   height: 36px;
+  min-width: 36px;
+  max-width: 36px;
   padding: 0;
+}
+
+/* Avoid icon-slot max-width:32 clipping / overlapping the next header control */
+.auth-nav-badge__item--icon.header-my-cat-link {
+  width: 36px;
+  min-width: 36px;
+  max-width: 36px;
+  height: 36px;
+  overflow: visible;
 }
 
 .header-my-cat-link__dot {
@@ -26799,5 +26812,80 @@ a.moon-journey-dropdown-card__checkin--done {
   .my-cat-stat {
     grid-template-columns: 58px 1fr 34px;
   }
+}
+
+/* ---- Media capture guard (mirror card + photo exchange) ---- */
+.media-capture-guard-active img.photo-exchange-panel__photo,
+.media-capture-guard-active img.photo-exchange-pair__img,
+.media-capture-guard-active img.photo-exchange-upload__preview,
+.media-capture-guard-active img.pcard-cat-img,
+.media-capture-guard img {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  user-drag: none;
+  -webkit-touch-callout: none;
+  pointer-events: none;
+}
+
+.media-capture-guard-active .photo-exchange-panel__photo-wrap,
+.media-capture-guard-active .photo-exchange-pair__frame,
+.media-capture-guard-active .pcard-avatar-wrap,
+.media-capture-guard-active .photo-exchange-overlay__confirm-preview,
+.media-capture-guard-active .photo-exchange-upload__preview-wrap {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Transparent hit layer so save-as / long-press hit the shield, not the <img> */
+.media-capture-guard-active .photo-exchange-panel__photo-wrap::after,
+.media-capture-guard-active .photo-exchange-pair__frame::after,
+.media-capture-guard-active .pcard-avatar-wrap::after,
+.media-capture-guard-active .photo-exchange-overlay__confirm-preview::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: auto;
+  background: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.media-capture-guard-active .photo-exchange-pair__frame::after {
+  box-shadow:
+    inset 0 0 0 1px rgba(189, 147, 249, 0.18),
+    inset 0 0 28px rgba(8, 6, 18, 0.28);
+}
+
+.media-capture-guard-active .pcard-avatar-wrap {
+  position: relative;
+}
+
+.media-capture-guard-active .photo-exchange-overlay__confirm-preview {
+  position: relative;
+}
+
+.media-capture-guard__shield {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  background: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Own upload dropzone must stay clickable — no blocking shield */
+.media-capture-guard-active .photo-exchange-upload__dropzone .photo-exchange-upload__preview-wrap::after,
+.media-capture-guard-active .photo-exchange-upload__dropzone::after {
+  content: none;
+  display: none;
+}
+
+.media-capture-guard-active .photo-exchange-upload__dropzone img.photo-exchange-upload__preview {
+  pointer-events: none;
 }
 

@@ -182,6 +182,7 @@ export default function MirrorVisitorDualActions({
                   alt=""
                   aria-hidden="true"
                   className="photo-exchange-panel__photo photo-exchange-panel__photo--blurred"
+                  draggable={false}
                 />
                 <div className="photo-exchange-panel__blur-overlay" aria-hidden="true" />
               </div>

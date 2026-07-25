@@ -25,6 +25,7 @@ import PhotoExchangePairView from '../components/PhotoExchangePairView.js';
 import PhotoExchangeMirrorCardBtn from '../components/PhotoExchangeMirrorCardBtn.js';
 import PhotoExchangeCompletedShell from '../components/PhotoExchangeCompletedShell.js';
 import MoonLoading from '../components/MoonLoading.js';
+import MediaCaptureGuard from '../components/MediaCaptureGuard.js';
 
 import { isPremiumUser, MOONLIGHT_PASSPORT_BRAND } from '../lib/premium.js';
 
@@ -384,6 +385,7 @@ export default function ExchangePhotoPage() {
     <>
 
       <SeoHead title={pageTitle} description="上傳用於 Mirror Card 交換相的真人相片。" path="/exchange-photo" />
+      <MediaCaptureGuard />
 
       <AppShell
 
@@ -393,7 +395,7 @@ export default function ExchangePhotoPage() {
 
         headerVariant="account"
 
-        pageClassName={`app-page--exchange-photo${isRespondMode ? ' app-page--exchange-photo--respond' : ''}${isViewMode ? ' app-page--exchange-photo--view' : ''}`}
+        pageClassName={`app-page--exchange-photo media-capture-guard${isRespondMode ? ' app-page--exchange-photo--respond' : ''}${isViewMode ? ' app-page--exchange-photo--view' : ''}`}
 
         maxWidth="420px"
 
@@ -598,6 +600,8 @@ export default function ExchangePhotoPage() {
                         aria-hidden="true"
 
                         className="photo-exchange-panel__photo photo-exchange-panel__photo--blurred"
+
+                        draggable={false}
 
                       />
 

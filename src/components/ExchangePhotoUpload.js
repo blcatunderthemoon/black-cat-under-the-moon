@@ -83,6 +83,7 @@ export default function ExchangePhotoUpload({
       src={preview}
       alt="你的交換用相片"
       className="photo-exchange-upload__preview"
+      draggable={false}
     />
   ) : (
     <div className="photo-exchange-upload__placeholder">

@@ -19,10 +19,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/drift-bottle.css?v=20260725catglow">
   <link rel="stylesheet" href="css/moon-loading.css?v=20260711n">
-  <link rel="stylesheet" href="css/auth-nav.css?v=20260725titlefull">
+  <link rel="stylesheet" href="css/auth-nav.css?v=20260725hdrfix">
   <link rel="stylesheet" href="css/mobile-webview-scroll.css?v=20260713echo">
-  <!-- Cloudflare Turnstile — site key from /api/turnstile/site-key (see src/lib/turnstile.js) -->
-  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <!-- Cloudflare Turnstile loaded on-demand (see drift-bottle.js) — avoid CF chrome on every page enter -->
   <script src="/js/posthog-page-context.js" defer></script>
   <script src="/js/posthog-init.js" defer></script>
 </head>
@@ -369,7 +368,7 @@
 <script src="js/me-cache.js?v=20260706name"></script>
 <script src="js/auth-nav.js?v=20260725catglow"></script>
 <script src="js/moon-loading.js?v=20260711n"></script>
-<script src="js/drift-bottle.js?v=20260711k"></script>
+<script src="js/drift-bottle.js?v=20260725cfhide"></script>
 
 <!-- ── Crisis Intervention Banner ── -->
 <div id="crisis-banner" class="crisis-overlay" style="display:none;"

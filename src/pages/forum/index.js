@@ -165,59 +165,24 @@ function formatMembersDisplay(total) {
   return `${Math.floor(n / step) * step}+`;
 }
 
-function GatheringPanel({ membersTotal, session, onCompose, onBookmarks, redirectPath = '/forum' }) {
+function GatheringPanel({ membersTotal }) {
   const membersLabel = formatMembersDisplay(membersTotal);
 
   return (
-    <>
-      <aside className="forum-panel forum-panel--stat">
-        <div className="forum-panel__head">
-          <h3 className="forum-panel__title">圍爐黑貓</h3>
-          <p className="forum-panel__hint forum-panel__hint--hot">累積已加入</p>
-        </div>
-        <div className="forum-gathering-count forum-gathering-count--body">
-          {membersLabel || '—'}
-          <span>
-            {membersLabel
-              ? '隻黑貓已加入圍爐'
-              : '歡迎成為第一批圍爐黑貓'}
-          </span>
-        </div>
-      </aside>
-      <aside className="forum-panel forum-panel--quick" aria-label="快捷選單">
-        {session ? (
-          <>
-            <button type="button" className="forum-quick-link forum-quick-link--primary" onClick={onCompose}>
-              ✎ 發佈新帖
-            </button>
-            <button type="button" className="forum-quick-link" onClick={onBookmarks}>
-              🔖 我的收藏
-            </button>
-            <Link href="/account" className="forum-quick-link">
-              ⚙ 個人設定
-            </Link>
-          </>
-        ) : (
-          <>
-            <Link
-              href={`/signup?redirect=${encodeURIComponent(redirectPath)}`}
-              className="forum-quick-link forum-quick-link--primary"
-            >
-              ✨ 註冊加入
-            </Link>
-            <Link
-              href={`/login?redirect=${encodeURIComponent(redirectPath)}`}
-              className="forum-quick-link"
-            >
-              登入
-            </Link>
-            <Link href="/mirror.html" className="forum-quick-link">
-              🪞 靈魂鏡像
-            </Link>
-          </>
-        )}
-      </aside>
-    </>
+    <aside className="forum-panel forum-panel--stat">
+      <div className="forum-panel__head">
+        <h3 className="forum-panel__title">圍爐黑貓</h3>
+        <p className="forum-panel__hint forum-panel__hint--hot">累積已加入</p>
+      </div>
+      <div className="forum-gathering-count forum-gathering-count--body">
+        {membersLabel || '—'}
+        <span>
+          {membersLabel
+            ? '隻黑貓已加入圍爐'
+            : '歡迎成為第一批圍爐黑貓'}
+        </span>
+      </div>
+    </aside>
   );
 }
 
@@ -1093,9 +1058,6 @@ export default function ForumPage() {
           <div className="forum-sidebar forum-sidebar--left">
             <GatheringPanel
               membersTotal={meta?.members_total}
-              session={session}
-              onCompose={openCompose}
-              onBookmarks={() => setShowBookmarks(true)}
             />
           </div>
 
@@ -1232,9 +1194,6 @@ export default function ForumPage() {
               <div className="forum-treehole-panels forum-treehole-panels--mobile">
                 <GatheringPanel
                   membersTotal={meta?.members_total}
-                  session={session}
-                  onCompose={openCompose}
-                  onBookmarks={() => setShowBookmarks(true)}
                 />
                 <FeaturedPostsPanel featuredPosts={featuredPosts} />
                 <HotTopicsPanel hotPosts={meta?.hot_posts} sparksMode={meta?.sparks_mode} />

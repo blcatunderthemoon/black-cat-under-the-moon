@@ -6,7 +6,7 @@ import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import AppShell from '../../components/AppShell.js';
-import AppHeaderAuth from '../../components/AppHeaderAuth.js';
+import ForumHeaderAuth from '../../components/ForumHeaderAuth.js';
 import ForumHeaderLogo from '../../components/ForumHeaderLogo.js';
 import SeoHead from '../../components/SeoHead.js';
 import { getAllGuideSlugs, getGuideBySlug } from '../../lib/guides.js';
@@ -97,7 +97,7 @@ export default function GuideDetailPage({ guide }) {
         warmBackground
         showStarfield={false}
         pageClassName="app-page--forum app-page--guide"
-        nav={<AppHeaderAuth redirectPath={path} />}
+        nav={<ForumHeaderAuth redirectPath={path} />}
       >
         <article className="guide-article">
           <header className="guide-article__head">

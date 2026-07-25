@@ -55,7 +55,15 @@ export default function LoginPage() {
     const { data: signInData, error: signInError } = await signIn(emailCheck.value, password);
     if (signInError) {
       setSubmitting(false);
-      setError('Email 或密碼不正確，請再試。');
+      if (signInError.code === 'ACCOUNT_LOCKED' || signInError.status === 423) {
+        setError(signInError.message || '密碼錯誤次數過多，帳號已暫時鎖定，請稍後再試。');
+        return;
+      }
+      if (signInError.status === 429) {
+        setError(signInError.message || '請求太頻繁，請稍後再試。');
+        return;
+      }
+      setError(signInError.message || 'Email 或密碼不正確，請再試。');
       return;
     }
     const token = signInData?.session?.access_token;

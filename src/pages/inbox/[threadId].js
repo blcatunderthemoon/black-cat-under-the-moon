@@ -22,6 +22,7 @@ import {
 import { DEFAULT_LETTER_PREFS } from '../../lib/letter-gameplay.js';
 import MoonLoading from '../../components/MoonLoading.js';
 import PhotoExchangeInboxPanel from '../../components/PhotoExchangeInboxPanel.js';
+import MediaCaptureGuard from '../../components/MediaCaptureGuard.js';
 import ChannelStatusLine from '../../components/ChannelStatusLine.js';
 import PixelMixedLabel from '../../components/PixelMixedLabel.js';
 import { markInboxThreadReadLocally } from '../../lib/inbox-read-sync.js';
@@ -325,6 +326,7 @@ export default function ThreadPage() {
           {other ? `與 ${other.display_name} 的對話` : '對話'} — Black Cat Under The Moon
         </title>
       </Head>
+      <MediaCaptureGuard active={isPhotoExchangeThread} />
       <AppShell
         thread
         title={
@@ -351,7 +353,7 @@ export default function ThreadPage() {
         backHref="/inbox"
         backLabel="返回"
         headerVariant="account"
-        pageClassName={`app-page--inbox app-page--thread${isPhotoExchangeThread ? ' app-page--photo-exchange-thread' : ''}${isMatchOnlyThread ? ' app-page--match-thread' : ''}${isSystemThread ? ' app-page--system-thread' : ''}`}
+        pageClassName={`app-page--inbox app-page--thread${isPhotoExchangeThread ? ' app-page--photo-exchange-thread media-capture-guard' : ''}${isMatchOnlyThread ? ' app-page--match-thread' : ''}${isSystemThread ? ' app-page--system-thread' : ''}`}
         nav={<AppHeaderAuth redirectPath={router.asPath || '/inbox'} />}
       >
         {data?.status_banner && !isSystemThread && (

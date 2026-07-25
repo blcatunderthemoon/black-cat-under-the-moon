@@ -14,7 +14,7 @@ export default function handler(req, res) {
   return res.status(200).json({
     siteKey: process.env.NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY || DEFAULT_SITE_KEY,
     verification: hasSecret ? 'required' : 'optional',
-    // flexible = challenge only when Cloudflare suspects automation (fewer false blocks than invisible)
+    // flexible + interaction-only: challenge UI only when Cloudflare needs it
     widgetSize: 'flexible',
   });
 }

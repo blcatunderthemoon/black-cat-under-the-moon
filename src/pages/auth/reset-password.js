@@ -97,6 +97,18 @@ export default function ResetPasswordPage() {
         return;
       }
 
+      try {
+        const { data: { session } } = await client.auth.getSession();
+        if (session?.access_token) {
+          await fetch('/api/auth/clear-login-lockout', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          });
+        }
+      } catch {
+        /* lockout clear is best-effort */
+      }
+
       const dest = resolvePostAuthDestination(redirect);
       if (dest.endsWith('.html')) {
         window.location.href = dest;

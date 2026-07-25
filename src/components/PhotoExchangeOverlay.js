@@ -139,6 +139,7 @@ export default function PhotoExchangeOverlay({
                 src={exchangePhotoUrl}
                 alt="你的交換用相片預覽"
                 className="photo-exchange-upload__preview"
+                draggable={false}
               />
             </div>
           )}
