@@ -280,7 +280,7 @@ export async function hasClaimedWishFirstCreate(admin, userId) {
 }
 
 /**
- * 收到打氣里程碑（10／30）發碎屑給許下心願嘅人。
+ * 收到打氣里程碑（10／30）發碎屑給許下願望嘅人。
  * source_id = `${wishId}#cheers_${n}`
  */
 export async function awardWishCheerMilestone(admin, userId, wishId, cheerCount) {
