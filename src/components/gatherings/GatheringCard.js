@@ -3,13 +3,10 @@
  */
 
 import Link from 'next/link';
-
-const STATUS_LABEL = {
-  open: '招募中',
-  full: '已滿額',
-  completed: '已結束',
-  cancelled: '已取消',
-};
+import {
+  getGatheringDisplayStatus,
+  isGatheringOngoing,
+} from '../../lib/gatherings.js';
 
 const ATTENDANCE_LABEL = {
   pending: '審核中',
@@ -27,7 +24,12 @@ export default function GatheringCard({ gathering, past = false }) {
     ? Math.min(100, Math.round((approved / max) * 100))
     : 0;
   const seatsFull = max > 0 && remaining === 0;
-  const isPast = past || gathering.status === 'completed';
+  const display = getGatheringDisplayStatus(gathering);
+  const ongoing = isGatheringOngoing(gathering);
+  const isPast = past || display.key === 'completed';
+  const timeLabel = gathering.time_range_hk
+    || gathering.starts_at_hk
+    || gathering.starts_at;
 
   return (
     <Link
@@ -36,6 +38,7 @@ export default function GatheringCard({ gathering, past = false }) {
         'gathering-card',
         gathering.status === 'cancelled' ? 'gathering-card--cancelled' : '',
         isPast ? 'gathering-card--past' : '',
+        ongoing ? 'gathering-card--ongoing' : '',
       ].filter(Boolean).join(' ')}
     >
       <div className="gathering-card__glow" aria-hidden="true" />
@@ -50,13 +53,13 @@ export default function GatheringCard({ gathering, past = false }) {
             </span>
           )}
         </div>
-        <span className={`gathering-card__status gathering-card__status--${gathering.status}`}>
-          {STATUS_LABEL[gathering.status] || gathering.status}
+        <span className={`gathering-card__status gathering-card__status--${display.key}`}>
+          {display.label}
         </span>
       </div>
       <h3 className="gathering-card__title">{gathering.title}</h3>
       <p className="gathering-card__meta">
-        <span className="gathering-card__meta-item">{gathering.starts_at_hk || gathering.starts_at}</span>
+        <span className="gathering-card__meta-item">{timeLabel}</span>
         <span className="gathering-card__meta-dot" aria-hidden="true">·</span>
         <span className="gathering-card__meta-item">{gathering.location_public}</span>
       </p>

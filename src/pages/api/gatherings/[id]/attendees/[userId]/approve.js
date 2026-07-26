@@ -5,7 +5,7 @@
 import { requireUser, sendAuthError, getAdminClient } from '../../../../../../lib/server-auth.js';
 import { databaseNowIso } from '../../../../../../lib/hong-kong-time.js';
 import { ensureGatheringDecisionNotified } from '../../../../../../lib/gathering-notify.js';
-import { maybeMarkCompleted, syncGatheringApprovedCount } from '../../../../../../lib/gatherings.js';
+import { maybeMarkCompleted, syncGatheringApprovedCount, assertCanApprove } from '../../../../../../lib/gatherings.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -26,8 +26,9 @@ export default async function handler(req, res) {
   if (row.host_id !== user.id) return res.status(403).json({ error: '只有主辦人可以批准。' });
   row = await maybeMarkCompleted(admin, row);
 
-  if (row.status !== 'open' && row.status !== 'full') {
-    return res.status(409).json({ error: '此聚會無法再批准參加者。' });
+  const canApprove = assertCanApprove(row);
+  if (!canApprove.ok) {
+    return res.status(canApprove.status).json({ error: canApprove.error, code: canApprove.code });
   }
   if ((row.approved_count || 0) >= row.max_participants) {
     return res.status(409).json({ error: '聚會已滿額。', code: 'full' });

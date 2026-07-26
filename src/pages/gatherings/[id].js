@@ -22,16 +22,19 @@ import {
 } from '../../components/UiIcons.js';
 import { useAuth } from '../../lib/auth-context.js';
 import { normalizeGatheringPrivateLocation } from '../../lib/gathering-private-location.js';
+import {
+  getGatheringDisplayStatus,
+  hasGatheringStarted,
+  isGatheringAcceptingApplications,
+  isGatheringOngoing,
+} from '../../lib/gatherings.js';
 
-const STATUS_LABEL = {
-  open: '招募中',
-  full: '已滿額',
-  completed: '已結束',
-  cancelled: '已取消',
+const ATTENDANCE_LABEL = {
   pending: '審核中',
   approved: '已獲邀',
   rejected: '未獲邀',
   withdrawn: '已撤回',
+  waitlist: '候補中',
 };
 
 function normalizeHkPhone(raw) {
@@ -316,6 +319,11 @@ export default function GatheringDetailPage({ seo = null }) {
     && new Date(gathering.starts_at).getTime() > Date.now();
 
   const canEditPrivate = canEditDescription;
+  const displayStatus = gathering ? getGatheringDisplayStatus(gathering) : null;
+  const gatheringStarted = gathering ? hasGatheringStarted(gathering) : false;
+  const gatheringOngoing = gathering ? isGatheringOngoing(gathering) : false;
+  const acceptingApplications = gathering ? isGatheringAcceptingApplications(gathering) : false;
+  const timeRangeLabel = gathering?.time_range_hk || gathering?.starts_at_hk || '';
 
   function startEditDesc() {
     setDescDraft(gathering?.description || '');
@@ -459,8 +467,8 @@ export default function GatheringDetailPage({ seo = null }) {
                   <span className={`gathering-detail__badge gathering-detail__badge--${gathering.is_online ? 'online' : 'offline'}`}>
                     {gathering.is_online ? '線上' : '線下'}
                   </span>
-                  <span className={`gathering-detail__badge gathering-detail__badge--status-${gathering.status}`}>
-                    {STATUS_LABEL[gathering.status] || gathering.status}
+                  <span className={`gathering-detail__badge gathering-detail__badge--status-${displayStatus?.key || gathering.status}`}>
+                    {displayStatus?.label || gathering.status}
                   </span>
                 </div>
                 <h1 className="gathering-detail__title">{gathering.title}</h1>
@@ -469,7 +477,7 @@ export default function GatheringDetailPage({ seo = null }) {
               <dl className="gathering-detail__facts">
                 <div className="gathering-detail__fact">
                   <dt>時間</dt>
-                  <dd>{gathering.starts_at_hk}</dd>
+                  <dd>{timeRangeLabel}</dd>
                 </div>
                 <div className="gathering-detail__fact">
                   <dt>地點</dt>
@@ -810,24 +818,34 @@ export default function GatheringDetailPage({ seo = null }) {
               <section className="gathering-detail__host-panel">
                 {gathering.status === 'cancelled' ? (
                   <p className="gathering-detail__host-closed">此聚會已取消，無法再審批申請。</p>
-                ) : gathering.status === 'completed' ? (
+                ) : displayStatus?.key === 'completed' ? (
                   <p className="gathering-detail__host-closed">聚會已結束，審批已關閉。</p>
                 ) : (
                   <>
                     <div className="gathering-detail__host-head">
                       <h2>主辦人審批</h2>
-                      <button
-                        type="button"
-                        className="gathering-detail__cancel"
-                        disabled={busy}
-                        onClick={cancelGathering}
-                      >
-                        取消聚會
-                      </button>
+                      {!gatheringStarted && (
+                        <button
+                          type="button"
+                          className="gathering-detail__cancel"
+                          disabled={busy}
+                          onClick={cancelGathering}
+                        >
+                          取消聚會
+                        </button>
+                      )}
                     </div>
+                    {gatheringStarted && (
+                      <p className="gathering-detail__host-closed gathering-detail__host-closed--inline" role="status">
+                        {gatheringOngoing
+                          ? '聚會進行中：已停止接受新申請同批准。仍可婉拒待審申請。'
+                          : '聚會已開始：已停止接受新申請同批准。'}
+                      </p>
+                    )}
                     <GatheringHostQueue
                       gatheringId={gathering.id}
                       knockQuestion={gathering.knock_question}
+                      canApprove={!gatheringStarted}
                       onChanged={() => load()}
                     />
                   </>
@@ -856,7 +874,7 @@ export default function GatheringDetailPage({ seo = null }) {
                       >
                         {gathering.status === 'cancelled'
                           ? '聚會已取消'
-                          : (STATUS_LABEL[gathering.my_attendance.status] || gathering.my_attendance.status)}
+                          : (ATTENDANCE_LABEL[gathering.my_attendance.status] || gathering.my_attendance.status)}
                       </p>
                     </header>
                     <div className="gathering-detail__attendance-copy-row">
@@ -892,7 +910,7 @@ export default function GatheringDetailPage({ seo = null }) {
                         <p className="gathering-detail__attendance-knock-body">{gathering.my_attendance.knock_message}</p>
                       </div>
                     )}
-                    {(gathering.status !== 'cancelled' && gathering.status !== 'completed')
+                    {(gathering.status !== 'cancelled' && displayStatus?.key !== 'completed')
                       && (gathering.my_attendance.status === 'pending' || gathering.my_attendance.status === 'approved') && (
                       <div className="gathering-detail__attendance-actions">
                         <button
@@ -906,7 +924,7 @@ export default function GatheringDetailPage({ seo = null }) {
                       </div>
                     )}
                   </div>
-                ) : gathering.status === 'open' && session ? (
+                ) : acceptingApplications && session ? (
                   <form
                     className="gathering-detail__apply"
                     noValidate
@@ -1003,7 +1021,7 @@ export default function GatheringDetailPage({ seo = null }) {
                       </button>
                     </div>
                   </form>
-                ) : gathering.status === 'open' && !session ? (
+                ) : acceptingApplications && !session ? (
                   <div className="gathering-detail__login-panel">
                     <p className="gathering-detail__login-lead">想參加呢場聚會？</p>
                     <p className="gathering-detail__login-hint">登入後先可以申請。</p>
@@ -1014,6 +1032,10 @@ export default function GatheringDetailPage({ seo = null }) {
                       登入後申請
                     </Link>
                   </div>
+                ) : displayStatus?.key === 'ongoing' ? (
+                  <p className="gatherings-empty">聚會進行中，已停止接受申請。</p>
+                ) : displayStatus?.key === 'completed' ? (
+                  <p className="gatherings-empty">聚會已結束，無法再報名。</p>
                 ) : (
                   <p className="gatherings-empty">此聚會目前無法報名。</p>
                 )}

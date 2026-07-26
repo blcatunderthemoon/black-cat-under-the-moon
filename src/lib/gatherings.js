@@ -22,10 +22,21 @@ export const GATHERING_OPEN_HOST_LIMIT = 2;
 export const GATHERING_MONTHLY_HOST_LIMIT = 4;
 export const GATHERING_DEFAULT_MAX_PARTICIPANTS = 8;
 export const GATHERING_DEFAULT_DURATION_MS = 2 * 60 * 60 * 1000;
+/** Max span from starts_at → ends_at (hosts pick a time period). */
+export const GATHERING_MAX_DURATION_MS = 12 * 60 * 60 * 1000;
 export const GATHERING_KNOCK_QUESTION_MAX_LEN = 80;
 
 export const GATHERING_STATUSES = ['draft', 'open', 'full', 'completed', 'cancelled'];
 export const ATTENDEE_STATUSES = ['pending', 'approved', 'rejected', 'withdrawn', 'waitlist'];
+
+/** Display-only phase keys (DB still uses open/full/completed/cancelled). */
+export const GATHERING_DISPLAY_STATUS = {
+  open: { key: 'open', label: '招募中' },
+  full: { key: 'full', label: '已滿額' },
+  ongoing: { key: 'ongoing', label: '進行中' },
+  completed: { key: 'completed', label: '已結束' },
+  cancelled: { key: 'cancelled', label: '已取消' },
+};
 
 const FAMILY_SET = new Set(TYPE_ORDER);
 
@@ -57,6 +68,105 @@ export function formatGatheringHkTime(iso) {
   } catch {
     return String(iso);
   }
+}
+
+function formatGatheringHkClock(iso) {
+  if (!iso) return '';
+  try {
+    return new Intl.DateTimeFormat('zh-HK', {
+      timeZone: HK_TZ,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(new Date(iso));
+  } catch {
+    return '';
+  }
+}
+
+function gatheringHkDateParts(iso) {
+  if (!iso) return null;
+  try {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: HK_TZ,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(new Date(iso));
+    const get = (type) => parts.find((p) => p.type === type)?.value || '';
+    return `${get('year')}-${get('month')}-${get('day')}`;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Human time period for cards / detail, e.g. "26/07/2026 (週日) 14:00–16:00".
+ * Cross-day spans keep both full stamps.
+ */
+export function formatGatheringHkTimeRange(startsAt, endsAt) {
+  const startLabel = formatGatheringHkTime(startsAt);
+  if (!startLabel) return '';
+  if (!endsAt) return startLabel;
+  const endMs = new Date(endsAt).getTime();
+  const startMs = new Date(startsAt).getTime();
+  if (Number.isNaN(endMs) || endMs <= startMs) return startLabel;
+
+  const sameDay = gatheringHkDateParts(startsAt) === gatheringHkDateParts(endsAt);
+  if (sameDay) {
+    const endClock = formatGatheringHkClock(endsAt);
+    return endClock ? `${startLabel}–${endClock}` : startLabel;
+  }
+  const endLabel = formatGatheringHkTime(endsAt);
+  return endLabel ? `${startLabel} – ${endLabel}` : startLabel;
+}
+
+export function getGatheringEndMs(gathering) {
+  if (!gathering) return NaN;
+  if (gathering.ends_at) {
+    const end = new Date(gathering.ends_at).getTime();
+    if (!Number.isNaN(end)) return end;
+  }
+  if (gathering.starts_at) {
+    const start = new Date(gathering.starts_at).getTime();
+    if (!Number.isNaN(start)) return start + GATHERING_DEFAULT_DURATION_MS;
+  }
+  return NaN;
+}
+
+export function hasGatheringStarted(gathering, now = new Date()) {
+  if (!gathering?.starts_at) return false;
+  const start = new Date(gathering.starts_at).getTime();
+  return !Number.isNaN(start) && start <= now.getTime();
+}
+
+export function isGatheringEnded(gathering, now = new Date()) {
+  if (!gathering) return false;
+  if (gathering.status === 'completed') return true;
+  const end = getGatheringEndMs(gathering);
+  return !Number.isNaN(end) && end <= now.getTime();
+}
+
+/** True while between starts_at and ends_at (and not cancelled/completed). */
+export function isGatheringOngoing(gathering, now = new Date()) {
+  if (!gathering) return false;
+  if (gathering.status === 'cancelled' || gathering.status === 'completed') return false;
+  return hasGatheringStarted(gathering, now) && !isGatheringEnded(gathering, now);
+}
+
+/**
+ * UI badge key/label. Prefer this over raw DB status so "進行中" / "已結束"
+ * show while status is still open/full until lazy completion writes.
+ */
+export function getGatheringDisplayStatus(gathering, now = new Date()) {
+  if (!gathering) return GATHERING_DISPLAY_STATUS.open;
+  if (gathering.status === 'cancelled') return GATHERING_DISPLAY_STATUS.cancelled;
+  if (gathering.status === 'completed' || isGatheringEnded(gathering, now)) {
+    return GATHERING_DISPLAY_STATUS.completed;
+  }
+  if (hasGatheringStarted(gathering, now)) return GATHERING_DISPLAY_STATUS.ongoing;
+  if (gathering.status === 'full') return GATHERING_DISPLAY_STATUS.full;
+  return GATHERING_DISPLAY_STATUS.open;
 }
 
 export function tagLabelsForIds(tagIds) {
@@ -108,10 +218,37 @@ export function assertCanApply(actor, gathering) {
   if (gathering.status !== 'open') {
     return { ok: false, status: 409, error: '此聚會目前無法接受申請。', code: 'not_open' };
   }
-  if (new Date(gathering.starts_at).getTime() <= Date.now()) {
+  if (hasGatheringStarted(gathering) || isGatheringEnded(gathering)) {
     return { ok: false, status: 409, error: '聚會已經開始或結束。', code: 'started' };
   }
   return { ok: true };
+}
+
+/** Host may approve only before the gathering starts. */
+export function assertCanApprove(gathering) {
+  if (!gathering) {
+    return { ok: false, status: 404, error: '找不到此聚會。', code: 'missing' };
+  }
+  if (gathering.status === 'cancelled') {
+    return { ok: false, status: 409, error: '此聚會無法再批准參加者。', code: 'cancelled' };
+  }
+  if (gathering.status === 'completed' || isGatheringEnded(gathering)) {
+    return { ok: false, status: 409, error: '聚會已經結束，無法再批准參加者。', code: 'completed' };
+  }
+  if (hasGatheringStarted(gathering)) {
+    return { ok: false, status: 409, error: '聚會已經開始，無法再批准參加者。', code: 'started' };
+  }
+  if (gathering.status !== 'open' && gathering.status !== 'full') {
+    return { ok: false, status: 409, error: '此聚會無法再批准參加者。', code: 'not_open' };
+  }
+  return { ok: true };
+}
+
+/** True when guests may still apply (open + not started). */
+export function isGatheringAcceptingApplications(gathering, now = new Date()) {
+  if (!gathering || gathering.status !== 'open') return false;
+  if (hasGatheringStarted(gathering, now) || isGatheringEnded(gathering, now)) return false;
+  return true;
 }
 
 /**
@@ -200,6 +337,8 @@ export function validateGatheringInput(body = {}, { partial = false } = {}) {
       if (Number.isNaN(ends.getTime())) errors.push('結束時間無效。');
       else if (startIso && ends.getTime() <= new Date(startIso).getTime()) {
         errors.push('結束時間需遲過開始時間。');
+      } else if (startIso && ends.getTime() - new Date(startIso).getTime() > GATHERING_MAX_DURATION_MS) {
+        errors.push('聚會時段最長 12 小時。');
       } else {
         out.ends_at = ends.toISOString();
       }
@@ -424,7 +563,9 @@ export function toPublicGathering(row, {
     ends_at: row.ends_at,
     starts_at_hk: formatGatheringHkTime(row.starts_at),
     ends_at_hk: formatGatheringHkTime(row.ends_at),
+    time_range_hk: formatGatheringHkTimeRange(row.starts_at, row.ends_at),
     timezone: row.timezone || HK_TZ,
+    phase: getGatheringDisplayStatus({ ...row, status: lazyUpdateStatus(row) }).key,
     location_public: row.location_public,
     location_private: includePrivate
       ? normalizeGatheringPrivateLocation(row.location_private)
@@ -460,8 +601,8 @@ export function lazyUpdateStatus(row) {
   if (row.status === 'cancelled' || row.status === 'completed' || row.status === 'draft') {
     return row.status;
   }
-  const end = row.ends_at || row.starts_at;
-  if (end && new Date(end).getTime() < Date.now()) return 'completed';
+  const end = getGatheringEndMs(row);
+  if (!Number.isNaN(end) && end <= Date.now()) return 'completed';
   return row.status;
 }
 

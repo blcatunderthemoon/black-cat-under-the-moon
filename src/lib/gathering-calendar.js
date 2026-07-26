@@ -125,13 +125,16 @@ export function buildGatheringMonthGrid(year, month, now = new Date()) {
   return cells;
 }
 
-/** True when a gathering should show under the past / ended bucket. */
+/** True when a gathering should show under the past / ended bucket (after ends_at). */
 export function isGatheringPastEvent(gathering, now = new Date()) {
   if (!gathering) return false;
   if (gathering.status === 'completed' || gathering.status === 'cancelled') return true;
-  const starts = gathering.starts_at ? new Date(gathering.starts_at) : null;
-  if (starts && !Number.isNaN(starts.getTime()) && starts.getTime() < now.getTime()) return true;
-  return false;
+  const startMs = gathering.starts_at ? new Date(gathering.starts_at).getTime() : NaN;
+  let endMs = gathering.ends_at ? new Date(gathering.ends_at).getTime() : NaN;
+  if (Number.isNaN(endMs) && !Number.isNaN(startMs)) {
+    endMs = startMs + 2 * 60 * 60 * 1000; // default window when ends_at missing
+  }
+  return !Number.isNaN(endMs) && endMs <= now.getTime();
 }
 
 export function groupGatheringsByHkDate(gatherings) {

@@ -9,7 +9,7 @@ import GatheringConfirmOverlay from './GatheringConfirmOverlay.js';
 import { ForumPawIcon, UiFlagIcon } from '../UiIcons.js';
 import { maskEmail, maskPhone } from '../../lib/gathering-contact.js';
 
-export default function GatheringHostQueue({ gatheringId, knockQuestion, onChanged }) {
+export default function GatheringHostQueue({ gatheringId, knockQuestion, canApprove = true, onChanged }) {
   const { session } = useAuth();
   const [attendees, setAttendees] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -193,8 +193,9 @@ export default function GatheringHostQueue({ gatheringId, knockQuestion, onChang
               <button
                 type="button"
                 className="gathering-host-queue__btn gathering-host-queue__btn--approve"
-                disabled={busyId === a.user_id}
-                onClick={() => decide(a.user_id, 'approve')}
+                disabled={!canApprove || busyId === a.user_id}
+                title={canApprove ? undefined : '聚會已開始，無法再批准'}
+                onClick={() => canApprove && decide(a.user_id, 'approve')}
               >
                 批准
               </button>

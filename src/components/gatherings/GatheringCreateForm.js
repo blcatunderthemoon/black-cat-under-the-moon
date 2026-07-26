@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../lib/auth-context.js';
 import { defaultStartsLocalForHkDate } from '../../lib/gathering-calendar.js';
+import { GATHERING_DEFAULT_DURATION_MS } from '../../lib/gatherings.js';
 import {
   GATHERING_CUSTOM_TAG_MAX_LEN,
   GATHERING_MAX_TAGS,
@@ -27,6 +28,12 @@ function toLocalInputValue(date = new Date(Date.now() + 2 * 60 * 60 * 1000)) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
+function addMsToLocalInput(localValue, ms) {
+  const d = new Date(localValue);
+  if (Number.isNaN(d.getTime())) return localValue;
+  return toLocalInputValue(new Date(d.getTime() + ms));
+}
+
 export default function GatheringCreateForm({ meta, onDateChange }) {
   const router = useRouter();
   const { session } = useAuth();
@@ -36,6 +43,8 @@ export default function GatheringCreateForm({ meta, onDateChange }) {
   const [customTagDraft, setCustomTagDraft] = useState('');
   const [isOnline, setIsOnline] = useState(false);
   const [startsAt, setStartsAt] = useState(toLocalInputValue());
+  const [endsAt, setEndsAt] = useState(() => addMsToLocalInput(toLocalInputValue(), GATHERING_DEFAULT_DURATION_MS));
+  const [endsTouched, setEndsTouched] = useState(false);
   const [locationPublic, setLocationPublic] = useState('');
   const [locationPrivate, setLocationPrivate] = useState('');
   const [hostEmail, setHostEmail] = useState(() => session?.user?.email || '');
@@ -77,7 +86,11 @@ export default function GatheringCreateForm({ meta, onDateChange }) {
     const dateKey = typeof router.query.date === 'string' ? router.query.date : '';
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) return;
     const local = defaultStartsLocalForHkDate(dateKey);
-    if (local) setStartsAt(local);
+    if (local) {
+      setStartsAt(local);
+      setEndsAt(addMsToLocalInput(local, GATHERING_DEFAULT_DURATION_MS));
+      setEndsTouched(false);
+    }
   }, [router.isReady, router.query.date]);
 
   // Keep the parent's "選定日期" label in sync with the actual start time.
@@ -85,6 +98,18 @@ export default function GatheringCreateForm({ meta, onDateChange }) {
     const dateKey = /^\d{4}-\d{2}-\d{2}/.test(startsAt) ? startsAt.slice(0, 10) : '';
     onDateChange?.(dateKey);
   }, [startsAt, onDateChange]);
+
+  function onStartsChange(value) {
+    setStartsAt(value);
+    if (!endsTouched) {
+      setEndsAt(addMsToLocalInput(value, GATHERING_DEFAULT_DURATION_MS));
+    }
+  }
+
+  function onEndsChange(value) {
+    setEndsTouched(true);
+    setEndsAt(value);
+  }
 
   function toggleTag(id) {
     setTags((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : (
@@ -118,10 +143,21 @@ export default function GatheringCreateForm({ meta, onDateChange }) {
       setError('請先登入。');
       return;
     }
+    const startsMs = new Date(startsAt).getTime();
+    const endsMs = new Date(endsAt).getTime();
+    if (Number.isNaN(startsMs) || Number.isNaN(endsMs)) {
+      setError('請提供有效開始同結束時間。');
+      return;
+    }
+    if (endsMs <= startsMs) {
+      setError('結束時間需遲過開始時間。');
+      return;
+    }
     setBusy(true);
     setError('');
     try {
       const startsIso = new Date(startsAt).toISOString();
+      const endsIso = new Date(endsAt).toISOString();
       const res = await fetch('/api/gatherings', {
         method: 'POST',
         headers: {
@@ -134,6 +170,7 @@ export default function GatheringCreateForm({ meta, onDateChange }) {
           tags,
           is_online: isOnline,
           starts_at: startsIso,
+          ends_at: endsIso,
           location_public: locationPublic,
           location_private: locationPrivate || null,
           host_email: hostEmail,
@@ -252,10 +289,24 @@ export default function GatheringCreateForm({ meta, onDateChange }) {
       <div className="gathering-form__section">
         <h2 className="gathering-form__section-title">時間與地點</h2>
 
-      <label className="gathering-form__field">
-        <span>開始時間 *</span>
-        <input type="datetime-local" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} required />
-      </label>
+      <div className="gathering-form__time-range">
+        <label className="gathering-form__field">
+          <span>開始時間 *</span>
+          <input type="datetime-local" value={startsAt} onChange={(e) => onStartsChange(e.target.value)} required />
+        </label>
+        <span className="gathering-form__time-range-sep" aria-hidden="true">至</span>
+        <label className="gathering-form__field">
+          <span>結束時間 *</span>
+          <input
+            type="datetime-local"
+            value={endsAt}
+            min={startsAt || undefined}
+            onChange={(e) => onEndsChange(e.target.value)}
+            required
+          />
+        </label>
+      </div>
+      <p className="gathering-form__hint">例如 14:00–16:00。預設兩小時，最長 12 小時；開始後會停止申請同批准。</p>
 
       <label className="gathering-form__field">
         <span>{isOnline ? '公開區域 *' : '公開區域（18 區）*'}</span>
@@ -342,7 +393,7 @@ export default function GatheringCreateForm({ meta, onDateChange }) {
             onChange={(e) => setKnockQuestion(e.target.value)}
             maxLength={80}
             required
-            placeholder="例如：你最鍾意邊隻桌遊？／點解想來呢場？"
+            placeholder="例如：你最鍾意邊隻桌遊？／點解想来呢場？"
           />
           <p className="gathering-form__hint">參加者申請時要回答呢條問題，你先見到答案再決定批唔批准。</p>
         </label>
