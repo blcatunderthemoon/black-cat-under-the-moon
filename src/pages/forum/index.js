@@ -37,7 +37,7 @@ import ForumStoryBookshelf from '../../components/ForumStoryBookshelf.js';
 import ForumStorySearchBar from '../../components/ForumStorySearchBar.js';
 import ForumStoryComposeFields from '../../components/ForumStoryComposeFields.js';
 import ForumPostTags from '../../components/ForumPostTags.js';
-import WishSidebarPanel from '../../components/wishes/WishSidebarPanel.js';
+import ForumCommunityActivities, { scrollForumHotPanelIntoView } from '../../components/ForumCommunityActivities.js';
 import { formatForumTagLabel, canonicalForumTagKey } from '../../lib/forum-tags.js';
 import { isStoryTopic, isStoryPost, storyFeedPreviewText, STORY_CONTENT_MAX } from '../../lib/forum-story.js';
 import { STORY_CHAPTER_TITLE_MAX } from '../../lib/forum-story-chapters.js';
@@ -247,7 +247,7 @@ function HotTopicsPanel({ hotPosts, sparksMode }) {
   if (!hotPosts?.length) {
     // Last-resort UI: still never announce a dead week
     return (
-      <aside className="forum-panel forum-panel--hot">
+      <aside data-forum-hot-panel className="forum-panel forum-panel--hot">
         <div className="forum-panel__head">
           <h3 className="forum-panel__title">
             <ForumSparkleIcon size={14} className="forum-panel__title-icon" />
@@ -263,7 +263,7 @@ function HotTopicsPanel({ hotPosts, sparksMode }) {
   }
 
   return (
-    <aside className="forum-panel forum-panel--hot">
+    <aside data-forum-hot-panel className="forum-panel forum-panel--hot">
       <div className="forum-panel__head">
         <h3 className="forum-panel__title">
           <TitleIcon size={14} className="forum-panel__title-icon" />
@@ -1242,14 +1242,17 @@ export default function ForumPage() {
               </div>
             </div>
 
+            <ForumCommunityActivities
+              onRankClick={() => {
+                if (scrollForumHotPanelIntoView()) return;
+                if (topic !== '全部') selectTopic('全部');
+                window.setTimeout(() => scrollForumHotPanelIntoView(), 120);
+              }}
+            />
+
             {topic === '全部' && (
               <>
                 <div className="forum-treehole-panels forum-treehole-panels--mobile">
-                  <WishSidebarPanel
-                    compact
-                    accessToken={session?.access_token}
-                    viewerId={session?.user?.id || null}
-                  />
                   <GatheringPanel
                     membersTotal={meta?.members_total}
                   />
@@ -1477,10 +1480,6 @@ export default function ForumPage() {
           </div>
 
           <div className="forum-sidebar forum-sidebar--right">
-            <WishSidebarPanel
-              accessToken={session?.access_token}
-              viewerId={session?.user?.id || null}
-            />
             <FeaturedPostsPanel featuredPosts={featuredPosts} />
             <HotTopicsPanel hotPosts={meta?.hot_posts} sparksMode={meta?.sparks_mode} />
           </div>
