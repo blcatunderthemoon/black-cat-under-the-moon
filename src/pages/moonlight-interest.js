@@ -4,8 +4,9 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '../lib/auth-context.js';
+import { useAuth, getBrowserClient } from '../lib/auth-context.js';
 import { canAdminForum } from '../lib/forum-roles.js';
+import { dashboardHeaders } from '../lib/dashboard-fetch.js';
 import AppShell from '../components/AppShell.js';
 import AppHeaderAuth from '../components/AppHeaderAuth.js';
 import SeoHead from '../components/SeoHead.js';
@@ -269,19 +270,34 @@ export default function MoonlightInterestPage() {
   }
 
   async function adminDraftFetch(payload) {
-    if (!session?.access_token) {
-      throw new Error('請先以管理員帳號登入。');
+    const client = getBrowserClient();
+    let token = session?.access_token || '';
+    if (client) {
+      const { data } = await client.auth.getSession();
+      if (data?.session?.access_token) {
+        token = data.session.access_token;
+      }
     }
+    if (!token) {
+      throw new Error('請先以管理員帳號登入（登入已過期請重新登入）。');
+    }
+
     const resp = await fetch('/api/dashboard/moonlight-interest-draft', {
       method: 'POST',
-      headers: {
+      headers: dashboardHeaders({
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${session.access_token}`,
-      },
+        Authorization: `Bearer ${token}`,
+      }),
       body: JSON.stringify(payload),
     });
     const data = await resp.json().catch(() => ({}));
     if (!resp.ok) {
+      if (resp.status === 401 || /Authentication required|Invalid or expired/i.test(data.error || '')) {
+        throw new Error('登入已過期或無效，請重新登入管理員帳號後再試。');
+      }
+      if (resp.status === 403 || data.code === 'admin_required') {
+        throw new Error(data.error || '需要論壇管理員權限。');
+      }
       throw new Error([data.error, data.hint].filter(Boolean).join(' ') || '請求失敗');
     }
     return data;
@@ -700,6 +716,7 @@ export default function MoonlightInterestPage() {
               <p className="mi-hint">
                 由 <code>responses</code> 篩 Label + 年齡，一次過建立<strong>一封</strong>草稿（收件人放 BCC）。
                 <strong>只存草稿，唔會自動發送。</strong>
+                {' '}需以論壇 admin 登入；若出現認證錯誤，請重新登入後再試。
               </p>
 
               <form className="mi-fields" onSubmit={handlePreviewCandidates}>
