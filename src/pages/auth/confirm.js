@@ -1,5 +1,5 @@
 /**
- * /auth/confirm — Email confirmation callback from Supabase
+ * /auth/confirm — Email confirmation callback (TokenHash on our domain, or legacy code)
  */
 
 import { useEffect, useState } from 'react';
@@ -10,6 +10,7 @@ import { getBrowserClient } from '../../lib/auth-context.js';
 import AppShell from '../../components/AppShell.js';
 import MoonLoading from '../../components/MoonLoading.js';
 import { UiWarningIcon } from '../../components/UiIcons.js';
+import { establishSessionFromAuthLink } from '../../lib/auth-email-link.js';
 
 export default function AuthConfirmPage() {
   const router = useRouter();
@@ -27,23 +28,11 @@ export default function AuthConfirmPage() {
         return;
       }
 
-      const { code, error: urlError, error_description: urlDesc } = router.query;
-
-      if (urlError) {
-        setErrorMsg(String(urlDesc || urlError));
+      const result = await establishSessionFromAuthLink(client, router.query);
+      if (!result.ok) {
+        setErrorMsg(result.message || '確認連結無效或已過期，請重新註冊。');
         setStatus('error');
         return;
-      }
-
-      if (code) {
-        const { error: exchangeError } = await client.auth.exchangeCodeForSession(String(code));
-        if (exchangeError) {
-          setErrorMsg(exchangeError.message || '確認失敗，連結可能已過期。');
-          setStatus('error');
-          return;
-        }
-      } else {
-        await new Promise((r) => setTimeout(r, 600));
       }
 
       const { data: { session } } = await client.auth.getSession();

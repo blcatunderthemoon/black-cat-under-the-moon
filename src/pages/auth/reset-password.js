@@ -13,6 +13,7 @@ import AppShell from '../../components/AppShell.js';
 import MoonLoading from '../../components/MoonLoading.js';
 import { resolvePostAuthDestination } from '../../lib/post-auth-redirect.js';
 import { UiWarningIcon } from '../../components/UiIcons.js';
+import { establishSessionFromAuthLink, resolveAuthRedirectPath } from '../../lib/auth-email-link.js';
 
 function buildRedirectQuery(redirect) {
   if (!redirect || typeof redirect !== 'string') return '';
@@ -21,7 +22,7 @@ function buildRedirectQuery(redirect) {
 
 export default function ResetPasswordPage() {
   const router = useRouter();
-  const redirect = typeof router.query.redirect === 'string' ? router.query.redirect : '';
+  const redirect = resolveAuthRedirectPath(router.query);
   const redirectQuery = buildRedirectQuery(redirect);
 
   const [status, setStatus] = useState('loading');
@@ -42,23 +43,11 @@ export default function ResetPasswordPage() {
         return;
       }
 
-      const { error: urlError, error_description: urlDesc, code } = router.query;
-
-      if (urlError) {
-        setErrorMsg(String(urlDesc || urlError));
+      const result = await establishSessionFromAuthLink(client, router.query);
+      if (!result.ok) {
+        setErrorMsg(result.message || '連結無效或已過期，請重新申請重設密碼。');
         setStatus('error');
         return;
-      }
-
-      if (code) {
-        const { error: exchangeError } = await client.auth.exchangeCodeForSession(String(code));
-        if (exchangeError) {
-          setErrorMsg(exchangeError.message || '連結無效或已過期，請重新申請重設密碼。');
-          setStatus('error');
-          return;
-        }
-      } else {
-        await new Promise((r) => setTimeout(r, 600));
       }
 
       const { data: { session } } = await client.auth.getSession();
