@@ -1,0 +1,20 @@
+---
+description: Keep gathering UI free of server-only lib imports
+globs: src/components/gatherings/**/*,src/pages/gatherings/**/*
+alwaysApply: false
+---
+
+# Gatherings client import safety
+
+`src/lib/gatherings.js` is **server-only** (it imports `permissions.js` → `server-auth.js`). Importing it from client pages/components crashes the browser with a client-side exception when env vars are missing.
+
+## Do
+
+- Import time/phase helpers from `src/lib/gathering-phase.js`
+- Import tags/districts/calendar helpers from their own client-safe modules
+- Keep API routes using `src/lib/gatherings.js`
+
+## Do not
+
+- `import … from '…/lib/gatherings.js'` in `src/components/gatherings/*` or `src/pages/gatherings/*`
+- Pull `permissions.js`, `server-auth.js`, or other DB/admin clients into client bundles

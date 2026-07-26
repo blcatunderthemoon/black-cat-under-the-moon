@@ -4,7 +4,7 @@
  */
 
 import { getAdminClient } from './server-auth.js';
-import { formatGatheringHkTime } from './gatherings.js';
+import { formatGatheringHkTime } from './gathering-phase.js';
 import { sendSystemInboxMessage, isSystemInboxThread } from './system-inbox.js';
 
 async function sendSystemMessage(_admin, userId, content, payload) {

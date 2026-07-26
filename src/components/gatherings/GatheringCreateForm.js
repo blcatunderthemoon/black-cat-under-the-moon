@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../lib/auth-context.js';
 import { defaultStartsLocalForHkDate } from '../../lib/gathering-calendar.js';
-import { GATHERING_DEFAULT_DURATION_MS } from '../../lib/gatherings.js';
+import { GATHERING_DEFAULT_DURATION_MS } from '../../lib/gathering-phase.js';
 import {
   GATHERING_CUSTOM_TAG_MAX_LEN,
   GATHERING_MAX_TAGS,

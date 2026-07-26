@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   getGatheringDisplayStatus,
   isGatheringOngoing,
-} from '../../lib/gatherings.js';
+} from '../../lib/gathering-phase.js';
 
 const ATTENDANCE_LABEL = {
   pending: '審核中',
