@@ -207,6 +207,43 @@ body::-webkit-scrollbar {
     padding-bottom: calc(var(--mobile-legal-page-bottom) + env(safe-area-inset-bottom, 0));
   }
 
+  /*
+   * Fixed top bars jitter when mobile Chrome / in-app WebViews resize the
+   * visual viewport (URL bar show/hide, rubber-band). Stick them in document
+   * flow instead — same “always on top” feel, without floating up/down.
+   * Keep quiz/result bars fixed (they live in quiz-viewport scroll models).
+   */
+  .mode-top-bar:not(.mode-top-bar--app):not(.mode-top-bar--quiz):not(.mode-top-bar--result),
+  .mode-top-bar--legal {
+    position: sticky !important;
+    top: 0 !important;
+    left: auto !important;
+    right: auto !important;
+    width: 100%;
+  }
+
+  /* Header is in-flow — drop clearance that was only for position:fixed */
+  .home-landing {
+    padding-top: max(8px, env(safe-area-inset-top, 0px)) !important;
+  }
+
+  body:has(.mode-top-bar--legal) .page {
+    padding-top: 16px !important;
+  }
+
+  .mode-top-bar--drift ~ .page {
+    padding-top: 12px !important;
+  }
+
+  .mode-top-bar--index ~ .welcome-screen,
+  body.welcome-active .mode-top-bar--index ~ .welcome-screen {
+    padding-top: 8px !important;
+  }
+
+  .mode-top-bar--index ~ .mode-select-screen.active {
+    padding-top: 12px !important;
+  }
+
   /* Next.js app shell */
   #__next {
     min-height: 0;

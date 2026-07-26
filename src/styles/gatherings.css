@@ -2075,17 +2075,58 @@
 .gathering-host-queue__item {
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
-  padding: 0.8rem 0.9rem;
+  gap: 0.55rem;
+  padding: 0.7rem 0.75rem;
   border: 1px solid rgba(255, 224, 102, 0.2);
   border-radius: 2px;
   background: rgba(8, 7, 16, 0.45);
+}
+
+.gathering-host-queue__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.gathering-host-queue__meta {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .gathering-host-queue__name {
   margin: 0 0 0.25rem;
   color: var(--gathering-cream);
   font-size: 0.9rem;
+}
+
+.gathering-host-queue__report {
+  appearance: none;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: -0.15rem -0.15rem 0 0;
+  padding: 0;
+  border: 1px solid rgba(255, 154, 171, 0.28);
+  border-radius: 6px;
+  background: rgba(40, 16, 22, 0.45);
+  color: rgba(255, 180, 190, 0.85);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.gathering-host-queue__report:hover:not(:disabled) {
+  color: #ffb0bc;
+  border-color: rgba(255, 154, 171, 0.55);
+  background: rgba(70, 24, 32, 0.55);
+}
+
+.gathering-host-queue__report:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .gathering-host-queue__q {
@@ -2103,8 +2144,8 @@
 
 /* Applicant knock answer — quoted, eye-catching */
 .gathering-host-queue__answer {
-  margin: 0.15rem 0 0;
-  padding: 0.6rem 0.75rem;
+  margin: 0;
+  padding: 0.55rem 0.65rem;
   border: 1px solid rgba(196, 181, 253, 0.3);
   border-left: 3px solid rgba(167, 139, 250, 0.85);
   border-radius: 4px;
@@ -2116,17 +2157,19 @@
 .gathering-host-queue__knock {
   display: flex;
   align-items: flex-start;
-  gap: 0.45rem;
+  gap: 0.4rem;
   margin: 0;
   color: #ece8f7;
-  font-size: 0.9rem;
-  line-height: 1.5;
+  font-size: 0.85rem;
+  line-height: 1.45;
 }
 
 .gathering-host-queue__paw {
   flex: 0 0 auto;
-  font-size: 1.05rem;
-  line-height: 1.3;
+  display: inline-flex;
+  margin-top: 0.1rem;
+  color: rgba(196, 181, 253, 0.9);
+  line-height: 1;
 }
 
 .gathering-host-queue__knock-text b {
@@ -2158,18 +2201,18 @@
 }
 
 .gathering-host-queue__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.55rem;
-  align-items: center;
-  padding-top: 0.35rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+  align-items: stretch;
+  padding-top: 0.15rem;
 }
 
 .gathering-host-queue__btn {
-  min-height: 40px;
-  padding: 0.45rem 0.85rem;
+  min-height: 36px;
+  padding: 0.35rem 0.65rem;
   border-radius: 4px;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   cursor: pointer;
@@ -2182,12 +2225,11 @@
 }
 
 .gathering-host-queue__btn--approve {
-  flex: 1 1 7rem;
   border: 1px solid transparent;
   background: linear-gradient(135deg, #fff0b0, #ffe066 50%, #e6c84a);
   color: #12101a;
   font-weight: 700;
-  box-shadow: 0 0 14px rgba(255, 224, 102, 0.18);
+  box-shadow: 0 0 10px rgba(255, 224, 102, 0.14);
 }
 
 .gathering-host-queue__btn--approve:hover:not(:disabled) {
@@ -2195,7 +2237,6 @@
 }
 
 .gathering-host-queue__btn--reject {
-  flex: 1 1 5.5rem;
   border: 1px solid rgba(240, 235, 216, 0.28);
   background: rgba(240, 235, 216, 0.04);
   color: rgba(240, 235, 216, 0.82);
@@ -2206,27 +2247,6 @@
   border-color: rgba(240, 235, 216, 0.48);
   background: rgba(240, 235, 216, 0.09);
   color: #f5ecd8;
-}
-
-.gathering-host-queue__btn--block {
-  flex: 0 0 auto;
-  min-height: 0;
-  margin-left: auto;
-  padding: 0.35rem 0.45rem;
-  border: none;
-  background: transparent;
-  color: rgba(186, 178, 210, 0.55);
-  font-size: 0.78rem;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-decoration: underline;
-  text-decoration-color: rgba(186, 178, 210, 0.28);
-  text-underline-offset: 3px;
-}
-
-.gathering-host-queue__btn--block:hover:not(:disabled) {
-  color: #ff9aab;
-  text-decoration-color: rgba(255, 154, 171, 0.55);
 }
 
 /* Legacy class hooks (if any leftover markup) */
@@ -4528,14 +4548,14 @@
   }
 
   .gathering-host-queue__actions {
-    display: flex;
-    flex-direction: column;
-    gap: 0.45rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
   }
 
   .gathering-host-queue__actions button {
-    width: 100%;
-    min-height: 44px;
+    width: auto;
+    min-height: 36px;
   }
 }
 

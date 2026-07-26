@@ -203,11 +203,23 @@
       '<svg class="header-nav-icon premium-moon-badge__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">'
       + '<path d="M15.2 4.8A7.8 7.8 0 1 0 19.2 15 6.2 6.2 0 0 1 15.2 4.8z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>'
       + '</svg>',
+    wish:
+      '<svg class="header-nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">'
+      + '<path d="M6 4.5v15" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>'
+      + '<path d="M6 5.5h10.5l-2 3.2 2 3.2H6" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>'
+      + '<path d="M16.5 15.2l1.2 2.4 2.6.3-2 1.8.5 2.5-2.3-1.4-2.3 1.4.5-2.5-2-1.8 2.6-.3z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>'
+      + '</svg>',
   };
 
   function gatheringsLinkHtml() {
     return '<a href="/gatherings" class="auth-nav-badge__item auth-nav-badge__item--icon" title="月光聚會" aria-label="月光聚會">' +
       '<span class="auth-nav-badge__icon" aria-hidden="true">' + NAV_ICON.calendar + '</span>' +
+    '</a>';
+  }
+
+  function wishesLinkHtml() {
+    return '<a href="/wishes" class="auth-nav-badge__item auth-nav-badge__item--icon" title="月光心願" aria-label="月光心願">' +
+      '<span class="auth-nav-badge__icon" aria-hidden="true">' + NAV_ICON.wish + '</span>' +
     '</a>';
   }
 
@@ -376,7 +388,8 @@
       syncGreetingTopBar(false);
       return;
     }
-    el.textContent = getWelcomeGreetingPrefix() + '。 ' + name;
+    /* Name lives in the auth badge; greeting is time-of-day only. */
+    el.textContent = getWelcomeGreetingPrefix() + '。';
     el.hidden = false;
     syncGreetingTopBar(true);
     requestAnimationFrame(function() {
@@ -650,27 +663,27 @@
     var profilePending = !!options.profilePending;
     var name = displayName || '貓咪';
     var moon = isPremium ? premiumMoonHtml(meData || meCache) : '';
-    var hideNameOnIndex = isIndexLandingPage()
-      && (profilePending || Boolean(String(displayName || '').trim()));
-    var nameBlock = hideNameOnIndex
-      ? (moon ? '<span class="auth-nav-badge__name-group">' + moon + '</span>' : '')
-      : (
+    var showName = !profilePending || Boolean(String(displayName || '').trim());
+    /* Index keeps time greeting; show full name + icon rail (same as app header). */
+    var nameBlock = showName
+      ? (
         '<span class="auth-nav-badge__name-group">' +
           '<a href="/mirror-card/me" class="auth-nav-badge__item auth-nav-badge__item--name" title="' + escHtml(name) + '">' + renderAuthNavNameHtml(name) + '</a>' +
           moon +
         '</span>'
-      );
-    var afterName = hideNameOnIndex && !moon ? '' : sep();
+      )
+      : (moon ? '<span class="auth-nav-badge__name-group">' + moon + '</span>' : '');
     var html =
       shellStart() +
       nameBlock +
-      afterName +
-      gatheringsLinkHtml() +
-      inboxLinkHtml(unreadCount) +
-      sep() +
-      settingsLinkHtml() +
-      sep() +
-      myCatLinkHtml(meData || meCache) +
+      (showName || moon ? sep() : '') +
+      '<span class="auth-nav-badge__icon-group">' +
+        gatheringsLinkHtml() +
+        wishesLinkHtml() +
+        inboxLinkHtml(unreadCount) +
+        settingsLinkHtml() +
+        myCatLinkHtml(meData || meCache) +
+      '</span>' +
       shellEnd();
 
     injectNav(html, doLogout);
@@ -686,26 +699,12 @@
   function showLoggedOut() {
     unmountIndexGreetingFromNav();
     updateWelcomeGreeting('');
-    var html;
-    if (isIndexLandingPage()) {
-      /* Compact user icon — less competition with the logo */
-      html =
-        shellStart() +
-        '<a href="' + loginHref() + '" class="auth-nav-badge__item auth-nav-badge__item--icon auth-nav-badge__item--guest-user" title="登入 / 註冊" aria-label="登入或註冊">' +
-          '<svg class="auth-nav-badge__guest-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
-            '<circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.75"/>' +
-            '<path d="M5.5 19.2c1.4-3.1 3.7-4.7 6.5-4.7s5.1 1.6 6.5 4.7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>' +
-          '</svg>' +
-        '</a>' +
-        shellEnd();
-    } else {
-      html =
-        shellStart() +
-        '<a href="' + loginHref() + '" class="auth-nav-badge__item auth-nav-badge__item--login">登入</a>' +
-        sep() +
-        '<a href="' + signupHref() + '" class="auth-nav-badge__item auth-nav-badge__item--signup">註冊</a>' +
-        shellEnd();
-    }
+    var html =
+      shellStart() +
+      '<a href="' + loginHref() + '" class="auth-nav-badge__item auth-nav-badge__item--login">登入</a>' +
+      sep() +
+      '<a href="' + signupHref() + '" class="auth-nav-badge__item auth-nav-badge__item--signup">註冊</a>' +
+      shellEnd();
 
     injectNav(html, null);
   }

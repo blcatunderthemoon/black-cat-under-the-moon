@@ -1215,6 +1215,30 @@
   margin-top: 14px;
 }
 
+/* Auth submit: same step-dots as 載入中… (no pulse / float) */
+.pixel-btn__loading-label {
+  margin: 0;
+  padding: 0;
+  display: inline;
+  font: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  color: inherit;
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  text-align: inherit;
+  animation: none !important;
+  opacity: 1 !important;
+}
+
+.pixel-btn__loading-label .loading-dots::after {
+  content: '';
+  animation: moon-loading-dots 1.4s steps(4, end) infinite;
+  color: inherit;
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+
 .pixel-card--auth .pixel-subtitle {
   font-family: var(--font-zh);
   font-size: 1.125rem;
@@ -1734,6 +1758,7 @@
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: grayscale;
   pointer-events: none;
+  animation: inbox-unread-badge-breathe 3.2s ease-in-out infinite;
 }
 
 .inbox-system-notice__new-tag::before {
@@ -7924,6 +7949,7 @@
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   pointer-events: none;
+  animation: inbox-unread-badge-breathe 3.2s ease-in-out infinite;
 }
 
 .inbox-letter-row__new-badge::before {
@@ -7957,25 +7983,22 @@
     0 0 10px rgba(255, 224, 102, 0.28);
 }
 
-@keyframes inbox-match-badge-pulse {
+/* Slow soft breathe — opacity only (works for all badge colors) */
+@keyframes inbox-unread-badge-breathe {
   0%,
   100% {
-    box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.35) inset,
-      0 0 0 1px rgba(0, 40, 50, 0.35),
-      0 0 10px rgba(0, 229, 255, 0.28);
+    opacity: 0.78;
   }
   50% {
-    box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.35) inset,
-      0 0 0 1px rgba(0, 40, 50, 0.35),
-      0 0 14px rgba(0, 229, 255, 0.4);
+    opacity: 1;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .inbox-letter-row__new-badge.inbox-letter-row__new-badge--match {
+  .inbox-letter-row__new-badge,
+  .inbox-system-notice__new-tag {
     animation: none;
+    opacity: 1;
   }
 }
 

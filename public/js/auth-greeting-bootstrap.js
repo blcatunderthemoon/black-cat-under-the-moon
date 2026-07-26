@@ -81,7 +81,8 @@
       if (topBar) topBar.classList.remove('mode-top-bar--greeting');
       return;
     }
-    el.textContent = greetingPrefix() + '。 ' + trimmed + (isPremium ? '' : ' 🌙');
+    /* Name lives in auth badge; greeting is time-of-day only. */
+    el.textContent = greetingPrefix() + '。';
     el.hidden = false;
     var topBarActive = document.querySelector('.mode-top-bar--index');
     if (topBarActive) topBarActive.classList.add('mode-top-bar--greeting');

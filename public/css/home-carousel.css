@@ -142,15 +142,12 @@ body.home-landing-active:has(#live-activity:not([hidden])) {
   line-height: 1;
   color: rgba(244, 238, 255, 0.92);
   -webkit-font-smoothing: antialiased;
-  /* Short label: 「人在線」→ with count: 「1人在線」 */
-  font-size: 0;
+  /* Full label: 「位旅人在線上」 */
+  font-size: 11px;
 }
 
 .mode-top-bar--index .site-presence--header .site-presence__label::after {
-  content: '人在線';
-  font-size: 11px;
-  font-weight: 500;
-  color: rgba(244, 238, 255, 0.92);
+  content: none;
 }
 
 .mode-top-bar--index .site-presence--header .site-presence__dot {

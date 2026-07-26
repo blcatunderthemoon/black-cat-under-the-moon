@@ -13,6 +13,7 @@ import { resolvePostAuthDestination, navigateAfterAuth } from '../lib/post-auth-
 import { validateEmail } from '../lib/auth-credentials-policy.js';
 import AppShell from '../components/AppShell.js';
 import AuthBrandHeader from '../components/AuthBrandHeader.js';
+import LoadingText from '../components/LoadingText.js';
 import MoonLoading from '../components/MoonLoading.js';
 
 export default function LoginPage() {
@@ -160,7 +161,11 @@ export default function LoginPage() {
             {error && <p className="pixel-error">{error}</p>}
 
             <button type="submit" className="pixel-btn pixel-btn--primary" disabled={submitting}>
-              {submitting ? '登入中…' : '登入'}
+              {submitting ? (
+                <LoadingText as="span" label="登入中..." className="pixel-btn__loading-label" />
+              ) : (
+                '登入'
+              )}
             </button>
           </form>
 
