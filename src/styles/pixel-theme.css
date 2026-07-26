@@ -1,5 +1,5 @@
 /* ============================================================
-   Pixel Theme — shared UI for Next.js user-facing pages
+   Pixel Theme ? shared UI for Next.js user-facing pages
    Matches public/css/questionnaire.css aesthetic
    ============================================================ */
 
@@ -8,7 +8,7 @@
   letter-spacing: 0.5px;
 }
 
-/* Chinese pixel type — titles & CTA only; labels/links stay --font-zh */
+/* Chinese pixel type ? titles & CTA only; labels/links stay --font-zh */
 .font-zpix {
   font-family: 'Zpix', 'Press Start 2P', monospace;
   font-weight: normal;
@@ -17,7 +17,7 @@
   text-rendering: geometricPrecision;
 }
 
-/* ── Page shell ── */
+/* ?? Page shell ?? */
 .app-page {
   min-height: 100vh;
   min-height: 100dvh;
@@ -89,7 +89,7 @@
 .app-main--wide { max-width: 720px; }
 .app-main--narrow { max-width: 420px; }
 
-/* ── Header ── */
+/* ?? Header ?? */
 .app-header {
   position: sticky;
   top: 0;
@@ -208,7 +208,7 @@
   text-shadow: 0 0 10px rgba(189, 147, 249, 0.25);
 }
 
-/* ── Cards ── */
+/* ?? Cards ?? */
 .pixel-card {
   background: var(--bg-card);
   border: 2px solid var(--border-glow);
@@ -280,7 +280,7 @@
   box-shadow: 0 0 16px rgba(189, 147, 249, 0.15);
 }
 
-/* Glass section — neon border, matches mirror card aesthetic */
+/* Glass section ? neon border, matches mirror card aesthetic */
 .pixel-card--glass {
   position: relative;
   background: rgba(12, 11, 29, 0.52);
@@ -322,7 +322,7 @@
   z-index: 1;
 }
 
-/* Moon-night pixel panel — account & settings sections */
+/* Moon-night pixel panel ? account & settings sections */
 .pixel-card--moon {
   position: relative;
   background: linear-gradient(165deg, rgba(15, 14, 34, 0.92) 0%, rgba(7, 6, 14, 0.96) 55%, rgba(10, 12, 28, 0.94) 100%);
@@ -387,7 +387,7 @@
   text-shadow: 0 0 14px rgba(189, 147, 249, 0.45);
 }
 
-/* ── Typography ── */
+/* ?? Typography ?? */
 .pixel-title {
   font-family: 'Press Start 2P', monospace;
   font-size: 10px;
@@ -421,7 +421,7 @@
   text-rendering: geometricPrecision;
 }
 
-/* ── Forms ── */
+/* ?? Forms ?? */
 .pixel-form {
   width: 100%;
   display: flex;
@@ -505,7 +505,7 @@
   padding: 32px 0;
 }
 
-/* ── Buttons ── */
+/* ?? Buttons ?? */
 .pixel-btn {
   font-family: 'Press Start 2P', monospace;
   font-size: 8px;
@@ -585,7 +585,7 @@
   justify-content: flex-end;
 }
 
-/* ── Links ── */
+/* ?? Links ?? */
 .pixel-link {
   color: var(--purple-light);
   text-decoration: none;
@@ -601,7 +601,7 @@
   margin: 8px 0 0;
 }
 
-/* ── Badges / pills ── */
+/* ?? Badges / pills ?? */
 .pixel-badge {
   font-family: 'Press Start 2P', monospace;
   font-size: 6px;
@@ -633,7 +633,7 @@
   background: rgba(189, 147, 249, 0.06);
 }
 
-/* ── Notices ── */
+/* ?? Notices ?? */
 .pixel-notice {
   display: flex;
   gap: 12px;
@@ -668,7 +668,7 @@
   margin: 0;
 }
 
-/* ── Modal overlay ── */
+/* ?? Modal overlay ?? */
 .pixel-overlay {
   position: fixed;
   inset: 0;
@@ -680,7 +680,7 @@
   padding: 16px;
 }
 
-/* ── Lists ── */
+/* ?? Lists ?? */
 .pixel-list {
   list-style: none;
   padding: 0;
@@ -708,7 +708,7 @@
   border-color: var(--purple-light);
 }
 
-/* ── Auth brand — site blue→purple→cyan gradient ── */
+/* ?? Auth brand ? site blue?purple?cyan gradient ?? */
 .auth-brand {
   --auth-brand-gradient: linear-gradient(135deg, #bd93f9 0%, #7c5cfc 45%, #00e5ff 100%);
   display: flex;
@@ -765,7 +765,7 @@
   text-shadow: none;
 }
 
-/* Signup — same rhythm as login */
+/* Signup ? same rhythm as login */
 .pixel-card--signup {
   overflow: visible;
 }
@@ -876,7 +876,7 @@
   text-decoration: none;
 }
 
-/* ── Auth logo (legacy pages: forgot-password, etc.) ── */
+/* ?? Auth logo (legacy pages: forgot-password, etc.) ?? */
 .auth-logo {
   width: 80px;
   height: 80px;
@@ -886,7 +886,7 @@
   margin-bottom: 8px;
 }
 
-/* ── Auth card: hierarchy, form, CTA ── */
+/* ?? Auth card: hierarchy, form, CTA ?? */
 .pixel-card--auth .auth-header {
   display: flex;
   flex-direction: column;
@@ -913,7 +913,7 @@
   text-rendering: geometricPrecision;
 }
 
-/* English brand — legacy alias */
+/* English brand ? legacy alias */
 .pixel-card--auth .auth-brand-title {
   font-family: 'Press Start 2P', monospace;
   font-size: 10px;
@@ -933,7 +933,7 @@
   text-rendering: geometricPrecision;
 }
 
-/* Auth taglines — below gradient hero title */
+/* Auth taglines ? below gradient hero title */
 .pixel-card--auth .auth-welcome-tag {
   display: flex;
   align-items: center;
@@ -990,7 +990,7 @@
   width: 100%;
 }
 
-/* Narrow centered column — RPG character login / save slot */
+/* Narrow centered column ? RPG character login / save slot */
 .pixel-card--login .pixel-form--login {
   margin-top: 22px;
   width: 100%;
@@ -1116,7 +1116,7 @@
     0 0 16px rgba(124, 92, 252, 0.12);
 }
 
-/* Browser autofill paints its own light background — override to match dark auth inputs */
+/* Browser autofill paints its own light background ? override to match dark auth inputs */
 .pixel-card--auth .pixel-input:-webkit-autofill,
 .pixel-card--auth .pixel-input:-webkit-autofill:hover,
 .pixel-card--auth .pixel-input:-webkit-autofill:focus,
@@ -1215,7 +1215,7 @@
   margin-top: 14px;
 }
 
-/* Auth submit: same step-dots as 載入中… (no pulse / float) */
+/* Auth submit: same step-dots as ???? (no pulse / float) */
 .pixel-btn__loading-label {
   margin: 0;
   padding: 0;
@@ -1361,7 +1361,7 @@
   }
 }
 
-/* ── Spinner (legacy; prefer MoonLoading) ── */
+/* ?? Spinner (legacy; prefer MoonLoading) ?? */
 .pixel-spinner {
   width: 36px;
   height: 36px;
@@ -1370,7 +1370,7 @@
   animation: spin 0.8s linear infinite;
 }
 
-/* ── Moon loading animation (unified blue→purple gradient) ── */
+/* ?? Moon loading animation (unified blue?purple gradient) ?? */
 :root {
   --moon-send-gradient: linear-gradient(155deg, #00e5ff 0%, #7c5cfc 52%, #bd93f9 100%);
   --moon-loading-gap: 8px;
@@ -1560,7 +1560,7 @@
   justify-content: center;
 }
 
-/* ── Starfield canvas ── */
+/* ?? Starfield canvas ?? */
 .starfield-canvas {
   position: fixed;
   inset: 0;
@@ -1568,7 +1568,7 @@
   pointer-events: none;
 }
 
-/* ── Filter row ── */
+/* ?? Filter row ?? */
 .pixel-filter-row {
   display: flex;
   gap: 8px;
@@ -1577,7 +1577,7 @@
   padding-bottom: 4px;
 }
 
-/* ── Avatar circle ── */
+/* ?? Avatar circle ?? */
 .pixel-avatar {
   width: 40px;
   height: 40px;
@@ -1601,7 +1601,7 @@
   text-align: center;
 }
 
-/* ── Thread / chat layout ── */
+/* ?? Thread / chat layout ?? */
 .app-page--thread {
   display: flex;
   flex-direction: column;
@@ -2445,7 +2445,7 @@
   flex: 0 0 auto;
 }
 
-/* Inbox — photo exchange requests (separate from letters) */
+/* Inbox ? photo exchange requests (separate from letters) */
 .inbox-exchange-requests {
   width: 100%;
   max-width: 420px;
@@ -2652,7 +2652,7 @@
   padding: 4px 0 16px;
 }
 
-/* Dual photo pair — pixel moon exchange */
+/* Dual photo pair ? pixel moon exchange */
 .photo-exchange-pair {
   display: flex;
   flex-direction: column;
@@ -3232,7 +3232,7 @@
   text-align: center;
 }
 
-/* ── Forum post cards ── */
+/* ?? Forum post cards ?? */
 .pixel-post-card {
   position: relative;
   display: block;
@@ -3565,7 +3565,7 @@
   gap: 12px;
 }
 
-/* ── Account info rows ── */
+/* ?? Account info rows ?? */
 .pixel-info-row {
   display: flex;
   justify-content: space-between;
@@ -3596,7 +3596,7 @@
 
 .pixel-success { color: var(--success); font-size: 13px; margin: 0; }
 
-/* ── Premium page ── */
+/* ?? Premium page ?? */
 .premium-hero {
   text-align: center;
   display: flex;
@@ -3953,7 +3953,7 @@
 
 .premium-table th { color: var(--text-dim); font-weight: 600; }
 
-/* ── Matches page ── */
+/* ?? Matches page ?? */
 .match-card {
   background: var(--bg-card);
   border: 1px solid var(--border-glow);
@@ -4351,7 +4351,7 @@
   letter-spacing: 0.06em;
   line-height: 1;
   color: color-mix(in srgb, var(--family-glow) 45%, var(--text-dim));
-  /* Press Start 2P sits optically higher than Zpix — nudge onto the same midline */
+  /* Press Start 2P sits optically higher than Zpix ? nudge onto the same midline */
   transform: translateY(1px);
 }
 
@@ -4703,8 +4703,8 @@
   padding: 10px 18px;
 }
 
-/* ── Account page ── */
-/* ── Account + Inbox — moon-night layout ── */
+/* ?? Account page ?? */
+/* ?? Account + Inbox ? moon-night layout ?? */
 .app-page--account,
 .app-page--inbox {
   background:
@@ -4724,7 +4724,7 @@
   width: 100%;
 }
 
-/* Account + inbox header — tighter toolbar row alignment (all breakpoints) */
+/* Account + inbox header ? tighter toolbar row alignment (all breakpoints) */
 .app-header--account .auth-nav-badge--user-toolbar .auth-nav-badge__name-group {
   align-items: center;
 }
@@ -4746,7 +4746,7 @@
   line-height: 1;
 }
 
-/* Account / inbox / legal app pages — index mode-top-bar chrome (forum unchanged) */
+/* Account / inbox / legal app pages ? index mode-top-bar chrome (forum unchanged) */
 .app-header.app-header--account.mode-top-bar,
 .app-header--account.mode-top-bar {
   position: sticky;
@@ -5585,7 +5585,7 @@
   }
 }
 
-/* ── Cat families guide (/cat-families) ── */
+/* ?? Cat families guide (/cat-families) ?? */
 .app-page--cat-families .app-main {
   padding: 24px 16px 40px;
   gap: 24px;
@@ -5971,7 +5971,7 @@
   font-size: 13px;
 }
 
-/* ── Mirror card pages ── */
+/* ?? Mirror card pages ?? */
 .app-page--mirror-card {
   background:
     radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124, 92, 252, 0.12) 0%, transparent 55%),
@@ -6073,7 +6073,7 @@
 }
 
 .mirror-visitor-premium__list li::before {
-  content: '·';
+  content: '?';
   position: absolute;
   left: 0;
   color: var(--yellow);
@@ -6346,7 +6346,7 @@
 }
 
 .mirror-card-bio__body::before {
-  content: '「';
+  content: '?';
   position: absolute;
   top: 6px;
   left: 10px;
@@ -6487,7 +6487,7 @@
   line-height: 1;
 }
 
-/* Premium visitor — dual 留信 + 交換相 */
+/* Premium visitor ? dual ?? + ??? */
 .mirror-dual-actions {
   width: 100%;
   display: flex;
@@ -7105,7 +7105,7 @@
   cursor: default;
 }
 
-/* ── Inbox page ── */
+/* ?? Inbox page ?? */
 .inbox-list-wrap {
   width: 100%;
 }
@@ -7716,7 +7716,7 @@
   padding: 0 3px;
 }
 
-/* ── Mystic inbox / scroll letters ── */
+/* ?? Mystic inbox / scroll letters ?? */
 :root {
   --scroll-paper: #e8d9a8;
   --scroll-paper-light: #e8d9a8;
@@ -7920,7 +7920,7 @@
 }
 
 
-/* Shared unread chip — color variants only differ by accent */
+/* Shared unread chip ? color variants only differ by accent */
 .inbox-letter-row__new-badge {
   position: absolute;
   top: 6px;
@@ -7983,7 +7983,7 @@
     0 0 10px rgba(255, 224, 102, 0.28);
 }
 
-/* Slow soft breathe — opacity only (works for all badge colors) */
+/* Slow soft breathe ? opacity only (works for all badge colors) */
 @keyframes inbox-unread-badge-breathe {
   0%,
   100% {
@@ -8020,7 +8020,7 @@
   padding-top: 1px;
 }
 
-/* Keep corner badge clear of the name row — shared for all unread chips */
+/* Keep corner badge clear of the name row ? shared for all unread chips */
 .inbox-letter-row:has(.inbox-letter-row__new-badge) .inbox-letter-row__top {
   padding-right: 4.25rem;
 }
@@ -8077,7 +8077,7 @@
   max-width: 100%;
 }
 
-/* System / 月光聚會 — accent only; layout matches shared card rhythm */
+/* System / ???? ? accent only; layout matches shared card rhythm */
 .inbox-letter-row--system {
   border: 1px solid rgba(189, 147, 249, 0.14);
 }
@@ -8197,7 +8197,7 @@
 .inbox-letter-list .inbox-letter-row__en--name {
   font-size: 10px;
   line-height: 1.25;
-  /* Press Start 2P sits optically higher than Zpix — nudge onto the same midline */
+  /* Press Start 2P sits optically higher than Zpix ? nudge onto the same midline */
   transform: translateY(1px);
   overflow: visible;
   text-overflow: unset;
@@ -8222,7 +8222,7 @@
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  /* Pixel fonts often collapse space glyphs — gap keeps「月光聚會 · Demo」readable */
+  /* Pixel fonts often collapse space glyphs ? gap keeps????? ? Demo?readable */
   column-gap: 0.35em;
   row-gap: 0.1em;
   max-width: 100%;
@@ -8510,7 +8510,7 @@
   width: 100%;
 }
 
-/* Desk-style letter pair — 一來一回對開 */
+/* Desk-style letter pair ? ?????? */
 .thread-messages__inner--desk {
   align-items: stretch;
   padding: 16px 12px 28px;
@@ -8642,7 +8642,7 @@
   justify-content: center;
 }
 
-/* Parchment letter — pixel double frame */
+/* Parchment letter ? pixel double frame */
 .scroll-message__paper,
 .letter-compose__paper,
 .scroll-compose__parchment {
@@ -8684,7 +8684,7 @@
   z-index: 1;
 }
 
-/* Pixel envelope peek — solid parchment, behind paper edge */
+/* Pixel envelope peek ? solid parchment, behind paper edge */
 .scroll-message__envelope-corner {
   position: absolute;
   bottom: -4px;
@@ -8725,7 +8725,7 @@
   background: #c9b87a;
 }
 
-/* Purple wax seal — mine letter header (right slot, clear of text) */
+/* Purple wax seal ? mine letter header (right slot, clear of text) */
 .scroll-message__wax-seal {
   position: relative;
   top: auto;
@@ -8969,7 +8969,7 @@
   color: var(--scroll-ink);
 }
 
-/* legacy scroll row aliases — keep for forum if referenced */
+/* legacy scroll row aliases ? keep for forum if referenced */
 .msg-row--scroll {
   max-width: none;
   width: 100%;
@@ -8999,7 +8999,7 @@
   align-self: flex-start;
 }
 
-/* ── Inline letter compose (reply / open) ── */
+/* ?? Inline letter compose (reply / open) ?? */
 .letter-compose {
   width: 100%;
   max-width: var(--letter-bubble-max);
@@ -9170,7 +9170,7 @@
   50% { transform: scale(1.06); opacity: 1; }
 }
 
-/* ── Channel narrative: candle ── */
+/* ?? Channel narrative: candle ?? */
 .channel-narrative-viz {
   display: inline-flex;
   align-items: flex-end;
@@ -9353,7 +9353,7 @@
   50% { opacity: 1; transform: translateX(-50%) scale(1.12); }
 }
 
-/* ── Letter gameplay picker ── */
+/* ?? Letter gameplay picker ?? */
 .letter-gameplay-picker {
   position: relative;
   display: flex;
@@ -9571,7 +9571,7 @@
   vertical-align: middle;
 }
 
-/* ── Note paper colors & fonts ── */
+/* ?? Note paper colors & fonts ?? */
 .note-paper--parchment {
   --note-paper: #e8d9a8;
   --note-ink: #221202;
@@ -9638,7 +9638,7 @@
   vertical-align: baseline;
 }
 
-/* ── Stamp imprint on messages ── */
+/* ?? Stamp imprint on messages ?? */
 .scroll-message__paper > .scroll-message__stamp,
 .letter-compose__paper > .scroll-message__stamp {
   position: absolute;
@@ -10120,9 +10120,9 @@
   gap: 8px;
 }
 
-/* ══════════════════════════════════════════════════════════
-   Forum page — warm campfire layout
-   ══════════════════════════════════════════════════════════ */
+/* ??????????????????????????????????????????????????????????
+   Forum page ? warm campfire layout
+   ?????????????????????????????????????????????????????????? */
 
 .forum-warm-bg {
   position: fixed;
@@ -10485,7 +10485,7 @@
   min-width: 0;
   position: relative;
   z-index: 2;
-  /* Crest overflow — logo reads larger without growing the header bar */
+  /* Crest overflow ? logo reads larger without growing the header bar */
   margin: -10px 0;
   padding: 2px 0;
 }
@@ -10818,7 +10818,7 @@
   font-size: 15px;
 }
 
-/* ── Story compose modal ── */
+/* ?? Story compose modal ?? */
 .forum-compose-overlay .forum-compose-modal--story {
   max-width: 560px;
   background:
@@ -11452,7 +11452,7 @@
   gap: 6px;
 }
 
-/* Moonlight Coronation (月光加冕) */
+/* Moonlight Coronation (????) */
 .forum-crown-badge {
   display: inline-flex;
   align-items: center;
@@ -11555,7 +11555,7 @@
     0 0 52px rgba(124, 92, 252, 0.14) !important;
 }
 
-/* 圍爐置頂 — soft violet elevation (glow over hard ring) */
+/* ???? ? soft violet elevation (glow over hard ring) */
 .pixel-post-card--pinned,
 .forum-post-card--pinned {
   position: relative;
@@ -11663,7 +11663,7 @@
   color: #fff3c4;
 }
 
-/* ── Guardian moderator UI ── */
+/* ?? Guardian moderator UI ?? */
 .forum-post-detail-stack {
   display: flex;
   flex-direction: column;
@@ -12702,7 +12702,7 @@
   }
 }
 
-/* Admin — moderator team */
+/* Admin ? moderator team */
 .forum-admin-team {
   color: #e8e3f5;
   font-family: 'Noto Sans TC', sans-serif;
@@ -12912,14 +12912,14 @@
     line-height: 1.5;
   }
 
-  .forum-admin-team__table td[data-label="負責版塊"] {
+  .forum-admin-team__table td[data-label="????"] {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .forum-admin-team__table td[data-label="負責版塊"]::before,
-  .forum-admin-team__table td[data-label="操作"]::before,
-  .forum-admin-team__table td[data-label="指派"]::before {
+  .forum-admin-team__table td[data-label="????"]::before,
+  .forum-admin-team__table td[data-label="??"]::before,
+  .forum-admin-team__table td[data-label="??"]::before {
     margin-bottom: 2px;
   }
 
@@ -12932,7 +12932,7 @@
   }
 }
 
-/* Admin — content monitor */
+/* Admin ? content monitor */
 .forum-admin-monitor {
   font-family: 'Noto Sans TC', sans-serif;
 }
@@ -14810,7 +14810,7 @@
   margin-left: auto;
 }
 
-/* ── Forum post detail page ── */
+/* ?? Forum post detail page ?? */
 .app-page--forum-post .app-main {
   padding: 24px 16px 24px;
 }
@@ -15734,7 +15734,7 @@
   min-width: 0;
 }
 
-/* ── Community activities strip (Forum as Community Hub) ── */
+/* ?? Community activities strip (Forum as Community Hub) ?? */
 .forum-community-activities {
   margin: 0;
   padding: 0.7rem 0.75rem 0.75rem;
@@ -16420,7 +16420,7 @@
   gap: 10px;
 }
 
-/* ── 論壇流動橫幅（Dashboard 設定） ── */
+/* ?? ???????Dashboard ??? ?? */
 .forum-banner-ticker.forum-panel {
   position: relative;
   display: flex;
@@ -17316,7 +17316,7 @@ button.forum-tag-chip {
     inset 0 1px 0 rgba(255, 255, 255, 0.92);
 }
 
-/* ── Official preset tags row (layer 2 filter) ── */
+/* ?? Official preset tags row (layer 2 filter) ?? */
 .forum-preset-tags-row {
   display: flex;
   align-items: center;
@@ -17357,7 +17357,7 @@ button.forum-tag-chip {
   scroll-padding-inline: 4px 10px;
 }
 
-/* ── Hot sub-tags row (layer 2 filter) ── */
+/* ?? Hot sub-tags row (layer 2 filter) ?? */
 .forum-hot-tags-row {
   display: flex;
   align-items: center;
@@ -17398,7 +17398,7 @@ button.forum-tag-chip {
   scroll-padding-inline: 4px 10px;
 }
 
-/* ── Unified forum tag chips (hot filter + post cards + compose) ── */
+/* ?? Unified forum tag chips (hot filter + post cards + compose) ?? */
 .forum-tag-chip {
   display: inline-flex;
   align-items: center;
@@ -17517,7 +17517,7 @@ button.forum-tag-chip:hover {
   padding: 3px 10px;
 }
 
-/* ── Compose tag field ── */
+/* ?? Compose tag field ?? */
 .forum-tag-field {
   display: flex;
   flex-direction: column;
@@ -18008,7 +18008,7 @@ button.forum-tag-chip:hover {
   margin-top: 4px;
 }
 
-/* Forum loading — warm shimmer text + animated dots (icon stays still) */
+/* Forum loading ? warm shimmer text + animated dots (icon stays still) */
 .app-page--forum .loading-send-stack {
   animation: none !important;
 }
@@ -18512,7 +18512,7 @@ button.forum-tag-chip:hover {
   background: linear-gradient(135deg, #ffc56d, #ff9a52);
 }
 
-/* ── Moon Journey (月光旅程) ── */
+/* ?? Moon Journey (????) ?? */
 .forum-panel--moon-journey {
   padding: 0;
   gap: 0;
@@ -19218,7 +19218,7 @@ button.forum-tag-chip:hover {
   color: #d4b5ff;
 }
 
-/* ── Moon Journey guide (/moon-journey) ── */
+/* ?? Moon Journey guide (/moon-journey) ?? */
 .app-page--moon-journey > .app-main {
   position: relative;
   z-index: 1;
@@ -19791,7 +19791,7 @@ button.forum-tag-chip:hover {
   width: auto;
 }
 
-/* Global legal footer — matches index welcome / site-footer--legal sizing */
+/* Global legal footer ? matches index welcome / site-footer--legal sizing */
 .site-footer.site-footer--app {
   width: 100%;
   max-width: 1100px;
@@ -20047,7 +20047,7 @@ button.forum-tag-chip:hover {
   flex-shrink: 0;
 }
 
-/* Scrollable header icons — edge fade + chevron when more exists */
+/* Scrollable header icons ? edge fade + chevron when more exists */
 .header-icon-scroll {
   position: relative;
   display: inline-flex;
@@ -20133,7 +20133,7 @@ button.forum-tag-chip:hover {
   transform: rotate(135deg);
 }
 
-/* Forum toolbar — equal hit targets + glyph box for bookmark / inbox / settings / journey */
+/* Forum toolbar ? equal hit targets + glyph box for bookmark / inbox / settings / journey */
 .forum-header-icon-group .app-header__nav-link--icon,
 .forum-header-icon-group .forum-header-bookmark-btn,
 .forum-header-icon-group .forum-mj-header-btn {
@@ -20228,7 +20228,7 @@ button.forum-tag-chip:hover {
   transform: translateY(-1px);
 }
 
-/* ── Photo exchange ── */
+/* ?? Photo exchange ?? */
 
 .mirror-photo-exchange-wrap {
   width: 100%;
@@ -21014,7 +21014,7 @@ button.forum-tag-chip:hover {
   width: 100%;
 }
 
-/* ── 寫故事：書櫃 + 閱讀模式 ── */
+/* ?? ?????? + ???? ?? */
 .forum-story-search {
   margin: 0 0 12px;
 }
@@ -22518,7 +22518,7 @@ button.forum-tag-chip:hover {
 }
 
 .forum-story-reader--hub .forum-story-reader__synopsis::before {
-  content: '「';
+  content: '?';
   position: absolute;
   top: 10px;
   left: 12px;
@@ -22531,7 +22531,7 @@ button.forum-tag-chip:hover {
 }
 
 .forum-story-reader--hub .forum-story-reader__synopsis::after {
-  content: '」';
+  content: '?';
   position: absolute;
   right: 12px;
   bottom: 8px;
@@ -22574,7 +22574,7 @@ button.forum-tag-chip:hover {
   }
 }
 
-/* Story book hub — synopsis header: 簡介📜 stays left on all viewports */
+/* Story book hub ? synopsis header: ???? stays left on all viewports */
 @media (max-width: 768px) {
   .forum-story-reader--hub .forum-story-reader__synopsis-head {
     flex-direction: row;
@@ -22597,7 +22597,7 @@ button.forum-tag-chip:hover {
   }
 }
 
-/* Story book hub — mobile polish */
+/* Story book hub ? mobile polish */
 @media (max-width: 599px) {
   .forum-story-reader--hub {
     max-width: none;
@@ -22794,7 +22794,7 @@ button.forum-tag-chip:hover {
   }
 }
 
-/* Story book hub — chapter list + enter read */
+/* Story book hub ? chapter list + enter read */
 .forum-story-reader--hub .forum-story-reader__actions {
   margin-top: 8px;
   justify-content: flex-start;
@@ -22922,7 +22922,7 @@ button.forum-tag-chip:hover {
   margin: 12px 0;
 }
 
-/* 番外篇（留言解鎖） */
+/* ????????? */
 .forum-story-chapters__login-btn {
   cursor: pointer;
   font-family: inherit;
@@ -22960,7 +22960,7 @@ button.forum-tag-chip:hover {
   background: linear-gradient(180deg, rgba(189, 147, 249, 0.6), rgba(140, 100, 210, 0.4));
 }
 
-/* 作者：番外篇留言解鎖開關 */
+/* ???????????? */
 .forum-story-bonus-toggle {
   display: flex;
   align-items: flex-start;
@@ -23567,7 +23567,7 @@ button.forum-tag-chip:hover {
   transition: transform 0.16s ease, background 0.16s ease;
 }
 
-/* Geometric chevron — optically centered (text › has uneven glyph metrics) */
+/* Geometric chevron ? optically centered (text ? has uneven glyph metrics) */
 .forum-story-reader__enter-read-arrow::before {
   content: '';
   width: 7px;
@@ -23619,7 +23619,7 @@ button.forum-tag-chip:hover {
   line-height: 1;
 }
 
-/* Add-chapter編輯改為全螢幕頁面（唔再係細張置中卡片） */
+/* Add-chapter???????????????????? */
 .forum-compose-overlay:has(.forum-compose-modal--add-chapter) {
   padding: 0;
   align-items: stretch;
@@ -23711,8 +23711,8 @@ button.forum-tag-chip:hover {
   background: rgba(0, 0, 0, 0.22);
 }
 
-/* 內層編輯器唔再自成一個 box（去掉 pixel-textarea 嘅邊框/底色），
-   等外層 editor-wrap 做唯一可見框，避免「上細下大」兩個框。 */
+/* ??????????? box??? pixel-textarea ???/????
+   ??? editor-wrap ??????????????????? */
 .forum-compose-modal--add-chapter .forum-story-add-chapter__editor .forum-tiptap__editor-wrap .forum-tiptap__editor {
   flex: 1 1 auto;
   display: flex;
@@ -23942,8 +23942,8 @@ button.forum-tag-chip:hover {
     max-height: var(--mobile-vvh, 100dvh);
   }
 
-  /* Full-screen 模式：寫作區盡量填滿餘下空間，並設一個較大嘅最低高度，
-     令手機上有明顯更大嘅打字區（唔會得返一細條）。 */
+  /* Full-screen ???????????????????????????
+     ??????????????????????? */
   .forum-compose-modal--add-chapter .forum-story-add-chapter__editor .forum-tiptap__editor-wrap {
     flex: 1 1 auto;
     min-height: 48vh;
@@ -24747,18 +24747,18 @@ button.forum-tag-chip:hover {
 }
 
 /* ============================================================
-   My Cat（月光小貓）— /my-cat + header 🐾 entry
+   My Cat??????? /my-cat + header ?? entry
    Spec: docs/my-cat/MY-CAT-GAME-DESIGN.md
    ============================================================ */
 
-/* ── Header 標題置中平衡（真中央：1fr auto 1fr） ── */
+/* ?? Header ???????????1fr auto 1fr? ?? */
 .app-page--my-cat > .app-header {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   gap: 12px;
 }
 
-/* ── my-cat header：與全站 header chip／登出字級一致 ── */
+/* ?? my-cat header???? header chip??????? ?? */
 .app-page--my-cat > .app-header > .app-header__back {
   grid-column: 1;
   justify-self: start;
@@ -24792,7 +24792,7 @@ button.forum-tag-chip:hover {
 }
 
 @media (max-width: 600px) {
-  /* 手機：兩邊各取自然闊度、標題彈性置中，杜絕右側 nav 溢出蓋住標題 */
+  /* ??????????????????????? nav ?????? */
   .app-page--my-cat > .app-header {
     grid-template-columns: auto minmax(0, 1fr) auto;
     gap: 8px;
@@ -24815,13 +24815,13 @@ button.forum-tag-chip:hover {
     padding: 0 6px;
   }
 
-  /* 收窄右側：手機隱藏問候名同分隔線，淨低圖示按鈕 */
+  /* ??????????????????????? */
   .app-page--my-cat > .app-header .auth-nav-badge__name-group,
   .app-page--my-cat > .app-header .auth-nav-badge__inner > .auth-nav-badge__sep {
     display: none;
   }
 
-  /* 右側圖示組收窄啲間距，貓咪入口更貼近登出 */
+  /* ???????????????????? */
   .app-page--my-cat > .app-header .auth-nav-badge__icon-group {
     gap: 2px;
   }
@@ -24831,7 +24831,7 @@ button.forum-tag-chip:hover {
   }
 }
 
-/* ── Header entry (§1.3) — transparent + moon glow, same on every page ── */
+/* ?? Header entry (?1.3) ? transparent + moon glow, same on every page ?? */
 .header-my-cat-link {
   position: relative;
   display: inline-flex;
@@ -24959,7 +24959,7 @@ button.forum-tag-chip:hover {
   animation: none;
 }
 
-/* ── 離家出走（飽腹 0） ── */
+/* ?? ??????? 0? ?? */
 .my-cat-away {
   position: absolute;
   bottom: 26px;
@@ -25043,7 +25043,7 @@ button.forum-tag-chip:hover {
   pointer-events: none;
 }
 
-/* 召喚搖鈴：只喺按「召喚」當下搖一次 */
+/* ????????????????? */
 .my-cat-away__bell {
   display: inline-block;
   transform-origin: 50% 0%;
@@ -25082,12 +25082,12 @@ button.forum-tag-chip:hover {
   }
 }
 
-/* 太餓（飽腹 < 20）— 冇心機郁，成隻貓灰灰哋 */
+/* ????? < 20?? ??????????? */
 .cat-sprite--starving {
   filter: saturate(0.55) brightness(0.85);
 }
 
-/* ── Panel（遊戲卡匣外框） ── */
+/* ?? Panel???????? ?? */
 .my-cat-panel {
   display: flex;
   flex-direction: column;
@@ -25111,7 +25111,7 @@ button.forum-tag-chip:hover {
   color: var(--text, #f0ebd8);
 }
 
-/* ── 像素房間場景（§12 輕量版：CSS 牆 + 窗 + 月光） ── */
+/* ?? ????????12 ????CSS ? + ? + ??? ?? */
 .my-cat-room {
   position: relative;
   height: 320px;
@@ -25140,7 +25140,7 @@ button.forum-tag-chip:hover {
   border-top: 3px solid #0c0a1c;
 }
 
-/* 窗（像素窗框 + 夜空） */
+/* ?????? + ??? */
 .my-cat-room__window {
   position: absolute;
   top: 22px;
@@ -25153,7 +25153,7 @@ button.forum-tag-chip:hover {
   box-shadow:
     0 0 0 2px #14102c,
     0 0 28px rgba(255, 224, 138, 0.18);
-  /* 星星／流星只喺窗框內（窗外夜空）出現，唔會飄入房間 */
+  /* ????????????????????????? */
   overflow: hidden;
 }
 
@@ -25165,7 +25165,7 @@ button.forum-tag-chip:hover {
     linear-gradient(0deg, transparent calc(50% - 2px), #3a3468 calc(50% - 2px), #3a3468 calc(50% + 2px), transparent calc(50% + 2px));
 }
 
-/* 像素月亮（八角近似圓） */
+/* ??????????? */
 .my-cat-room__moon {
   position: absolute;
   top: 12px;
@@ -25177,7 +25177,7 @@ button.forum-tag-chip:hover {
   box-shadow: 0 0 14px 3px rgba(255, 224, 138, 0.8);
 }
 
-/* 窗外星星（兩幀閃爍） */
+/* ?????????? */
 .my-cat-room__star {
   position: absolute;
   width: 4px;
@@ -25195,9 +25195,9 @@ button.forum-tag-chip:hover {
   50% { opacity: 0.15; }
 }
 
-/* 流星（預設隱藏；只喺流星窗顯示）。
-   條紋方向同飛行方向對齊：rotate(150deg) → 頭部（右端亮點）指向左下，
-   再沿左下 translate，尾巴自然拖喺後面。 */
+/* ?????????????????
+   ????????????rotate(150deg) ? ?????????????
+   ???? translate?????????? */
 .my-cat-room__meteor {
   position: absolute;
   top: 8px;
@@ -25213,17 +25213,17 @@ button.forum-tag-chip:hover {
   pointer-events: none;
 }
 
-/* ── 窗外景升級款（可佈置）── */
-/* 銀河窗：紫粉螺旋星雲 + 旋轉銀河核心 + 雙層星塵 */
+/* ?? ????????????? */
+/* ?????????? + ?????? + ???? */
 .my-cat-room__window--galaxy {
   background:
-    /* 中央銀河核心光暈 */
+    /* ???????? */
     radial-gradient(30% 24% at 52% 46%, rgba(255, 244, 224, 0.55) 0%, rgba(255, 214, 170, 0.28) 30%, transparent 66%),
-    /* 紫粉星雲雲團 */
+    /* ?????? */
     radial-gradient(64% 46% at 30% 64%, rgba(157, 106, 245, 0.55) 0%, transparent 64%),
     radial-gradient(56% 42% at 72% 32%, rgba(255, 107, 173, 0.48) 0%, transparent 60%),
     radial-gradient(40% 32% at 78% 74%, rgba(94, 165, 255, 0.4) 0%, transparent 62%),
-    /* 螺旋旋渦帶 */
+    /* ????? */
     conic-gradient(from 210deg at 52% 48%,
       rgba(189, 147, 249, 0.42) 0deg,
       transparent 55deg,
@@ -25245,7 +25245,7 @@ button.forum-tag-chip:hover {
     0 0 24px 5px rgba(255, 150, 210, 0.35);
 }
 
-/* 旋轉螺旋核心（慢速自轉，令星雲有流動感） */
+/* ???????????????????? */
 .my-cat-room__window--galaxy::after {
   content: '';
   position: absolute;
@@ -25270,7 +25270,7 @@ button.forum-tag-chip:hover {
   animation: my-cat-galaxy-spin 26s linear infinite;
 }
 
-/* 雙層星塵（大小星 + 閃爍飄移） */
+/* ???????? + ????? */
 .my-cat-room__window--galaxy::before {
   content: '';
   position: absolute;
@@ -25301,7 +25301,7 @@ button.forum-tag-chip:hover {
   100% { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
-/* 流星窗：深邃夜空（比預設更暗更藍）+ 週期性流星劃過 */
+/* ?????????????????+ ??????? */
 .my-cat-room__window--meteor {
   background:
     radial-gradient(70% 50% at 60% 30%, rgba(60, 92, 160, 0.28) 0%, transparent 60%),
@@ -25311,12 +25311,12 @@ button.forum-tag-chip:hover {
     inset 0 0 24px rgba(0, 0, 0, 0.55);
 }
 
-/* 主流星 */
+/* ??? */
 .my-cat-room__window--meteor .my-cat-room__meteor {
   animation: my-cat-meteor-streak 4.6s ease-in infinite;
 }
 
-/* 副流星（另一條軌跡 + 延遲，令夜空更有活力） */
+/* ????????? + ??????????? */
 .my-cat-room__window--meteor::after {
   content: '';
   position: absolute;
@@ -25334,7 +25334,7 @@ button.forum-tag-chip:hover {
   animation: my-cat-meteor-streak 4.6s ease-in 2.3s infinite;
 }
 
-/* 頭部亮點指向左下，沿左下飛越窗口，飛完停一陣再嚟。 */
+/* ????????????????????????? */
 @keyframes my-cat-meteor-streak {
   0% { opacity: 0; transform: translate(0, 0) rotate(150deg); }
   5% { opacity: 1; }
@@ -25342,7 +25342,7 @@ button.forum-tag-chip:hover {
   42%, 100% { opacity: 0; transform: translate(-92px, 54px) rotate(150deg); }
 }
 
-/* 霓虹招牌（呼吸） */
+/* ???????? */
 .my-cat-room__neon {
   position: absolute;
   top: 36px;
@@ -25361,7 +25361,7 @@ button.forum-tag-chip:hover {
   animation: my-cat-neon-breathe 3.4s ease-in-out infinite;
 }
 
-/* 像素字型嘅 ~ 偏高 — 推返落嚟同 meow 上下置中 */
+/* ????? ~ ?? ? ????? meow ???? */
 .my-cat-room__neon-tilde {
   display: inline-block;
   transform: translateY(3px);
@@ -25372,8 +25372,8 @@ button.forum-tag-chip:hover {
   50% { opacity: 0.55; }
 }
 
-/* 牆上小書架（暗示黑貓在寫故事） */
-/* 牆上小書架（暗示黑貓在寫故事）— 可點擊 → 玩法指南 */
+/* ??????????????? */
+/* ???????????????? ??? ? ???? */
 .my-cat-room__shelf {
   position: absolute;
   top: 96px;
@@ -25403,7 +25403,7 @@ button.forum-tag-chip:hover {
   transition: filter 0.2s;
 }
 
-/* 透明加大點擊範圍（覆蓋書本） */
+/* ?????????????? */
 .my-cat-room__shelf::after {
   content: '';
   position: absolute;
@@ -25423,7 +25423,7 @@ button.forum-tag-chip:hover {
   filter: brightness(1.3) drop-shadow(0 0 4px rgba(189, 147, 249, 0.6));
 }
 
-/* 月光光束（窗 → 地板） */
+/* ?????? ? ??? */
 .my-cat-room__beam {
   position: absolute;
   top: 114px;
@@ -25436,7 +25436,7 @@ button.forum-tag-chip:hover {
   pointer-events: none;
 }
 
-/* 地板月光光斑（貓的座位） */
+/* ???????????? */
 .my-cat-room__moonpatch {
   position: absolute;
   bottom: 20px;
@@ -25448,7 +25448,7 @@ button.forum-tag-chip:hover {
   pointer-events: none;
 }
 
-/* ── 貓窩（房間家具，右下角常駐）Phase 3 §12.3 ── */
+/* ?? ??????????????Phase 3 ?12.3 ?? */
 .my-cat-room__bed {
   position: absolute;
   bottom: 12px;
@@ -25460,9 +25460,9 @@ button.forum-tag-chip:hover {
   image-rendering: pixelated;
 }
 
-/* 紙皮箱窩：開口向前嘅瓦通紙箱 + 翻開嘅箱蓋 + 軟墊 + 枕頭 */
+/* ?????????????? + ????? + ?? + ?? */
 
-/* 箱身（主體） */
+/* ?????? */
 .my-cat-room__bed-box {
   position: absolute;
   left: 4px;
@@ -25470,7 +25470,7 @@ button.forum-tag-chip:hover {
   bottom: 0;
   height: 30px;
   background:
-    /* 瓦通坑紋 */
+    /* ???? */
     repeating-linear-gradient(
       90deg,
       rgba(74, 46, 24, 0.16) 0 3px,
@@ -25486,7 +25486,7 @@ button.forum-tag-chip:hover {
     0 0 16px rgba(255, 196, 120, 0.14);
 }
 
-/* 箱口內側陰影（開口深度感） */
+/* ????????????? */
 .my-cat-room__bed-box::before {
   content: '';
   position: absolute;
@@ -25499,7 +25499,7 @@ button.forum-tag-chip:hover {
   box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.55);
 }
 
-/* 封箱膠帶（正面豎紋細節） */
+/* ???????????? */
 .my-cat-room__bed-tape {
   position: absolute;
   left: 50%;
@@ -25512,7 +25512,7 @@ button.forum-tag-chip:hover {
   border-right: 1px solid rgba(120, 92, 55, 0.5);
 }
 
-/* 翻開嘅箱蓋（左右各一片，微微外翻） */
+/* ????????????????? */
 .my-cat-room__bed-flap {
   position: absolute;
   top: 0;
@@ -25537,7 +25537,7 @@ button.forum-tag-chip:hover {
   border-radius: 2px 4px 0 0;
 }
 
-/* 軟墊（箱內冷色毛毯） */
+/* ?????????? */
 .my-cat-room__bed-cushion {
   position: absolute;
   left: 6px;
@@ -25552,14 +25552,14 @@ button.forum-tag-chip:hover {
 }
 
 
-/* ── 貓兜（食盆）Phase 3 — 餵食時罐罐 + 魚仔彈出 ── */
-/* 貓兜擺喺貓咪餵食時會行埋去嘅位置（中心偏左），確保「貓走向碗」對齊。 */
+/* ?? ??????Phase 3 ? ????? + ???? ?? */
+/* ?????????????????????????????????? */
 .my-cat-room__bowl {
   position: absolute;
   bottom: 16px;
-  /* 餵食時貓身中心行到 50% - 58px；碗略為向右移，碗心對正貓頭（碗闊 38px） */
+  /* ????????? 50% - 58px????????????????? 38px? */
   left: calc(50% - 67px);
-  /* 碗喺貓前面（上層）先合乎邏輯：貓兜擺喺地上，貓咪低頭食 */
+  /* ??????????????????????????? */
   z-index: 3;
   width: 38px;
   height: 22px;
@@ -25677,7 +25677,7 @@ button.forum-tag-chip:hover {
   50%      { opacity: 1; transform: scale(1); }
 }
 
-/* 貓（點擊互動） */
+/* ??????? */
 .my-cat-panel__cat-btn {
   position: absolute;
   bottom: 4px;
@@ -25692,7 +25692,7 @@ button.forum-tag-chip:hover {
   transition: transform 0.35s steps(4, jump-end);
 }
 
-/* 餵食時貓咪行埋去貓兜（貓兜喺 left: 50% - 86px，貓身要行到碗邊） */
+/* ?????????????? left: 50% - 86px????????? */
 .my-cat-panel__cat-btn--eating {
   transform: translateX(calc(-50% - 58px)) scale(0.96);
   cursor: default;
@@ -25721,7 +25721,7 @@ button.forum-tag-chip:hover {
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55));
 }
 
-/* Spritesheet playback — speed set inline per animation (my-cat.js CAT_ANIM_META) */
+/* Spritesheet playback ? speed set inline per animation (my-cat.js CAT_ANIM_META) */
 .cat-sprite--strip {
   display: block;
   background-repeat: repeat-x;
@@ -25750,7 +25750,7 @@ button.forum-tag-chip:hover {
   transform: scale(0.78);
 }
 
-/* 遊戲式名牌（左上 HUD） */
+/* ???????? HUD? */
 .my-cat-room__nameplate {
   position: absolute;
   top: 10px;
@@ -25788,7 +25788,7 @@ button.forum-tag-chip:hover {
   opacity: 1;
 }
 
-/* ── 改名對話框（像素窗） ── */
+/* ?? ?????????? ?? */
 .my-cat-rename {
   position: absolute;
   inset: 0;
@@ -25882,7 +25882,7 @@ button.forum-tag-chip:hover {
   cursor: default;
 }
 
-/* 餵食獎勵 popup（+2 EXP） */
+/* ???? popup?+2 EXP? */
 .my-cat-reward {
   position: absolute;
   inset: 0;
@@ -25939,7 +25939,7 @@ button.forum-tag-chip:hover {
   }
 }
 
-/* 摸摸飄心 */
+/* ???? */
 .my-cat-room__heart {
   position: absolute;
   bottom: 150px;
@@ -25968,7 +25968,7 @@ button.forum-tag-chip:hover {
   100% { opacity: 0; transform: translate(calc(-50% - 30px), -68px) scale(1.15); }
 }
 
-/* 台詞泡泡（RPG 對話框：像素切角 + 名牌 + 打字機） */
+/* ?????RPG ???????? + ?? + ???? */
 .my-cat-panel__bubble {
   position: absolute;
   bottom: 172px;
@@ -25987,7 +25987,7 @@ button.forum-tag-chip:hover {
   color: #1d1836;
   font-size: 0.85rem;
   line-height: 1.6;
-  /* 像素邊框（上下左右外推 3px，角位自然缺角）＋ 硬陰影 ＋ 內側壓線 */
+  /* ??????????? 3px????????? ??? ? ???? */
   box-shadow:
     0 -3px 0 #1d1836,
     0 3px 0 #1d1836,
@@ -26029,7 +26029,7 @@ button.forum-tag-chip:hover {
   50% { opacity: 0; }
 }
 
-/* 講者名牌（掛喺框頂） */
+/* ?????????? */
 .my-cat-panel__bubble-tag {
   position: absolute;
   top: -22px;
@@ -26050,7 +26050,7 @@ button.forum-tag-chip:hover {
     2px 0 0 #07060e;
 }
 
-/* 對話尾巴（指向貓，雙層三角做描邊） */
+/* ????????????????? */
 .my-cat-panel__bubble-tail {
   position: absolute;
   bottom: -13px;
@@ -26101,7 +26101,7 @@ button.forum-tag-chip:hover {
   color: #bd93f9;
 }
 
-/* ── HUD 屬性面板 ── */
+/* ?? HUD ???? ?? */
 .my-cat-panel__stats {
   display: flex;
   flex-direction: column;
@@ -26119,7 +26119,7 @@ button.forum-tag-chip:hover {
   color: #7c7aa8;
 }
 
-/* STATUS 頂行：標題＋成長階段徽章 */
+/* STATUS ???????????? */
 .my-cat-panel__stats-head {
   display: flex;
   align-items: center;
@@ -26190,7 +26190,7 @@ button.forum-tag-chip:hover {
   transition: width 0.6s steps(10);
 }
 
-/* 像素格紋刻度 */
+/* ?????? */
 .my-cat-stat__fill::after {
   content: '';
   position: absolute;
@@ -26217,7 +26217,7 @@ button.forum-tag-chip:hover {
   color: rgba(240, 235, 216, 0.85);
 }
 
-/* ── 餵食按鈕（像素起司鍵） ── */
+/* ?? ??????????? ?? */
 .my-cat-panel__feed-btn {
   display: flex;
   align-items: center;
@@ -26266,7 +26266,7 @@ button.forum-tag-chip:hover {
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
 }
 
-/* ── Footer 資訊列（像素 HUD chip） ── */
+/* ?? Footer ?????? HUD chip? ?? */
 .my-cat-panel__footer {
   display: flex;
   align-items: stretch;
@@ -26317,7 +26317,7 @@ button.forum-tag-chip:hover {
     0 4px 0 rgba(0, 0, 0, 0.35);
 }
 
-/* 可點擊嘅膠囊（例如：等級稱號 → /moon-journey 說明頁） */
+/* ?????????????? ? /moon-journey ???? */
 a.my-cat-footer-chip--link {
   text-decoration: none;
   color: inherit;
@@ -26451,7 +26451,7 @@ a.my-cat-footer-chip--link:active {
   text-shadow: none;
 }
 
-/* 商店區塊群組 */
+/* ?????? */
 .my-cat-panel__stores {
   display: flex;
   flex-direction: column;
@@ -26459,7 +26459,7 @@ a.my-cat-footer-chip--link:active {
   margin-top: 14px;
 }
 
-/* 共用碎屑餘額 pill */
+/* ?????? pill */
 .my-cat-shard-pill {
   display: inline-flex;
   align-items: center;
@@ -26484,7 +26484,7 @@ a.my-cat-footer-chip--link:active {
   opacity: 0.95;
 }
 
-/* 貓咪商店（Phase 2） */
+/* ?????Phase 2? */
 .my-cat-shop {
   margin-top: 0;
   padding: 0;
@@ -26608,7 +26608,7 @@ a.my-cat-footer-chip--link:active {
   box-shadow: inset 0 0 0 1px rgba(255, 224, 138, 0.2);
 }
 
-/* 貓咪預覽（strip 第一格靜態縮圖） */
+/* ?????strip ???????? */
 .my-cat-shop__thumb {
   grid-column: 1;
   grid-row: 1 / span 2;
@@ -26677,7 +26677,7 @@ a.my-cat-footer-chip--link:active {
   border-color: rgba(189, 147, 249, 0.5);
 }
 
-/* ── 房間佈置（碎屑家具商店）§12.5 ── */
+/* ?? ?????????????12.5 ?? */
 .my-cat-room-shop {
   margin-top: 0;
   padding: 0;
@@ -26882,7 +26882,7 @@ a.my-cat-footer-chip--link:active {
   border-color: rgba(124, 200, 255, 0.5);
 }
 
-/* 家具縮圖（純 CSS 迷你預覽） */
+/* ?????? CSS ????? */
 .my-cat-furni__preview--bowl-basic,
 .my-cat-furni__preview--bowl-moon {
   display: flex;
@@ -26954,12 +26954,12 @@ a.my-cat-footer-chip--link:active {
     radial-gradient(1.6px 1.6px at 82% 58%, #ffffff 99%, transparent),
     radial-gradient(1px 1px at 14% 60%, #fff 99%, transparent),
     radial-gradient(1px 1px at 60% 48%, #ffe6f6 99%, transparent),
-    /* 銀河核心亮點 */
+    /* ?????? */
     radial-gradient(26% 22% at 52% 48%, rgba(255, 244, 224, 0.6) 0%, transparent 68%),
-    /* 星雲雲團 */
+    /* ???? */
     radial-gradient(60% 44% at 32% 62%, rgba(157, 106, 245, 0.62) 0%, transparent 64%),
     radial-gradient(52% 40% at 72% 34%, rgba(255, 107, 173, 0.52) 0%, transparent 60%),
-    /* 螺旋旋渦帶 */
+    /* ????? */
     conic-gradient(from 210deg at 52% 48%,
       rgba(189, 147, 249, 0.42) 0deg,
       transparent 60deg,
@@ -26979,7 +26979,7 @@ a.my-cat-footer-chip--link:active {
     linear-gradient(180deg, #060a24 0%, #0e1440 60%, #050818 100%);
 }
 
-/* 短促流星：斜劃 + 頭部發光 */
+/* ??????? + ???? */
 .my-cat-furni__preview--window-meteor::after {
   content: '';
   position: absolute;
@@ -27001,7 +27001,7 @@ a.my-cat-footer-chip--link:active {
   padding-bottom: 12px;
 }
 
-/* 迷你紙皮箱窩 */
+/* ?????? */
 .my-cat-furni__preview--bed-box::after {
   content: '';
   width: 34px;
@@ -27014,7 +27014,7 @@ a.my-cat-footer-chip--link:active {
   box-shadow: inset 0 2px 0 rgba(255, 224, 180, 0.3);
 }
 
-/* 箱內軟墊 */
+/* ???? */
 .my-cat-furni__preview--bed-box::before {
   content: '';
   position: absolute;
@@ -27094,7 +27094,7 @@ a.my-cat-footer-chip--link:active {
     animation: none;
   }
 
-  /* 靜態流星：仍留一道淡淡光痕 */
+  /* ????????????? */
   .my-cat-room__window--meteor .my-cat-room__meteor {
     opacity: 0.5;
   }
@@ -27112,7 +27112,7 @@ a.my-cat-footer-chip--link:active {
   }
 }
 
-/* 打卡按鈕改為連結（去 /my-cat 餵食）— 沿用原按鈕外觀 */
+/* ?????????? /my-cat ???? ??????? */
 a.moon-journey-panel__compact-checkin,
 a.moon-journey-dropdown-card__checkin {
   text-decoration: none;
@@ -27129,7 +27129,7 @@ a.moon-journey-dropdown-card__checkin--done {
   opacity: 0.7;
 }
 
-/* ── /my-cat/guide 月光貓養成秘笈（遊戲書） ── */
+/* ?? /my-cat/guide ???????????? ?? */
 .my-cat-guide {
   position: relative;
   display: flex;
@@ -27141,7 +27141,7 @@ a.moon-journey-dropdown-card__checkin--done {
     8px 10px 0 rgba(0, 0, 0, 0.5);
 }
 
-/* 書脊縫線 */
+/* ???? */
 .my-cat-guide::before {
   content: '';
   position: absolute;
@@ -27154,7 +27154,7 @@ a.moon-journey-dropdown-card__checkin--done {
   z-index: 1;
 }
 
-/* ── 封面 ── */
+/* ?? ?? ?? */
 .my-cat-guide__cover {
   position: relative;
   display: flex;
@@ -27171,7 +27171,7 @@ a.moon-journey-dropdown-card__checkin--done {
   border-bottom: 2px solid #2a2650;
 }
 
-/* 封面像素月亮 */
+/* ?????? */
 .my-cat-guide__cover-moon {
   position: absolute;
   top: 16px;
@@ -27208,7 +27208,7 @@ a.moon-journey-dropdown-card__checkin--done {
   color: rgba(240, 235, 216, 0.55);
 }
 
-/* ── 章節（絲帶顏色 = 書架四本書） ── */
+/* ?? ??????? = ?????? ?? */
 .my-cat-guide__chapter {
   position: relative;
   padding: 18px 18px 16px 30px;
@@ -27223,7 +27223,7 @@ a.moon-journey-dropdown-card__checkin--done {
   width: 7px;
   height: 30px;
   background: var(--ribbon, #bd93f9);
-  /* 絲帶尾部三角剪口 */
+  /* ???????? */
   clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 82%, 0 100%);
   box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.55);
   z-index: 2;
@@ -27272,7 +27272,7 @@ a.moon-journey-dropdown-card__checkin--done {
   color: var(--ribbon, #bd93f9);
 }
 
-/* 貓咪旁白（引用書架 icon 同一隻貓） */
+/* ????????? icon ????? */
 .my-cat-guide__meow {
   position: relative;
   margin: 12px 0 0;
@@ -27296,7 +27296,7 @@ a.moon-journey-dropdown-card__checkin--done {
   image-rendering: pixelated;
 }
 
-/* 戰利品獎勵 chips */
+/* ????? chips */
 .my-cat-guide__loot {
   display: flex;
   flex-wrap: wrap;
@@ -27315,7 +27315,7 @@ a.moon-journey-dropdown-card__checkin--done {
   white-space: nowrap;
 }
 
-/* 摸摸冷卻 — 橫向時間軸（5 次 = 5 個節點） */
+/* ???? ? ??????5 ? = 5 ???? */
 .my-cat-guide__timeline {
   display: flex;
   align-items: flex-start;
@@ -27334,7 +27334,7 @@ a.moon-journey-dropdown-card__checkin--done {
   padding-top: 2px;
 }
 
-/* 節點之間嘅虛線軌道 */
+/* ????????? */
 .my-cat-guide__timeline-step:not(:last-child)::after {
   content: '';
   position: absolute;
@@ -27396,7 +27396,7 @@ a.moon-journey-dropdown-card__checkin--done {
   }
 }
 
-/* 三大屬性（迷你像素能量條） */
+/* ????????????? */
 .my-cat-guide__stats {
   display: flex;
   flex-direction: column;
@@ -27447,7 +27447,7 @@ a.moon-journey-dropdown-card__checkin--done {
   color: rgba(240, 235, 216, 0.72);
 }
 
-/* 進化路線圖 */
+/* ????? */
 .my-cat-guide__evo {
   display: flex;
   flex-wrap: wrap;
@@ -27479,7 +27479,7 @@ a.moon-journey-dropdown-card__checkin--done {
   color: rgba(189, 147, 249, 0.7);
 }
 
-/* 同一隻貓 icon，一階比一階大隻 */
+/* ???? icon???????? */
 .my-cat-guide__evo-icon {
   display: flex;
   align-items: flex-end;
@@ -27520,7 +27520,7 @@ a.moon-journey-dropdown-card__checkin--done {
   color: rgba(240, 235, 216, 0.6);
 }
 
-/* ── 封底 ── */
+/* ?? ?? ?? */
 .my-cat-guide__back-cover {
   padding: 20px 18px 22px;
   text-align: center;
@@ -27554,7 +27554,7 @@ a.moon-journey-dropdown-card__checkin--done {
   }
 }
 
-/* ── Forum sidebar feed hint（打卡改到 /my-cat） ── */
+/* ?? Forum sidebar feed hint????? /my-cat? ?? */
 .moon-journey-panel__feed-hint {
   display: flex;
   align-items: center;
@@ -27606,7 +27606,7 @@ a.moon-journey-dropdown-card__checkin--done {
     width: 56px;
   }
 
-  /* 窄屏：貓窩再縮細啲並貼近右下角，避免同置中嘅貓咪重疊 */
+  /* ?????????????????????????? */
   .my-cat-room__bed {
     right: 2%;
     width: 54px;
@@ -27686,7 +27686,7 @@ a.moon-journey-dropdown-card__checkin--done {
   user-select: none;
 }
 
-/* Own upload dropzone must stay clickable — no blocking shield */
+/* Own upload dropzone must stay clickable ? no blocking shield */
 .media-capture-guard-active .photo-exchange-upload__dropzone .photo-exchange-upload__preview-wrap::after,
 .media-capture-guard-active .photo-exchange-upload__dropzone::after {
   content: none;
@@ -27697,3 +27697,487 @@ a.moon-journey-dropdown-card__checkin--done {
   pointer-events: none;
 }
 
+
+/* ?? Moonlight Gathering interest survey (/moonlight-interest) ?? */
+.app-page--moonlight-interest .app-main {
+  padding-bottom: 3rem;
+}
+
+.mi-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.mi-hero {
+  padding: 0.35rem 0.15rem 0.2rem;
+}
+
+.mi-hero__kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--purple-light, #bd93f9);
+  margin: 0 0 0.65rem;
+}
+
+.mi-hero__title {
+  font-family: var(--font-main, 'M PLUS Rounded 1c', 'Noto Sans TC', sans-serif);
+  font-size: clamp(1.35rem, 4vw, 1.75rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--cream, #f0ebd8);
+  margin: 0 0 0.55rem;
+  line-height: 1.35;
+}
+
+.mi-hero__guest-note {
+  margin: 0 0 0.9rem;
+  font-size: 0.8rem;
+  color: var(--cyan, #00e5ff);
+  letter-spacing: 0.02em;
+}
+
+.mi-hero__lead {
+  margin: 0 0 0.75rem;
+  font-size: 0.92rem;
+  line-height: 1.85;
+  color: rgba(240, 235, 216, 0.88);
+}
+
+.mi-hero__lead strong {
+  color: var(--yellow, #ffe066);
+  font-weight: 700;
+}
+
+.mi-card {
+  background: rgba(11, 13, 34, 0.88);
+  border: 1px solid rgba(29, 32, 85, 0.95);
+  border-radius: 16px;
+  padding: 1.35rem 1.4rem 1.45rem;
+}
+
+.mi-card--success {
+  border-color: rgba(80, 250, 123, 0.28);
+  background: rgba(80, 250, 123, 0.06);
+}
+
+.mi-card__title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 1rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--purple-light, #bd93f9);
+  letter-spacing: 0.04em;
+}
+
+.mi-features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.mi-features__item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  background: rgba(124, 92, 252, 0.06);
+  border: 1px solid rgba(124, 92, 252, 0.16);
+  font-size: 0.88rem;
+  color: var(--cream, #f0ebd8);
+}
+
+.mi-features__icon {
+  display: inline-flex;
+  color: var(--cyan, #00e5ff);
+  flex-shrink: 0;
+}
+
+.mi-meta {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.mi-meta__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  background: rgba(124, 92, 252, 0.06);
+  border: 1px solid rgba(124, 92, 252, 0.16);
+}
+
+.mi-meta__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-dim, #7a7590);
+  font-weight: 500;
+}
+
+.mi-meta__icon {
+  display: inline-flex;
+  color: var(--cyan, #00e5ff);
+  flex-shrink: 0;
+}
+
+.mi-meta__value {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--cream, #f0ebd8);
+  text-align: right;
+}
+
+.mi-subhead {
+  margin: 0 0 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--cyan, #00e5ff);
+}
+
+.mi-hint--tight {
+  margin: -0.35rem 0 0.85rem;
+}
+
+.mi-schedule {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.mi-schedule__item {
+  border-radius: 10px;
+  background: rgba(5, 9, 20, 0.45);
+  border: 1px solid rgba(29, 32, 85, 0.9);
+  padding: 0.55rem 0.75rem;
+}
+
+.mi-schedule__item--expandable {
+  padding: 0;
+  overflow: hidden;
+}
+
+.mi-schedule__item--expandable.is-open {
+  border-color: rgba(189, 147, 249, 0.4);
+  background: rgba(124, 92, 252, 0.08);
+}
+
+.mi-schedule__toggle {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mi-schedule__toggle:hover .mi-schedule__title {
+  color: var(--yellow, #ffe066);
+}
+
+.mi-schedule__chevron {
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.1rem;
+  border-radius: 6px;
+  border: 1px solid rgba(189, 147, 249, 0.35);
+  color: var(--purple-light, #bd93f9);
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.mi-schedule__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.mi-schedule__title {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--cream, #f0ebd8);
+  line-height: 1.4;
+}
+
+.mi-schedule__detail {
+  font-size: 0.76rem;
+  color: var(--text-dim, #7a7590);
+  line-height: 1.55;
+}
+
+.mi-schedule__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0 0.75rem 0.75rem;
+  border-top: 1px solid rgba(124, 92, 252, 0.18);
+  margin: 0 0.15rem;
+  padding-top: 0.7rem;
+}
+
+.mi-schedule__panel-block + .mi-schedule__panel-block {
+  padding-top: 0.55rem;
+  border-top: 1px solid rgba(124, 92, 252, 0.12);
+}
+
+.mi-schedule__panel-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.3rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--purple-light, #bd93f9);
+}
+
+.mi-schedule__panel-icon {
+  display: inline-flex;
+  color: var(--cyan, #00e5ff);
+}
+
+.mi-schedule__panel-body {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.7;
+  color: rgba(240, 235, 216, 0.88);
+}
+
+.mi-overview-note {
+  margin: 0.9rem 0 0;
+  font-size: 0.76rem;
+  line-height: 1.65;
+  color: var(--text-dim, #7a7590);
+}
+
+.mi-admin-draft {
+  border-color: rgba(255, 224, 102, 0.28);
+}
+
+.mi-admin-draft .mi-hint strong {
+  color: var(--yellow, #ffe066);
+  font-weight: 700;
+}
+
+.mi-draft-ok {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.65;
+  color: var(--green, #50fa7b);
+}
+
+.mi-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.mi-fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.mi-legend {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--purple-light, #bd93f9);
+  margin-bottom: 0.55rem;
+  letter-spacing: 0.03em;
+}
+
+.mi-hint {
+  margin: 0 0 0.7rem;
+  font-size: 0.76rem;
+  color: var(--text-dim, #7a7590);
+  line-height: 1.6;
+}
+
+.mi-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.mi-choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.mi-choice,
+.mi-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  cursor: pointer;
+  border-radius: 10px;
+  border: 1px solid rgba(29, 32, 85, 0.95);
+  background: rgba(5, 9, 20, 0.45);
+  color: var(--cream, #f0ebd8);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.mi-choice {
+  padding: 0.7rem 0.85rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.mi-chip {
+  padding: 0.55rem 0.7rem;
+  font-size: 0.82rem;
+}
+
+.mi-choice input,
+.mi-chip input {
+  accent-color: var(--purple, #7c5cfc);
+  flex-shrink: 0;
+}
+
+.mi-choice:hover,
+.mi-chip:hover {
+  border-color: rgba(124, 92, 252, 0.45);
+}
+
+.mi-choice.is-selected,
+.mi-chip.is-selected {
+  border-color: rgba(189, 147, 249, 0.55);
+  background: rgba(124, 92, 252, 0.14);
+}
+
+.mi-followup {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid rgba(124, 92, 252, 0.18);
+}
+
+.mi-chip-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 0.45rem;
+}
+
+.mi-date-group {
+  margin-top: 0.85rem;
+}
+
+.mi-date-group__label {
+  margin: 0 0 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--cyan, #00e5ff);
+  letter-spacing: 0.06em;
+}
+
+.mi-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.mi-fields--compact {
+  margin-top: 0.15rem;
+}
+
+.mi-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.mi-field__label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--purple-light, #bd93f9);
+  letter-spacing: 0.03em;
+}
+
+.mi-field__req {
+  color: var(--pink, #ff6b9d);
+  font-weight: 500;
+  font-size: 0.72rem;
+  margin-left: 0.35rem;
+}
+
+.mi-field__opt {
+  color: var(--text-dim, #7a7590);
+  font-weight: 400;
+  font-size: 0.72rem;
+  margin-left: 0.35rem;
+}
+
+.mi-error {
+  margin: 0;
+}
+
+.mi-submit {
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.mi-success-copy {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.8;
+  color: rgba(240, 235, 216, 0.9);
+}
+
+.mi-footnote {
+  margin: 0.2rem 0.15rem 0;
+  font-size: 0.74rem;
+  line-height: 1.7;
+  color: var(--text-dim, #7a7590);
+  text-align: center;
+}
+
+@media (max-width: 520px) {
+  .mi-card {
+    padding: 1.15rem 1.05rem 1.25rem;
+  }
+
+  .mi-chip-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
