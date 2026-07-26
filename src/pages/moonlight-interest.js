@@ -155,6 +155,29 @@ const FEATURES = [
 ];
 
 const IDENTITY_FILTER_OPTIONS = ['Pure', 'TB', 'TBG', 'Bi', 'No Label', '仲探索緊'];
+const DRAFT_CHUNK = 20;
+const SEND_CHUNK = 15;
+const SENT_EMAILS_STORAGE_KEY = 'bcutm:moonlight-interest:sent-emails';
+
+function loadSentEmails() {
+  if (typeof window === 'undefined') return new Set();
+  try {
+    const raw = sessionStorage.getItem(SENT_EMAILS_STORAGE_KEY);
+    const list = raw ? JSON.parse(raw) : [];
+    return new Set(Array.isArray(list) ? list.map((e) => String(e).toLowerCase()) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveSentEmails(set) {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.setItem(SENT_EMAILS_STORAGE_KEY, JSON.stringify([...set]));
+  } catch {
+    /* ignore */
+  }
+}
 
 function toggleInList(list, value) {
   return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
@@ -179,6 +202,7 @@ export default function MoonlightInterestPage() {
   const [filterAgeMax, setFilterAgeMax] = useState('34');
   const [candidates, setCandidates] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [sentEmails, setSentEmails] = useState(() => loadSentEmails());
   const [previewBusy, setPreviewBusy] = useState(false);
   const [draftTo, setDraftTo] = useState('');
   const [draftName, setDraftName] = useState('');
@@ -187,11 +211,35 @@ export default function MoonlightInterestPage() {
   const [draftErr, setDraftErr] = useState('');
 
   const showFollowUp = interest === 'interested';
+  const visibleCandidates = (candidates || []).filter(
+    (c) => !sentEmails.has(String(c.email || '').toLowerCase()),
+  );
   const selectedCount = selectedIds.length;
   const datesFilled = timeSlots.length > 0 && dates.length > 0;
   const priceFilled = Boolean(priceRange);
   const emailFilled = Boolean(email.trim());
   const nameFilled = Boolean(displayName.trim());
+
+  function markEmailsSent(emails) {
+    const newly = emails
+      .map((e) => String(e || '').toLowerCase().trim())
+      .filter(Boolean);
+    if (!newly.length) return;
+
+    const next = new Set(sentEmails);
+    for (const e of newly) next.add(e);
+    setSentEmails(next);
+    saveSentEmails(next);
+
+    setSelectedIds((prev) => {
+      const byId = new Map((candidates || []).map((c) => [c.id, c]));
+      return prev.filter((id) => {
+        const row = byId.get(id);
+        if (!row) return false;
+        return !next.has(String(row.email || '').toLowerCase());
+      });
+    });
+  }
 
   // Prefill from session when already logged in — never require login.
   useEffect(() => {
@@ -315,10 +363,17 @@ export default function MoonlightInterestPage() {
         age_min: filterAgeMin === '' ? null : Number(filterAgeMin),
         age_max: filterAgeMax === '' ? null : Number(filterAgeMax),
       });
-      const list = data.candidates || [];
+      const list = (data.candidates || []).filter(
+        (c) => !sentEmails.has(String(c.email || '').toLowerCase()),
+      );
       setCandidates(list);
       setSelectedIds(list.map((c) => c.id));
-      setDraftMsg(`搵到 ${list.length} 位（已去重 email）。預設全選，可再剔走。`);
+      const hidden = (data.candidates || []).length - list.length;
+      setDraftMsg(
+        `搵到 ${list.length} 位可寄（已去重 email）`
+        + `${hidden ? `，已隱藏 ${hidden} 位今次 session 已寄過` : ''}。`
+        + '預設全選，可再剔走。',
+      );
     } catch (err) {
       setCandidates(null);
       setSelectedIds([]);
@@ -338,13 +393,55 @@ export default function MoonlightInterestPage() {
     }
     setDraftBusy(true);
     try {
+      const chunk = selectedIds.slice(0, DRAFT_CHUNK);
       const data = await adminDraftFetch({
         action: 'create_batch',
-        response_ids: selectedIds,
+        response_ids: chunk,
       });
-      setDraftMsg(data.message || `已建立 1 封草稿，BCC ${selectedIds.length} 人（未發送）。`);
+      const doneIds = new Set((data.results || []).filter((r) => r.saved).map((r) => r.id));
+      setSelectedIds((prev) => prev.filter((id) => !doneIds.has(id)));
+      const remain = Math.max(0, selectedIds.length - chunk.length);
+      setDraftMsg(
+        (data.message || `已建立 ${doneIds.size} 封獨立草稿。`)
+        + (remain > 0 ? ` 仲有 ${remain + (chunk.length - doneIds.size)} 人未處理，可再撳一次。` : ''),
+      );
     } catch (err) {
       setDraftErr(err.message || '建立草稿失敗');
+    } finally {
+      setDraftBusy(false);
+    }
+  }
+
+  async function handleSendBatch(e) {
+    e.preventDefault();
+    setDraftMsg('');
+    setDraftErr('');
+    if (!selectedIds.length) {
+      setDraftErr('請至少揀一位收件人。');
+      return;
+    }
+    const chunk = selectedIds.slice(0, SEND_CHUNK);
+    const ok = window.confirm(
+      `將真正發送 ${chunk.length} 封獨立電郵（每封間隔約 2 秒）。\n`
+      + '大批一次 BCC 好易入 spam；分批獨立寄較穩。\n\n確定發送今批？',
+    );
+    if (!ok) return;
+
+    setDraftBusy(true);
+    try {
+      const data = await adminDraftFetch({
+        action: 'send_batch',
+        response_ids: chunk,
+      });
+      const sentRows = (data.results || []).filter((r) => r.sent);
+      markEmailsSent(sentRows.map((r) => r.email));
+      const remain = Math.max(0, selectedIds.length - sentRows.length);
+      setDraftMsg(
+        (data.message || `已發送 ${sentRows.length} 封。`)
+        + (remain > 0 ? ` 仲剩約 ${remain} 人，建議隔幾分鐘再撳「下一批發送」。` : ''),
+      );
+    } catch (err) {
+      setDraftErr(err.message || '發送失敗');
     } finally {
       setDraftBusy(false);
     }
@@ -374,7 +471,7 @@ export default function MoonlightInterestPage() {
   }
 
   function selectAllCandidates() {
-    setSelectedIds((candidates || []).map((c) => c.id));
+    setSelectedIds(visibleCandidates.map((c) => c.id));
   }
 
   function clearCandidateSelection() {
@@ -714,9 +811,8 @@ export default function MoonlightInterestPage() {
                 Admin · Gmail 草稿
               </h2>
               <p className="mi-hint">
-                由 <code>responses</code> 篩 Label + 年齡，一次過建立<strong>一封</strong>草稿（收件人放 BCC）。
-                <strong>只存草稿，唔會自動發送。</strong>
-                {' '}需以論壇 admin 登入；若出現認證錯誤，請重新登入後再試。
+                BCC 一大班好易入 spam／被擋。而家改做<strong>一人一封</strong>：可建獨立草稿，或分批真正發送（每批最多 {SEND_CHUNK} 封、間隔約 2 秒）。
+                {' '}需以論壇 admin 登入。
               </p>
 
               <form className="mi-fields" onSubmit={handlePreviewCandidates}>
@@ -781,7 +877,8 @@ export default function MoonlightInterestPage() {
                 <div className="mi-admin-candidates">
                   <div className="mi-admin-candidates__toolbar">
                     <span className="mi-admin-candidates__count">
-                      已選 {selectedCount} / {candidates.length}
+                      已選 {selectedCount} / {visibleCandidates.length}
+                      {sentEmails.size > 0 ? ` · 已寄 ${sentEmails.size}` : ''}
                     </span>
                     <div className="mi-admin-candidates__actions">
                       <button type="button" className="mi-link-btn" onClick={selectAllCandidates}>
@@ -793,7 +890,7 @@ export default function MoonlightInterestPage() {
                     </div>
                   </div>
                   <ul className="mi-admin-candidates__list">
-                    {candidates.map((c) => (
+                    {visibleCandidates.map((c) => (
                       <li key={c.id}>
                         <label className={`mi-choice${selectedIds.includes(c.id) ? ' is-selected' : ''}`}>
                           <input
@@ -811,21 +908,39 @@ export default function MoonlightInterestPage() {
                       </li>
                     ))}
                   </ul>
-                  {candidates.length === 0 && (
-                    <p className="mi-hint">呢組條件冇人（或冇有效 email）。</p>
+                  {visibleCandidates.length === 0 && (
+                    <p className="mi-hint">
+                      {(candidates || []).length === 0
+                        ? '呢組條件冇人（或冇有效 email）。'
+                        : '呢批人已全部寄過；重新預覽亦唔會再出現。'}
+                    </p>
                   )}
-                  <button
-                    type="button"
-                    className="pixel-btn pixel-btn--primary mi-submit"
-                    disabled={draftBusy || previewBusy || !selectedCount}
-                    onClick={handleCreateBatchDrafts}
-                  >
-                    <span className="pixel-btn__zh">
-                      {draftBusy
-                        ? '建立草稿中…'
-                        : `一次過存入 1 封草稿（BCC ${selectedCount} 人・不發送）`}
-                    </span>
-                  </button>
+                  <div className="mi-admin-batch-actions">
+                    <button
+                      type="button"
+                      className="pixel-btn pixel-btn--ghost mi-submit"
+                      disabled={draftBusy || previewBusy || !selectedCount}
+                      onClick={handleCreateBatchDrafts}
+                    >
+                      <span className="pixel-btn__zh">
+                        {draftBusy
+                          ? '處理中…'
+                          : `建立獨立草稿（本批最多 ${DRAFT_CHUNK}）`}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      className="pixel-btn pixel-btn--primary mi-submit"
+                      disabled={draftBusy || previewBusy || !selectedCount}
+                      onClick={handleSendBatch}
+                    >
+                      <span className="pixel-btn__zh">
+                        {draftBusy
+                          ? '發送中…'
+                          : `分批發送（本批最多 ${SEND_CHUNK}・約 2 秒／封）`}
+                      </span>
+                    </button>
+                  </div>
                 </div>
               )}
 

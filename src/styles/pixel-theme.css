@@ -28091,6 +28091,12 @@ a.moon-journey-dropdown-card__checkin--done {
   margin-top: 0.5rem;
 }
 
+.mi-admin-batch-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
 .mi-draft-ok {
   margin: 0.75rem 0 0;
   font-size: 0.82rem;
