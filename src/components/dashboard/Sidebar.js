@@ -6,6 +6,7 @@ import { FORUM_DASHBOARD_NAV_ITEMS } from './ForumDashboardNav.js';
 const MAIN_NAV_ITEMS = [
   { href: '/dashboard', icon: '◉', label: '總覽' },
   { href: '/dashboard/questionnaire-stats', icon: '◫', label: '問卷統計' },
+  { href: '/dashboard/moonlight-interest', icon: '☽', label: 'Moonlight 調查' },
   { href: '/dashboard/matching-analytics', icon: '◈', label: '配對分析' },
   { href: '/dashboard/scoring', icon: '⚡', label: '計分說明' },
   { href: '/dashboard/match-explorer', icon: '◎', label: '配對瀏覽器' },
