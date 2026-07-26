@@ -3,6 +3,7 @@
  */
 
 import { useEffect, useId } from 'react';
+import { createPortal } from 'react-dom';
 
 export default function GatheringConfirmOverlay({
   open,
@@ -25,26 +26,35 @@ export default function GatheringConfirmOverlay({
 
   useEffect(() => {
     if (!open) return undefined;
-    const prev = document.body.style.overflow;
+    const html = document.documentElement;
+    const prevBody = document.body.style.overflow;
+    const prevHtml = html.style.overflow;
     document.body.style.overflow = 'hidden';
+    html.style.overflow = 'hidden';
+    html.classList.add('gathering-confirm-open');
+    document.body.classList.add('gathering-confirm-open');
+
     function onKey(e) {
       if (e.key === 'Escape' && !busy) onCancel?.();
     }
     document.addEventListener('keydown', onKey);
     return () => {
-      document.body.style.overflow = prev;
+      document.body.style.overflow = prevBody;
+      html.style.overflow = prevHtml;
+      html.classList.remove('gathering-confirm-open');
+      document.body.classList.remove('gathering-confirm-open');
       document.removeEventListener('keydown', onKey);
     };
   }, [open, busy, onCancel]);
 
-  if (!open) return null;
+  if (!open || typeof document === 'undefined') return null;
 
   const confirmClass = variant === 'danger'
     ? 'gathering-confirm__btn gathering-confirm__btn--danger'
     : 'gathering-confirm__btn gathering-confirm__btn--primary';
   const hasChoices = Array.isArray(choices) && choices.length > 0;
 
-  return (
+  return createPortal(
     <div
       className="gathering-confirm"
       role="dialog"
@@ -56,24 +66,26 @@ export default function GatheringConfirmOverlay({
     >
       <div className="gathering-confirm__box gathering-hud">
         <div className="gathering-hud__corners" aria-hidden="true" />
-        <p className="gathering-confirm__eyebrow">SYSTEM CHECK</p>
-        <h2 className="gathering-confirm__title" id={titleId}>{title}</h2>
-        {sub ? <div className="gathering-confirm__sub">{sub}</div> : null}
+        <div className="gathering-confirm__body">
+          <p className="gathering-confirm__eyebrow">SYSTEM CHECK</p>
+          <h2 className="gathering-confirm__title" id={titleId}>{title}</h2>
+          {sub ? <div className="gathering-confirm__sub">{sub}</div> : null}
 
-        {showNote && (
-          <label className="gathering-confirm__note-wrap">
-            <span className="gathering-confirm__note-label">{noteLabel}</span>
-            <textarea
-              className="gathering-confirm__note"
-              value={note}
-              onChange={(e) => onNoteChange?.(e.target.value)}
-              placeholder={notePlaceholder}
-              maxLength={200}
-              rows={3}
-              disabled={busy}
-            />
-          </label>
-        )}
+          {showNote && (
+            <label className="gathering-confirm__note-wrap">
+              <span className="gathering-confirm__note-label">{noteLabel}</span>
+              <textarea
+                className="gathering-confirm__note"
+                value={note}
+                onChange={(e) => onNoteChange?.(e.target.value)}
+                placeholder={notePlaceholder}
+                maxLength={200}
+                rows={3}
+                disabled={busy}
+              />
+            </label>
+          )}
+        </div>
 
         <div className={`gathering-confirm__actions${hasChoices ? ' gathering-confirm__actions--stack' : ''}`}>
           {hasChoices ? (
@@ -115,6 +127,7 @@ export default function GatheringConfirmOverlay({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

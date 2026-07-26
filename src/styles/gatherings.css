@@ -3816,7 +3816,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.25rem;
+  padding:
+    max(1rem, env(safe-area-inset-top, 0px))
+    1.25rem
+    max(1rem, env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+  overflow: hidden;
+  overscroll-behavior: contain;
   background:
     radial-gradient(ellipse 60% 50% at 50% 40%, rgba(255, 224, 102, 0.08) 0%, transparent 55%),
     rgba(4, 3, 10, 0.78);
@@ -3830,9 +3836,24 @@
 }
 
 .gathering-confirm__box {
+  display: flex;
+  flex-direction: column;
   width: min(100%, 22.5rem);
+  max-height: 90vh;
+  max-height: min(90dvh, calc(100% - 0.5rem));
   padding: 1.35rem 1.25rem 1.3rem;
+  box-sizing: border-box;
+  overflow: hidden;
   animation: gathering-confirm-pop 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.gathering-confirm__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 @keyframes gathering-confirm-pop {
@@ -3874,7 +3895,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  margin: 0 0 1rem;
+  margin: 0;
 }
 
 .gathering-confirm__note-label {
@@ -3906,7 +3927,10 @@
 .gathering-confirm__actions {
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
   gap: 0.55rem;
+  margin-top: 0.85rem;
+  padding-top: 0.15rem;
 }
 
 .gathering-confirm__actions--stack {
@@ -4632,9 +4656,11 @@
   .gathering-confirm__box {
     width: 100%;
     max-width: none;
+    max-height: 88vh;
+    max-height: min(88dvh, 100%);
     margin: 0;
     border-radius: 12px 12px 0 0;
-    padding: 1.15rem 1rem calc(1.15rem + env(safe-area-inset-bottom, 0px));
+    padding: 1.15rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
   }
 
   .gathering-confirm__title {
@@ -4643,11 +4669,23 @@
 
   .gathering-confirm__sub {
     font-size: 0.84rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .gathering-confirm__note-wrap {
+    margin-bottom: 0;
+  }
+
+  .gathering-confirm__note {
+    min-height: 3.25rem;
+    max-height: 6.5rem;
+    resize: none;
   }
 
   .gathering-confirm__actions {
     flex-direction: column-reverse;
     gap: 0.5rem;
+    margin-top: 0.75rem;
   }
 
   .gathering-confirm__actions--stack {
