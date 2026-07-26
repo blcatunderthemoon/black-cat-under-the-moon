@@ -66,6 +66,7 @@ const PAGE_META = {
   guide_article: { page_name: 'Guide Article', page_group: 'guides' },
   dashboard: { page_name: 'Dashboard', page_group: 'admin' },
   admin: { page_name: 'Admin', page_group: 'admin' },
+  admin_moonlight_interest: { page_name: 'Admin Moonlight Interest', page_group: 'forum_admin' },
   other: { page_name: 'Other', page_group: 'other' },
 };
 
@@ -103,6 +104,7 @@ const ROUTE_RULES = [
   { test: /^\/auth\/confirm\/?$/, key: 'auth_confirm' },
   { test: /^\/auth\/reset-password\/?$/, key: 'auth_reset' },
   { test: /^\/dashboard/, key: 'dashboard' },
+  { test: /^\/admin\/moonlight-interest\/?$/, key: 'admin_moonlight_interest' },
   { test: /^\/admin/, key: 'admin' },
 ];
 
