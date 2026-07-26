@@ -99,12 +99,12 @@ export default async function handler(req, res) {
       if (!displayName) {
         return res.status(400).json({ error: '請填寫稱呼。' });
       }
-      if (!message) {
-        return res.status(400).json({ error: '請留下訊息。' });
-      }
-      const { blocked } = filterContent(message);
-      if (blocked) {
-        return res.status(400).json({ error: '留言包含不當字眼，無法傳送。' });
+      if (message) {
+        const { blocked } = filterContent(message);
+        if (blocked) {
+          return res.status(400).json({ error: '留言包含不當字眼，無法傳送。' });
+        }
+        cleanMessage = message;
       }
       cleanSlots = timeSlots.filter((s) => TIME_SLOTS.has(s));
       cleanDates = dates.filter((d) => DATE_RE.test(d) && ALLOWED_DATES.has(d));
@@ -118,7 +118,6 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: '請選擇可以接受嘅收費範圍。' });
       }
       cleanPrice = priceRange;
-      cleanMessage = message;
     }
 
     const authUser = await getOptionalUser(req);

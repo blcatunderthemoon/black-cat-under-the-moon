@@ -11,11 +11,22 @@ export function isGmailDraftConfigured() {
   return Boolean(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD);
 }
 
-async function buildRawMime({ from, to, subject, html, text, bcc }) {
+function normalizeAddressList(value) {
+  if (!value) return undefined;
+  if (Array.isArray(value)) {
+    const list = value.map((v) => String(v || '').trim()).filter(Boolean);
+    return list.length ? list : undefined;
+  }
+  const s = String(value).trim();
+  return s || undefined;
+}
+
+async function buildRawMime({ from, to, cc, bcc, subject, html, text }) {
   const streamTransport = nodemailer.createTransport({ streamTransport: true, newline: 'unix' });
   const info = await streamTransport.sendMail({
     from,
     ...(to ? { to } : {}),
+    ...(cc ? { cc } : {}),
     ...(bcc ? { bcc } : {}),
     subject,
     html,
@@ -45,7 +56,9 @@ async function findDraftsPath(client) {
 
 /**
  * @param {{
- *   to?: string,
+ *   to?: string | string[],
+ *   cc?: string | string[],
+ *   bcc?: string | string[],
  *   subject: string,
  *   html: string,
  *   text?: string,
@@ -65,7 +78,9 @@ export async function appendGmailDraft(opts) {
   const subject = String(opts.subject || '').trim();
   const html = String(opts.html || '');
   const text = opts.text != null ? String(opts.text) : undefined;
-  const to = typeof opts.to === 'string' ? opts.to.trim() : '';
+  const to = normalizeAddressList(opts.to);
+  const cc = normalizeAddressList(opts.cc);
+  const bcc = normalizeAddressList(opts.bcc);
 
   if (!subject || !html) {
     return { ok: false, error: 'subject and html are required.' };
@@ -73,7 +88,9 @@ export async function appendGmailDraft(opts) {
 
   const rawMime = await buildRawMime({
     from,
-    to: to || undefined,
+    to,
+    cc,
+    bcc,
     subject,
     html,
     text,

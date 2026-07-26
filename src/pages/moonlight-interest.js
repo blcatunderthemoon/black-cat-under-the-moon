@@ -153,6 +153,8 @@ const FEATURES = [
   { icon: HeaderMailIcon, label: 'Moonlight Mail（活動後配對通知）' },
 ];
 
+const IDENTITY_FILTER_OPTIONS = ['Pure', 'TB', 'TBG', 'Bi', 'No Label', '仲探索緊'];
+
 function toggleInList(list, value) {
   return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
 }
@@ -171,6 +173,12 @@ export default function MoonlightInterestPage() {
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
   const [openScheduleId, setOpenScheduleId] = useState('');
+  const [filterIdentities, setFilterIdentities] = useState(['Pure']);
+  const [filterAgeMin, setFilterAgeMin] = useState('23');
+  const [filterAgeMax, setFilterAgeMax] = useState('34');
+  const [candidates, setCandidates] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [previewBusy, setPreviewBusy] = useState(false);
   const [draftTo, setDraftTo] = useState('');
   const [draftName, setDraftName] = useState('');
   const [draftBusy, setDraftBusy] = useState(false);
@@ -178,6 +186,11 @@ export default function MoonlightInterestPage() {
   const [draftErr, setDraftErr] = useState('');
 
   const showFollowUp = interest === 'interested';
+  const selectedCount = selectedIds.length;
+  const datesFilled = timeSlots.length > 0 && dates.length > 0;
+  const priceFilled = Boolean(priceRange);
+  const emailFilled = Boolean(email.trim());
+  const nameFilled = Boolean(displayName.trim());
 
   // Prefill from session when already logged in — never require login.
   useEffect(() => {
@@ -221,10 +234,6 @@ export default function MoonlightInterestPage() {
         setError('請填寫稱呼。');
         return;
       }
-      if (!message.trim()) {
-        setError('請留下訊息。');
-        return;
-      }
     }
 
     setSubmitting(true);
@@ -259,38 +268,101 @@ export default function MoonlightInterestPage() {
     }
   }
 
-  async function handleCreateGmailDraft(e) {
+  async function adminDraftFetch(payload) {
+    if (!session?.access_token) {
+      throw new Error('請先以管理員帳號登入。');
+    }
+    const resp = await fetch('/api/dashboard/moonlight-interest-draft', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+      throw new Error([data.error, data.hint].filter(Boolean).join(' ') || '請求失敗');
+    }
+    return data;
+  }
+
+  async function handlePreviewCandidates(e) {
     e.preventDefault();
     setDraftMsg('');
     setDraftErr('');
-    if (!session?.access_token) {
-      setDraftErr('請先以管理員帳號登入。');
+    setPreviewBusy(true);
+    try {
+      const data = await adminDraftFetch({
+        action: 'preview',
+        identities: filterIdentities,
+        age_min: filterAgeMin === '' ? null : Number(filterAgeMin),
+        age_max: filterAgeMax === '' ? null : Number(filterAgeMax),
+      });
+      const list = data.candidates || [];
+      setCandidates(list);
+      setSelectedIds(list.map((c) => c.id));
+      setDraftMsg(`搵到 ${list.length} 位（已去重 email）。預設全選，可再剔走。`);
+    } catch (err) {
+      setCandidates(null);
+      setSelectedIds([]);
+      setDraftErr(err.message || '預覽失敗');
+    } finally {
+      setPreviewBusy(false);
+    }
+  }
+
+  async function handleCreateBatchDrafts(e) {
+    e.preventDefault();
+    setDraftMsg('');
+    setDraftErr('');
+    if (!selectedIds.length) {
+      setDraftErr('請至少揀一位收件人。');
       return;
     }
     setDraftBusy(true);
     try {
-      const resp = await fetch('/api/dashboard/moonlight-interest-draft', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          to: draftTo.trim() || undefined,
-          recipient_name: draftName.trim() || undefined,
-        }),
+      const data = await adminDraftFetch({
+        action: 'create_batch',
+        response_ids: selectedIds,
       });
-      const data = await resp.json().catch(() => ({}));
-      if (!resp.ok) {
-        setDraftErr([data.error, data.hint].filter(Boolean).join(' '));
-        return;
-      }
-      setDraftMsg(data.message || '已存入 Gmail 草稿（未發送）。');
-    } catch {
-      setDraftErr('網絡錯誤，請稍後再試。');
+      setDraftMsg(data.message || `已建立 1 封草稿，BCC ${selectedIds.length} 人（未發送）。`);
+    } catch (err) {
+      setDraftErr(err.message || '建立草稿失敗');
     } finally {
       setDraftBusy(false);
     }
+  }
+
+  async function handleCreateGmailDraft(e) {
+    e.preventDefault();
+    setDraftMsg('');
+    setDraftErr('');
+    setDraftBusy(true);
+    try {
+      const data = await adminDraftFetch({
+        action: 'create_one',
+        to: draftTo.trim() || undefined,
+        recipient_name: draftName.trim() || undefined,
+      });
+      setDraftMsg(data.message || '已存入 Gmail 草稿（未發送）。');
+    } catch (err) {
+      setDraftErr(err.message || '建立草稿失敗');
+    } finally {
+      setDraftBusy(false);
+    }
+  }
+
+  function toggleCandidate(id) {
+    setSelectedIds((prev) => toggleInList(prev, id));
+  }
+
+  function selectAllCandidates() {
+    setSelectedIds((candidates || []).map((c) => c.id));
+  }
+
+  function clearCandidateSelection() {
+    setSelectedIds([]);
   }
 
   return (
@@ -471,7 +543,10 @@ export default function MoonlightInterestPage() {
               {showFollowUp && (
                 <div className="mi-followup">
                   <fieldset className="mi-fieldset">
-                    <legend className="mi-legend">可以參加日期（可多選）<span className="mi-field__req">必填</span></legend>
+                    <legend className="mi-legend">
+                      可以參加日期（可多選）
+                      {!datesFilled && <span className="mi-field__req">必填</span>}
+                    </legend>
                     <p className="mi-hint">請揀慣常時段同具體日子，兩邊都要最少揀一個。</p>
                     <div className="mi-chip-grid">
                       {TIME_SLOT_OPTIONS.map((opt) => (
@@ -512,7 +587,10 @@ export default function MoonlightInterestPage() {
                   </fieldset>
 
                   <fieldset className="mi-fieldset">
-                    <legend className="mi-legend">可以接受收費範圍<span className="mi-field__req">必填</span></legend>
+                    <legend className="mi-legend">
+                      可以接受收費範圍
+                      {!priceFilled && <span className="mi-field__req">必填</span>}
+                    </legend>
                     <div className="mi-choice-list" role="radiogroup" aria-label="可以接受收費範圍">
                       {PRICE_OPTIONS.map((opt) => (
                         <label
@@ -535,7 +613,7 @@ export default function MoonlightInterestPage() {
                   <div className="mi-fields">
                     <label className="mi-field">
                       <span className="mi-field__label">
-                        電郵 <span className="mi-field__req">必填</span>
+                        電郵 {!emailFilled && <span className="mi-field__req">必填</span>}
                       </span>
                       <input
                         className="pixel-input"
@@ -549,7 +627,7 @@ export default function MoonlightInterestPage() {
                     </label>
                     <label className="mi-field">
                       <span className="mi-field__label">
-                        稱呼 <span className="mi-field__req">必填</span>
+                        稱呼 {!nameFilled && <span className="mi-field__req">必填</span>}
                       </span>
                       <input
                         className="pixel-input"
@@ -564,7 +642,7 @@ export default function MoonlightInterestPage() {
                     </label>
                     <label className="mi-field">
                       <span className="mi-field__label">
-                        留言 <span className="mi-field__req">必填</span>
+                        留言 <span className="mi-field__opt">選填</span>
                       </span>
                       <textarea
                         className="pixel-textarea"
@@ -573,7 +651,6 @@ export default function MoonlightInterestPage() {
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                         placeholder="例如：想認識多啲朋友、對邊個環節最有興趣…"
-                        required
                       />
                     </label>
                   </div>
@@ -621,47 +698,162 @@ export default function MoonlightInterestPage() {
                 Admin · Gmail 草稿
               </h2>
               <p className="mi-hint">
-                建立邀請填寫本頁嘅靚 email 草稿到你嘅 Gmail「草稿」箱。
+                由 <code>responses</code> 篩 Label + 年齡，一次過建立<strong>一封</strong>草稿（收件人放 BCC）。
                 <strong>只存草稿，唔會自動發送。</strong>
               </p>
-              <form className="mi-fields" onSubmit={handleCreateGmailDraft}>
-                <label className="mi-field">
-                  <span className="mi-field__label">
-                    收件人電郵 <span className="mi-field__opt">選填</span>
-                  </span>
-                  <input
-                    className="pixel-input"
-                    type="email"
-                    value={draftTo}
-                    onChange={(e) => setDraftTo(e.target.value)}
-                    placeholder="留空＝之後喺 Gmail 草稿自行填"
-                  />
-                </label>
-                <label className="mi-field">
-                  <span className="mi-field__label">
-                    稱呼（信內問候） <span className="mi-field__opt">選填</span>
-                  </span>
-                  <input
-                    className="pixel-input"
-                    type="text"
-                    maxLength={40}
-                    value={draftName}
-                    onChange={(e) => setDraftName(e.target.value)}
-                    placeholder="例如：阿貓"
-                  />
-                </label>
-                {draftErr && <p className="pixel-error mi-error">{draftErr}</p>}
-                {draftMsg && <p className="mi-draft-ok">{draftMsg}</p>}
+
+              <form className="mi-fields" onSubmit={handlePreviewCandidates}>
+                <fieldset className="mi-fieldset">
+                  <legend className="mi-legend">Label（identity）</legend>
+                  <div className="mi-chip-grid">
+                    {IDENTITY_FILTER_OPTIONS.map((opt) => (
+                      <label
+                        key={opt}
+                        className={`mi-chip${filterIdentities.includes(opt) ? ' is-selected' : ''}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={filterIdentities.includes(opt)}
+                          onChange={() => setFilterIdentities((prev) => toggleInList(prev, opt))}
+                        />
+                        <span>{opt}</span>
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+
+                <div className="mi-admin-age-row">
+                  <label className="mi-field">
+                    <span className="mi-field__label">年齡下限</span>
+                    <input
+                      className="pixel-input"
+                      type="number"
+                      min={18}
+                      max={60}
+                      value={filterAgeMin}
+                      onChange={(e) => setFilterAgeMin(e.target.value)}
+                      placeholder="例如 23"
+                    />
+                  </label>
+                  <label className="mi-field">
+                    <span className="mi-field__label">年齡上限</span>
+                    <input
+                      className="pixel-input"
+                      type="number"
+                      min={18}
+                      max={60}
+                      value={filterAgeMax}
+                      onChange={(e) => setFilterAgeMax(e.target.value)}
+                      placeholder="例如 34"
+                    />
+                  </label>
+                </div>
+
                 <button
                   type="submit"
-                  className="pixel-btn pixel-btn--primary mi-submit"
-                  disabled={draftBusy}
+                  className="pixel-btn pixel-btn--ghost mi-submit"
+                  disabled={previewBusy || draftBusy}
                 >
                   <span className="pixel-btn__zh">
-                    {draftBusy ? '建立中…' : '存入 Gmail 草稿（不發送）'}
+                    {previewBusy ? '篩選中…' : '預覽符合條件嘅人'}
                   </span>
                 </button>
               </form>
+
+              {candidates && (
+                <div className="mi-admin-candidates">
+                  <div className="mi-admin-candidates__toolbar">
+                    <span className="mi-admin-candidates__count">
+                      已選 {selectedCount} / {candidates.length}
+                    </span>
+                    <div className="mi-admin-candidates__actions">
+                      <button type="button" className="mi-link-btn" onClick={selectAllCandidates}>
+                        全選
+                      </button>
+                      <button type="button" className="mi-link-btn" onClick={clearCandidateSelection}>
+                        清空
+                      </button>
+                    </div>
+                  </div>
+                  <ul className="mi-admin-candidates__list">
+                    {candidates.map((c) => (
+                      <li key={c.id}>
+                        <label className={`mi-choice${selectedIds.includes(c.id) ? ' is-selected' : ''}`}>
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.includes(c.id)}
+                            onChange={() => toggleCandidate(c.id)}
+                          />
+                          <span className="mi-admin-candidates__meta">
+                            <span className="mi-admin-candidates__name">{c.name || '（無稱呼）'}</span>
+                            <span className="mi-admin-candidates__sub">
+                              {c.identity || '—'} · {c.age != null ? `${c.age} 歲` : '年齡不明'} · {c.email}
+                            </span>
+                          </span>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                  {candidates.length === 0 && (
+                    <p className="mi-hint">呢組條件冇人（或冇有效 email）。</p>
+                  )}
+                  <button
+                    type="button"
+                    className="pixel-btn pixel-btn--primary mi-submit"
+                    disabled={draftBusy || previewBusy || !selectedCount}
+                    onClick={handleCreateBatchDrafts}
+                  >
+                    <span className="pixel-btn__zh">
+                      {draftBusy
+                        ? '建立草稿中…'
+                        : `一次過存入 1 封草稿（BCC ${selectedCount} 人・不發送）`}
+                    </span>
+                  </button>
+                </div>
+              )}
+
+              <details className="mi-admin-manual">
+                <summary>手動開一封草稿（可選）</summary>
+                <form className="mi-fields" onSubmit={handleCreateGmailDraft}>
+                  <label className="mi-field">
+                    <span className="mi-field__label">
+                      收件人電郵 <span className="mi-field__opt">選填</span>
+                    </span>
+                    <input
+                      className="pixel-input"
+                      type="email"
+                      value={draftTo}
+                      onChange={(e) => setDraftTo(e.target.value)}
+                      placeholder="留空＝之後喺 Gmail 草稿自行填"
+                    />
+                  </label>
+                  <label className="mi-field">
+                    <span className="mi-field__label">
+                      稱呼（信內問候） <span className="mi-field__opt">選填</span>
+                    </span>
+                    <input
+                      className="pixel-input"
+                      type="text"
+                      maxLength={40}
+                      value={draftName}
+                      onChange={(e) => setDraftName(e.target.value)}
+                      placeholder="例如：阿貓"
+                    />
+                  </label>
+                  <button
+                    type="submit"
+                    className="pixel-btn pixel-btn--ghost mi-submit"
+                    disabled={draftBusy}
+                  >
+                    <span className="pixel-btn__zh">
+                      {draftBusy ? '建立中…' : '存入單封 Gmail 草稿（不發送）'}
+                    </span>
+                  </button>
+                </form>
+              </details>
+
+              {draftErr && <p className="pixel-error mi-error">{draftErr}</p>}
+              {draftMsg && <p className="mi-draft-ok">{draftMsg}</p>}
             </section>
           )}
         </article>

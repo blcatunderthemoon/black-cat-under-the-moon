@@ -27991,8 +27991,108 @@ a.moon-journey-dropdown-card__checkin--done {
   font-weight: 700;
 }
 
-.mi-draft-ok {
+.mi-admin-draft code {
+  font-size: 0.78em;
+  color: var(--cyan, #00e5ff);
+}
+
+.mi-admin-age-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.mi-admin-candidates {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.mi-admin-candidates__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.mi-admin-candidates__count {
+  font-size: 0.8rem;
+  color: var(--purple-light, #bd93f9);
+  font-weight: 700;
+}
+
+.mi-admin-candidates__actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.mi-link-btn {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--cyan, #00e5ff);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.mi-admin-candidates__list {
+  list-style: none;
   margin: 0;
+  padding: 0;
+  max-height: 280px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.mi-admin-candidates__list .mi-choice {
+  align-items: flex-start;
+}
+
+.mi-admin-candidates__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.mi-admin-candidates__name {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--cream, #f0ebd8);
+}
+
+.mi-admin-candidates__sub {
+  font-size: 0.72rem;
+  color: var(--text-dim, #7a7590);
+  word-break: break-all;
+  line-height: 1.45;
+}
+
+.mi-admin-manual {
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(124, 92, 252, 0.18);
+}
+
+.mi-admin-manual summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--purple-light, #bd93f9);
+  margin-bottom: 0.75rem;
+}
+
+.mi-admin-manual .mi-fields {
+  margin-top: 0.5rem;
+}
+
+.mi-draft-ok {
+  margin: 0.75rem 0 0;
   font-size: 0.82rem;
   line-height: 1.65;
   color: var(--green, #50fa7b);
