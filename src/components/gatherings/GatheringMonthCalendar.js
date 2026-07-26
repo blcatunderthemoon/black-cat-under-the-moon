@@ -103,16 +103,26 @@ export default function GatheringMonthCalendar({
       </div>
 
       <p className="gathering-cal__hint">點日子睇詳情 · 左右換月</p>
-      <p className="gathering-cal__legend" aria-hidden="true">
-        <span className="gathering-cal__legend-item gathering-cal__legend-item--live">
-          <ForumMoonIcon size={10} />
-          進行中／即將
-        </span>
-        <span className="gathering-cal__legend-item gathering-cal__legend-item--past">
-          <ForumMoonIcon size={10} />
-          已結束
-        </span>
-      </p>
+      <div className="gathering-cal__legend" aria-label="日曆圖示說明">
+        <button
+          type="button"
+          className="gathering-cal__legend-item gathering-cal__legend-item--live"
+          data-tip="進行中／即將"
+          title="進行中／即將"
+          aria-label="進行中／即將"
+        >
+          <ForumMoonIcon size={12} />
+        </button>
+        <button
+          type="button"
+          className="gathering-cal__legend-item gathering-cal__legend-item--past"
+          data-tip="已結束"
+          title="已結束"
+          aria-label="已結束"
+        >
+          <ForumMoonIcon size={12} />
+        </button>
+      </div>
 
       <div className="gathering-cal__weekdays" aria-hidden="true">
         {weekdays.map((label) => (
