@@ -517,10 +517,23 @@ export default function WishDetailPage() {
               ) : (
                 <ul className="wish-cheers__list">
                   {cheers.map((c) => {
-                    const cheerName = c.user?.display_name || '匿名貓咪';
+                    if (!isOwner || c.anonymous || !c.user) {
+                      return (
+                        <li key={c.id} className="wish-cheers__item">
+                          <span className="wish-cheers__bubble" aria-hidden="true">
+                            <ForumSparkleIcon size={12} />
+                          </span>
+                          <div className="wish-cheers__content">
+                            <span className="wish-cheers__name">有人</span>
+                            <span className="wish-cheers__note">送上溫柔打氣</span>
+                          </div>
+                        </li>
+                      );
+                    }
+                    const cheerName = c.user.display_name || '匿名貓咪';
                     const cheerHref = mirrorCardHref({
-                      isMine: !!(session?.user?.id && c.user?.id === session.user.id),
-                      slug: c.user?.public_slug,
+                      isMine: !!(session?.user?.id && c.user.id === session.user.id),
+                      slug: c.user.public_slug,
                     });
                     return (
                       <li key={c.id} className="wish-cheers__item">

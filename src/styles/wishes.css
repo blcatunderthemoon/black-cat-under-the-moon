@@ -1236,10 +1236,8 @@ button.wish-moon__stamp:hover:not(:disabled) .wish-moon__stamp-paw {
   gap: 8px;
 }
 
-.wish-detail__secondary-actions .wish-share {
+.wish-detail__secondary-actions .wish-detail__share-btn {
   flex: 0 1 auto;
-  display: flex;
-  align-items: stretch;
 }
 
 .wish-detail__report-btn {
@@ -1267,10 +1265,8 @@ button.wish-moon__stamp:hover:not(:disabled) .wish-moon__stamp-paw {
 }
 
 .wish-detail__owner-actions .wish-detail__forum-btn,
-.wish-detail__owner-actions .wish-share {
+.wish-detail__owner-actions .wish-detail__share-btn {
   flex: 0 1 auto;
-  display: flex;
-  align-items: stretch;
 }
 
 .wish-detail__action-btn {
@@ -1416,58 +1412,6 @@ button.wish-moon__stamp:hover:not(:disabled) .wish-moon__stamp-paw {
   min-height: 44px;
 }
 
-.wish-share {
-  position: relative;
-  flex: 0 1 auto;
-}
-
-.wish-share__backdrop {
-  display: none;
-}
-
-.wish-share__menu {
-  position: absolute;
-  right: 0;
-  bottom: calc(100% + 6px);
-  z-index: 30;
-  min-width: 11.5rem;
-  padding: 6px;
-  border: 1px solid rgba(255, 180, 100, 0.35);
-  border-radius: 10px;
-  background:
-    linear-gradient(180deg, rgba(40, 28, 20, 0.98), rgba(16, 10, 8, 0.98));
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-  display: grid;
-  gap: 2px;
-}
-
-.wish-share__menu-title {
-  display: none;
-}
-
-.wish-share__cancel {
-  display: none;
-}
-
-.wish-share__item {
-  appearance: none;
-  margin: 0;
-  padding: 10px 12px;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: #f0ebd8;
-  font-family: "Noto Sans TC", sans-serif;
-  font-size: 0.88rem;
-  text-align: left;
-  cursor: pointer;
-  min-height: 44px;
-}
-
-.wish-share__item:hover {
-  background: rgba(255, 200, 100, 0.12);
-  color: #ffe8b0;
-}
 
 .wish-detail__text-link {
   appearance: none;
@@ -1637,7 +1581,6 @@ button.wish-moon__stamp:hover:not(:disabled) .wish-moon__stamp-paw {
     width: 100%;
   }
 
-  .wish-detail__owner-actions .wish-share,
   .wish-detail__owner-actions .wish-detail__share-btn {
     width: 100%;
   }
@@ -1657,7 +1600,6 @@ button.wish-moon__stamp:hover:not(:disabled) .wish-moon__stamp-paw {
     gap: 8px;
   }
 
-  .wish-detail__secondary-actions .wish-share,
   .wish-detail__secondary-actions .wish-detail__share-btn,
   .wish-detail__secondary-actions .wish-detail__report-btn {
     width: 100%;
@@ -3387,71 +3329,6 @@ button.wish-moon__stamp:hover:not(:disabled) .wish-moon__stamp-paw {
     min-width: 0;
   }
 
-  /* Share sheet on mobile */
-  .wish-share {
-    width: 100%;
-  }
-
-  .wish-share__backdrop {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 80;
-    margin: 0;
-    padding: 0;
-    border: 0;
-    background: rgba(0, 0, 0, 0.55);
-  }
-
-  .wish-share__menu {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 90;
-    min-width: 0;
-    max-width: none;
-    margin: 0;
-    padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px));
-    border-radius: 16px 16px 0 0;
-    border: 1px solid rgba(255, 180, 100, 0.3);
-    border-bottom: 0;
-    gap: 4px;
-  }
-
-  .wish-share__menu-title {
-    display: block;
-    margin: 2px 4px 8px;
-    font-family: "Noto Sans TC", sans-serif;
-    font-size: 0.82rem;
-    color: rgba(232, 224, 208, 0.65);
-  }
-
-  .wish-share__item {
-    width: 100%;
-    min-height: 48px;
-    padding: 12px 14px;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.04);
-    text-align: center;
-    font-size: 0.95rem;
-  }
-
-  .wish-share__cancel {
-    display: block;
-    appearance: none;
-    width: 100%;
-    margin: 4px 0 0;
-    padding: 12px;
-    min-height: 48px;
-    border: 0;
-    border-radius: 10px;
-    background: transparent;
-    color: rgba(232, 224, 208, 0.6);
-    font-family: "Noto Sans TC", sans-serif;
-    font-size: 0.9rem;
-    cursor: pointer;
-  }
 
   .forum-wish-quest__cta-row {
     flex-wrap: nowrap;

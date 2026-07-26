@@ -28,7 +28,7 @@ export default async function handler(req, res) {
 
   const wish = await maybeExpireWish(admin, row);
   if (wish.user_id !== user.id) {
-    return res.status(403).json({ error: '只有主人可以放棄心願。' });
+    return res.status(403).json({ error: '只有你可以放棄自己嘅心願。' });
   }
   if (!['active', 'expired'].includes(wish.status)) {
     return res.status(400).json({ error: '此心願無法放棄。' });

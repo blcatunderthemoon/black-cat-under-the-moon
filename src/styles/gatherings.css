@@ -2026,55 +2026,14 @@
   filter: grayscale(0.2);
 }
 
-.gathering-detail__risk-check {
-  align-items: flex-start;
-  gap: 0.65rem;
-  margin: 0.1rem 0 0;
-  padding: 0.8rem 0.9rem;
-  border: 1px solid rgba(255, 160, 90, 0.28);
-  background: rgba(40, 24, 32, 0.55);
-  border-radius: 6px;
-  font-size: 0.84rem;
-  line-height: 1.55;
-  color: rgba(232, 228, 240, 0.78);
-  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+.gathering-confirm__sub p {
+  margin: 0 0 0.55rem;
 }
 
-.gathering-detail__risk-check.is-remind {
-  border-color: rgba(255, 140, 150, 0.65);
-  background: rgba(90, 30, 40, 0.4);
-  box-shadow: 0 0 0 1px rgba(255, 120, 140, 0.2);
-}
-
-.gathering-detail__risk-hint {
-  margin: -0.15rem 0 0;
-  padding: 0.45rem 0.7rem;
-  border: 1px solid rgba(255, 140, 150, 0.4);
-  border-radius: 4px;
-  background: rgba(255, 100, 120, 0.1);
-  color: #ffc0c8;
-  font-size: 0.8rem;
-  line-height: 1.45;
-}
-
-.gathering-detail__risk-check input[type='checkbox'] {
-  margin-top: 0.12rem;
-  flex-shrink: 0;
-}
-
-.gathering-detail__risk-em {
-  color: var(--gathering-cream);
-  font-weight: 700;
-}
-
-.gathering-detail__risk-check a {
+.gathering-confirm__sub a {
   color: var(--gathering-accent);
   text-decoration: underline;
   text-underline-offset: 2px;
-}
-
-.gathering-confirm__sub p {
-  margin: 0 0 0.55rem;
 }
 
 .gathering-confirm__sub p:last-child {
@@ -4400,7 +4359,7 @@
     padding: 0.95rem 0.85rem 1.05rem;
   }
 
-  /* Apply + risk acknowledgement */
+  /* Apply form */
   .gathering-detail__apply-lead {
     font-size: 0.8rem;
   }
@@ -4413,20 +4372,6 @@
   .gathering-detail__apply-privacy {
     font-size: 0.74rem;
     padding: 0.5rem 0.6rem;
-  }
-
-  .gathering-detail__risk-check {
-    align-items: flex-start;
-    gap: 0.55rem;
-    padding: 0.75rem 0.8rem;
-    font-size: 0.8rem;
-    line-height: 1.55;
-  }
-
-  .gathering-detail__risk-check input[type='checkbox'] {
-    width: 1.2rem;
-    height: 1.2rem;
-    margin-top: 0.12rem;
   }
 
   .gathering-detail__apply-actions {

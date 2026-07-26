@@ -59,8 +59,6 @@ export default function GatheringDetailPage({ seo = null }) {
   const [cancelReason, setCancelReason] = useState('');
   const [reportReason, setReportReason] = useState('');
   const [safetyMsg, setSafetyMsg] = useState('');
-  const [riskAccepted, setRiskAccepted] = useState(false);
-  const [riskRemind, setRiskRemind] = useState(false);
   const [editingDesc, setEditingDesc] = useState(false);
   const [descDraft, setDescDraft] = useState('');
   const [savingDesc, setSavingDesc] = useState(false);
@@ -132,27 +130,11 @@ export default function GatheringDetailPage({ seo = null }) {
       }
       return;
     }
-    if (!riskAccepted) {
-      setRiskRemind(true);
-      setMsg('請先勾選風險確認，同意自行承擔參加聚會的風險。');
-      if (typeof document !== 'undefined') {
-        const el = document.getElementById('gathering-risk-check');
-        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        el?.querySelector('input[type="checkbox"]')?.focus();
-      }
-      return;
-    }
-    setRiskRemind(false);
     setConfirmKind('apply');
   }
 
   async function runApply() {
     if (!session?.access_token) return;
-    if (!riskAccepted) {
-      setMsg('請先勾選風險確認，同意自行承擔參加聚會的風險。');
-      setConfirmKind(null);
-      return;
-    }
     setBusy(true);
     setMsg('');
     try {
@@ -176,7 +158,6 @@ export default function GatheringDetailPage({ seo = null }) {
       }
       setMsg(data.attendance?.status === 'approved' ? '已直接獲邀！' : '申請已送出，等候主辦人審核。');
       setConfirmKind(null);
-      setRiskAccepted(false);
       await load();
     } catch {
       setMsg('網絡錯誤');
@@ -1007,35 +988,6 @@ export default function GatheringDetailPage({ seo = null }) {
                       </fieldset>
                     )}
 
-                    <label
-                      id="gathering-risk-check"
-                      className={`gathering-form__field gathering-form__check gathering-detail__risk-check${riskRemind && !riskAccepted ? ' is-remind' : ''}`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={riskAccepted}
-                        onChange={(e) => {
-                          setRiskAccepted(e.target.checked);
-                          if (e.target.checked) setRiskRemind(false);
-                        }}
-                        aria-invalid={riskRemind && !riskAccepted ? 'true' : 'false'}
-                        aria-describedby={riskRemind && !riskAccepted ? 'gathering-risk-hint' : undefined}
-                      />
-                      <span>
-                        我明白平台只係<span className="gathering-detail__risk-em">中介渠道</span>、唔係主辦；
-                        已閱讀
-                        {' '}
-                        <Link href="/tos.html" target="_blank" rel="noopener noreferrer">使用條款</Link>
-                        ，並<span className="gathering-detail__risk-em">自行承擔</span>
-                        參加風險。提交後會再確認一次。
-                      </span>
-                    </label>
-                    {riskRemind && !riskAccepted && (
-                      <p id="gathering-risk-hint" className="gathering-detail__risk-hint" role="alert">
-                        請先勾選上方風險確認，先可以提交申請。
-                      </p>
-                    )}
-
                     <div className="gathering-detail__apply-actions">
                       <button
                         type="submit"
@@ -1082,7 +1034,13 @@ export default function GatheringDetailPage({ seo = null }) {
             <>
               <p>本平台只係中介渠道，唔係呢場聚會嘅主辦方。</p>
               <p>聚會期間同前後發生嘅任何糾紛、人身／財物風險或其他後果，由你同相關用戶自行承擔；平台不作任何後果承擔。</p>
-              <p>按確認即表示你同意繼續申請，並接受使用條款中關於月光聚會的規定。</p>
+              <p>
+                按確認即表示你同意繼續申請，並接受
+                {' '}
+                <Link href="/tos.html" target="_blank" rel="noopener noreferrer">使用條款</Link>
+                {' '}
+                中關於月光聚會的規定。
+              </p>
             </>
           )}
           confirmLabel="明白，繼續申請"

@@ -49,24 +49,36 @@ async function handleGet(req, res, id) {
     .order('created_at', { ascending: false })
     .limit(20);
 
-  const cheererIds = [...new Set((cheerRows || []).map((c) => c.user_id))];
-  const cheererMap = cheererIds.length
-    ? await enrichWishOwners(admin, cheererIds.map((id) => ({ user_id: id })))
-    : new Map();
-
-  const cheers = (cheerRows || []).map((c) => {
-    const user = cheererMap.get(c.user_id);
-    return {
+  const isOwner = !!(user && user.id === wish.user_id);
+  let cheers;
+  if (isOwner) {
+    const cheererIds = [...new Set((cheerRows || []).map((c) => c.user_id))];
+    const cheererMap = cheererIds.length
+      ? await enrichWishOwners(admin, cheererIds.map((uid) => ({ user_id: uid })))
+      : new Map();
+    cheers = (cheerRows || []).map((c) => {
+      const cheerer = cheererMap.get(c.user_id);
+      return {
+        id: c.id,
+        note: c.note,
+        created_at: c.created_at,
+        user: {
+          id: c.user_id,
+          display_name: cheerer?.display_name || '匿名貓咪',
+          public_slug: cheerer?.public_slug || null,
+        },
+      };
+    });
+  } else {
+    // Non-owners / guests: hide cheerer identity (privacy)
+    cheers = (cheerRows || []).map((c) => ({
       id: c.id,
-      note: c.note,
+      note: null,
       created_at: c.created_at,
-      user: {
-        id: c.user_id,
-        display_name: user?.display_name || '匿名貓咪',
-        public_slug: user?.public_slug || null,
-      },
-    };
-  });
+      user: null,
+      anonymous: true,
+    }));
+  }
 
   let stampedDays = [];
   let checkinMeta = buildWishCheckinDays(wish);
@@ -82,7 +94,7 @@ async function handleGet(req, res, id) {
       cheered,
     }),
     cheers,
-    is_owner: !!(user && user.id === wish.user_id),
+    is_owner: isOwner,
     checkins: {
       days: checkinMeta.days,
       today: checkinMeta.today,
@@ -104,7 +116,7 @@ async function handlePatch(req, res, id) {
   const wish = await loadWish(admin, id);
   if (!wish) return res.status(404).json({ error: '找不到此心願。' });
   if (wish.user_id !== user.id) {
-    return res.status(403).json({ error: '只有主人可以編輯心願。' });
+    return res.status(403).json({ error: '只有你可以編輯自己嘅心願。' });
   }
   if (!['active', 'expired'].includes(wish.status)) {
     return res.status(400).json({ error: '此心願狀態無法再編輯。' });

@@ -41,7 +41,7 @@ export default async function handler(req, res) {
 
   const wish = await maybeExpireWish(admin, row);
   if (wish.user_id !== user.id) {
-    return res.status(403).json({ error: '只有主人可以完成心願。' });
+    return res.status(403).json({ error: '只有你可以完成自己嘅心願。' });
   }
   if (wish.status === 'completed') {
     const award = await awardWishCompleteShards(admin, user.id, wish.id);
