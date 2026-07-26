@@ -2453,83 +2453,10 @@
 }
 
 .gathering-cal__hint {
-  margin: 0 0 0.45rem;
+  margin: 0 0 0.85rem;
   text-align: center;
   font-size: 0.78rem;
   color: var(--gathering-muted);
-}
-
-.gathering-cal__legend {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: 0.55rem 0.75rem;
-  margin: 0 0 0.85rem;
-}
-
-.gathering-cal__legend-item {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.6rem;
-  height: 1.6rem;
-  padding: 0;
-  border: 1px solid transparent;
-  border-radius: 2px;
-  background: transparent;
-  cursor: help;
-  color: inherit;
-}
-
-.gathering-cal__legend-item::after {
-  content: attr(data-tip);
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 0.35rem);
-  transform: translateX(-50%) translateY(2px);
-  padding: 0.28rem 0.5rem;
-  border: 1px solid rgba(255, 224, 102, 0.28);
-  border-radius: 2px;
-  background: rgba(12, 10, 22, 0.96);
-  color: var(--gathering-cream);
-  font-size: 0.68rem;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s ease, transform 0.15s ease;
-  z-index: 5;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
-}
-
-.gathering-cal__legend-item:hover::after,
-.gathering-cal__legend-item:focus-visible::after {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-.gathering-cal__legend-item:focus-visible {
-  outline: none;
-  border-color: rgba(255, 224, 102, 0.45);
-}
-
-.gathering-cal__legend-item--live {
-  color: rgba(255, 224, 102, 0.95);
-}
-
-.gathering-cal__legend-item--live svg {
-  filter: drop-shadow(0 0 4px rgba(255, 224, 102, 0.7));
-}
-
-.gathering-cal__legend-item--past {
-  color: rgba(186, 178, 210, 0.75);
-}
-
-.gathering-cal__legend-item--past svg {
-  opacity: 0.55;
-  filter: none;
 }
 
 .gathering-cal__weekdays {
@@ -2636,11 +2563,40 @@
 
 /* Event marker: glowing moon (+ count when >1) */
 .gathering-cal__marker {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 2px;
   min-height: 12px;
   line-height: 1;
+  z-index: 1;
+}
+
+.gathering-cal__marker::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 0.4rem);
+  transform: translateX(-50%) translateY(2px);
+  padding: 0.28rem 0.5rem;
+  border: 1px solid rgba(255, 224, 102, 0.28);
+  border-radius: 2px;
+  background: rgba(12, 10, 22, 0.96);
+  color: var(--gathering-cream);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 6;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+.gathering-cal__day:hover .gathering-cal__marker::after,
+.gathering-cal__day:focus-visible .gathering-cal__marker::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 .gathering-cal__marker-moon {
@@ -2868,10 +2824,6 @@
   .gathering-cal__marker-moon {
     font-size: 0.62rem;
     animation: none;
-  }
-
-  .gathering-cal__legend {
-    gap: 0.4rem 0.55rem;
   }
 
   .gathering-cal__marker-count {

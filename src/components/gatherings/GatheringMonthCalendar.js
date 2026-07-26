@@ -103,26 +103,6 @@ export default function GatheringMonthCalendar({
       </div>
 
       <p className="gathering-cal__hint">點日子睇詳情 · 左右換月</p>
-      <div className="gathering-cal__legend" aria-label="日曆圖示說明">
-        <button
-          type="button"
-          className="gathering-cal__legend-item gathering-cal__legend-item--live"
-          data-tip="進行中／即將"
-          title="進行中／即將"
-          aria-label="進行中／即將"
-        >
-          <ForumMoonIcon size={12} />
-        </button>
-        <button
-          type="button"
-          className="gathering-cal__legend-item gathering-cal__legend-item--past"
-          data-tip="已結束"
-          title="已結束"
-          aria-label="已結束"
-        >
-          <ForumMoonIcon size={12} />
-        </button>
-      </div>
 
       <div className="gathering-cal__weekdays" aria-hidden="true">
         {weekdays.map((label) => (
@@ -138,6 +118,9 @@ export default function GatheringMonthCalendar({
           const activeCount = liveCount + pastCount;
           const selected = selectedDate === cell.dateKey;
           const markerPastOnly = pastCount > 0 && liveCount === 0;
+          const markerTip = markerPastOnly
+            ? '已結束'
+            : (liveCount > 0 && pastCount > 0 ? '進行中／即將 · 已結束' : '進行中／即將');
           return (
             <button
               key={cell.dateKey + (cell.inMonth ? '' : '-out')}
@@ -160,11 +143,17 @@ export default function GatheringMonthCalendar({
             >
               <span className="gathering-cal__day-num">{cell.day}</span>
               {activeCount > 0 && (
-                <span className={`gathering-cal__marker${markerPastOnly ? ' is-past' : ''}`} aria-hidden="true">
-                  <span className="gathering-cal__marker-moon">
+                <span
+                  className={`gathering-cal__marker${markerPastOnly ? ' is-past' : ''}`}
+                  data-tip={markerTip}
+                  title={markerTip}
+                >
+                  <span className="gathering-cal__marker-moon" aria-hidden="true">
                     <ForumMoonIcon size={11} />
                   </span>
-                  {activeCount > 1 && <span className="gathering-cal__marker-count">{activeCount}</span>}
+                  {activeCount > 1 && (
+                    <span className="gathering-cal__marker-count" aria-hidden="true">{activeCount}</span>
+                  )}
                 </span>
               )}
             </button>
