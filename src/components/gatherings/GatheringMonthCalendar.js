@@ -120,7 +120,7 @@ export default function GatheringMonthCalendar({
           const markerPastOnly = pastCount > 0 && liveCount === 0;
           const markerTip = markerPastOnly
             ? '已結束'
-            : (liveCount > 0 && pastCount > 0 ? '進行中／即將 · 已結束' : '進行中／即將');
+            : (liveCount > 0 && pastCount > 0 ? '進行中 · 已結束' : '進行中');
           return (
             <button
               key={cell.dateKey + (cell.inMonth ? '' : '-out')}
@@ -171,10 +171,10 @@ export default function GatheringMonthCalendar({
               {selectedIsPastDay
                 ? '過去聚會'
                 : upcoming.length && past.length
-                  ? '進行中／即將 · 已結束'
+                  ? '進行中 · 已結束'
                   : past.length && !upcoming.length
                     ? '已結束'
-                    : '進行中／即將'}
+                    : '進行中'}
             </p>
           )}
         </div>
@@ -193,10 +193,10 @@ export default function GatheringMonthCalendar({
         ) : (
           <div className="gathering-cal__sections">
             {upcoming.length > 0 && (
-              <section className="gathering-cal__section" aria-label="進行中或即將開始">
+              <section className="gathering-cal__section" aria-label="進行中">
                 {past.length > 0 && (
                   <h4 className="gathering-cal__section-title gathering-cal__section-title--live">
-                    進行中／即將
+                    進行中
                   </h4>
                 )}
                 <DayEventList items={upcoming} />
