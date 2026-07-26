@@ -80,7 +80,7 @@ export function isGatheringYmAtMin(year, month, min = GATHERING_CALENDAR_MIN) {
 
 /**
  * Monday-first month grid cells for HKT calendar UI.
- * @returns {{ dateKey: string, day: number, inMonth: boolean, isToday: boolean }[]}
+ * @returns {{ dateKey: string, day: number, inMonth: boolean, isToday: boolean, isPast: boolean }[]}
  */
 export function buildGatheringMonthGrid(year, month, now = new Date()) {
   const todayKey = getHongKongDateString(now);
@@ -95,15 +95,23 @@ export function buildGatheringMonthGrid(year, month, now = new Date()) {
   const prevMonth = month === 1 ? 12 : month - 1;
   const prevYear = month === 1 ? year - 1 : year;
 
+  const cell = (dateKey, day, inMonth) => ({
+    dateKey,
+    day,
+    inMonth,
+    isToday: dateKey === todayKey,
+    isPast: dateKey < todayKey,
+  });
+
   const cells = [];
   for (let i = 0; i < firstWeekday; i += 1) {
     const day = daysInPrev - firstWeekday + i + 1;
     const dateKey = `${prevYear}-${String(prevMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    cells.push({ dateKey, day, inMonth: false, isToday: dateKey === todayKey });
+    cells.push(cell(dateKey, day, false));
   }
   for (let day = 1; day <= daysInMonth; day += 1) {
     const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    cells.push({ dateKey, day, inMonth: true, isToday: dateKey === todayKey });
+    cells.push(cell(dateKey, day, true));
   }
   let nextDay = 1;
   const nextMonth = month === 12 ? 1 : month + 1;
@@ -112,9 +120,18 @@ export function buildGatheringMonthGrid(year, month, now = new Date()) {
     const day = nextDay;
     nextDay += 1;
     const dateKey = `${nextYear}-${String(nextMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    cells.push({ dateKey, day, inMonth: false, isToday: dateKey === todayKey });
+    cells.push(cell(dateKey, day, false));
   }
   return cells;
+}
+
+/** True when a gathering should show under the past / ended bucket. */
+export function isGatheringPastEvent(gathering, now = new Date()) {
+  if (!gathering) return false;
+  if (gathering.status === 'completed' || gathering.status === 'cancelled') return true;
+  const starts = gathering.starts_at ? new Date(gathering.starts_at) : null;
+  if (starts && !Number.isNaN(starts.getTime()) && starts.getTime() < now.getTime()) return true;
+  return false;
 }
 
 export function groupGatheringsByHkDate(gatherings) {

@@ -18,7 +18,7 @@ const ATTENDANCE_LABEL = {
   withdrawn: '已撤回',
 };
 
-export default function GatheringCard({ gathering }) {
+export default function GatheringCard({ gathering, past = false }) {
   if (!gathering) return null;
   const approved = gathering.approved_count || 0;
   const max = gathering.max_participants || 0;
@@ -27,11 +27,16 @@ export default function GatheringCard({ gathering }) {
     ? Math.min(100, Math.round((approved / max) * 100))
     : 0;
   const seatsFull = max > 0 && remaining === 0;
+  const isPast = past || gathering.status === 'completed';
 
   return (
     <Link
       href={`/gatherings/${gathering.id}`}
-      className={`gathering-card${gathering.status === 'cancelled' ? ' gathering-card--cancelled' : ''}`}
+      className={[
+        'gathering-card',
+        gathering.status === 'cancelled' ? 'gathering-card--cancelled' : '',
+        isPast ? 'gathering-card--past' : '',
+      ].filter(Boolean).join(' ')}
     >
       <div className="gathering-card__glow" aria-hidden="true" />
       <div className="gathering-card__top">

@@ -146,7 +146,7 @@ export default function GatheringHostQueue({ gatheringId, knockQuestion, onChang
               title="舉報申請人"
               aria-label={`舉報 ${a.display_name || '申請人'}`}
             >
-              <UiFlagIcon size={15} />
+              <UiFlagIcon size={13} />
             </button>
           </div>
 
