@@ -51,6 +51,18 @@ const PAGE_META = {
   forgot_password: { page_name: 'Forgot Password', page_group: 'auth' },
   auth_confirm: { page_name: 'Email Confirm', page_group: 'auth' },
   auth_reset: { page_name: 'Reset Password', page_group: 'auth' },
+  wishes: { page_name: 'Wishes Wall', page_group: 'wishes' },
+  wishes_my: { page_name: 'My Wishes', page_group: 'wishes' },
+  wishes_new: { page_name: 'New Wish', page_group: 'wishes' },
+  wish_detail: { page_name: 'Wish Detail', page_group: 'wishes' },
+  gatherings: { page_name: 'Gatherings', page_group: 'gatherings' },
+  gatherings_my: { page_name: 'My Gatherings', page_group: 'gatherings' },
+  gatherings_new: { page_name: 'New Gathering', page_group: 'gatherings' },
+  gathering_detail: { page_name: 'Gathering Detail', page_group: 'gatherings' },
+  my_cat: { page_name: 'My Cat', page_group: 'my_cat' },
+  my_cat_guide: { page_name: 'My Cat Guide', page_group: 'my_cat' },
+  guides: { page_name: 'Guides', page_group: 'guides' },
+  guide_article: { page_name: 'Guide Article', page_group: 'guides' },
   dashboard: { page_name: 'Dashboard', page_group: 'admin' },
   admin: { page_name: 'Admin', page_group: 'admin' },
   other: { page_name: 'Other', page_group: 'other' },
@@ -67,6 +79,18 @@ const ROUTE_RULES = [
   { test: /^\/matches\/?$/, key: 'matches' },
   { test: /^\/moon-journey\/?$/, key: 'moon_journey' },
   { test: /^\/cat-families\/?$/, key: 'cat_families' },
+  { test: /^\/wishes\/new\/?$/, key: 'wishes_new' },
+  { test: /^\/wishes\/my\/?$/, key: 'wishes_my' },
+  { test: /^\/wishes\/[^/]+/, key: 'wish_detail' },
+  { test: /^\/wishes\/?$/, key: 'wishes' },
+  { test: /^\/gatherings\/new\/?$/, key: 'gatherings_new' },
+  { test: /^\/gatherings\/my\/?$/, key: 'gatherings_my' },
+  { test: /^\/gatherings\/[^/]+/, key: 'gathering_detail' },
+  { test: /^\/gatherings\/?$/, key: 'gatherings' },
+  { test: /^\/my-cat\/guide\/?$/, key: 'my_cat_guide' },
+  { test: /^\/my-cat\/?$/, key: 'my_cat' },
+  { test: /^\/guides\/[^/]+/, key: 'guide_article' },
+  { test: /^\/guides\/?$/, key: 'guides' },
   { test: /^\/premium\/?$/, key: 'premium' },
   { test: /^\/account\/?$/, key: 'account' },
   { test: /^\/exchange-photo\/?$/, key: 'exchange_photo' },
@@ -119,8 +143,27 @@ export function resolvePageContext(pathname, opts = {}) {
 /** Properties merged into every PostHog $pageview event. */
 export function pageviewEventProperties(pathname, opts = {}) {
   const ctx = resolvePageContext(pathname, opts);
+  let currentUrl;
+  if (typeof window !== 'undefined') {
+    try {
+      // Lazy require path: keep this file free of circular deps by inlining scrub
+      const u = new URL(window.location.href);
+      for (const key of [
+        'token_hash', 'token', 'code', 'access_token', 'refresh_token',
+        'provider_token', 'provider_refresh_token', 'confirmation_url',
+      ]) {
+        u.searchParams.delete(key);
+      }
+      if (u.hash && /access_token|refresh_token|token_hash|provider_token/i.test(u.hash)) {
+        u.hash = '';
+      }
+      currentUrl = u.origin + u.pathname + u.search + u.hash;
+    } catch {
+      currentUrl = window.location.origin + (ctx.path || '/');
+    }
+  }
   return {
-    $current_url: typeof window !== 'undefined' ? window.location.href : undefined,
+    $current_url: currentUrl,
     path: ctx.path,
     surface: ctx.surface,
     page_key: ctx.page_key,

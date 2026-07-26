@@ -1,0 +1,23 @@
+---
+description: New user-facing pages must be registered in PostHog page context (src + public)
+alwaysApply: true
+---
+
+# PostHog — register new pages
+
+When adding a **new user-facing route or static page**, also update PostHog page context so analytics do not fall through to `page_key: other`.
+
+## Required
+
+1. Add `PAGE_META` entry (`page_key` → `page_name`, `page_group`)
+2. Add a `ROUTE_RULES` match (more specific rules first); update `STATIC_PAGE_KEYS` for static HTML paths
+3. Keep **both** files in sync:
+   - `src/lib/posthog-page-context.js`
+   - `public/js/posthog-page-context.js`
+
+## Skip only when
+
+- Pure API / cron / internal dashboard-only endpoints with no user pageview
+- Redirect-only stubs that never render a page
+
+Full rule: `docs/ops/POSTHOG-PAGE-CONTEXT.md`

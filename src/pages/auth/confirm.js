@@ -10,7 +10,7 @@ import { getBrowserClient } from '../../lib/auth-context.js';
 import AppShell from '../../components/AppShell.js';
 import MoonLoading from '../../components/MoonLoading.js';
 import { UiWarningIcon } from '../../components/UiIcons.js';
-import { establishSessionFromAuthLink } from '../../lib/auth-email-link.js';
+import { establishSessionFromAuthLink, scrubAuthSecretsFromLocation } from '../../lib/auth-email-link.js';
 
 export default function AuthConfirmPage() {
   const router = useRouter();
@@ -29,6 +29,7 @@ export default function AuthConfirmPage() {
       }
 
       const result = await establishSessionFromAuthLink(client, router.query);
+      scrubAuthSecretsFromLocation();
       if (!result.ok) {
         setErrorMsg(result.message || '確認連結無效或已過期，請重新註冊。');
         setStatus('error');
@@ -59,7 +60,11 @@ export default function AuthConfirmPage() {
 
   return (
     <>
-      <Head><title>確認帳號 — Black Cat Under The Moon</title></Head>
+      <Head>
+        <title>確認帳號 — Black Cat Under The Moon</title>
+        <meta name="referrer" content="no-referrer" />
+        <meta name="robots" content="noindex, nofollow" />
+      </Head>
       <AppShell centered hideHeader>
         <div className="pixel-card pixel-card--auth">
           {status === 'loading' ? (

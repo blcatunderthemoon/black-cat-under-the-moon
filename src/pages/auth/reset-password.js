@@ -13,7 +13,11 @@ import AppShell from '../../components/AppShell.js';
 import MoonLoading from '../../components/MoonLoading.js';
 import { resolvePostAuthDestination } from '../../lib/post-auth-redirect.js';
 import { UiWarningIcon } from '../../components/UiIcons.js';
-import { establishSessionFromAuthLink, resolveAuthRedirectPath } from '../../lib/auth-email-link.js';
+import {
+  establishSessionFromAuthLink,
+  resolveAuthRedirectPath,
+  scrubAuthSecretsFromLocation,
+} from '../../lib/auth-email-link.js';
 
 function buildRedirectQuery(redirect) {
   if (!redirect || typeof redirect !== 'string') return '';
@@ -22,7 +26,7 @@ function buildRedirectQuery(redirect) {
 
 export default function ResetPasswordPage() {
   const router = useRouter();
-  const redirect = resolveAuthRedirectPath(router.query);
+  const [redirect, setRedirect] = useState('');
   const redirectQuery = buildRedirectQuery(redirect);
 
   const [status, setStatus] = useState('loading');
@@ -43,7 +47,11 @@ export default function ResetPasswordPage() {
         return;
       }
 
+      const nextRedirect = resolveAuthRedirectPath(router.query);
+      setRedirect(nextRedirect);
+
       const result = await establishSessionFromAuthLink(client, router.query);
+      scrubAuthSecretsFromLocation();
       if (!result.ok) {
         setErrorMsg(result.message || '連結無效或已過期，請重新申請重設密碼。');
         setStatus('error');
@@ -55,6 +63,13 @@ export default function ResetPasswordPage() {
         setErrorMsg('連結無效或已過期，請重新申請重設密碼。');
         setStatus('error');
         return;
+      }
+
+      const clean = nextRedirect
+        ? `/auth/reset-password?redirect=${encodeURIComponent(nextRedirect)}`
+        : '/auth/reset-password';
+      if (typeof window !== 'undefined') {
+        window.history.replaceState(window.history.state, '', clean);
       }
 
       setStatus('ready');
@@ -113,7 +128,11 @@ export default function ResetPasswordPage() {
 
   return (
     <>
-      <Head><title>重設密碼 — Black Cat Under The Moon</title></Head>
+      <Head>
+        <title>重設密碼 — Black Cat Under The Moon</title>
+        <meta name="referrer" content="no-referrer" />
+        <meta name="robots" content="noindex, nofollow" />
+      </Head>
       <AppShell centered hideHeader>
         <div className="pixel-card pixel-card--auth">
           {status === 'loading' && (
