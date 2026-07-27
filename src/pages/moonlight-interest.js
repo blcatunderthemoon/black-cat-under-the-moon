@@ -20,7 +20,6 @@ import {
   HeaderMailIcon,
   HeaderUserPlusIcon,
   UiHomeIcon,
-  UiTvIcon,
 } from '../components/UiIcons.js';
 
 const INTEREST_OPTIONS = [
@@ -44,21 +43,8 @@ const PRICE_OPTIONS = [
 
 const DATE_GROUPS = [
   {
-    label: '8 月',
-    dates: [
-      { value: '2026-08-15', label: '8/15（六）' },
-      { value: '2026-08-16', label: '8/16（日）' },
-      { value: '2026-08-22', label: '8/22（六）' },
-      { value: '2026-08-23', label: '8/23（日）' },
-      { value: '2026-08-29', label: '8/29（六）' },
-      { value: '2026-08-30', label: '8/30（日）' },
-    ],
-  },
-  {
     label: '9 月',
     dates: [
-      { value: '2026-09-05', label: '9/5（六）' },
-      { value: '2026-09-06', label: '9/6（日）' },
       { value: '2026-09-12', label: '9/12（六）' },
       { value: '2026-09-13', label: '9/13（日）' },
       { value: '2026-09-19', label: '9/19（六）' },
@@ -103,18 +89,6 @@ const SCHEDULE = [
     ],
   },
   {
-    id: 'ppt',
-    title: 'PowerPoint Pitch · 45 分鐘',
-    summary: '每人 3 分鐘，最多 5 頁',
-    expand: [
-      {
-        icon: UiTvIcon,
-        title: '分享規則',
-        body: '每人 3 分鐘、最多 5 頁，主題自由（我是誰、旅行、貓、Meme…）。',
-      },
-    ],
-  },
-  {
     id: 'table',
     title: 'Table Chat · 45 分鐘',
     summary: '4 人一組，Topic Card，3 輪換桌',
@@ -149,7 +123,6 @@ const FEATURES = [
   { icon: HeaderUserPlusIcon, label: '12 人小型聚會' },
   { icon: UiHomeIcon, label: 'Party Room' },
   { icon: ForumGamepadIcon, label: '破冰遊戲（尋貓 Bingo）' },
-  { icon: UiTvIcon, label: '3 分鐘 PowerPoint 分享' },
   { icon: HeaderChatIcon, label: 'Topic Card 小組聊天' },
   { icon: HeaderMailIcon, label: 'Moonlight Mail（活動後配對通知）' },
 ];
@@ -482,7 +455,7 @@ export default function MoonlightInterestPage() {
     <>
       <SeoHead
         title="Moonlight Gathering 意見調查"
-        description="Moonlight Gathering #001 興趣調查 — 12 人限定小型聚會，8–9 月試辦。"
+        description="Moonlight Gathering #001 興趣調查 — 12 人限定小型聚會，9 月試辦。"
         path="/moonlight-interest"
         noindex
       />
@@ -506,7 +479,7 @@ export default function MoonlightInterestPage() {
               Black Cat 一直都希望，唔止係一個配對網站，而係一個可以真正認識新朋友、建立連結嘅地方。
             </p>
             <p className="mi-hero__lead">
-              所以我哋正計劃於 <strong>8–9 月</strong> 試辦第一場 Moonlight Gathering。
+              所以我哋正計劃於 <strong>9 月</strong> 試辦第一場 Moonlight Gathering。
             </p>
             <p className="mi-hero__lead">
               今次會係一場 <strong>12 人限定</strong> 嘅小型聚會，希望透過遊戲、故事分享同輕鬆聊天，令大家自然認識彼此，而唔係傳統 Speed Dating。

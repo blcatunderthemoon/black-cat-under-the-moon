@@ -43,7 +43,7 @@ export function buildMoonlightInterestEmailHtml(opts = {}) {
   </div>
 
   <div style="font-size:14px;line-height:1.9;color:#e8e0d0;margin-bottom:18px;">
-    我哋正計劃於 <strong style="color:#ffe066;">8–9 月</strong> 試辦第一場 Moonlight Gathering：
+    我哋正計劃於 <strong style="color:#ffe066;">9 月</strong> 試辦第一場 Moonlight Gathering：
     透過遊戲、故事分享同輕鬆聊天自然認識彼此——唔係傳統 Speed Dating。
   </div>
 
@@ -68,7 +68,7 @@ export function buildMoonlightInterestEmailHtml(opts = {}) {
       </tr>
       <tr>
         <td style="padding:4px 0;color:#8880a8;vertical-align:top;">環節</td>
-        <td style="padding:4px 0;">尋貓 Bingo · PPT 分享 · Topic Card · Moonlight Mail</td>
+        <td style="padding:4px 0;">尋貓 Bingo · Topic Card · Moonlight Mail</td>
       </tr>
     </table>
   </div>
@@ -114,8 +114,8 @@ export function buildMoonlightInterestEmailText(opts = {}) {
     greeting,
     'Black Cat 一直都希望，唔止係一個配對網站，而係一個可以真正認識新朋友、建立連結嘅地方。',
     '',
-    '我哋正計劃於 8–9 月試辦第一場 Moonlight Gathering（12 人限定）：',
-    '尋貓 Bingo、PPT 分享、Topic Card 小組聊天、Moonlight Mail。',
+    '我哋正計劃於 9 月試辦第一場 Moonlight Gathering（12 人限定）：',
+    '尋貓 Bingo、Topic Card 小組聊天、Moonlight Mail。',
     '對象 Label：Pure｜年齡：23–34 歲｜時長：約 3.5–4 小時',
     '',
     '想先聽你嘅意見（有興趣／日子／收費）。填寫唔等於報名。',

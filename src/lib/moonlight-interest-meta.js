@@ -21,6 +21,7 @@ export const PRICE_LABELS = {
   '350-400': '$350–400',
 };
 
+/** Labels for active + legacy survey dates (legacy kept for dashboard display). */
 export const DATE_LABELS = {
   '2026-08-15': '8/15（六）',
   '2026-08-16': '8/16（日）',
@@ -38,8 +39,15 @@ export const DATE_LABELS = {
   '2026-09-27': '9/27（日）',
 };
 
-/** Ordered date keys for charts (Aug → Sep weekends). */
-export const DATE_ORDER = Object.keys(DATE_LABELS);
+/** Active survey dates shown on charts (9/12 onwards). */
+export const DATE_ORDER = [
+  '2026-09-12',
+  '2026-09-13',
+  '2026-09-19',
+  '2026-09-20',
+  '2026-09-26',
+  '2026-09-27',
+];
 
 export const TIME_SLOT_ORDER = Object.keys(TIME_SLOT_LABELS);
 
