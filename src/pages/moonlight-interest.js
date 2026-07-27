@@ -58,7 +58,7 @@ const DATE_GROUPS = [
 const EVENT_META = [
   { icon: HeaderUserPlusIcon, label: '對象 Label', value: 'Pure' },
   { icon: ForumPawIcon, label: '年齡範圍', value: '23–34 歲' },
-  { icon: ForumClockIcon, label: '活動時間', value: '3.5 – 4 小時' },
+  { icon: ForumClockIcon, label: '活動時間', value: '3–3.5h' },
 ];
 
 const SCHEDULE = [
@@ -108,12 +108,12 @@ const SCHEDULE = [
   {
     id: 'mail',
     title: 'Moonlight Mail · 15–30 分鐘',
-    summary: '活動後配對／聯絡機制',
+    summary: '活動後聯絡機制',
     expand: [
       {
         icon: HeaderMailIcon,
         title: 'Moonlight Mail',
-        body: '活動尾段以聯絡卡／配對機制收束，方便想繼續認識嘅人接上線。',
+        body: '活動尾段以聯絡卡機制收束，方便想繼續認識嘅人接上線。',
       },
     ],
   },
@@ -124,7 +124,7 @@ const FEATURES = [
   { icon: UiHomeIcon, label: 'Party Room' },
   { icon: ForumGamepadIcon, label: '破冰遊戲（尋貓 Bingo）' },
   { icon: HeaderChatIcon, label: 'Topic Card 小組聊天' },
-  { icon: HeaderMailIcon, label: 'Moonlight Mail（活動後配對通知）' },
+  { icon: HeaderMailIcon, label: 'Moonlight Mail（活動後聯絡通知）' },
 ];
 
 const IDENTITY_FILTER_OPTIONS = ['Pure', 'TB', 'TBG', 'Bi', 'No Label', '仲探索緊'];

@@ -60,7 +60,7 @@ export function buildMoonlightInterestEmailHtml(opts = {}) {
       </tr>
       <tr>
         <td style="padding:4px 0;color:#8880a8;vertical-align:top;">活動時間</td>
-        <td style="padding:4px 0;font-weight:700;">約 3.5–4 小時</td>
+        <td style="padding:4px 0;font-weight:700;">約 3–3.5h</td>
       </tr>
       <tr>
         <td style="padding:4px 0;color:#8880a8;vertical-align:top;">人數</td>
@@ -116,7 +116,7 @@ export function buildMoonlightInterestEmailText(opts = {}) {
     '',
     '我哋正計劃於 9 月試辦第一場 Moonlight Gathering（12 人限定）：',
     '尋貓 Bingo、Topic Card 小組聊天、Moonlight Mail。',
-    '對象 Label：Pure｜年齡：23–34 歲｜時長：約 3.5–4 小時',
+    '對象 Label：Pure｜年齡：23–34 歲｜時長：約 3–3.5h',
     '',
     '想先聽你嘅意見（有興趣／日子／收費）。填寫唔等於報名。',
     '',
