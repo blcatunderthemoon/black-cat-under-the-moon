@@ -42,11 +42,15 @@ src/pages/api/dashboard/**
 !src/pages/api/dashboard/email-automation.js
 !src/pages/api/dashboard/create-gmail-drafts.js
 !src/pages/api/dashboard/send-emails.js
+!src/pages/api/dashboard/moonlight-interest.js
+!src/pages/api/dashboard/moonlight-interest-draft.js
 src/components/dashboard/
 !src/components/dashboard/Layout.js
 !src/components/dashboard/Sidebar.js
 !src/components/dashboard/Header.js
 !src/components/dashboard/ForumDashboardNav.js
+!src/components/dashboard/ChartCard.js
+!src/components/dashboard/KPICard.js
 src/styles/dashboard/*
 !src/styles/dashboard/Layout.module.css
 !src/styles/dashboard/Sidebar.module.css
@@ -54,6 +58,9 @@ src/styles/dashboard/*
 !src/styles/dashboard/ForumDashboardNav.module.css
 !src/styles/dashboard/globals.css
 !src/styles/dashboard/EmailAutomation.module.css
+!src/styles/dashboard/MoonlightInterest.module.css
+!src/styles/dashboard/ChartCard.module.css
+!src/styles/dashboard/KPICard.module.css
 src/lib/seed-data.js
 
 # Website forum admin (production — not under dashboard ignore rules above)
