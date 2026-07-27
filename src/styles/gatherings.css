@@ -2649,17 +2649,6 @@
   margin-bottom: 0.75rem;
 }
 
-.gathering-cal__panel-kicker {
-  margin: 0;
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
-  color: rgba(255, 224, 102, 0.75);
-}
-
-.gathering-cal__panel--past .gathering-cal__panel-kicker {
-  color: rgba(170, 178, 210, 0.75);
-}
-
 .gathering-cal__sections {
   display: flex;
   flex-direction: column;

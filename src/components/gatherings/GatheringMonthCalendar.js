@@ -27,21 +27,6 @@ function formatSelectedLabel(dateKey) {
   return `${Number(m[1])}年${Number(m[2])}月${Number(m[3])}日`;
 }
 
-function panelKicker({ selectedIsPastDay, upcoming, past, cancelled }) {
-  const hasU = upcoming.length > 0;
-  const hasP = past.length > 0;
-  const hasC = cancelled.length > 0;
-  if (!hasU && !hasP && !hasC) return '';
-  if (hasC && !hasU && !hasP) return '已取消';
-  if (hasP && !hasU && !hasC) return selectedIsPastDay ? '過去聚會' : '已結束';
-  if (hasU && !hasP && !hasC) return '進行中';
-  const bits = [];
-  if (hasU) bits.push('進行中');
-  if (hasP) bits.push('已結束');
-  if (hasC) bits.push('已取消');
-  return bits.join(' · ');
-}
-
 function DayEventList({ items, past = false }) {
   if (!items.length) return null;
   return (
@@ -80,9 +65,6 @@ export default function GatheringMonthCalendar({
     else upcoming.push(g);
   }
   const selectedIsPastDay = Boolean(selectedDate && selectedDate < todayKey);
-  const kicker = selectedDate && selectedList.length > 0
-    ? panelKicker({ selectedIsPastDay, upcoming, past, cancelled })
-    : '';
 
   function go(delta) {
     const next = shiftGatheringYm(year, month, delta);
@@ -186,9 +168,6 @@ export default function GatheringMonthCalendar({
           <h3 className="gathering-cal__panel-title">
             {selectedDate ? formatSelectedLabel(selectedDate) : '揀一日睇聚會'}
           </h3>
-          {kicker && (
-            <p className="gathering-cal__panel-kicker">{kicker}</p>
-          )}
         </div>
 
         {loading ? (
