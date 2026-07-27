@@ -27,6 +27,21 @@ function formatSelectedLabel(dateKey) {
   return `${Number(m[1])}年${Number(m[2])}月${Number(m[3])}日`;
 }
 
+function panelKicker({ selectedIsPastDay, upcoming, past, cancelled }) {
+  const hasU = upcoming.length > 0;
+  const hasP = past.length > 0;
+  const hasC = cancelled.length > 0;
+  if (!hasU && !hasP && !hasC) return '';
+  if (hasC && !hasU && !hasP) return '已取消';
+  if (hasP && !hasU && !hasC) return selectedIsPastDay ? '過去聚會' : '已結束';
+  if (hasU && !hasP && !hasC) return '進行中';
+  const bits = [];
+  if (hasU) bits.push('進行中');
+  if (hasP) bits.push('已結束');
+  if (hasC) bits.push('已取消');
+  return bits.join(' · ');
+}
+
 function DayEventList({ items, past = false }) {
   if (!items.length) return null;
   return (
@@ -58,11 +73,16 @@ export default function GatheringMonthCalendar({
   const selectedList = selectedDate ? (byDate.get(selectedDate) || []) : [];
   const upcoming = [];
   const past = [];
+  const cancelled = [];
   for (const g of selectedList) {
-    if (isGatheringPastEvent(g)) past.push(g);
+    if (g.status === 'cancelled') cancelled.push(g);
+    else if (isGatheringPastEvent(g)) past.push(g);
     else upcoming.push(g);
   }
   const selectedIsPastDay = Boolean(selectedDate && selectedDate < todayKey);
+  const kicker = selectedDate && selectedList.length > 0
+    ? panelKicker({ selectedIsPastDay, upcoming, past, cancelled })
+    : '';
 
   function go(delta) {
     const next = shiftGatheringYm(year, month, delta);
@@ -166,16 +186,8 @@ export default function GatheringMonthCalendar({
           <h3 className="gathering-cal__panel-title">
             {selectedDate ? formatSelectedLabel(selectedDate) : '揀一日睇聚會'}
           </h3>
-          {selectedDate && selectedList.length > 0 && (
-            <p className="gathering-cal__panel-kicker">
-              {selectedIsPastDay
-                ? '過去聚會'
-                : upcoming.length && past.length
-                  ? '進行中 · 已結束'
-                  : past.length && !upcoming.length
-                    ? '已結束'
-                    : '進行中'}
-            </p>
+          {kicker && (
+            <p className="gathering-cal__panel-kicker">{kicker}</p>
           )}
         </div>
 
@@ -194,7 +206,7 @@ export default function GatheringMonthCalendar({
           <div className="gathering-cal__sections">
             {upcoming.length > 0 && (
               <section className="gathering-cal__section" aria-label="進行中">
-                {past.length > 0 && (
+                {(past.length > 0 || cancelled.length > 0) && (
                   <h4 className="gathering-cal__section-title gathering-cal__section-title--live">
                     進行中
                   </h4>
@@ -204,12 +216,22 @@ export default function GatheringMonthCalendar({
             )}
             {past.length > 0 && (
               <section className="gathering-cal__section" aria-label="已結束的聚會">
-                {(upcoming.length > 0 || !selectedIsPastDay) && (
+                {(upcoming.length > 0 || cancelled.length > 0 || !selectedIsPastDay) && (
                   <h4 className="gathering-cal__section-title gathering-cal__section-title--past">
                     已結束
                   </h4>
                 )}
                 <DayEventList items={past} past />
+              </section>
+            )}
+            {cancelled.length > 0 && (
+              <section className="gathering-cal__section" aria-label="已取消的聚會">
+                {(upcoming.length > 0 || past.length > 0) && (
+                  <h4 className="gathering-cal__section-title gathering-cal__section-title--cancelled">
+                    已取消
+                  </h4>
+                )}
+                <DayEventList items={cancelled} />
               </section>
             )}
           </div>

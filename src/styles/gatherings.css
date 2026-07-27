@@ -2681,6 +2681,10 @@
   color: rgba(170, 178, 210, 0.78);
 }
 
+.gathering-cal__section-title--cancelled {
+  color: rgba(251, 113, 133, 0.88);
+}
+
 .gatherings-list--past .gathering-card,
 .gathering-card--past {
   opacity: 0.78;

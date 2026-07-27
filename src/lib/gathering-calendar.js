@@ -125,10 +125,11 @@ export function buildGatheringMonthGrid(year, month, now = new Date()) {
   return cells;
 }
 
-/** True when a gathering should show under the past / ended bucket (after ends_at). */
+/** True when a gathering finished by time / completed (not cancelled). */
 export function isGatheringPastEvent(gathering, now = new Date()) {
   if (!gathering) return false;
-  if (gathering.status === 'completed' || gathering.status === 'cancelled') return true;
+  if (gathering.status === 'cancelled') return false;
+  if (gathering.status === 'completed') return true;
   const startMs = gathering.starts_at ? new Date(gathering.starts_at).getTime() : NaN;
   let endMs = gathering.ends_at ? new Date(gathering.ends_at).getTime() : NaN;
   if (Number.isNaN(endMs) && !Number.isNaN(startMs)) {
