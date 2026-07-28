@@ -240,7 +240,12 @@ export default function MoonlightInterest001Page() {
               <button
                 type="button"
                 className="mi-poster__link"
-                onClick={() => setPosterOpen(true)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setPosterOpen(true);
+                }}
+                onContextMenu={(e) => e.preventDefault()}
                 aria-label="放大睇活動海報"
               >
                 <img
@@ -251,6 +256,7 @@ export default function MoonlightInterest001Page() {
                   height={1697}
                   decoding="async"
                   fetchPriority="high"
+                  draggable={false}
                 />
               </button>
               <figcaption className="mi-poster__caption">活動海報 · 撳圖可睇大圖</figcaption>
@@ -266,6 +272,7 @@ export default function MoonlightInterest001Page() {
                 <div
                   className="mi-poster-lightbox__panel"
                   onClick={(e) => e.stopPropagation()}
+                  onContextMenu={(e) => e.preventDefault()}
                 >
                   <button
                     type="button"
@@ -282,6 +289,7 @@ export default function MoonlightInterest001Page() {
                     width={1200}
                     height={1697}
                     decoding="async"
+                    draggable={false}
                   />
                 </div>
               </div>

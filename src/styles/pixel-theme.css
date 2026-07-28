@@ -27765,6 +27765,10 @@ a.moon-journey-dropdown-card__checkin--done {
   width: 100%;
   height: auto;
   vertical-align: middle;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
 }
 
 .mi-poster__caption {
@@ -27830,6 +27834,10 @@ a.moon-journey-dropdown-card__checkin--done {
   border: 1px solid rgba(124, 92, 252, 0.4);
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
   background: #0b0d22;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
 }
 
 @media (max-width: 520px) {
