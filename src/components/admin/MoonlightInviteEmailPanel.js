@@ -280,6 +280,10 @@ export default function MoonlightInviteEmailPanel({ variant = 'card' }) {
     setSelectedIds(visibleCandidates.map((c) => c.id));
   }
 
+  function selectNextBatch() {
+    setSelectedIds(visibleCandidates.slice(0, SEND_CHUNK).map((c) => c.id));
+  }
+
   function clearCandidateSelection() {
     setSelectedIds([]);
   }
@@ -367,6 +371,9 @@ export default function MoonlightInviteEmailPanel({ variant = 'card' }) {
               {sentEmails.size > 0 ? ` · 已寄 ${sentEmails.size}` : ''}
             </span>
             <div className="mi-admin-candidates__actions">
+              <button type="button" className="mi-link-btn" onClick={selectNextBatch}>
+                選 {SEND_CHUNK} 封
+              </button>
               <button type="button" className="mi-link-btn" onClick={selectAllCandidates}>
                 全選
               </button>
