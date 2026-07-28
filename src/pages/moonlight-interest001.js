@@ -1,6 +1,7 @@
 /**
- * /moonlight-interest — Moonlight Gathering #001 interest survey (email outreach).
+ * /moonlight-interest001 — Moonlight Gathering #001 participation form (email outreach).
  * Public (no login required). No site nav / footer entry; noindex.
+ * Fixed session: 2026-09-19 (Sat) 14:00–17:00 HKT.
  */
 
 import { useEffect, useState } from 'react';
@@ -22,18 +23,9 @@ import {
   UiHomeIcon,
 } from '../components/UiIcons.js';
 
-const INTEREST_OPTIONS = [
-  { value: 'interested', label: '有興趣，希望收到優先通知' },
-  { value: 'unsure', label: '暫時未能確定' },
-  { value: 'skip', label: '今次唔參加' },
-];
-
-const TIME_SLOT_OPTIONS = [
-  { value: 'sat_afternoon', label: '星期六下午' },
-  { value: 'sat_eve', label: '星期六晚上' },
-  { value: 'sun_afternoon', label: '星期日下午' },
-  { value: 'sun_eve', label: '星期日晚上' },
-];
+/** Fixed event — stored with each signup for dashboard compatibility. */
+const EVENT_DATE = '2026-09-19';
+const EVENT_TIME_SLOT = 'sat_afternoon';
 
 const PRICE_OPTIONS = [
   { value: '250-300', label: '$250–300' },
@@ -41,24 +33,12 @@ const PRICE_OPTIONS = [
   { value: '350-400', label: '$350–400' },
 ];
 
-const DATE_GROUPS = [
-  {
-    label: '9 月',
-    dates: [
-      { value: '2026-09-12', label: '9/12（六）' },
-      { value: '2026-09-13', label: '9/13（日）' },
-      { value: '2026-09-19', label: '9/19（六）' },
-      { value: '2026-09-20', label: '9/20（日）' },
-      { value: '2026-09-26', label: '9/26（六）' },
-      { value: '2026-09-27', label: '9/27（日）' },
-    ],
-  },
-];
-
 const EVENT_META = [
+  { icon: HeaderCalendarIcon, label: '日期', value: '2026年9月19日（六）' },
+  { icon: ForumClockIcon, label: '時間', value: '下午 2:00–5:00' },
   { icon: HeaderUserPlusIcon, label: '對象 Label', value: 'Pure' },
   { icon: ForumPawIcon, label: '年齡範圍', value: '23–34 歲' },
-  { icon: ForumClockIcon, label: '活動時間', value: '3–3.5h' },
+  { icon: UiHomeIcon, label: '形式', value: '12 人限定 · Party Room' },
 ];
 
 const SCHEDULE = [
@@ -130,7 +110,7 @@ const FEATURES = [
 const IDENTITY_FILTER_OPTIONS = ['Pure', 'TB', 'TBG', 'Bi', 'No Label', '仲探索緊'];
 const DRAFT_CHUNK = 20;
 const SEND_CHUNK = 15;
-const SENT_EMAILS_STORAGE_KEY = 'bcutm:moonlight-interest:sent-emails';
+const SENT_EMAILS_STORAGE_KEY = 'bcutm:moonlight-interest001:sent-emails';
 
 function loadSentEmails() {
   if (typeof window === 'undefined') return new Set();
@@ -156,12 +136,9 @@ function toggleInList(list, value) {
   return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
 }
 
-export default function MoonlightInterestPage() {
+export default function MoonlightInterest001Page() {
   const { session, profile, displayName: authDisplayName, loading: authLoading } = useAuth();
   const isAdmin = canAdminForum(profile?.profile?.forum_role);
-  const [interest, setInterest] = useState('');
-  const [timeSlots, setTimeSlots] = useState([]);
-  const [dates, setDates] = useState([]);
   const [priceRange, setPriceRange] = useState('');
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -183,12 +160,10 @@ export default function MoonlightInterestPage() {
   const [draftMsg, setDraftMsg] = useState('');
   const [draftErr, setDraftErr] = useState('');
 
-  const showFollowUp = interest === 'interested';
   const visibleCandidates = (candidates || []).filter(
     (c) => !sentEmails.has(String(c.email || '').toLowerCase()),
   );
   const selectedCount = selectedIds.length;
-  const datesFilled = timeSlots.length > 0 && dates.length > 0;
   const priceFilled = Boolean(priceRange);
   const emailFilled = Boolean(email.trim());
   const nameFilled = Boolean(displayName.trim());
@@ -230,32 +205,17 @@ export default function MoonlightInterestPage() {
     e.preventDefault();
     setError('');
 
-    if (!interest) {
-      setError('請選擇是否有興趣參加。');
+    if (!priceRange) {
+      setError('請選擇可以接受嘅收費範圍。');
       return;
     }
-
-    if (showFollowUp) {
-      if (!timeSlots.length) {
-        setError('請至少揀一個可參加時段。');
-        return;
-      }
-      if (!dates.length) {
-        setError('請至少揀一個可參加日期。');
-        return;
-      }
-      if (!priceRange) {
-        setError('請選擇可以接受嘅收費範圍。');
-        return;
-      }
-      if (!email.trim()) {
-        setError('請留下電郵方便優先通知。');
-        return;
-      }
-      if (!displayName.trim()) {
-        setError('請填寫稱呼。');
-        return;
-      }
+    if (!email.trim()) {
+      setError('請留下電郵方便聯絡。');
+      return;
+    }
+    if (!displayName.trim()) {
+      setError('請填寫稱呼。');
+      return;
     }
 
     setSubmitting(true);
@@ -268,18 +228,18 @@ export default function MoonlightInterestPage() {
         method: 'POST',
         headers,
         body: JSON.stringify({
-          interest,
-          time_slots: showFollowUp ? timeSlots : [],
-          dates: showFollowUp ? dates : [],
-          price_range: showFollowUp ? priceRange || null : null,
-          email: email.trim() || null,
-          display_name: displayName.trim() || null,
-          message: showFollowUp ? message.trim() : null,
+          interest: 'interested',
+          time_slots: [EVENT_TIME_SLOT],
+          dates: [EVENT_DATE],
+          price_range: priceRange,
+          email: email.trim(),
+          display_name: displayName.trim(),
+          message: message.trim() || null,
         }),
       });
       const data = await resp.json().catch(() => ({}));
       if (!resp.ok) {
-        setError(data.error || '無法儲存回覆，請稍後再試。');
+        setError(data.error || '無法提交參加表，請稍後再試。');
         return;
       }
       setDone(true);
@@ -454,9 +414,9 @@ export default function MoonlightInterestPage() {
   return (
     <>
       <SeoHead
-        title="Moonlight Gathering 意見調查"
-        description="Moonlight Gathering #001 興趣調查 — 12 人限定小型聚會，9 月試辦。"
-        path="/moonlight-interest"
+        title="Moonlight Gathering 參加表"
+        description="Moonlight Gathering #001 參加表 — 2026年9月19日（六）下午 2:00–5:00，12 人限定小型聚會。"
+        path="/moonlight-interest001"
         noindex
       />
       <AppShell
@@ -465,13 +425,13 @@ export default function MoonlightInterestPage() {
         backHref="/index.html"
         maxWidth="680px"
         pageClassName="app-page--moonlight-interest"
-        nav={session ? <AppHeaderAuth redirectPath="/moonlight-interest" /> : null}
+        nav={session ? <AppHeaderAuth redirectPath="/moonlight-interest001" /> : null}
       >
         <article className="mi-page">
           <header className="mi-hero">
             <p className="mi-hero__kicker">
               <ForumMoonIcon size={14} />
-              <span>Interest Survey</span>
+              <span>Participation Form</span>
             </p>
             <h1 className="mi-hero__title">Moonlight Gathering #001</h1>
             <p className="mi-hero__guest-note">唔使登入都可以填寫；約一分鐘。</p>
@@ -479,10 +439,13 @@ export default function MoonlightInterestPage() {
               Black Cat 一直都希望，唔止係一個配對網站，而係一個可以真正認識新朋友、建立連結嘅地方。
             </p>
             <p className="mi-hero__lead">
-              所以我哋正計劃於 <strong>9 月</strong> 試辦第一場 Moonlight Gathering。
+              第一場 Moonlight Gathering 定喺 <strong>2026年9月19日（六）下午 2:00–5:00</strong>。
             </p>
             <p className="mi-hero__lead">
               今次會係一場 <strong>12 人限定</strong> 嘅小型聚會，希望透過遊戲、故事分享同輕鬆聊天，令大家自然認識彼此，而唔係傳統 Speed Dating。
+            </p>
+            <p className="mi-hero__lead">
+              <strong>想出席就填下面嘅參加表</strong>，我哋會用電郵同你確認。
             </p>
           </header>
 
@@ -588,37 +551,39 @@ export default function MoonlightInterestPage() {
             <section className="mi-card mi-card--success" aria-live="polite">
               <h2 className="mi-card__title">
                 <HeaderMailIcon size={15} />
-                多謝你嘅回覆
+                多謝填寫參加表
               </h2>
               <p className="mi-success-copy">
-                {interest === 'interested'
-                  ? '已收到你嘅興趣同檔期偏好。若有適合場次，會優先通知你。'
-                  : interest === 'unsure'
-                    ? '已收到你嘅回覆。稍後若有更多詳情，或者會再問一次。'
-                    : '已收到你嘅回覆，多謝抽時間填寫。'}
+                已收到你嘅參加資料。我哋會用電郵同你確認名額同之後安排。
               </p>
             </section>
           ) : (
             <form className="mi-card mi-form" onSubmit={handleSubmit} noValidate>
               <h2 className="mi-card__title">
                 <HeaderCalendarIcon size={15} />
-                妳會有興趣參加嗎？
+                參加表
               </h2>
+              <p className="mi-hint">
+                場次：<strong>9月19日（六）下午 2:00–5:00</strong>。想出席就填表，約一分鐘。
+              </p>
 
               <fieldset className="mi-fieldset">
-                <legend className="mi-sr-only">興趣程度</legend>
-                <div className="mi-choice-list" role="radiogroup" aria-label="妳會有興趣參加嗎？">
-                  {INTEREST_OPTIONS.map((opt) => (
+                <legend className="mi-legend">
+                  可以接受收費範圍
+                  {!priceFilled && <span className="mi-field__req">必填</span>}
+                </legend>
+                <div className="mi-choice-list" role="radiogroup" aria-label="可以接受收費範圍">
+                  {PRICE_OPTIONS.map((opt) => (
                     <label
                       key={opt.value}
-                      className={`mi-choice${interest === opt.value ? ' is-selected' : ''}`}
+                      className={`mi-choice${priceRange === opt.value ? ' is-selected' : ''}`}
                     >
                       <input
                         type="radio"
-                        name="interest"
+                        name="price_range"
                         value={opt.value}
-                        checked={interest === opt.value}
-                        onChange={() => setInterest(opt.value)}
+                        checked={priceRange === opt.value}
+                        onChange={() => setPriceRange(opt.value)}
                       />
                       <span>{opt.label}</span>
                     </label>
@@ -626,155 +591,65 @@ export default function MoonlightInterestPage() {
                 </div>
               </fieldset>
 
-              {showFollowUp && (
-                <div className="mi-followup">
-                  <fieldset className="mi-fieldset">
-                    <legend className="mi-legend">
-                      可以參加日期（可多選）
-                      {!datesFilled && <span className="mi-field__req">必填</span>}
-                    </legend>
-                    <p className="mi-hint">請揀慣常時段同具體日子，兩邊都要最少揀一個。</p>
-                    <div className="mi-chip-grid">
-                      {TIME_SLOT_OPTIONS.map((opt) => (
-                        <label
-                          key={opt.value}
-                          className={`mi-chip${timeSlots.includes(opt.value) ? ' is-selected' : ''}`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={timeSlots.includes(opt.value)}
-                            onChange={() => setTimeSlots((prev) => toggleInList(prev, opt.value))}
-                          />
-                          <span>{opt.label}</span>
-                        </label>
-                      ))}
-                    </div>
-
-                    {DATE_GROUPS.map((group) => (
-                      <div key={group.label} className="mi-date-group">
-                        <p className="mi-date-group__label">{group.label}</p>
-                        <div className="mi-chip-grid">
-                          {group.dates.map((opt) => (
-                            <label
-                              key={opt.value}
-                              className={`mi-chip${dates.includes(opt.value) ? ' is-selected' : ''}`}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={dates.includes(opt.value)}
-                                onChange={() => setDates((prev) => toggleInList(prev, opt.value))}
-                              />
-                              <span>{opt.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </fieldset>
-
-                  <fieldset className="mi-fieldset">
-                    <legend className="mi-legend">
-                      可以接受收費範圍
-                      {!priceFilled && <span className="mi-field__req">必填</span>}
-                    </legend>
-                    <div className="mi-choice-list" role="radiogroup" aria-label="可以接受收費範圍">
-                      {PRICE_OPTIONS.map((opt) => (
-                        <label
-                          key={opt.value}
-                          className={`mi-choice${priceRange === opt.value ? ' is-selected' : ''}`}
-                        >
-                          <input
-                            type="radio"
-                            name="price_range"
-                            value={opt.value}
-                            checked={priceRange === opt.value}
-                            onChange={() => setPriceRange(opt.value)}
-                          />
-                          <span>{opt.label}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </fieldset>
-
-                  <div className="mi-fields">
-                    <label className="mi-field">
-                      <span className="mi-field__label">
-                        電郵 {!emailFilled && <span className="mi-field__req">必填</span>}
-                      </span>
-                      <input
-                        className="pixel-input"
-                        type="email"
-                        autoComplete="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="用作優先通知"
-                        required
-                      />
-                    </label>
-                    <label className="mi-field">
-                      <span className="mi-field__label">
-                        稱呼 {!nameFilled && <span className="mi-field__req">必填</span>}
-                      </span>
-                      <input
-                        className="pixel-input"
-                        type="text"
-                        autoComplete="nickname"
-                        maxLength={40}
-                        value={displayName}
-                        onChange={(e) => setDisplayName(e.target.value)}
-                        placeholder="方便我哋稱呼你"
-                        required
-                      />
-                    </label>
-                    <label className="mi-field">
-                      <span className="mi-field__label">
-                        留言 <span className="mi-field__opt">選填</span>
-                      </span>
-                      <textarea
-                        className="pixel-textarea"
-                        rows={4}
-                        maxLength={500}
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        placeholder="例如：想認識多啲朋友、對邊個環節最有興趣…"
-                      />
-                    </label>
-                  </div>
-                </div>
-              )}
-
-              {!showFollowUp && interest && (
-                <div className="mi-fields mi-fields--compact">
-                  <label className="mi-field">
-                    <span className="mi-field__label">
-                      電郵 <span className="mi-field__opt">選填</span>
-                    </span>
-                    <input
-                      className="pixel-input"
-                      type="email"
-                      autoComplete="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="若希望收到後續消息可留下"
-                    />
-                  </label>
-                </div>
-              )}
+              <div className="mi-fields">
+                <label className="mi-field">
+                  <span className="mi-field__label">
+                    電郵 {!emailFilled && <span className="mi-field__req">必填</span>}
+                  </span>
+                  <input
+                    className="pixel-input"
+                    type="email"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="用作確認名額同聯絡"
+                    required
+                  />
+                </label>
+                <label className="mi-field">
+                  <span className="mi-field__label">
+                    稱呼 {!nameFilled && <span className="mi-field__req">必填</span>}
+                  </span>
+                  <input
+                    className="pixel-input"
+                    type="text"
+                    autoComplete="nickname"
+                    maxLength={40}
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="方便我哋稱呼你"
+                    required
+                  />
+                </label>
+                <label className="mi-field">
+                  <span className="mi-field__label">
+                    留言 <span className="mi-field__opt">選填</span>
+                  </span>
+                  <textarea
+                    className="pixel-textarea"
+                    rows={4}
+                    maxLength={500}
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="例如：想認識多啲朋友、對邊個環節最有興趣…"
+                  />
+                </label>
+              </div>
 
               {error && <p className="pixel-error mi-error">{error}</p>}
 
               <button
                 type="submit"
                 className="pixel-btn pixel-btn--primary mi-submit"
-                disabled={submitting || !interest}
+                disabled={submitting}
               >
-                <span className="pixel-btn__zh">{submitting ? '傳送中…' : '提交回覆'}</span>
+                <span className="pixel-btn__zh">{submitting ? '提交中…' : '提交參加表'}</span>
               </button>
             </form>
           )}
 
           <p className="mi-footnote">
-            呢頁只用作收集意見，唔等於報名成功。正式場次同收費會另行公布。
+            提交參加表後，我哋會用電郵同你確認。名額有限（12 人），以確認為準。
           </p>
 
           {isAdmin && (

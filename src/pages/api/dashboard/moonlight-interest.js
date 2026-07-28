@@ -1,9 +1,9 @@
 /**
  * GET /api/dashboard/moonlight-interest
- * Aggregate Moonlight Gathering #001 interest survey for ops dashboard.
+ * Aggregate Moonlight Gathering #001 participation form for ops dashboard.
  *
  * Query: interest=interested|unsure|skip (optional — filters response list only)
- * Charts for dates / slots / price always use「有興趣」rows.
+ * Charts for dates / slots / price always use「有興趣／已報名」rows.
  */
 
 import { authorizeDashboardAccess } from '../../../lib/dashboard-auth.js';
@@ -87,7 +87,7 @@ export default async function handler(req, res) {
         });
       }
       console.error('[dashboard/moonlight-interest]', error.message, error.code);
-      return res.status(500).json({ error: '無法讀取意見調查。' });
+      return res.status(500).json({ error: '無法讀取參加表回覆。' });
     }
 
     const rows = data || [];
@@ -144,6 +144,6 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error('[dashboard/moonlight-interest] unexpected:', err);
-    return res.status(500).json({ error: '無法讀取意見調查。' });
+    return res.status(500).json({ error: '無法讀取參加表回覆。' });
   }
 }

@@ -1,5 +1,5 @@
 /**
- * Shared labels / option maps for Moonlight Gathering #001 interest survey.
+ * Shared labels / option maps for Moonlight Gathering #001 participation form.
  */
 
 export const INTEREST_LABELS = {
@@ -39,14 +39,9 @@ export const DATE_LABELS = {
   '2026-09-27': '9/27（日）',
 };
 
-/** Active survey dates shown on charts (9/12 onwards). */
+/** Active #001 session date for charts. */
 export const DATE_ORDER = [
-  '2026-09-12',
-  '2026-09-13',
   '2026-09-19',
-  '2026-09-20',
-  '2026-09-26',
-  '2026-09-27',
 ];
 
 export const TIME_SLOT_ORDER = Object.keys(TIME_SLOT_LABELS);

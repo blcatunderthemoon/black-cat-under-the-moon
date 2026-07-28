@@ -34,6 +34,8 @@ const nextConfig = {
       { source: '/login.html', destination: '/login', permanent: false },
       { source: '/signup.html', destination: '/signup', permanent: false },
       { source: '/match.html', destination: '/echo.html', permanent: true },
+      { source: '/moonlight-interest', destination: '/moonlight-interest001', permanent: true },
+      { source: '/moonlight-interest/', destination: '/moonlight-interest001', permanent: true },
     ];
   },
   async headers() {

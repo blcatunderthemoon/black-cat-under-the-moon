@@ -13,7 +13,7 @@ const ITEMS = [
   { href: '/forum/guardian', label: '檢舉佇列', Icon: HeaderForumIcon },
   { href: '/forum/guardian/team', label: '版主團隊', Icon: HeaderShieldIcon },
   { href: '/forum/guardian/monitor', label: '內容監控', Icon: ForumEyeIcon },
-  { href: '/admin/moonlight-interest', label: 'Moonlight 調查', Icon: ForumMoonIcon },
+  { href: '/admin/moonlight-interest', label: 'Moonlight 參加表', Icon: ForumMoonIcon },
   { href: '/admin/email-automation', label: '郵件自動化', Icon: HeaderMailIcon },
   { href: '/admin/login-lockout', label: '登入鎖定', Icon: ForumLockIcon },
 ];

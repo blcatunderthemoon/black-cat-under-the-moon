@@ -1,7 +1,10 @@
 /**
  * POST /api/moonlight-interest
- * Save Moonlight Gathering #001 interest survey responses.
- * Body: { interest, time_slots?, dates?, price_range?, email?, display_name?, message? }
+ * Save Moonlight Gathering #001 participation form responses.
+ * Body: { interest?, time_slots?, dates?, price_range, email, display_name, message? }
+ *
+ * Participation form always stores interest=interested with fixed session
+ * 2026-09-19 / sat_afternoon (client sends these; API also accepts legacy survey payloads).
  */
 
 import { Ratelimit } from '@upstash/ratelimit';
@@ -19,9 +22,13 @@ const MAX_EMAIL = 120;
 const MAX_MESSAGE = 500;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+const EVENT_DATE = '2026-09-19';
+const EVENT_TIME_SLOT = 'sat_afternoon';
+
 const ALLOWED_DATES = new Set([
-  '2026-09-12', '2026-09-13',
-  '2026-09-19', '2026-09-20', '2026-09-26', '2026-09-27',
+  EVENT_DATE,
+  // Legacy survey dates (read-compatible for older clients)
+  '2026-09-12', '2026-09-13', '2026-09-20', '2026-09-26', '2026-09-27',
 ]);
 
 const ratelimit = process.env.UPSTASH_REDIS_REST_URL
@@ -60,7 +67,7 @@ export default async function handler(req, res) {
     }
 
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
-    const interest = typeof body.interest === 'string' ? body.interest.trim() : '';
+    let interest = typeof body.interest === 'string' ? body.interest.trim() : '';
     const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
     const displayName = typeof body.display_name === 'string' ? body.display_name.trim() : '';
     const message = typeof body.message === 'string' ? body.message.trim() : '';
@@ -68,8 +75,10 @@ export default async function handler(req, res) {
     const timeSlots = asStringArray(body.time_slots);
     const dates = asStringArray(body.dates);
 
+    // Participation form: treat missing interest as signup.
+    if (!interest) interest = 'interested';
     if (!INTEREST.has(interest)) {
-      return res.status(400).json({ error: '請選擇是否有興趣參加。' });
+      return res.status(400).json({ error: '無法識別參加意向。' });
     }
 
     if (displayName.length > MAX_NAME) {
@@ -92,7 +101,7 @@ export default async function handler(req, res) {
 
     if (interest === 'interested') {
       if (!email) {
-        return res.status(400).json({ error: '請留下電郵方便優先通知。' });
+        return res.status(400).json({ error: '請留下電郵方便聯絡。' });
       }
       if (!displayName) {
         return res.status(400).json({ error: '請填寫稱呼。' });
@@ -106,12 +115,9 @@ export default async function handler(req, res) {
       }
       cleanSlots = timeSlots.filter((s) => TIME_SLOTS.has(s));
       cleanDates = dates.filter((d) => DATE_RE.test(d) && ALLOWED_DATES.has(d));
-      if (!cleanSlots.length) {
-        return res.status(400).json({ error: '請至少揀一個可參加時段。' });
-      }
-      if (!cleanDates.length) {
-        return res.status(400).json({ error: '請至少揀一個可參加日期。' });
-      }
+      // Default to fixed #001 session when client omits / sends empty.
+      if (!cleanSlots.length) cleanSlots = [EVENT_TIME_SLOT];
+      if (!cleanDates.length) cleanDates = [EVENT_DATE];
       if (!PRICE.has(priceRange)) {
         return res.status(400).json({ error: '請選擇可以接受嘅收費範圍。' });
       }
@@ -134,15 +140,15 @@ export default async function handler(req, res) {
 
     if (error) {
       if (error.code === '42P01') {
-        return res.status(503).json({ error: '調查表尚未設定完成，請稍後再試。' });
+        return res.status(503).json({ error: '參加表尚未設定完成，請稍後再試。' });
       }
       console.error('[moonlight-interest] insert failed:', error.message, error.code);
-      return res.status(500).json({ error: '無法儲存回覆，請稍後再試。' });
+      return res.status(500).json({ error: '無法提交參加表，請稍後再試。' });
     }
 
     return res.status(200).json({ success: true });
   } catch (err) {
     console.error('[moonlight-interest] unexpected error:', err);
-    return res.status(500).json({ error: '無法儲存回覆，請稍後再試。' });
+    return res.status(500).json({ error: '無法提交參加表，請稍後再試。' });
   }
 }
