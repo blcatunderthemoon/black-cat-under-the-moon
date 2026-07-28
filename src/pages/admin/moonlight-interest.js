@@ -69,7 +69,7 @@ export default function AdminMoonlightInterestPage() {
       <div className="forum-admin-page">
         <header className="forum-admin-page__hero">
           <h1 className="forum-admin-page__title">Moonlight 參加表</h1>
-          <p className="forum-admin-page__subtitle">#001 · 9/19 下午 2:00–5:00 · 睇報名同收費偏好</p>
+          <p className="forum-admin-page__subtitle">#001 · 9/19 下午 2:00–5:00 · 睇報名回覆</p>
           <Link href="/forum/guardian" className="forum-guardian-page__back">
             <span className="forum-guardian-page__back-icon" aria-hidden="true">←</span>
             返回檢舉佇列

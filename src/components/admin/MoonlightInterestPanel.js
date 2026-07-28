@@ -112,7 +112,7 @@ export default function MoonlightInterestPanel({ apiFetch }) {
 
       <div className={styles.kpiGrid}>
         <KPICard label="總回覆" value={loading ? '…' : totals.all} icon="📋" />
-        <KPICard label="有興趣" value={loading ? '…' : totals.interested} icon="✨" sub="會填檔期／收費" />
+        <KPICard label="有興趣" value={loading ? '…' : totals.interested} icon="✨" sub="已填參加表" />
         <KPICard label="未能確定" value={loading ? '…' : totals.unsure} icon="◐" />
         <KPICard label="今次唔參加" value={loading ? '…' : totals.skip} icon="—" />
       </div>
@@ -234,9 +234,9 @@ export default function MoonlightInterestPanel({ apiFetch }) {
               <th>意向</th>
               <th>稱呼</th>
               <th>電郵</th>
-              <th>時段</th>
+              <th>Telegram</th>
               <th>日期</th>
-              <th>收費</th>
+              <th>自我介紹</th>
               <th>留言</th>
             </tr>
           </thead>
@@ -261,9 +261,15 @@ export default function MoonlightInterestPanel({ apiFetch }) {
                 </td>
                 <td>{r.display_name || '—'}</td>
                 <td className={styles.email}>{r.email || '—'}</td>
-                <td className={styles.wrap}>{r.time_slot_labels.join('、') || '—'}</td>
+                <td className={styles.email}>{r.telegram_username ? `@${r.telegram_username}` : '—'}</td>
                 <td className={styles.wrap}>{r.date_labels.join('、') || '—'}</td>
-                <td>{r.price_label}</td>
+                <td className={styles.msg}>
+                  {r.answers_summary
+                    ? r.answers_summary.split('\n').filter(Boolean).map((line) => (
+                      <div key={line}>{line}</div>
+                    ))
+                    : '—'}
+                </td>
                 <td className={styles.msg}>{r.message || '—'}</td>
               </tr>
             ))}

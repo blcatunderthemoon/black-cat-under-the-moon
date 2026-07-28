@@ -21,6 +21,42 @@ export const PRICE_LABELS = {
   '350-400': '$350–400',
 };
 
+/** Profile questions on the #001 participation form (stored in answers jsonb). */
+export const PROFILE_QUESTIONS = [
+  {
+    key: 'hobbies',
+    label: '你有咩個人興趣？',
+    placeholder: '例如：貓、Board Game、攝影…',
+  },
+  {
+    key: 'pets',
+    label: '有冇養寵物？（有嘅話係咩？）',
+    placeholder: '例如：冇／有一隻黑貓叫…',
+  },
+  {
+    key: 'singer',
+    label: '最鍾意邊位歌手？',
+    placeholder: '可以寫多過一位',
+  },
+  {
+    key: 'movie',
+    label: '最鍾意嘅電影？',
+    placeholder: '電影名或類型都得',
+  },
+  {
+    key: 'travel',
+    label: '最想去邊個國家旅行？',
+    placeholder: '例如：日本、冰島…',
+  },
+  {
+    key: 'sports',
+    label: '有冇做運動？最鍾意咩運動？',
+    placeholder: '例如：少做／最鍾意行山、瑜伽…',
+  },
+];
+
+export const PROFILE_QUESTION_KEYS = PROFILE_QUESTIONS.map((q) => q.key);
+
 /** Labels for active + legacy survey dates (legacy kept for dashboard display). */
 export const DATE_LABELS = {
   '2026-08-15': '8/15（六）',
@@ -60,4 +96,17 @@ export function formatMoonlightInterest(key) {
 
 export function formatMoonlightPrice(key) {
   return PRICE_LABELS[key] || key || '—';
+}
+
+/** Compact multi-line summary for admin tables. */
+export function formatMoonlightAnswers(answers) {
+  if (!answers || typeof answers !== 'object') return '';
+  return PROFILE_QUESTIONS
+    .map((q) => {
+      const v = typeof answers[q.key] === 'string' ? answers[q.key].trim() : '';
+      if (!v) return null;
+      return `${q.label} ${v}`;
+    })
+    .filter(Boolean)
+    .join('\n');
 }

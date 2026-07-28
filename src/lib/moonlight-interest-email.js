@@ -32,7 +32,7 @@ export function buildMoonlightInterestEmailHtml(opts = {}) {
   <div style="text-align:center;margin-bottom:22px;">
     <div style="font-size:11px;letter-spacing:0.18em;color:#a89cc8;text-transform:uppercase;margin-bottom:8px;">Black Cat Under The Moon</div>
     <h1 style="margin:0 0 8px;font-size:22px;color:#ffe066;letter-spacing:0.04em;line-height:1.35;">Moonlight Gathering #001</h1>
-    <div style="font-size:13px;color:#a89cc8;line-height:1.7;">12 人限定小型聚會 · 參加表</div>
+    <div style="font-size:13px;color:#a89cc8;line-height:1.7;">12–16 人小型聚會 · 參加表</div>
   </div>
 
   <div style="border-top:1px solid rgba(124,92,252,.25);margin-bottom:20px;"></div>
@@ -69,7 +69,7 @@ export function buildMoonlightInterestEmailHtml(opts = {}) {
       </tr>
       <tr>
         <td style="padding:4px 0;color:#8880a8;vertical-align:top;">人數</td>
-        <td style="padding:4px 0;font-weight:700;">12 人限定 · Party Room</td>
+        <td style="padding:4px 0;font-weight:700;">12–16 人 · Party Room</td>
       </tr>
       <tr>
         <td style="padding:4px 0;color:#8880a8;vertical-align:top;">環節</td>
@@ -118,7 +118,7 @@ export function buildMoonlightInterestEmailText(opts = {}) {
     greeting,
     'Black Cat 一直都希望，唔止係一個配對網站，而係一個可以真正認識新朋友、建立連結嘅地方。',
     '',
-    '第一場 Moonlight Gathering：2026年9月19日（六）下午 2:00–5:00（12 人限定）',
+    '第一場 Moonlight Gathering：2026年9月19日（六）下午 2:00–5:00（12–16 人）',
     '尋貓 Bingo、Topic Card 小組聊天、Moonlight Mail。',
     '對象 Label：Pure｜年齡：23–34 歲',
     '',

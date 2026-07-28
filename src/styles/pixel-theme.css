@@ -28117,6 +28117,12 @@ a.moon-journey-dropdown-card__checkin--done {
   min-width: 0;
 }
 
+.mi-fieldset--profile {
+  margin-top: 0.35rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(124, 92, 252, 0.18);
+}
+
 .mi-legend {
   font-size: 0.82rem;
   font-weight: 700;

@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { useAuth, getBrowserClient } from '../lib/auth-context.js';
 import { canAdminForum } from '../lib/forum-roles.js';
 import { dashboardHeaders } from '../lib/dashboard-fetch.js';
+import { PROFILE_QUESTIONS } from '../lib/moonlight-interest-meta.js';
 import AppShell from '../components/AppShell.js';
 import AppHeaderAuth from '../components/AppHeaderAuth.js';
 import SeoHead from '../components/SeoHead.js';
@@ -27,18 +28,14 @@ import {
 const EVENT_DATE = '2026-09-19';
 const EVENT_TIME_SLOT = 'sat_afternoon';
 
-const PRICE_OPTIONS = [
-  { value: '250-300', label: '$250–300' },
-  { value: '300-350', label: '$300–350' },
-  { value: '350-400', label: '$350–400' },
-];
+const EMPTY_ANSWERS = Object.fromEntries(PROFILE_QUESTIONS.map((q) => [q.key, '']));
 
 const EVENT_META = [
   { icon: HeaderCalendarIcon, label: '日期', value: '2026年9月19日（六）' },
   { icon: ForumClockIcon, label: '時間', value: '下午 2:00–5:00' },
   { icon: HeaderUserPlusIcon, label: '對象 Label', value: 'Pure' },
   { icon: ForumPawIcon, label: '年齡範圍', value: '23–34 歲' },
-  { icon: UiHomeIcon, label: '形式', value: '12 人限定 · Party Room' },
+  { icon: UiHomeIcon, label: '形式', value: '12–16 人 · Party Room' },
 ];
 
 const SCHEDULE = [
@@ -100,7 +97,7 @@ const SCHEDULE = [
 ];
 
 const FEATURES = [
-  { icon: HeaderUserPlusIcon, label: '12 人小型聚會' },
+  { icon: HeaderUserPlusIcon, label: '12–16 人小型聚會' },
   { icon: UiHomeIcon, label: 'Party Room' },
   { icon: ForumGamepadIcon, label: '破冰遊戲（尋貓 Bingo）' },
   { icon: HeaderChatIcon, label: 'Topic Card 小組聊天' },
@@ -139,9 +136,10 @@ function toggleInList(list, value) {
 export default function MoonlightInterest001Page() {
   const { session, profile, displayName: authDisplayName, loading: authLoading } = useAuth();
   const isAdmin = canAdminForum(profile?.profile?.forum_role);
-  const [priceRange, setPriceRange] = useState('');
   const [email, setEmail] = useState('');
+  const [telegram, setTelegram] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [answers, setAnswers] = useState(() => ({ ...EMPTY_ANSWERS }));
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
@@ -164,9 +162,13 @@ export default function MoonlightInterest001Page() {
     (c) => !sentEmails.has(String(c.email || '').toLowerCase()),
   );
   const selectedCount = selectedIds.length;
-  const priceFilled = Boolean(priceRange);
   const emailFilled = Boolean(email.trim());
+  const telegramFilled = Boolean(telegram.trim());
   const nameFilled = Boolean(displayName.trim());
+
+  function setAnswer(key, value) {
+    setAnswers((prev) => ({ ...prev, [key]: value }));
+  }
 
   function markEmailsSent(emails) {
     const newly = emails
@@ -205,18 +207,28 @@ export default function MoonlightInterest001Page() {
     e.preventDefault();
     setError('');
 
-    if (!priceRange) {
-      setError('請選擇可以接受嘅收費範圍。');
-      return;
-    }
     if (!email.trim()) {
       setError('請留下電郵方便聯絡。');
+      return;
+    }
+    if (!telegram.trim()) {
+      setError('請填寫 Telegram username。');
       return;
     }
     if (!displayName.trim()) {
       setError('請填寫稱呼。');
       return;
     }
+    for (const q of PROFILE_QUESTIONS) {
+      if (!String(answers[q.key] || '').trim()) {
+        setError(`請回答：${q.label}`);
+        return;
+      }
+    }
+
+    const cleanAnswers = Object.fromEntries(
+      PROFILE_QUESTIONS.map((q) => [q.key, String(answers[q.key] || '').trim()]),
+    );
 
     setSubmitting(true);
     try {
@@ -231,9 +243,10 @@ export default function MoonlightInterest001Page() {
           interest: 'interested',
           time_slots: [EVENT_TIME_SLOT],
           dates: [EVENT_DATE],
-          price_range: priceRange,
           email: email.trim(),
+          telegram_username: telegram.trim(),
           display_name: displayName.trim(),
+          answers: cleanAnswers,
           message: message.trim() || null,
         }),
       });
@@ -415,7 +428,7 @@ export default function MoonlightInterest001Page() {
     <>
       <SeoHead
         title="Moonlight Gathering 參加表"
-        description="Moonlight Gathering #001 參加表 — 2026年9月19日（六）下午 2:00–5:00，12 人限定小型聚會。"
+        description="Moonlight Gathering #001 參加表 — 2026年9月19日（六）下午 2:00–5:00，12–16 人小型聚會。"
         path="/moonlight-interest001"
         noindex
       />
@@ -434,7 +447,7 @@ export default function MoonlightInterest001Page() {
               <span>Participation Form</span>
             </p>
             <h1 className="mi-hero__title">Moonlight Gathering #001</h1>
-            <p className="mi-hero__guest-note">唔使登入都可以填寫；約一分鐘。</p>
+            <p className="mi-hero__guest-note">唔使登入都可以填寫。</p>
             <p className="mi-hero__lead">
               Black Cat 一直都希望，唔止係一個配對網站，而係一個可以真正認識新朋友、建立連結嘅地方。
             </p>
@@ -442,7 +455,7 @@ export default function MoonlightInterest001Page() {
               第一場 Moonlight Gathering 定喺 <strong>2026年9月19日（六）下午 2:00–5:00</strong>。
             </p>
             <p className="mi-hero__lead">
-              今次會係一場 <strong>12 人限定</strong> 嘅小型聚會，希望透過遊戲、故事分享同輕鬆聊天，令大家自然認識彼此，而唔係傳統 Speed Dating。
+              今次會係一場 <strong>12–16 人</strong> 嘅小型聚會，希望透過遊戲、故事分享同輕鬆聊天，令大家自然認識彼此，而唔係傳統 Speed Dating。
             </p>
             <p className="mi-hero__lead">
               <strong>想出席就填下面嘅參加表</strong>，我哋會用電郵同你確認。
@@ -564,32 +577,8 @@ export default function MoonlightInterest001Page() {
                 參加表
               </h2>
               <p className="mi-hint">
-                場次：<strong>9月19日（六）下午 2:00–5:00</strong>。想出席就填表，約一分鐘。
+                場次：<strong>9月19日（六）下午 2:00–5:00</strong>。想出席就填表。
               </p>
-
-              <fieldset className="mi-fieldset">
-                <legend className="mi-legend">
-                  可以接受收費範圍
-                  {!priceFilled && <span className="mi-field__req">必填</span>}
-                </legend>
-                <div className="mi-choice-list" role="radiogroup" aria-label="可以接受收費範圍">
-                  {PRICE_OPTIONS.map((opt) => (
-                    <label
-                      key={opt.value}
-                      className={`mi-choice${priceRange === opt.value ? ' is-selected' : ''}`}
-                    >
-                      <input
-                        type="radio"
-                        name="price_range"
-                        value={opt.value}
-                        checked={priceRange === opt.value}
-                        onChange={() => setPriceRange(opt.value)}
-                      />
-                      <span>{opt.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
 
               <div className="mi-fields">
                 <label className="mi-field">
@@ -608,6 +597,22 @@ export default function MoonlightInterest001Page() {
                 </label>
                 <label className="mi-field">
                   <span className="mi-field__label">
+                    Telegram username {!telegramFilled && <span className="mi-field__req">必填</span>}
+                  </span>
+                  <input
+                    className="pixel-input"
+                    type="text"
+                    autoComplete="username"
+                    inputMode="text"
+                    maxLength={33}
+                    value={telegram}
+                    onChange={(e) => setTelegram(e.target.value)}
+                    placeholder="@your_username"
+                    required
+                  />
+                </label>
+                <label className="mi-field">
+                  <span className="mi-field__label">
                     稱呼 {!nameFilled && <span className="mi-field__req">必填</span>}
                   </span>
                   <input
@@ -621,17 +626,47 @@ export default function MoonlightInterest001Page() {
                     required
                   />
                 </label>
+              </div>
+
+              <fieldset className="mi-fieldset mi-fieldset--profile">
+                <legend className="mi-legend">想多啲認識你</legend>
+                <p className="mi-hint mi-hint--tight">以下問題都會用於破冰同分組，請盡量真實填寫。</p>
+                <div className="mi-fields">
+                  {PROFILE_QUESTIONS.map((q) => {
+                    const filled = Boolean(String(answers[q.key] || '').trim());
+                    return (
+                      <label key={q.key} className="mi-field">
+                        <span className="mi-field__label">
+                          {q.label}
+                          {!filled && <span className="mi-field__req">必填</span>}
+                        </span>
+                        <textarea
+                          className="pixel-textarea"
+                          rows={2}
+                          maxLength={200}
+                          value={answers[q.key] || ''}
+                          onChange={(e) => setAnswer(q.key, e.target.value)}
+                          placeholder={q.placeholder}
+                          required
+                        />
+                      </label>
+                    );
+                  })}
+                </div>
+              </fieldset>
+
+              <div className="mi-fields">
                 <label className="mi-field">
                   <span className="mi-field__label">
                     留言 <span className="mi-field__opt">選填</span>
                   </span>
                   <textarea
                     className="pixel-textarea"
-                    rows={4}
+                    rows={3}
                     maxLength={500}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    placeholder="例如：想認識多啲朋友、對邊個環節最有興趣…"
+                    placeholder="其他想同我哋講嘅…"
                   />
                 </label>
               </div>
@@ -649,7 +684,7 @@ export default function MoonlightInterest001Page() {
           )}
 
           <p className="mi-footnote">
-            提交參加表後，我哋會用電郵同你確認。名額有限（12 人），以確認為準。
+            提交參加表後，我哋會用電郵同你確認。名額有限（12–16 人），以確認為準。
           </p>
 
           {isAdmin && (
