@@ -447,6 +447,25 @@ export default function MoonlightInterest001Page() {
               <span>Participation Form</span>
             </p>
             <h1 className="mi-hero__title">Moonlight Gathering #001</h1>
+            <figure className="mi-poster">
+              <a
+                className="mi-poster__link"
+                href="/poster001.png"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img
+                  className="mi-poster__img"
+                  src="/poster001.png"
+                  alt="Moonlight Gathering #001 活動海報：2026年9月19日下午 2:00–5:00，Party Room，破冰遊戲、Bingo、Table Chat"
+                  width={1200}
+                  height={1697}
+                  decoding="async"
+                  fetchPriority="high"
+                />
+              </a>
+              <figcaption className="mi-poster__caption">活動海報 · 撳圖可睇大圖</figcaption>
+            </figure>
             <p className="mi-hero__guest-note">唔使登入都可以填寫。</p>
             <p className="mi-hero__lead">
               Black Cat 一直都希望，唔止係一個配對網站，而係一個可以真正認識新朋友、建立連結嘅地方。

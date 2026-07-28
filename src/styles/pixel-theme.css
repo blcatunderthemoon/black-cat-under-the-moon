@@ -27733,6 +27733,43 @@ a.moon-journey-dropdown-card__checkin--done {
   line-height: 1.35;
 }
 
+.mi-poster {
+  margin: 0.35rem 0 1.1rem;
+  padding: 0;
+}
+
+.mi-poster__link {
+  display: block;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(124, 92, 252, 0.35);
+  background: rgba(11, 13, 34, 0.88);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mi-poster__link:hover,
+.mi-poster__link:focus-visible {
+  border-color: rgba(189, 147, 249, 0.65);
+  box-shadow: 0 14px 44px rgba(124, 92, 252, 0.22);
+  outline: none;
+}
+
+.mi-poster__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  vertical-align: middle;
+}
+
+.mi-poster__caption {
+  margin: 0.45rem 0 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--text-dim, #7a7590);
+  text-align: center;
+}
+
 .mi-hero__guest-note {
   margin: 0 0 0.9rem;
   font-size: 0.8rem;
