@@ -11,8 +11,9 @@ import { HeaderMailIcon } from '../UiIcons.js';
 
 const IDENTITY_FILTER_OPTIONS = ['Pure', 'TB', 'TBG', 'Bi', 'No Label', '仲探索緊'];
 const DRAFT_CHUNK = 20;
-const SEND_CHUNK = 15;
+const SEND_CHUNK = 8;
 const SENT_EMAILS_STORAGE_KEY = 'bcutm:moonlight-interest001:sent-emails';
+const DEFAULT_TEST_EMAIL = 'lhuen2010@gmail.com';
 
 function loadSentEmails() {
   if (typeof window === 'undefined') return new Set();
@@ -50,8 +51,8 @@ export default function MoonlightInviteEmailPanel({ variant = 'card' }) {
   const [selectedIds, setSelectedIds] = useState([]);
   const [sentEmails, setSentEmails] = useState(() => loadSentEmails());
   const [previewBusy, setPreviewBusy] = useState(false);
-  const [draftTo, setDraftTo] = useState('');
-  const [draftName, setDraftName] = useState('');
+  const [draftTo, setDraftTo] = useState(DEFAULT_TEST_EMAIL);
+  const [draftName, setDraftName] = useState('測試');
   const [draftBusy, setDraftBusy] = useState(false);
   const [draftMsg, setDraftMsg] = useState('');
   const [draftErr, setDraftErr] = useState('');
@@ -190,6 +191,7 @@ export default function MoonlightInviteEmailPanel({ variant = 'card' }) {
     const chunk = selectedIds.slice(0, SEND_CHUNK);
     const ok = window.confirm(
       `將真正發送 ${chunk.length} 封獨立邀請電郵（每封間隔約 2 秒）。\n`
+      + `本批最多 ${SEND_CHUNK} 封，避免 server timeout。\n`
       + '大批一次 BCC 好易入 spam；分批獨立寄較穩。\n\n確定發送今批？',
     );
     if (!ok) return;
@@ -201,14 +203,25 @@ export default function MoonlightInviteEmailPanel({ variant = 'card' }) {
         response_ids: chunk,
       });
       const sentRows = (data.results || []).filter((r) => r.sent);
+      const failedRows = (data.results || []).filter((r) => !r.sent);
       markEmailsSent(sentRows.map((r) => r.email));
       const remain = Math.max(0, selectedIds.length - sentRows.length);
       setDraftMsg(
         (data.message || `已發送 ${sentRows.length} 封。`)
-        + (remain > 0 ? ` 仲剩約 ${remain} 人，建議隔幾分鐘再撳「下一批發送」。` : ''),
+        + (remain > 0 ? ` 仲剩約 ${remain} 人，建議隔 1–2 分鐘再撳下一批。` : ''),
       );
+      if (failedRows.length) {
+        setDraftErr(
+          failedRows
+            .map((r) => `${r.email || r.id}：${r.error || '發送失敗'}`)
+            .join(' · '),
+        );
+      }
     } catch (err) {
-      setDraftErr(err.message || '發送失敗');
+      setDraftErr(
+        (err.message || '發送失敗')
+        + '（若剛寄過一批，可能係 Gmail 限速或請求 timeout；請隔幾分鐘再試，每批唔好超過 8 封。）',
+      );
     } finally {
       setDraftBusy(false);
     }
@@ -233,6 +246,32 @@ export default function MoonlightInviteEmailPanel({ variant = 'card' }) {
     }
   }
 
+  async function handleSendTestOne(e) {
+    e.preventDefault();
+    setDraftMsg('');
+    setDraftErr('');
+    const to = draftTo.trim().toLowerCase();
+    if (!to) {
+      setDraftErr('請填測試電郵（例如 lhuen2010@gmail.com）。');
+      return;
+    }
+    const ok = window.confirm(`將真正發送 1 封測試邀請電郵至：\n${to}\n\n確定發送？`);
+    if (!ok) return;
+
+    setDraftBusy(true);
+    try {
+      const data = await adminDraftFetch({
+        action: 'send_one',
+        to,
+        recipient_name: draftName.trim() || undefined,
+      });
+      setDraftMsg(data.message || `已發送測試電郵至 ${to}。`);
+    } catch (err) {
+      setDraftErr(err.message || '測試發送失敗');
+    } finally {
+      setDraftBusy(false);
+    }
+  }
   function toggleCandidate(id) {
     setSelectedIds((prev) => toggleInList(prev, id));
   }
@@ -259,7 +298,7 @@ export default function MoonlightInviteEmailPanel({ variant = 'card' }) {
         篩選問卷用戶（預設 Pure · 23–34），一人一封寄
         {' '}
         <strong>Moonlight Gathering #001 邀請</strong>
-        （連參加表連結）。可建 Gmail 草稿，或分批真正發送（每批最多 {SEND_CHUNK} 封、間隔約 2 秒）。
+        （每批最多 {SEND_CHUNK} 封、間隔約 2 秒；寄完請隔 1–2 分鐘再下一批，避免 Gmail／timeout）。
       </p>
 
       <form className="mi-fields" onSubmit={handlePreviewCandidates}>
@@ -391,19 +430,19 @@ export default function MoonlightInviteEmailPanel({ variant = 'card' }) {
         </div>
       )}
 
-      <details className="mi-admin-manual">
-        <summary>手動開一封草稿（可選）</summary>
+      <details className="mi-admin-manual" open>
+        <summary>手動／測試一封（建議先寄去自己）</summary>
         <form className="mi-fields" onSubmit={handleCreateGmailDraft}>
           <label className="mi-field">
             <span className="mi-field__label">
-              收件人電郵 <span className="mi-field__opt">選填</span>
+              收件人電郵 <span className="mi-field__opt">測試用</span>
             </span>
             <input
               className="pixel-input"
               type="email"
               value={draftTo}
               onChange={(e) => setDraftTo(e.target.value)}
-              placeholder="留空＝之後喺 Gmail 草稿自行填"
+              placeholder="lhuen2010@gmail.com"
             />
           </label>
           <label className="mi-field">
@@ -419,15 +458,27 @@ export default function MoonlightInviteEmailPanel({ variant = 'card' }) {
               placeholder="例如：阿貓"
             />
           </label>
-          <button
-            type="submit"
-            className="pixel-btn pixel-btn--ghost mi-submit"
-            disabled={draftBusy}
-          >
-            <span className="pixel-btn__zh">
-              {draftBusy ? '建立中…' : '存入單封 Gmail 草稿（不發送）'}
-            </span>
-          </button>
+          <div className="mi-admin-batch-actions">
+            <button
+              type="button"
+              className="pixel-btn pixel-btn--primary mi-submit"
+              disabled={draftBusy}
+              onClick={handleSendTestOne}
+            >
+              <span className="pixel-btn__zh">
+                {draftBusy ? '發送中…' : '立即測試發送（真寄）'}
+              </span>
+            </button>
+            <button
+              type="submit"
+              className="pixel-btn pixel-btn--ghost mi-submit"
+              disabled={draftBusy}
+            >
+              <span className="pixel-btn__zh">
+                {draftBusy ? '建立中…' : '只存 Gmail 草稿（不發送）'}
+              </span>
+            </button>
+          </div>
         </form>
       </details>
 
