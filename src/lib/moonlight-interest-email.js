@@ -1,6 +1,6 @@
 /**
- * Moonlight Gathering #001 participation-form invite email (HTML + text).
- * Draft-only — never auto-sent.
+ * Moonlight Gathering #001 invite email (HTML + text).
+ * Used for Gmail drafts and admin batch send.
  */
 
 import { esc } from './email-template.js';
@@ -12,7 +12,7 @@ export function moonlightInterestSurveyUrl(siteUrl) {
 }
 
 export function buildMoonlightInterestEmailSubject() {
-  return 'Moonlight Gathering #001｜參加表 · Black Cat Under The Moon';
+  return 'Moonlight Gathering #001｜邀請你參加 · Black Cat Under The Moon';
 }
 
 /**
@@ -32,7 +32,18 @@ export function buildMoonlightInterestEmailHtml(opts = {}) {
   <div style="text-align:center;margin-bottom:22px;">
     <div style="font-size:11px;letter-spacing:0.18em;color:#a89cc8;text-transform:uppercase;margin-bottom:8px;">Black Cat Under The Moon</div>
     <h1 style="margin:0 0 8px;font-size:22px;color:#ffe066;letter-spacing:0.04em;line-height:1.35;">Moonlight Gathering #001</h1>
-    <div style="font-size:13px;color:#a89cc8;line-height:1.7;">12–16 人小型聚會 · 參加表</div>
+    <div style="font-size:13px;color:#a89cc8;line-height:1.7;">12–16 人小型聚會 · 邀請你參加</div>
+  </div>
+
+  <div style="text-align:center;margin:0 0 20px;">
+    <a href="${esc(surveyUrl)}" style="display:inline-block;text-decoration:none;">
+      <img
+        src="${esc(`${String(opts.siteUrl || getSiteUrl()).replace(/\/$/, '')}/poster001.png`)}"
+        alt="Moonlight Gathering #001 活動海報"
+        width="520"
+        style="max-width:100%;height:auto;border-radius:10px;border:1px solid rgba(124,92,252,.35);display:block;margin:0 auto;"
+      />
+    </a>
   </div>
 
   <div style="border-top:1px solid rgba(124,92,252,.25);margin-bottom:20px;"></div>
@@ -112,7 +123,7 @@ export function buildMoonlightInterestEmailText(opts = {}) {
   const greeting = name ? `你好 ${name}，` : '你好，';
 
   return [
-    'Moonlight Gathering #001｜參加表',
+    'Moonlight Gathering #001｜邀請你參加',
     'Black Cat Under The Moon',
     '',
     greeting,

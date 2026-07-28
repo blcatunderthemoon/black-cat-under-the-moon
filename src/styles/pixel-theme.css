@@ -28019,8 +28019,33 @@ a.moon-journey-dropdown-card__checkin--done {
   color: var(--text-dim, #7a7590);
 }
 
+.mi-admin-invite-wrap {
+  margin-bottom: 1.5rem;
+}
+
+.mi-admin-invite-wrap .mi-admin-draft {
+  margin: 0;
+}
+
 .mi-admin-draft {
   border-color: rgba(255, 224, 102, 0.28);
+}
+
+.mi-admin-draft--plain {
+  padding: 1.25rem 1.15rem;
+  border: 1px solid rgba(255, 224, 102, 0.28);
+  border-radius: 14px;
+  background: rgba(18, 17, 29, 0.72);
+}
+
+.mi-admin-draft__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 0.65rem;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--cream, #f0ebd8);
 }
 
 .mi-admin-draft .mi-hint strong {
