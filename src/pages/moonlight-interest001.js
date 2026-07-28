@@ -35,7 +35,7 @@ const EVENT_META = [
   { icon: ForumClockIcon, label: '時間', value: '下午 2:00–5:00' },
   { icon: HeaderUserPlusIcon, label: '對象 Label', value: 'Pure' },
   { icon: ForumPawIcon, label: '年齡範圍', value: '23–34 歲' },
-  { icon: UiHomeIcon, label: '形式', value: '12–16 人 · Party Room' },
+  { icon: UiHomeIcon, label: '形式', value: '12 人 · Party Room' },
 ];
 
 const SCHEDULE = [
@@ -79,7 +79,7 @@ const SCHEDULE = [
   },
   {
     id: 'free',
-    title: '自由交流 · 15–30 分鐘',
+    title: '自由交流 · 45 分鐘',
     summary: '休息、飲嘢、交換聯絡',
   },
   {
@@ -97,7 +97,7 @@ const SCHEDULE = [
 ];
 
 const FEATURES = [
-  { icon: HeaderUserPlusIcon, label: '12–16 人小型聚會' },
+  { icon: HeaderUserPlusIcon, label: '12 人小型聚會' },
   { icon: UiHomeIcon, label: 'Party Room' },
   { icon: ForumGamepadIcon, label: '破冰遊戲（尋貓 Bingo）' },
   { icon: HeaderChatIcon, label: 'Topic Card 小組聊天' },
@@ -201,7 +201,7 @@ export default function MoonlightInterest001Page() {
     <>
       <SeoHead
         title="Moonlight Gathering 參加表"
-        description="Moonlight Gathering #001 參加表 — 2026年9月19日（六）下午 2:00–5:00，12–16 人小型聚會。"
+        description="Moonlight Gathering #001 參加表 — 2026年9月19日（六）下午 2:00–5:00，12 人小型聚會。"
         path="/moonlight-interest001"
         noindex
       />
@@ -247,10 +247,10 @@ export default function MoonlightInterest001Page() {
               第一場 Moonlight Gathering 定喺 <strong>2026年9月19日（六）下午 2:00–5:00</strong>。
             </p>
             <p className="mi-hero__lead">
-              今次會係一場 <strong>12–16 人</strong> 嘅小型聚會，希望透過遊戲、故事分享同輕鬆聊天，令大家自然認識彼此，而唔係傳統 Speed Dating。
+              今次會係一場 <strong>12 人</strong> 嘅小型聚會，希望透過遊戲、故事分享同輕鬆聊天，令大家自然認識彼此，而唔係傳統 Speed Dating。
             </p>
             <p className="mi-hero__lead">
-              <strong>想出席就填下面嘅參加表</strong>，我哋會用電郵同你確認。
+              如果有興趣出席，可以填以下參加表，我哋會用電郵同你確認。
             </p>
           </header>
 
@@ -369,7 +369,7 @@ export default function MoonlightInterest001Page() {
                 參加表
               </h2>
               <p className="mi-hint">
-                場次：<strong>9月19日（六）下午 2:00–5:00</strong>。想出席就填表。
+                場次：<strong>9月19日（六）下午 2:00–5:00</strong>。如果有興趣出席，可以填表。
               </p>
 
               <div className="mi-fields">
@@ -422,7 +422,7 @@ export default function MoonlightInterest001Page() {
 
               <fieldset className="mi-fieldset mi-fieldset--profile">
                 <legend className="mi-legend">想多啲認識你</legend>
-                <p className="mi-hint mi-hint--tight">以下問題都會用於破冰同分組，請盡量真實填寫。</p>
+                <p className="mi-hint mi-hint--tight">以下問題都會用於破冰，請盡量真實填寫。</p>
                 <div className="mi-fields">
                   {PROFILE_QUESTIONS.map((q) => {
                     const filled = Boolean(String(answers[q.key] || '').trim());
@@ -476,7 +476,7 @@ export default function MoonlightInterest001Page() {
           )}
 
           <p className="mi-footnote">
-            提交參加表後，我哋會用電郵同你確認。名額有限（12–16 人），以確認為準。
+            提交參加表後，我哋會用電郵同你確認。名額有限（12 人），以確認為準。
           </p>
 
           {isAdmin && <MoonlightInviteEmailPanel />}

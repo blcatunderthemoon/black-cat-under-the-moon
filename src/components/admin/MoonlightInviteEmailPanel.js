@@ -91,16 +91,18 @@ export default function MoonlightInviteEmailPanel({ variant = 'card' }) {
         token = data.session.access_token;
       }
     }
-    if (!token) {
+
+    const headers = dashboardHeaders({
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    });
+    if (!headers.Authorization && !headers['x-dashboard-key']) {
       throw new Error('請先以管理員帳號登入（登入已過期請重新登入）。');
     }
 
     const resp = await fetch('/api/dashboard/moonlight-interest-draft', {
       method: 'POST',
-      headers: dashboardHeaders({
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      }),
+      headers,
       body: JSON.stringify(payload),
     });
     const data = await resp.json().catch(() => ({}));
