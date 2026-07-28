@@ -211,7 +211,7 @@ export default function MoonlightInterest001Page() {
         backHref="/index.html"
         maxWidth="680px"
         pageClassName="app-page--moonlight-interest"
-        nav={session ? <AppHeaderAuth redirectPath="/moonlight-interest001" /> : null}
+        nav={<AppHeaderAuth redirectPath="/moonlight-interest001" />}
       >
         <article className="mi-page">
           <header className="mi-hero">
@@ -250,7 +250,7 @@ export default function MoonlightInterest001Page() {
               今次會係一場 <strong>12 人</strong> 嘅小型聚會，希望透過遊戲、故事分享同輕鬆聊天，令大家自然認識彼此，而唔係傳統 Speed Dating。
             </p>
             <p className="mi-hero__lead">
-              如果有興趣出席，可以填以下參加表，我哋會用電郵同你確認。
+              如果有興趣出席，可以填以下參加表，我哋會加你入 TG group。
             </p>
           </header>
 
@@ -359,7 +359,7 @@ export default function MoonlightInterest001Page() {
                 多謝填寫參加表
               </h2>
               <p className="mi-success-copy">
-                已收到你嘅參加資料。我哋會用電郵同你確認名額同之後安排。
+                已收到你嘅參加資料。我哋會加你入 TG group，同你確認名額同之後安排。
               </p>
             </section>
           ) : (
@@ -476,7 +476,7 @@ export default function MoonlightInterest001Page() {
           )}
 
           <p className="mi-footnote">
-            提交參加表後，我哋會用電郵同你確認。名額有限（12 人），以確認為準。
+            提交參加表後，我哋會加你入 TG group。名額有限（12 人），以確認為準。
           </p>
 
           {isAdmin && <MoonlightInviteEmailPanel />}

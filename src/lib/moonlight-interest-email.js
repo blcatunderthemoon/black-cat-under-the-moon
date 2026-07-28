@@ -92,7 +92,7 @@ export function buildMoonlightInterestEmailHtml(opts = {}) {
   </div>
 
   <div style="font-size:14px;line-height:1.9;color:#e8e0d0;margin-bottom:22px;">
-    如果有興趣出席，可以填以下參加表，我哋會用電郵同你確認。
+    如果有興趣出席，可以填以下參加表，我哋會加你入 TG group。
   </div>
 
   <div style="text-align:center;margin:8px 0 24px;">
@@ -135,7 +135,7 @@ export function buildMoonlightInterestEmailText(opts = {}) {
     '尋貓 Bingo、Topic Card 小組聊天、Moonlight Mail。',
     '對象 Label：Pure｜年齡：23–34 歲',
     '',
-    '如果有興趣出席，可以填以下參加表，我哋會用電郵同你確認。',
+    '如果有興趣出席，可以填以下參加表，我哋會加你入 TG group。',
     '',
     `參加表連結：${surveyUrl}`,
     '',
