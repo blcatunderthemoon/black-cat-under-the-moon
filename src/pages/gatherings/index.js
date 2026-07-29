@@ -19,6 +19,7 @@ import {
   gatheringMonthRangeIso,
   parseGatheringYm,
 } from '../../lib/gathering-calendar.js';
+import { withFeaturedMoonlightGatherings } from '../../lib/moonlight-gathering-001.js';
 
 function todayKeyIfInMonth(year, month) {
   const today = getHongKongDateString();
@@ -145,6 +146,11 @@ export default function GatheringsIndexPage() {
     );
   }
 
+  const calendarGatherings = useMemo(
+    () => withFeaturedMoonlightGatherings(gatherings, year, month),
+    [gatherings, year, month],
+  );
+
   return (
     <>
       <SeoHead
@@ -179,7 +185,7 @@ export default function GatheringsIndexPage() {
         <GatheringMonthCalendar
           year={year}
           month={month}
-          gatherings={gatherings}
+          gatherings={calendarGatherings}
           selectedDate={selectedDate}
           onSelectDate={handleSelectDate}
           onMonthChange={handleMonthChange}

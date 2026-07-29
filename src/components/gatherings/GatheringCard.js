@@ -33,9 +33,10 @@ export default function GatheringCard({ gathering, past = false }) {
 
   return (
     <Link
-      href={`/gatherings/${gathering.id}`}
+      href={gathering.href || `/gatherings/${gathering.id}`}
       className={[
         'gathering-card',
+        gathering.featured ? 'gathering-card--featured' : '',
         gathering.status === 'cancelled' ? 'gathering-card--cancelled' : '',
         isPast ? 'gathering-card--past' : '',
         ongoing ? 'gathering-card--ongoing' : '',
@@ -44,6 +45,11 @@ export default function GatheringCard({ gathering, past = false }) {
       <div className="gathering-card__glow" aria-hidden="true" />
       <div className="gathering-card__top">
         <div className="gathering-card__top-start">
+          {gathering.featured && (
+            <span className="gathering-card__badge gathering-card__badge--featured">
+              {gathering.featured_label || '官方'}
+            </span>
+          )}
           <span className={`gathering-card__badge gathering-card__badge--${gathering.is_online ? 'online' : 'offline'}`}>
             {gathering.is_online ? '線上' : '線下'}
           </span>

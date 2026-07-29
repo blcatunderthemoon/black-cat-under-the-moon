@@ -1,9 +1,10 @@
 /**
- * Random Cantonese icebreaker draw + confirm-before-send for 月光低語.
+ * Random Cantonese icebreaker draw + edit-before-confirm for 月光低語.
  */
 
 import { useState } from 'react';
 import { pickRandomWhisperOpener } from '../lib/inbox-match-whisper.js';
+import { INBOX_MESSAGE_MAX_LENGTH } from '../lib/inbox-limits.js';
 import { ForumSparkleIcon } from './UiIcons.js';
 
 export default function MatchWhisperOpeners({
@@ -12,6 +13,7 @@ export default function MatchWhisperOpeners({
   onPick,
 }) {
   const [drawn, setDrawn] = useState(null);
+  const [draftText, setDraftText] = useState('');
   const [spinning, setSpinning] = useState(false);
 
   if (!visible) return null;
@@ -20,15 +22,29 @@ export default function MatchWhisperOpeners({
     if (disabled || spinning) return;
     setSpinning(true);
     window.setTimeout(() => {
-      setDrawn(pickRandomWhisperOpener(drawn?.id || null));
+      const next = pickRandomWhisperOpener(drawn?.id || null);
+      setDrawn(next);
+      setDraftText(next?.text || '');
       setSpinning(false);
     }, 220);
   }
 
+  function handleUse() {
+    const text = String(draftText || '').trim();
+    if (!text || disabled) return;
+    onPick?.({
+      id: drawn?.id || null,
+      label: drawn?.label || null,
+      text,
+    });
+  }
+
+  const canUse = Boolean(String(draftText || '').trim()) && !disabled;
+
   return (
     <div className="match-whisper-openers" role="group" aria-label="隨機開場白">
       <p className="match-whisper-openers__lead">
-        唔知點開波？可以隨機抽一句輕鬆／搞笑廣東話開場白——確認後先寄，唔會自動 send。
+        唔知點開波？可以隨機抽一句開場白，改好內容後再確認寄出（唔會自動 send）。
       </p>
 
       <button
@@ -44,14 +60,30 @@ export default function MatchWhisperOpeners({
       </button>
 
       {drawn && (
-        <div className="match-whisper-openers__result" aria-live="polite">
+        <div className="match-whisper-openers__result">
           <p className="match-whisper-openers__result-tag">{drawn.label}</p>
-          <p className="match-whisper-openers__result-text">{drawn.text}</p>
+          <label className="match-whisper-openers__edit">
+            <span className="match-whisper-openers__edit-label">可改內容</span>
+            <textarea
+              className="match-whisper-openers__textarea"
+              value={draftText}
+              onChange={(e) => setDraftText(e.target.value.slice(0, INBOX_MESSAGE_MAX_LENGTH))}
+              maxLength={INBOX_MESSAGE_MAX_LENGTH}
+              rows={3}
+              disabled={disabled}
+              aria-label="開場白內容"
+            />
+            <span className="match-whisper-openers__count">
+              {draftText.length}
+              /
+              {INBOX_MESSAGE_MAX_LENGTH}
+            </span>
+          </label>
           <button
             type="button"
             className="match-whisper-openers__use pixel-btn pixel-btn--primary"
-            disabled={disabled}
-            onClick={() => onPick?.(drawn)}
+            disabled={!canUse}
+            onClick={handleUse}
           >
             用呢句（會再確認）
           </button>

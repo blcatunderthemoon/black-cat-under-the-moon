@@ -118,11 +118,14 @@ export default function GatheringMonthCalendar({
           const liveCount = dayList.filter((g) => !isGatheringPastEvent(g) && g.status !== 'cancelled').length;
           const pastCount = dayList.filter((g) => isGatheringPastEvent(g) && g.status !== 'cancelled').length;
           const activeCount = liveCount + pastCount;
+          const featured = dayList.find((g) => g.featured);
           const selected = selectedDate === cell.dateKey;
           const markerPastOnly = pastCount > 0 && liveCount === 0;
-          const markerTip = markerPastOnly
-            ? '已結束'
-            : (liveCount > 0 && pastCount > 0 ? '進行中 · 已結束' : '進行中');
+          const markerTip = featured
+            ? `${featured.title}${featured.seats_left != null ? ` · 仲有 ${featured.seats_left} 個位` : ''}`
+            : (markerPastOnly
+              ? '已結束'
+              : (liveCount > 0 && pastCount > 0 ? '進行中 · 已結束' : '進行中'));
           return (
             <button
               key={cell.dateKey + (cell.inMonth ? '' : '-out')}
@@ -137,13 +140,19 @@ export default function GatheringMonthCalendar({
                 activeCount > 0 ? 'has-events' : '',
                 markerPastOnly ? 'has-events--past' : '',
                 liveCount > 0 ? 'has-events--live' : '',
+                featured ? 'has-featured' : '',
                 selected ? 'is-selected' : '',
               ].filter(Boolean).join(' ')}
-              aria-label={`${cell.dateKey}${liveCount ? `，${liveCount} 場進行中` : ''}${pastCount ? `，${pastCount} 場已結束` : ''}`}
+              aria-label={`${cell.dateKey}${featured ? `，${featured.title}` : ''}${liveCount ? `，${liveCount} 場進行中` : ''}${pastCount ? `，${pastCount} 場已結束` : ''}`}
               aria-pressed={selected}
               onClick={() => cell.inMonth && onSelectDate?.(cell.dateKey)}
             >
               <span className="gathering-cal__day-num">{cell.day}</span>
+              {featured && (
+                <span className="gathering-cal__day-chip" aria-hidden="true">
+                  {featured.featured_label || '官方局'}
+                </span>
+              )}
               {activeCount > 0 && (
                 <span
                   className={`gathering-cal__marker${markerPastOnly ? ' is-past' : ''}`}

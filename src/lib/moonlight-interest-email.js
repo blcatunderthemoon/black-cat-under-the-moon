@@ -183,7 +183,6 @@ export function buildMoonlightApplicationAckHtml(opts = {}) {
   <div style="background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:16px 18px;margin-bottom:20px;font-size:14px;line-height:1.9;color:#e8e0d0;">
     當報名人數達一定數量、可以成團時，我哋會再用電郵／Telegram 聯絡你，並邀請你加入
     <strong style="color:#00e5ff;">TG group</strong>。
-    暫時唔使做其他嘢，安心等我哋消息就得。
   </div>
 
   <div style="font-size:14px;line-height:1.9;color:#e8e0d0;margin-bottom:22px;">
@@ -218,7 +217,6 @@ export function buildMoonlightApplicationAckText(opts = {}) {
     '名額有限，會以先到先得安排。',
     '',
     '當報名人數達一定數量、可以成團時，我哋會再用電郵／Telegram 聯絡你，並邀請你加入 TG group。',
-    '暫時唔使做其他嘢，安心等我哋消息就得。',
     '',
     '如有疑問，歡迎直接回覆呢封電郵。謝謝你願意一齊嚟月下認識新朋友。',
     '',

@@ -594,6 +594,18 @@
   color: var(--gathering-moon);
 }
 
+.gathering-card__badge--featured {
+  border-color: rgba(255, 224, 102, 0.65);
+  background: rgba(255, 208, 96, 0.18);
+  color: var(--gathering-accent);
+  font-weight: 700;
+}
+
+.gathering-card--featured {
+  border-color: rgba(255, 224, 102, 0.45);
+  box-shadow: 0 0 0 1px rgba(255, 224, 102, 0.12), 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+
 .gathering-card__status--open {
   border-color: rgba(80, 200, 120, 0.75);
   background: rgba(60, 190, 110, 0.85);
@@ -2536,6 +2548,25 @@
   background: rgba(255, 224, 102, 0.08);
   border-color: rgba(255, 224, 102, 0.32);
   opacity: 1;
+}
+
+.gathering-cal__day.has-featured {
+  background: rgba(255, 208, 96, 0.12);
+  border-color: rgba(255, 224, 102, 0.42);
+}
+
+.gathering-cal__day-chip {
+  display: block;
+  margin-top: 0.12rem;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.55rem;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  color: var(--gathering-accent, #ffe066);
+  opacity: 0.92;
 }
 
 /* Past-only event days = cool muted moon, no glow pulse */

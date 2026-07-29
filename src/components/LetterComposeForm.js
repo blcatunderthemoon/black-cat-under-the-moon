@@ -41,6 +41,7 @@ export default function LetterComposeForm({
   compact = false,
   channelRemaining = null,
   channelMax = null,
+  statusVariant = 'channel',
   letterPrefs = null,
   onLetterPrefsChange,
   showGameplay = false,
@@ -50,6 +51,7 @@ export default function LetterComposeForm({
   const compactClass = compact ? ' letter-compose--compact' : '';
   const roundsMax = channelMax ?? CHANNEL_MAX_ROUND_TRIPS;
   const channelOpen = channelRemaining != null && channelRemaining > 0;
+  const isWhisperStatus = statusVariant === 'whisper';
   const prefs = letterPrefs || { ...DEFAULT_LETTER_PREFS, unlocked_stamps: ['cat_paw'] };
   const stamp = getStampById(prefs.stamp_id);
   const paperClass = notePaperClassName(prefs.note_color, prefs.note_font);
@@ -164,10 +166,11 @@ export default function LetterComposeForm({
           <div className="letter-compose__hint-wrap">
             <ChannelStatusLine
               text={hint}
-              channelOpen={channelOpen}
+              channelOpen={channelOpen || isWhisperStatus}
               remaining={channelRemaining}
-              max={roundsMax}
+              max={isWhisperStatus ? (channelMax ?? roundsMax) : roundsMax}
               align="center"
+              variant={statusVariant}
             />
           </div>
         )}

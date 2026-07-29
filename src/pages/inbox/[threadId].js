@@ -21,6 +21,7 @@ import {
 } from '../../lib/inbox-channel.js';
 import {
   WHISPER_COMPOSE_PLACEHOLDER,
+  MATCH_WHISPER_MAX_MESSAGES,
 } from '../../lib/inbox-match-whisper.js';
 import { captureProductEvent, MATCH_WHISPER_EVENTS } from '../../lib/product-analytics.js';
 import { MOONLIGHT_PASSPORT_BRAND } from '../../lib/premium.js';
@@ -359,8 +360,13 @@ export default function ThreadPage() {
           sending={sending}
           error={sendError}
           maxLength={INBOX_MESSAGE_MAX_LENGTH}
-          channelRemaining={isMatchWhisper ? null : data?.channel_round_trips_remaining}
-          channelMax={isMatchWhisper ? null : CHANNEL_MAX_ROUND_TRIPS}
+          channelRemaining={isMatchWhisper
+            ? (data?.whisper_messages_remaining ?? data?.channel_round_trips_remaining)
+            : data?.channel_round_trips_remaining}
+          channelMax={isMatchWhisper
+            ? (data?.whisper_messages_max || MATCH_WHISPER_MAX_MESSAGES)
+            : CHANNEL_MAX_ROUND_TRIPS}
+          statusVariant={isMatchWhisper ? 'whisper' : 'channel'}
           letterPrefs={letterPrefs}
           onLetterPrefsChange={saveLetterPrefs}
           showGameplay
