@@ -874,12 +874,4 @@
   } else {
     init();
   }
-
-  (function loadSitePresenceHeartbeat() {
-    if (window.__BCUTM_SITE_PRESENCE_HEARTBEAT) return;
-    var s = document.createElement('script');
-    s.src = '/js/site-presence-heartbeat.js?v=20260709a';
-    s.async = true;
-    document.head.appendChild(s);
-  })();
 })();

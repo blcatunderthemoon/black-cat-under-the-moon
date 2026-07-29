@@ -47,20 +47,9 @@
 </head>
 <body data-analytics-surface="static" data-analytics-page="home">
 
-<!-- Unified home top bar: presence (left) + auth (right) -->
+<!-- Unified home top bar: auth (right) -->
 <div class="mode-top-bar mode-top-bar--index">
   <div class="mode-top-bar__row mode-top-bar__row--home">
-    <aside class="site-presence site-presence--header" id="site-presence" hidden aria-live="polite" aria-label="月下在線人數">
-      <span class="site-presence__sigil" aria-hidden="true">🌙</span>
-      <span class="site-presence__content">
-        <span class="site-presence__eyebrow">月下同在</span>
-        <span class="site-presence__line">
-          <span class="site-presence__count" data-presence-count>0</span>
-          <span class="site-presence__label">位旅人在線上</span>
-          <span class="site-presence__dot" aria-hidden="true"></span>
-        </span>
-      </span>
-    </aside>
     <div class="mode-top-bar__header-end">
       <p class="welcome-greeting" id="welcome-greeting" hidden aria-live="polite"></p>
       <div class="mode-top-bar__nav-slot"></div>
@@ -406,11 +395,9 @@
 
 <script src="/js/home-carousel.js?v=20260726countchip"></script>
 <script src="/js/welcome-mascot.js?v=20260725rarecat"></script>
-<script src="/js/site-presence-heartbeat.js?v=20260709a"></script>
-<script src="/js/site-presence.js?v=20260725gate"></script>
 <script src="/js/live-activity.js?v=20260725liveicons"></script>
 <script src="/js/me-cache.js?v=20260725presence"></script>
-<script src="/js/auth-nav.js?v=20260726fullhdr"></script>
+<script src="/js/auth-nav.js?v=20260729nopresence"></script>
 
 </body>
 </html>

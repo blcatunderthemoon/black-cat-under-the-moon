@@ -202,7 +202,6 @@ export default function App({ Component, pageProps }) {
       {!isDashboard && (
         <Script src="/js/mobile-document-scroll.js?v=20260710a" strategy="afterInteractive" />
       )}
-      <Script src="/js/site-presence-heartbeat.js?v=20260709a" strategy="afterInteractive" />
       <AppErrorBoundary>
       {isDashboard ? (
         <DashboardAuthGate>
