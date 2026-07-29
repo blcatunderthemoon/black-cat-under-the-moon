@@ -124,7 +124,7 @@ export default function MoonlightApplicationAckPanel({ variant = 'card' }) {
         (c) => !sentEmails.has(String(c.email || '').toLowerCase()),
       );
       setCandidates(list);
-      setSelectedIds(list.slice(0, SEND_CHUNK).map((c) => c.id));
+      setSelectedIds(list.slice(0, SEND_CHUNK).map((c) => String(c.id)));
       const hidden = (data.candidates || []).length - list.length;
       setDraftMsg(
         `搵到 ${list.length} 位可寄申請人`
@@ -151,13 +151,13 @@ export default function MoonlightApplicationAckPanel({ variant = 'card' }) {
     }
     setDraftBusy(true);
     try {
-      const chunk = selectedIds.slice(0, DRAFT_CHUNK);
+      const chunk = selectedIds.slice(0, DRAFT_CHUNK).map(String);
       const data = await adminAckFetch({
         action: 'create_batch',
         application_ids: chunk,
       });
-      const doneIds = new Set((data.results || []).filter((r) => r.saved).map((r) => r.id));
-      setSelectedIds((prev) => prev.filter((id) => !doneIds.has(id)));
+      const doneIds = new Set((data.results || []).filter((r) => r.saved).map((r) => String(r.id)));
+      setSelectedIds((prev) => prev.filter((id) => !doneIds.has(String(id))));
       setDraftMsg(data.message || `已建立 ${doneIds.size} 封草稿。`);
     } catch (err) {
       setDraftErr(err.message || '建立草稿失敗');
@@ -174,7 +174,7 @@ export default function MoonlightApplicationAckPanel({ variant = 'card' }) {
       setDraftErr('請至少揀一位申請人。');
       return;
     }
-    const chunk = selectedIds.slice(0, SEND_CHUNK);
+    const chunk = selectedIds.slice(0, SEND_CHUNK).map(String);
     const ok = window.confirm(
       `將真正發送 ${chunk.length} 封「已收到申請」電郵（每封間隔約 2 秒）。\n\n確定發送今批？`,
     );
@@ -255,15 +255,15 @@ export default function MoonlightApplicationAckPanel({ variant = 'card' }) {
   }
 
   function toggleCandidate(id) {
-    setSelectedIds((prev) => toggleInList(prev, id));
+    setSelectedIds((prev) => toggleInList(prev, String(id)));
   }
 
   function selectNextBatch() {
-    setSelectedIds(visibleCandidates.slice(0, SEND_CHUNK).map((c) => c.id));
+    setSelectedIds(visibleCandidates.slice(0, SEND_CHUNK).map((c) => String(c.id)));
   }
 
   function selectAllCandidates() {
-    setSelectedIds(visibleCandidates.map((c) => c.id));
+    setSelectedIds(visibleCandidates.map((c) => String(c.id)));
   }
 
   function clearCandidateSelection() {
@@ -328,10 +328,10 @@ export default function MoonlightApplicationAckPanel({ variant = 'card' }) {
           <ul className="mi-admin-candidates__list">
             {visibleCandidates.map((c) => (
               <li key={c.id}>
-                <label className={`mi-choice${selectedIds.includes(c.id) ? ' is-selected' : ''}`}>
+                <label className={`mi-choice${selectedIds.includes(String(c.id)) ? ' is-selected' : ''}`}>
                   <input
                     type="checkbox"
-                    checked={selectedIds.includes(c.id)}
+                    checked={selectedIds.includes(String(c.id))}
                     onChange={() => toggleCandidate(c.id)}
                   />
                   <span className="mi-admin-candidates__meta">

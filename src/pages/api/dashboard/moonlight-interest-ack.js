@@ -53,7 +53,12 @@ function parseIdList(body) {
     : Array.isArray(body.response_ids)
       ? body.response_ids
       : [];
-  return [...new Set(raw.map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0))];
+  // moonlight_interest.id is UUID; keep string ids (also accept numeric if ever used).
+  return [...new Set(
+    raw
+      .map((id) => String(id ?? '').trim())
+      .filter((id) => id.length > 0 && id !== 'NaN'),
+  )];
 }
 
 /**
@@ -142,13 +147,13 @@ async function resolveApplicantsByIds(ids) {
     (rows || []).map((r) => r.user_id).filter(Boolean),
   );
 
-  const byId = new Map((rows || []).map((r) => [Number(r.id), r]));
+  const byId = new Map((rows || []).map((r) => [String(r.id), r]));
   const skipped = [];
   const ordered = [];
   const seenEmail = new Set();
 
   for (const id of ids) {
-    const row = byId.get(id);
+    const row = byId.get(String(id));
     if (!row) {
       skipped.push({ id, reason: 'not_found' });
       continue;
