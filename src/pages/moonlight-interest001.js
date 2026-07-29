@@ -12,6 +12,7 @@ import AppShell from '../components/AppShell.js';
 import AppHeaderAuth from '../components/AppHeaderAuth.js';
 import SeoHead from '../components/SeoHead.js';
 import MoonlightInviteEmailPanel from '../components/admin/MoonlightInviteEmailPanel.js';
+import MoonlightApplicationAckPanel from '../components/admin/MoonlightApplicationAckPanel.js';
 import {
   ForumClockIcon,
   ForumGamepadIcon,
@@ -534,7 +535,12 @@ export default function MoonlightInterest001Page() {
             提交參加表後，我哋會加你入 TG group。名額有限（12 人），以確認為準。
           </p>
 
-          {isAdmin && <MoonlightInviteEmailPanel />}
+          {isAdmin && (
+            <>
+              <MoonlightApplicationAckPanel />
+              <MoonlightInviteEmailPanel />
+            </>
+          )}
         </article>
       </AppShell>
     </>

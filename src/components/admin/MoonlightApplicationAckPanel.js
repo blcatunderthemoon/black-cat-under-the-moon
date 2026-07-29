@@ -278,14 +278,14 @@ export default function MoonlightApplicationAckPanel({ variant = 'card' }) {
     <section className={shellClass} aria-labelledby="mi-admin-ack-title">
       <h2 id="mi-admin-ack-title" className={variant === 'card' ? 'mi-card__title' : 'mi-admin-draft__title'}>
         <HeaderMailIcon size={15} />
-        申請確認信 · Draft / Send
+        Thank you 確認信 · Draft / Send
       </h2>
       <p className="mi-hint">
         寄俾已填
         {' '}
         <strong>參加表</strong>
         {' '}
-        嘅人：已收到申請；達一定人數會邀請入 TG group；名額先到先得。
+        嘅人（感謝／已收到申請）：達一定人數會邀請入 TG group；名額先到先得。
         每批最多 {SEND_CHUNK} 封；
         {' '}
         <strong>conduct_score = 0</strong>

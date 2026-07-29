@@ -1,17 +1,17 @@
 /**
  * POST /api/dashboard/moonlight-interest-ack
  *
- * Admin: draft / send "application received" emails to moonlight_interest rows.
+ * Admin tools for Moonlight Gathering #001 "application received" thank-you emails
+ * (moonlight_interest participation form applicants).
  *
  * Body.action:
- *   preview      — list applicants with email (deduped)
+ *   preview      — list interested applicants (skip conduct_score = 0 when linked)
  *   create_batch — Gmail drafts (max 20)
  *   send_batch   — SMTP send (max 8, ~2s apart)
- *   send_one     — SMTP one test email
- *   create_one   — one Gmail draft
+ *   send_one     — one manual test send
+ *   create_one   — one manual draft
  *
  * Auth: station dashboard key OR forum admin Bearer.
- * Skips linked profiles with conduct_score === 0.
  */
 
 import { authorizeStationOrForumAdmin } from '../../../lib/station-or-forum-admin-auth.js';
@@ -48,96 +48,100 @@ function normalizeEmail(email) {
 }
 
 function parseIdList(body) {
-  return Array.isArray(body.application_ids)
-    ? [...new Set(body.application_ids.map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0))]
-    : [];
+  const raw = Array.isArray(body.application_ids)
+    ? body.application_ids
+    : Array.isArray(body.response_ids)
+      ? body.response_ids
+      : [];
+  return [...new Set(raw.map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0))];
 }
 
-async function loadBlockedEmailsByConduct(admin, rows) {
-  const userIds = [...new Set(
-    (rows || [])
-      .map((r) => r.user_id)
-      .filter((id) => typeof id === 'string' && id.length > 0),
-  )];
-  if (!userIds.length) return new Set();
+/**
+ * Latest row wins per email. Prefer interest=interested.
+ */
+function dedupeApplicants(rows) {
+  const byEmail = new Map();
+  for (const row of rows || []) {
+    const email = normalizeEmail(row.email);
+    if (!email || !EMAIL_RE.test(email)) continue;
+    const prev = byEmail.get(email);
+    if (!prev || String(row.created_at || '') > String(prev.created_at || '')) {
+      byEmail.set(email, row);
+    }
+  }
+  return [...byEmail.values()].sort((a, b) => (
+    String(b.created_at || '').localeCompare(String(a.created_at || ''))
+  ));
+}
 
+async function loadConductBlockedUserIds(admin, userIds) {
+  const ids = [...new Set((userIds || []).filter(Boolean))];
+  if (!ids.length) return new Set();
   const { data, error } = await admin
     .from('profiles')
     .select('id, conduct_score')
-    .in('id', userIds);
+    .in('id', ids);
   if (error) {
     console.error('[moonlight-interest-ack] conduct lookup failed:', error.message);
     return new Set();
   }
-
-  const blockedUserIds = new Set(
+  return new Set(
     (data || [])
-      .filter((p) => p.conduct_score != null && Number(p.conduct_score) === 0)
+      .filter((p) => Number(p.conduct_score) === 0)
       .map((p) => p.id),
   );
-  if (!blockedUserIds.size) return new Set();
-
-  const blockedEmails = new Set();
-  for (const row of rows || []) {
-    if (!blockedUserIds.has(row.user_id)) continue;
-    const email = normalizeEmail(row.email);
-    if (email) blockedEmails.add(email);
-  }
-  return blockedEmails;
 }
 
-function dedupeApplicants(rows, blockedEmails) {
-  const byEmail = new Map();
-  const skippedConduct = [];
-  for (const row of rows || []) {
-    const email = normalizeEmail(row.email);
-    if (!email || !EMAIL_RE.test(email)) continue;
-    if (blockedEmails.has(email)) {
-      skippedConduct.push({ id: Number(row.id), email, reason: 'conduct_score_0' });
-      continue;
-    }
-    const prev = byEmail.get(email);
-    const id = Number(row.id);
-    if (!prev || id > prev.id) {
-      byEmail.set(email, {
-        id,
-        email,
-        name: row.display_name || null,
-        telegram: row.telegram_username || null,
-        created_at: row.created_at || null,
-      });
-    }
-  }
-  return {
-    candidates: [...byEmail.values()].sort((a, b) => b.id - a.id),
-    skippedConduct,
-  };
-}
-
-async function loadApplicants() {
+async function loadApplicantsPreview() {
   const admin = getAdminClient();
   const { data, error } = await fetchAllRows(() => admin
     .from('moonlight_interest')
-    .select('id, email, display_name, telegram_username, user_id, created_at')
+    .select('id, email, display_name, telegram_username, interest, user_id, created_at')
+    .eq('interest', 'interested')
     .not('email', 'is', null)
     .neq('email', '')
-    .order('id', { ascending: false }));
-  if (error) return { error, candidates: [], skippedConduct: [] };
+    .order('created_at', { ascending: false }));
 
-  const blockedEmails = await loadBlockedEmailsByConduct(admin, data || []);
-  const { candidates, skippedConduct } = dedupeApplicants(data || [], blockedEmails);
-  return { error: null, candidates, skippedConduct };
+  if (error) return { error, candidates: [], skipped_conduct_count: 0 };
+
+  const deduped = dedupeApplicants(data);
+  const blocked = await loadConductBlockedUserIds(
+    admin,
+    deduped.map((r) => r.user_id).filter(Boolean),
+  );
+
+  let skippedConduct = 0;
+  const candidates = [];
+  for (const row of deduped) {
+    if (row.user_id && blocked.has(row.user_id)) {
+      skippedConduct += 1;
+      continue;
+    }
+    candidates.push({
+      id: row.id,
+      name: row.display_name || null,
+      email: normalizeEmail(row.email),
+      telegram: row.telegram_username || null,
+      created_at: row.created_at,
+    });
+  }
+
+  return { error: null, candidates, skipped_conduct_count: skippedConduct };
 }
 
 async function resolveApplicantsByIds(ids) {
   const admin = getAdminClient();
   const { data: rows, error } = await admin
     .from('moonlight_interest')
-    .select('id, email, display_name, telegram_username, user_id, created_at')
+    .select('id, email, display_name, telegram_username, interest, user_id, created_at')
     .in('id', ids);
   if (error) return { error, recipients: [], skipped: [] };
 
-  const blockedEmails = await loadBlockedEmailsByConduct(admin, rows || []);
+  const blocked = await loadConductBlockedUserIds(
+    admin,
+    (rows || []).map((r) => r.user_id).filter(Boolean),
+  );
+
   const byId = new Map((rows || []).map((r) => [Number(r.id), r]));
   const skipped = [];
   const ordered = [];
@@ -149,13 +153,17 @@ async function resolveApplicantsByIds(ids) {
       skipped.push({ id, reason: 'not_found' });
       continue;
     }
+    if (row.interest !== 'interested') {
+      skipped.push({ id, reason: 'not_interested' });
+      continue;
+    }
+    if (row.user_id && blocked.has(row.user_id)) {
+      skipped.push({ id, reason: 'conduct_zero' });
+      continue;
+    }
     const email = normalizeEmail(row.email);
     if (!email || !EMAIL_RE.test(email)) {
       skipped.push({ id, reason: 'no_email' });
-      continue;
-    }
-    if (blockedEmails.has(email)) {
-      skipped.push({ id, email, reason: 'conduct_score_0' });
       continue;
     }
     if (seenEmail.has(email)) {
@@ -190,17 +198,21 @@ export default async function handler(req, res) {
   const action = typeof body.action === 'string' ? body.action.trim() : 'create_one';
 
   if (action === 'preview') {
-    const { error, candidates, skippedConduct } = await loadApplicants();
+    const { error, candidates, skipped_conduct_count } = await loadApplicantsPreview();
     if (error) {
       console.error('[moonlight-interest-ack] preview failed:', error.message);
-      return res.status(500).json({ error: '無法讀取參加表申請。' });
+      const missing = /relation|does not exist|schema cache/i.test(error.message || '');
+      return res.status(missing ? 503 : 500).json({
+        error: missing
+          ? 'moonlight_interest 表尚未建立，請先執行 migration。'
+          : '無法讀取參加表申請人。',
+      });
     }
     return res.status(200).json({
       success: true,
       count: candidates.length,
       candidates,
-      skipped_conduct_count: skippedConduct.length,
-      skipped_conduct: skippedConduct.slice(0, 50),
+      skipped_conduct_count,
     });
   }
 
@@ -226,10 +238,10 @@ export default async function handler(req, res) {
     const { error, recipients, skipped } = await resolveApplicantsByIds(ids);
     if (error) {
       console.error('[moonlight-interest-ack] batch load failed:', error.message);
-      return res.status(500).json({ error: '無法讀取選定嘅申請。' });
+      return res.status(500).json({ error: '無法讀取選定嘅申請人。' });
     }
     if (!recipients.length) {
-      return res.status(400).json({ error: '選定嘅人冇有效電郵（或 conduct_score=0 已略過）。' });
+      return res.status(400).json({ error: '選定嘅人冇有效電郵（或已被 conduct 略過）。' });
     }
 
     const results = [];
@@ -238,7 +250,12 @@ export default async function handler(req, res) {
     for (const person of recipients) {
       const html = buildMoonlightApplicationAckHtml({ recipientName: person.name || undefined });
       const text = buildMoonlightApplicationAckText({ recipientName: person.name || undefined });
-      const result = await appendGmailDraft({ to: person.email, subject, html, text });
+      const result = await appendGmailDraft({
+        to: person.email,
+        subject,
+        html,
+        text,
+      });
       if (result.ok) {
         results.push({ id: person.id, email: person.email, saved: true });
         saved += 1;
@@ -251,14 +268,15 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       sent: false,
-      mode: 'application_ack_drafts',
+      mode: 'individual_drafts',
       saved,
       failed,
       skipped_count: skipped.length,
       skipped,
+      max_batch: MAX_DRAFT_BATCH,
       results,
       message:
-        `已建立 ${saved} 封「已收到申請」草稿`
+        `已建立 ${saved} 封「已收到申請」Gmail 草稿（未發送）`
         + `${failed ? `，失敗 ${failed}` : ''}`
         + `${skipped.length ? `，略過 ${skipped.length}` : ''}。`,
     });
@@ -286,10 +304,10 @@ export default async function handler(req, res) {
     const { error, recipients, skipped } = await resolveApplicantsByIds(ids);
     if (error) {
       console.error('[moonlight-interest-ack] send load failed:', error.message);
-      return res.status(500).json({ error: '無法讀取選定嘅申請。' });
+      return res.status(500).json({ error: '無法讀取選定嘅申請人。' });
     }
     if (!recipients.length) {
-      return res.status(400).json({ error: '選定嘅人冇有效電郵（或 conduct_score=0 已略過）。' });
+      return res.status(400).json({ error: '選定嘅人冇有效電郵（或已被 conduct 略過）。' });
     }
 
     const from = `"Black Cat Under The Moon" <${process.env.GMAIL_USER}>`;
@@ -322,19 +340,19 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       sent: true,
-      mode: 'application_ack_send',
+      mode: 'individual_send',
       sent_count: sentCount,
       failed,
       skipped_count: skipped.length,
       skipped,
       delay_ms: SEND_DELAY_MS,
       max_batch: MAX_SEND_BATCH,
+      processed_ids: results.filter((r) => r.sent).map((r) => r.id),
       results,
       message:
-        `已發送 ${sentCount} 封「已收到申請」電郵`
+        `已發送 ${sentCount} 封「已收到申請／感謝」電郵（每封間隔約 ${SEND_DELAY_MS / 1000} 秒）`
         + `${failed ? `，失敗 ${failed}` : ''}`
-        + `${skipped.length ? `，略過 ${skipped.length}` : ''}。`
-        + ' 若仲有人，請隔 1–2 分鐘再撳下一批。',
+        + `${skipped.length ? `，略過 ${skipped.length}` : ''}。`,
     });
   }
 
@@ -366,17 +384,17 @@ export default async function handler(req, res) {
       console.error('[moonlight-interest-ack] send_one failed:', to, err.message);
       return res.status(502).json({
         error: err.message || '測試發送失敗',
-        hint: '常見原因：Gmail 發送配額／App Password／SMTP 被擋。',
+        hint: '常見原因：Gmail 發送配額／App Password／SMTP 被擋。可隔幾分鐘再試。',
       });
     }
 
     return res.status(200).json({
       success: true,
       sent: true,
-      mode: 'application_ack_send_one',
+      mode: 'manual_send_one',
       to,
       subject,
-      message: `已真正發送「已收到申請」測試電郵至 ${to}。`,
+      message: `已真正發送「已收到申請／感謝」測試電郵至 ${to}。請檢查收件箱／垃圾郵件。`,
     });
   }
 
@@ -384,7 +402,7 @@ export default async function handler(req, res) {
   const to = typeof body.to === 'string' ? body.to.trim().toLowerCase() : '';
   const recipientName = typeof body.recipient_name === 'string' ? body.recipient_name.trim() : '';
   if (to && !EMAIL_RE.test(to)) {
-    return res.status(400).json({ error: '請輸入有效電郵（或留空）。' });
+    return res.status(400).json({ error: '請輸入有效電郵（或留空，之後喺 Gmail 草稿自行填收件人）。' });
   }
   if (recipientName.length > MAX_NAME) {
     return res.status(400).json({ error: `稱呼不能超過 ${MAX_NAME} 字。` });
@@ -413,7 +431,7 @@ export default async function handler(req, res) {
     subject,
     to: to || null,
     message: to
-      ? `已存入「已收到申請」Gmail 草稿（收件人：${to}）。`
-      : '已存入「已收到申請」Gmail 草稿（收件人留空）。',
+      ? `已存入「已收到申請／感謝」Gmail 草稿（收件人：${to}）。未發送。`
+      : '已存入「已收到申請／感謝」Gmail 草稿（收件人留空）。未發送。',
   });
 }
