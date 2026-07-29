@@ -142,3 +142,86 @@ export function buildMoonlightInterestEmailText(opts = {}) {
     'Black Cat Under The Moon · blcatunderthemoon@gmail.com',
   ].join('\n');
 }
+
+export function buildMoonlightApplicationAckSubject() {
+  return 'Moonlight Gathering #001｜已收到你嘅參加申請 · Black Cat Under The Moon';
+}
+
+/**
+ * Application-received acknowledgment (after participation form submit).
+ * @param {{ recipientName?: string }} [opts]
+ */
+export function buildMoonlightApplicationAckHtml(opts = {}) {
+  const name = typeof opts.recipientName === 'string' ? opts.recipientName.trim() : '';
+  const greeting = name
+    ? `你好 <strong style="color:#ffe066;">${esc(name)}</strong>，`
+    : '你好，';
+
+  return `
+<div style="background:#07060e;padding:24px 16px;font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;color:#f0ebd8;">
+<div style="max-width:600px;margin:0 auto;background:#12111d;border:2px solid #7c5cfc;border-radius:12px;padding:28px 24px;">
+
+  <div style="text-align:center;margin-bottom:22px;">
+    <div style="font-size:11px;letter-spacing:0.18em;color:#a89cc8;text-transform:uppercase;margin-bottom:8px;">Black Cat Under The Moon</div>
+    <h1 style="margin:0 0 8px;font-size:22px;color:#ffe066;letter-spacing:0.04em;line-height:1.35;">Moonlight Gathering #001</h1>
+    <div style="font-size:13px;color:#a89cc8;line-height:1.7;">已收到你嘅參加申請</div>
+  </div>
+
+  <div style="border-top:1px solid rgba(124,92,252,.25);margin-bottom:20px;"></div>
+
+  <div style="font-size:14px;line-height:1.9;color:#e8e0d0;margin-bottom:18px;">
+    ${greeting}<br>
+    多謝你提交參加申請，我哋已經收到喇。
+  </div>
+
+  <div style="font-size:14px;line-height:1.9;color:#e8e0d0;margin-bottom:18px;">
+    聚會日期係
+    <strong style="color:#ffe066;">2026年9月19日（六）下午 2:00–5:00</strong>，
+    名額有限（約 12 人），會以<strong style="color:#f0ebd8;">先到先得</strong>安排。
+  </div>
+
+  <div style="background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:16px 18px;margin-bottom:20px;font-size:14px;line-height:1.9;color:#e8e0d0;">
+    當報名人數達一定數量、可以成團時，我哋會再用電郵／Telegram 聯絡你，並邀請你加入
+    <strong style="color:#00e5ff;">TG group</strong>。
+    暫時唔使做其他嘢，安心等我哋消息就得。
+  </div>
+
+  <div style="font-size:14px;line-height:1.9;color:#e8e0d0;margin-bottom:22px;">
+    如有疑問，歡迎直接回覆呢封電郵。謝謝你願意一齊嚟月下認識新朋友。
+  </div>
+
+  <div style="border-top:1px solid rgba(124,92,252,.2);margin-bottom:16px;"></div>
+
+  <div style="text-align:center;font-size:11px;color:#46435a;line-height:1.9;">
+    <div>Black Cat Under The Moon · blcatunderthemoon@gmail.com</div>
+  </div>
+
+</div>
+</div>`.trim();
+}
+
+/**
+ * @param {{ recipientName?: string }} [opts]
+ */
+export function buildMoonlightApplicationAckText(opts = {}) {
+  const name = typeof opts.recipientName === 'string' ? opts.recipientName.trim() : '';
+  const greeting = name ? `你好 ${name}，` : '你好，';
+
+  return [
+    'Moonlight Gathering #001｜已收到你嘅參加申請',
+    'Black Cat Under The Moon',
+    '',
+    greeting,
+    '多謝你提交參加申請，我哋已經收到喇。',
+    '',
+    '聚會日期：2026年9月19日（六）下午 2:00–5:00（約 12 人）',
+    '名額有限，會以先到先得安排。',
+    '',
+    '當報名人數達一定數量、可以成團時，我哋會再用電郵／Telegram 聯絡你，並邀請你加入 TG group。',
+    '暫時唔使做其他嘢，安心等我哋消息就得。',
+    '',
+    '如有疑問，歡迎直接回覆呢封電郵。謝謝你願意一齊嚟月下認識新朋友。',
+    '',
+    'Black Cat Under The Moon · blcatunderthemoon@gmail.com',
+  ].join('\n');
+}

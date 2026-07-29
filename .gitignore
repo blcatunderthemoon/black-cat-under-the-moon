@@ -44,6 +44,7 @@ src/pages/api/dashboard/**
 !src/pages/api/dashboard/send-emails.js
 !src/pages/api/dashboard/moonlight-interest.js
 !src/pages/api/dashboard/moonlight-interest-draft.js
+!src/pages/api/dashboard/moonlight-interest-ack.js
 src/components/dashboard/
 !src/components/dashboard/Layout.js
 !src/components/dashboard/Sidebar.js

@@ -12,6 +12,7 @@ import ForumHeaderLogo from '../../components/ForumHeaderLogo.js';
 import ForumAdminNav from '../../components/ForumAdminNav.js';
 import MoonlightInterestPanel from '../../components/admin/MoonlightInterestPanel.js';
 import MoonlightInviteEmailPanel from '../../components/admin/MoonlightInviteEmailPanel.js';
+import MoonlightApplicationAckPanel from '../../components/admin/MoonlightApplicationAckPanel.js';
 import MoonLoading from '../../components/MoonLoading.js';
 import { useAuth } from '../../lib/auth-context.js';
 import { canAdminForum } from '../../lib/forum-roles.js';
@@ -70,7 +71,7 @@ export default function AdminMoonlightInterestPage() {
       <div className="forum-admin-page">
         <header className="forum-admin-page__hero">
           <h1 className="forum-admin-page__title">Moonlight 參加表</h1>
-          <p className="forum-admin-page__subtitle">#001 · 9/19 下午 2:00–5:00 · 邀請電郵 + 報名回覆</p>
+          <p className="forum-admin-page__subtitle">#001 · 9/19 下午 2:00–5:00 · 邀請／申請確認電郵 + 報名回覆</p>
           <Link href="/forum/guardian" className="forum-guardian-page__back">
             <span className="forum-guardian-page__back-icon" aria-hidden="true">←</span>
             返回檢舉佇列
@@ -78,6 +79,9 @@ export default function AdminMoonlightInterestPage() {
         </header>
         <ForumAdminNav />
         <div className="forum-admin-page__workspace forum-admin-page__workspace--wide">
+          <div className="mi-admin-invite-wrap">
+            <MoonlightApplicationAckPanel />
+          </div>
           <div className="mi-admin-invite-wrap">
             <MoonlightInviteEmailPanel />
           </div>
