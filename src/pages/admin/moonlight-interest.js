@@ -11,8 +11,7 @@ import ForumHeaderAuth from '../../components/ForumHeaderAuth.js';
 import ForumHeaderLogo from '../../components/ForumHeaderLogo.js';
 import ForumAdminNav from '../../components/ForumAdminNav.js';
 import MoonlightInterestPanel from '../../components/admin/MoonlightInterestPanel.js';
-import MoonlightInviteEmailPanel from '../../components/admin/MoonlightInviteEmailPanel.js';
-import MoonlightApplicationAckPanel from '../../components/admin/MoonlightApplicationAckPanel.js';
+import MoonlightEmailToolsSwitch from '../../components/admin/MoonlightEmailToolsSwitch.js';
 import MoonLoading from '../../components/MoonLoading.js';
 import { useAuth } from '../../lib/auth-context.js';
 import { canAdminForum } from '../../lib/forum-roles.js';
@@ -80,10 +79,7 @@ export default function AdminMoonlightInterestPage() {
         <ForumAdminNav />
         <div className="forum-admin-page__workspace forum-admin-page__workspace--wide">
           <div className="mi-admin-invite-wrap">
-            <MoonlightApplicationAckPanel />
-          </div>
-          <div className="mi-admin-invite-wrap">
-            <MoonlightInviteEmailPanel />
+            <MoonlightEmailToolsSwitch />
           </div>
           <MoonlightInterestPanel apiFetch={apiFetch} />
         </div>

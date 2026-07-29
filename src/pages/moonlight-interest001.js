@@ -11,8 +11,7 @@ import { PROFILE_QUESTIONS } from '../lib/moonlight-interest-meta.js';
 import AppShell from '../components/AppShell.js';
 import AppHeaderAuth from '../components/AppHeaderAuth.js';
 import SeoHead from '../components/SeoHead.js';
-import MoonlightInviteEmailPanel from '../components/admin/MoonlightInviteEmailPanel.js';
-import MoonlightApplicationAckPanel from '../components/admin/MoonlightApplicationAckPanel.js';
+import MoonlightEmailToolsSwitch from '../components/admin/MoonlightEmailToolsSwitch.js';
 import {
   ForumClockIcon,
   ForumGamepadIcon,
@@ -535,12 +534,7 @@ export default function MoonlightInterest001Page() {
             提交參加表後，我哋會加你入 TG group。名額有限（12 人），以確認為準。
           </p>
 
-          {isAdmin && (
-            <>
-              <MoonlightApplicationAckPanel />
-              <MoonlightInviteEmailPanel />
-            </>
-          )}
+          {isAdmin && <MoonlightEmailToolsSwitch />}
         </article>
       </AppShell>
     </>
