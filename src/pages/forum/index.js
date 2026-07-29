@@ -173,35 +173,6 @@ function EmptyState({ topic, onCompose, canCompose, sort, viewerClanType }) {
   );
 }
 
-function formatMembersDisplay(total) {
-  const n = Number(total) || 0;
-  if (n < 1) return null;
-  if (n < 10) return String(n);
-  const step = n >= 100 ? 10 : 5;
-  return `${Math.floor(n / step) * step}+`;
-}
-
-function GatheringPanel({ membersTotal }) {
-  const membersLabel = formatMembersDisplay(membersTotal);
-
-  return (
-    <aside className="forum-panel forum-panel--stat">
-      <div className="forum-panel__head">
-        <h3 className="forum-panel__title">圍爐黑貓</h3>
-        <p className="forum-panel__hint forum-panel__hint--hot">累積已加入</p>
-      </div>
-      <div className="forum-gathering-count forum-gathering-count--body">
-        {membersLabel || '—'}
-        <span>
-          {membersLabel
-            ? '隻黑貓已加入圍爐'
-            : '歡迎成為第一批圍爐黑貓'}
-        </span>
-      </div>
-    </aside>
-  );
-}
-
 function FeaturedPostsPanel({ featuredPosts }) {
   if (!featuredPosts?.length) return null;
 
@@ -355,6 +326,7 @@ export default function ForumPage() {
   const [matureAcked, setMatureAcked] = useState(false);
   const [storySearch, setStorySearch] = useState('');
   const [storySearchDebounced, setStorySearchDebounced] = useState('');
+  const [showHotPanel, setShowHotPanel] = useState(false);
   const topicRef = useRef(topic);
   const topicsRowRef = useRef(null);
   const initialLoadDoneRef = useRef(false);
@@ -1109,12 +1081,6 @@ export default function ForumPage() {
         }
       >
         <div className="forum-layout">
-          <div className="forum-sidebar forum-sidebar--left">
-            <GatheringPanel
-              membersTotal={meta?.members_total}
-            />
-          </div>
-
           <div className="forum-main">
             <ForumBannerTicker />
 
@@ -1244,20 +1210,22 @@ export default function ForumPage() {
 
             <ForumCommunityActivities
               onRankClick={() => {
-                if (scrollForumHotPanelIntoView()) return;
-                if (topic !== '全部') selectTopic('全部');
-                window.setTimeout(() => scrollForumHotPanelIntoView(), 120);
+                setShowHotPanel(true);
+                window.setTimeout(() => {
+                  if (scrollForumHotPanelIntoView()) return;
+                  if (topic !== '全部') selectTopic('全部');
+                  window.setTimeout(() => scrollForumHotPanelIntoView(), 120);
+                }, 40);
               }}
             />
 
             {topic === '全部' && (
               <>
                 <div className="forum-treehole-panels forum-treehole-panels--mobile">
-                  <GatheringPanel
-                    membersTotal={meta?.members_total}
-                  />
                   <FeaturedPostsPanel featuredPosts={featuredPosts} />
-                  <HotTopicsPanel hotPosts={meta?.hot_posts} sparksMode={meta?.sparks_mode} />
+                  {showHotPanel && (
+                    <HotTopicsPanel hotPosts={meta?.hot_posts} sparksMode={meta?.sparks_mode} />
+                  )}
                 </div>
               </>
             )}
@@ -1481,7 +1449,9 @@ export default function ForumPage() {
 
           <div className="forum-sidebar forum-sidebar--right">
             <FeaturedPostsPanel featuredPosts={featuredPosts} />
-            <HotTopicsPanel hotPosts={meta?.hot_posts} sparksMode={meta?.sparks_mode} />
+            {showHotPanel && (
+              <HotTopicsPanel hotPosts={meta?.hot_posts} sparksMode={meta?.sparks_mode} />
+            )}
           </div>
           <div className="forum-scroll-end" data-scroll-end aria-hidden="true" />
         </div>

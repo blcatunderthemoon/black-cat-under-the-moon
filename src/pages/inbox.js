@@ -281,7 +281,7 @@ export default function InboxPage() {
                   : isGatheringApplicantNotice
                     ? '新申請'
                     : isSystem
-                      ? '通知'
+                      ? '新通知'
                       : 'NEW';
                 const unreadBadgeAria = isMatch
                   ? '新的連線通知'
