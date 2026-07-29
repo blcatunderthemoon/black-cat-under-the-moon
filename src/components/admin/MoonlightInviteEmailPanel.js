@@ -44,7 +44,7 @@ function toggleInList(list, value) {
  */
 export default function MoonlightInviteEmailPanel({ variant = 'card' }) {
   const { session } = useAuth();
-  const [filterIdentities, setFilterIdentities] = useState(['Pure']);
+  const [filterIdentities, setFilterIdentities] = useState(['Pure', 'Bi']);
   const [filterAgeMin, setFilterAgeMin] = useState('23');
   const [filterAgeMax, setFilterAgeMax] = useState('34');
   const [candidates, setCandidates] = useState(null);

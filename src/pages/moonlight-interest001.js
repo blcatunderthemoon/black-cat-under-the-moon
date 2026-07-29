@@ -7,7 +7,11 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../lib/auth-context.js';
 import { canAdminForum } from '../lib/forum-roles.js';
-import { PROFILE_QUESTIONS } from '../lib/moonlight-interest-meta.js';
+import {
+  MOONLIGHT_ELIGIBLE_IDENTITIES,
+  PROFILE_QUESTIONS,
+  isMoonlightEligibleIdentity,
+} from '../lib/moonlight-interest-meta.js';
 import AppShell from '../components/AppShell.js';
 import AppHeaderAuth from '../components/AppHeaderAuth.js';
 import SeoHead from '../components/SeoHead.js';
@@ -34,7 +38,7 @@ const EMPTY_ANSWERS = Object.fromEntries(PROFILE_QUESTIONS.map((q) => [q.key, ''
 const EVENT_META = [
   { icon: HeaderCalendarIcon, label: '日期', value: '2026年9月19日（六）' },
   { icon: ForumClockIcon, label: '時間', value: '下午 2:00–5:00' },
-  { icon: HeaderUserPlusIcon, label: '對象 Label', value: 'Pure' },
+  { icon: HeaderUserPlusIcon, label: '對象 Label', value: 'Pure / Bi' },
   { icon: ForumPawIcon, label: '年齡範圍', value: '23–34 歲' },
   { icon: UiHomeIcon, label: '形式', value: '12 人 · Party Room' },
 ];
@@ -111,6 +115,7 @@ export default function MoonlightInterest001Page() {
   const [email, setEmail] = useState('');
   const [telegram, setTelegram] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [identity, setIdentity] = useState('');
   const [answers, setAnswers] = useState(() => ({ ...EMPTY_ANSWERS }));
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -169,6 +174,10 @@ export default function MoonlightInterest001Page() {
       setError('請填寫稱呼。');
       return;
     }
+    if (!isMoonlightEligibleIdentity(identity)) {
+      setError('今次只開放 Pure / Bi 報名，請選擇你的 Label。');
+      return;
+    }
     for (const q of PROFILE_QUESTIONS) {
       if (!String(answers[q.key] || '').trim()) {
         setError(`請回答：${q.label}`);
@@ -196,6 +205,7 @@ export default function MoonlightInterest001Page() {
           email: email.trim(),
           telegram_username: telegram.trim(),
           display_name: displayName.trim(),
+          identity,
           answers: cleanAnswers,
           message: message.trim() || null,
         }),
@@ -424,7 +434,7 @@ export default function MoonlightInterest001Page() {
                 參加表
               </h2>
               <p className="mi-hint">
-                場次：<strong>9月19日（六）下午 2:00–5:00</strong>。如果有興趣出席，可以填表。
+                場次：<strong>9月19日（六）下午 2:00–5:00</strong>。今次只開放 <strong>Pure / Bi</strong> 報名。
               </p>
 
               <div className="mi-fields">
@@ -474,6 +484,30 @@ export default function MoonlightInterest001Page() {
                   />
                 </label>
               </div>
+
+              <fieldset className="mi-fieldset">
+                <legend className="mi-legend">
+                  你的 Label {!identity && <span className="mi-field__req">必填</span>}
+                </legend>
+                <p className="mi-hint mi-hint--tight">只接受 Pure 或 Bi。</p>
+                <div className="mi-choice-list" role="radiogroup" aria-label="你的 Label">
+                  {MOONLIGHT_ELIGIBLE_IDENTITIES.map((opt) => (
+                    <label
+                      key={opt}
+                      className={`mi-choice${identity === opt ? ' is-selected' : ''}`}
+                    >
+                      <input
+                        type="radio"
+                        name="moonlight-identity"
+                        value={opt}
+                        checked={identity === opt}
+                        onChange={() => setIdentity(opt)}
+                      />
+                      <span>{opt}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
 
               <fieldset className="mi-fieldset mi-fieldset--profile">
                 <legend className="mi-legend">想多啲認識你</legend>

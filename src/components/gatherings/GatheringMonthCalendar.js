@@ -150,7 +150,7 @@ export default function GatheringMonthCalendar({
               <span className="gathering-cal__day-num">{cell.day}</span>
               {featured && (
                 <span className="gathering-cal__day-chip" aria-hidden="true">
-                  {featured.featured_label || '官方局'}
+                  {featured.featured_label || '官方'}
                 </span>
               )}
               {activeCount > 0 && (

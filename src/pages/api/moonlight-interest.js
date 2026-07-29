@@ -15,7 +15,10 @@ import { Redis } from '@upstash/redis';
 import { checkIp } from '../../lib/ip-guard.js';
 import { filterContent } from '../../lib/content-filter.js';
 import { getOptionalUser, getAdminClient } from '../../lib/server-auth.js';
-import { PROFILE_QUESTIONS } from '../../lib/moonlight-interest-meta.js';
+import {
+  PROFILE_QUESTIONS,
+  isMoonlightEligibleIdentity,
+} from '../../lib/moonlight-interest-meta.js';
 
 const INTEREST = new Set(['interested', 'unsure', 'skip']);
 const TIME_SLOTS = new Set(['sat_afternoon', 'sat_eve', 'sun_afternoon', 'sun_eve']);
@@ -148,6 +151,15 @@ export default async function handler(req, res) {
       if (!displayName) {
         return res.status(400).json({ error: '請填寫稱呼。' });
       }
+      const identity = typeof body.identity === 'string' ? body.identity.trim() : '';
+      if (!identity) {
+        return res.status(400).json({ error: '請選擇你的 Label（Pure / Bi）。' });
+      }
+      if (!isMoonlightEligibleIdentity(identity)) {
+        return res.status(403).json({
+          error: '今次 Moonlight Gathering 只開放 Pure / Bi 報名。',
+        });
+      }
       if (message) {
         const { blocked } = filterContent(message);
         if (blocked) {
@@ -159,7 +171,7 @@ export default async function handler(req, res) {
       if (parsed?.error) {
         return res.status(400).json({ error: parsed.error });
       }
-      cleanAnswers = parsed?.answers || null;
+      cleanAnswers = { ...(parsed?.answers || {}), identity };
 
       cleanSlots = timeSlots.filter((s) => TIME_SLOTS.has(s));
       cleanDates = dates.filter((d) => DATE_RE.test(d) && ALLOWED_DATES.has(d));

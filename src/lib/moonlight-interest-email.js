@@ -74,7 +74,7 @@ export function buildMoonlightInterestEmailHtml(opts = {}) {
       </tr>
       <tr>
         <td style="padding:4px 0;color:#8880a8;vertical-align:top;">對象 Label</td>
-        <td style="padding:4px 0;font-weight:700;color:#00e5ff;">Pure</td>
+        <td style="padding:4px 0;font-weight:700;color:#00e5ff;">Pure / Bi</td>
       </tr>
       <tr>
         <td style="padding:4px 0;color:#8880a8;vertical-align:top;">年齡範圍</td>
@@ -133,7 +133,7 @@ export function buildMoonlightInterestEmailText(opts = {}) {
     '',
     '第一場 Moonlight Gathering：2026年9月19日（六）下午 2:00–5:00（12 人）',
     '尋貓 Bingo、Topic Card 小組聊天、Moonlight Mail。',
-    '對象 Label：Pure｜年齡：23–34 歲',
+    '對象 Label：Pure / Bi｜年齡：23–34 歲',
     '',
     '如果有興趣出席，可以填以下參加表，我哋會加你入 TG group。',
     '',

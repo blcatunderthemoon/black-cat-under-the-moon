@@ -36,7 +36,7 @@ export function buildMoonlightGathering001Card(now = new Date()) {
     },
     href: '/moonlight-interest001',
     featured: true,
-    featured_label: '官方局',
+    featured_label: '官方',
   };
 }
 

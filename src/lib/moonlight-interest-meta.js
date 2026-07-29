@@ -2,6 +2,13 @@
  * Shared labels / option maps for Moonlight Gathering #001 participation form.
  */
 
+/** #001 only accepts Pure / Bi applicants. */
+export const MOONLIGHT_ELIGIBLE_IDENTITIES = ['Pure', 'Bi'];
+
+export function isMoonlightEligibleIdentity(value) {
+  return MOONLIGHT_ELIGIBLE_IDENTITIES.includes(String(value || '').trim());
+}
+
 export const INTEREST_LABELS = {
   interested: '有興趣',
   unsure: '未能確定',
@@ -101,12 +108,13 @@ export function formatMoonlightPrice(key) {
 /** Compact multi-line summary for admin tables. */
 export function formatMoonlightAnswers(answers) {
   if (!answers || typeof answers !== 'object') return '';
-  return PROFILE_QUESTIONS
-    .map((q) => {
-      const v = typeof answers[q.key] === 'string' ? answers[q.key].trim() : '';
-      if (!v) return null;
-      return `${q.label} ${v}`;
-    })
-    .filter(Boolean)
-    .join('\n');
+  const lines = [];
+  const identity = typeof answers.identity === 'string' ? answers.identity.trim() : '';
+  if (identity) lines.push(`Label ${identity}`);
+  for (const q of PROFILE_QUESTIONS) {
+    const v = typeof answers[q.key] === 'string' ? answers[q.key].trim() : '';
+    if (!v) continue;
+    lines.push(`${q.label} ${v}`);
+  }
+  return lines.join('\n');
 }
