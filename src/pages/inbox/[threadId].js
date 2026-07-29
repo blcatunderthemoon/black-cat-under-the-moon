@@ -19,6 +19,12 @@ import {
   COMPOSE_TITLE_REPLY,
   CHANNEL_MAX_ROUND_TRIPS,
 } from '../../lib/inbox-channel.js';
+import {
+  WHISPER_COMPOSE_PLACEHOLDER,
+} from '../../lib/inbox-match-whisper.js';
+import { captureProductEvent, MATCH_WHISPER_EVENTS } from '../../lib/product-analytics.js';
+import { MOONLIGHT_PASSPORT_BRAND } from '../../lib/premium.js';
+import MatchWhisperOpeners, { MatchWhisperSendConfirm } from '../../components/MatchWhisperOpeners.js';
 import { DEFAULT_LETTER_PREFS } from '../../lib/letter-gameplay.js';
 import MoonLoading from '../../components/MoonLoading.js';
 import PhotoExchangeInboxPanel from '../../components/PhotoExchangeInboxPanel.js';
@@ -75,6 +81,7 @@ export default function ThreadPage() {
   const [reply, setReply] = useState('');
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState('');
+  const [pendingWhisper, setPendingWhisper] = useState(null);
   const [letterPrefs, setLetterPrefs] = useState(DEFAULT_LETTER_PREFS);
   const prefsSaveRef = useRef(null);
   const bottomRef = useRef(null);
@@ -124,6 +131,7 @@ export default function ThreadPage() {
     // A match-card-only thread has no conversation to follow — anchor to the top
     // so the card header is visible, instead of scrolling to the latest message.
     const isMatchOnly = data?.thread?.source_type === 'match'
+      && data?.compose_mode !== 'reply'
       && !(data.messages || []).some(
         (m) => isLetterMessage(m) || m.message_type === 'photo_exchange_request',
       );
@@ -170,11 +178,15 @@ export default function ThreadPage() {
     }, 400);
   }, []);
 
-  async function handleSend(e, letterStyle) {
-    e?.preventDefault?.();
-    if (!reply.trim() || sending || !data?.can_compose) return;
+  async function sendWhisperOrLetter({ content, letterStyle = null, openerId = null }) {
+    const trimmed = String(content || '').trim();
+    if (!trimmed || sending || !data?.can_compose) return false;
+
     setSending(true);
     setSendError('');
+
+    const isWhisper = Boolean(data?.is_match_whisper);
+    const isOpeningWhisper = isWhisper && Number(data?.whisper_messages_used || 0) === 0;
 
     try {
       const r = await fetch('/api/inbox/send', {
@@ -185,23 +197,64 @@ export default function ThreadPage() {
         },
         body: JSON.stringify({
           recipient_id: data?.other_participant?.id,
-          content: reply.trim(),
+          content: trimmed,
           thread_id: threadId,
           letter_style: letterStyle || null,
+          ...(isWhisper ? { source_type: 'match_whisper' } : {}),
         }),
       });
       const result = await r.json();
       if (!r.ok) {
         setSendError(result.error || '發送失敗，請稍後再試。');
-        return;
+        return false;
+      }
+      if (isWhisper) {
+        captureProductEvent(
+          isOpeningWhisper ? MATCH_WHISPER_EVENTS.send : MATCH_WHISPER_EVENTS.reply,
+          {
+            thread_id: threadId,
+            remaining_before: data?.whisper_messages_remaining ?? null,
+            opener_id: openerId || null,
+          },
+        );
       }
       setReply('');
+      setPendingWhisper(null);
       await loadThread();
+      return true;
     } catch {
       setSendError('發送失敗，請稍後再試。');
+      return false;
     } finally {
       setSending(false);
     }
+  }
+
+  async function handleSend(e, letterStyle) {
+    e?.preventDefault?.();
+    if (!reply.trim() || sending || !data?.can_compose) return;
+    await sendWhisperOrLetter({ content: reply, letterStyle });
+  }
+
+  function handlePickOpener(opener) {
+    if (!opener?.text || sending) return;
+    setReply(opener.text);
+    setSendError('');
+    // Fill compose + ask before send — never auto-send presets.
+    setPendingWhisper({
+      text: opener.text,
+      letterStyle: null,
+      openerId: opener.id || null,
+    });
+  }
+
+  async function confirmPendingWhisper() {
+    if (!pendingWhisper?.text || sending) return;
+    await sendWhisperOrLetter({
+      content: pendingWhisper.text,
+      letterStyle: pendingWhisper.letterStyle,
+      openerId: pendingWhisper.openerId,
+    });
   }
 
   const booting = !clientReady || loading;
@@ -280,11 +333,13 @@ export default function ThreadPage() {
     ? `/mirror-card/${encodeURIComponent(other.mirror_card_slug)}`
     : null;
   const composeMode = data?.compose_mode === 'reply' ? 'reply' : null;
-  const composePlaceholder = COMPOSE_PLACEHOLDER;
+  const isMatchWhisper = Boolean(data?.is_match_whisper);
+  const composePlaceholder = isMatchWhisper ? WHISPER_COMPOSE_PLACEHOLDER : COMPOSE_PLACEHOLDER;
   const composeTitle = composeMode === 'reply'
     ? (data?.compose_title || COMPOSE_TITLE_REPLY)
     : null;
   const showMidnightBar = Boolean(data?.status_footer);
+  const whisperClosed = isMatchWhisper && data?.channel_state === 'whisper_closed';
 
   function renderComposeForm(messageCount = 0) {
     if (composeMode !== 'reply') return null;
@@ -304,12 +359,12 @@ export default function ThreadPage() {
           sending={sending}
           error={sendError}
           maxLength={INBOX_MESSAGE_MAX_LENGTH}
-          channelRemaining={data?.channel_round_trips_remaining}
-          channelMax={CHANNEL_MAX_ROUND_TRIPS}
+          channelRemaining={isMatchWhisper ? null : data?.channel_round_trips_remaining}
+          channelMax={isMatchWhisper ? null : CHANNEL_MAX_ROUND_TRIPS}
           letterPrefs={letterPrefs}
           onLetterPrefsChange={saveLetterPrefs}
           showGameplay
-          viewerTier={data?.viewer_tier || 'premium'}
+          viewerTier={data?.viewer_tier || 'free'}
           compact
         />
       </div>
@@ -318,7 +373,8 @@ export default function ThreadPage() {
 
   const isMatchOnlyThread = data?.thread?.source_type === 'match'
     && letterMessages.length === 0
-    && exchangeRequests.length === 0;
+    && exchangeRequests.length === 0
+    && !composeMode;
 
   return (
     <>
@@ -437,9 +493,27 @@ export default function ThreadPage() {
 
         {composeMode === 'reply' && !isPhotoExchangeThread && !isSystemThread && (
           <div className="thread-compose-dock">
+            {isMatchWhisper && (
+              <MatchWhisperOpeners
+                visible={Boolean(data?.show_openers)}
+                disabled={sending}
+                onPick={handlePickOpener}
+              />
+            )}
             {renderComposeForm(letterMessages.length + matchMessages.length)}
           </div>
         )}
+
+        <MatchWhisperSendConfirm
+          open={Boolean(pendingWhisper)}
+          text={pendingWhisper?.text || ''}
+          partnerName={other?.display_name || ''}
+          busy={sending}
+          onConfirm={confirmPendingWhisper}
+          onCancel={() => {
+            if (!sending) setPendingWhisper(null);
+          }}
+        />
 
         {showMidnightBar && !isPhotoExchangeThread && !isSystemThread && (
           <div className="channel-status-footer channel-status-footer--midnight" role="status">
@@ -448,9 +522,35 @@ export default function ThreadPage() {
               channelOpen={false}
               align="center"
             />
-            {mirrorCardHref && data.channel_state === 'closed' && data.viewer_tier === 'premium' && (
-              <Link href={mirrorCardHref} className="channel-status-footer__mirror-link pixel-link">
-                前往對方 Mirror Card →
+            {mirrorCardHref && (whisperClosed || (data.channel_state === 'closed' && data.viewer_tier === 'premium')) && (
+              <Link
+                href={whisperClosed ? `${mirrorCardHref}?from=match_whisper` : mirrorCardHref}
+                className="channel-status-footer__mirror-link pixel-link"
+                onClick={() => {
+                  if (whisperClosed) {
+                    captureProductEvent(MATCH_WHISPER_EVENTS.convertToPassport, {
+                      thread_id: threadId,
+                      intent: 'mirror_open',
+                      viewer_tier: data?.viewer_tier || 'free',
+                    });
+                  }
+                }}
+              >
+                {whisperClosed ? '前往 Mirror Card 開啟月光信 →' : '前往對方 Mirror Card →'}
+              </Link>
+            )}
+            {whisperClosed && data?.viewer_tier !== 'premium' && (
+              <Link
+                href="/premium"
+                className="channel-status-footer__mirror-link pixel-link"
+                onClick={() => {
+                  captureProductEvent(MATCH_WHISPER_EVENTS.convertToPassport, {
+                    thread_id: threadId,
+                    intent: 'passport_upsell',
+                  });
+                }}
+              >
+                了解 {MOONLIGHT_PASSPORT_BRAND} →
               </Link>
             )}
           </div>
@@ -679,7 +779,7 @@ function MessageItem({ msg, isMine, otherName, mirrorCardHref, stackIndex = 0 })
             </span>
             <p className="inbox-match-card__hint-text">
               {mirrorCardHref
-                ? '連線通知已寄至你的電郵信箱；亦可點擊下方查看對方鏡像卡。'
+                ? '連線成功。可揀下方開場白踏出第一步（確認後先寄出）；想長聊再到 Mirror Card 開月光信。'
                 : '連線通知已寄至你的電郵信箱，請前往查收。'}
             </p>
           </div>

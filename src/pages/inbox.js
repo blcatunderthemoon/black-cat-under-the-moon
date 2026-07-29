@@ -254,18 +254,21 @@ export default function InboxPage() {
                 const hasReplyOpportunity = thread.reply_opportunity;
                 const isMatch = thread.source_type === 'match';
                 const isSystem = thread.source_type === 'system';
+                const isMatchWhisper = isMatch && thread.is_match_whisper;
                 const iconVariant = hasUnread ? 'sealed-glow' : 'read';
                 const metaText = thread.list_meta
                   || (hasUnread && hasReplyOpportunity && !isMatch && !isSystem ? '1 封回信機會待用' : null);
                 const isMirrorClosed = metaText === LIST_META_MIRROR_CLOSED;
 
                 const isPhotoExchange = thread.source_type === 'photo_exchange';
-                const isOpportunityMeta = metaText && /回信機會|尚餘.*次來回/.test(metaText);
+                const isOpportunityMeta = metaText && /回信機會|尚餘.*次來回|月光低語/.test(metaText);
                 const isMatchUnread = isMatch && hasUnread;
                 const isMatchRead = isMatch && !hasUnread;
-                const matchTitle = isMatchUnread
-                  ? '靈魂共鳴連線通知'
-                  : (isMatchRead ? (thread.mysterious_title || '連線紀錄') : null);
+                const matchTitle = isMatchWhisper
+                  ? (thread.mysterious_title || '月光低語')
+                  : isMatchUnread
+                    ? '靈魂共鳴連線通知'
+                    : (isMatchRead ? (thread.mysterious_title || '連線紀錄') : null);
                 const systemChannel = isSystem ? (thread.system_channel || null) : null;
                 const gatheringTitle = isSystem ? (thread.gathering_title || null) : null;
                 const systemNameLabel = gatheringTitle || thread.other_participant.display_name;
@@ -304,7 +307,7 @@ export default function InboxPage() {
                         isGatheringCancelled && 'inbox-letter-row--system-cancelled',
                         isMatchUnread && 'inbox-letter-row--match-unread',
                         isMatchRead && 'inbox-letter-row--match-read',
-                        hasReplyOpportunity && hasUnread && !isMatch && !isSystem && 'inbox-letter-row--opportunity',
+                        hasReplyOpportunity && hasUnread && !isSystem && (!isMatch || isMatchWhisper) && 'inbox-letter-row--opportunity',
                       ].filter(Boolean).join(' ')}
                     >
                       {hasUnread && (
@@ -375,7 +378,7 @@ export default function InboxPage() {
                                 <span className="inbox-match-score-pill__max">/100</span>
                               </span>
                             )}
-                            {!isMatch && !isSystem && metaText ? (
+                            {!isSystem && metaText && (!isMatch || isMatchWhisper) ? (
                               <div className="inbox-letter-row__trail inbox-letter-row__trail--under-title">
                                 <InboxListMetaText text={metaText} badge={isOpportunityMeta} />
                               </div>

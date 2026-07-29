@@ -218,7 +218,7 @@ function HotTopicsPanel({ hotPosts, sparksMode }) {
   if (!hotPosts?.length) {
     // Last-resort UI: still never announce a dead week
     return (
-      <aside data-forum-hot-panel className="forum-panel forum-panel--hot">
+      <aside data-forum-hot-panel className="forum-panel forum-panel--hot forum-panel--hot-reveal">
         <div className="forum-panel__head">
           <h3 className="forum-panel__title">
             <ForumSparkleIcon size={14} className="forum-panel__title-icon" />
@@ -234,7 +234,7 @@ function HotTopicsPanel({ hotPosts, sparksMode }) {
   }
 
   return (
-    <aside data-forum-hot-panel className="forum-panel forum-panel--hot">
+    <aside data-forum-hot-panel className="forum-panel forum-panel--hot forum-panel--hot-reveal">
       <div className="forum-panel__head">
         <h3 className="forum-panel__title">
           <TitleIcon size={14} className="forum-panel__title-icon" />
@@ -248,7 +248,7 @@ function HotTopicsPanel({ hotPosts, sparksMode }) {
             ? (curatedIcons[index] || ForumSparkleIcon)
             : ForumTrophyIcon;
           return (
-            <li key={p.id}>
+            <li key={p.id} style={{ '--hot-i': index }}>
               <Link
                 href={`/forum/${p.id}`}
                 className={`forum-hot-item${rankMods[index] ? ` ${rankMods[index]}` : ''}${curated ? ' forum-hot-item--curated' : ''}`}

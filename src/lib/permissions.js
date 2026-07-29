@@ -6,6 +6,8 @@
 
 import { getAdminClient, getSubscriptionTier } from './server-auth.js';
 import { getChannelState } from './inbox-channel.js';
+import { getMatchWhisperState } from './inbox-match-whisper.js';
+import { isLegacySoloMatchThread, isSoloMatchPayload } from './inbox-solo-anchor.js';
 import {
   databaseNowIso,
   getHongKongDayEnd,
@@ -211,10 +213,27 @@ export async function canSendActiveLetter(senderId, recipientId, existingThreadI
 
   const { data: messages } = await admin
     .from('inbox_messages')
-    .select('id, sender_id, message_type, created_at')
+    .select('id, sender_id, message_type, created_at, payload')
     .eq('thread_id', threadId)
     .eq('is_hidden', false)
     .order('created_at', { ascending: true });
+
+  if (thread.source_type === 'match') {
+    const isSolo = isLegacySoloMatchThread(thread)
+      || (messages || []).some((m) => m.message_type === 'match_card' && isSoloMatchPayload(m.payload));
+    const whisper = getMatchWhisperState({
+      viewerId: senderId,
+      messages: messages || [],
+      isSolo,
+    });
+    if (!whisper.whisper_unlocked) {
+      return { allowed: false, reason: 'whisper_solo_unavailable' };
+    }
+    if (whisper.can_compose) {
+      return { allowed: true, action: 'whisper' };
+    }
+    return { allowed: false, reason: 'whisper_exhausted' };
+  }
 
   const participantIds = [thread.participant_a, thread.participant_b];
   const participantTiers = await loadParticipantTiers(participantIds);

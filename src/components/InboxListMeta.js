@@ -19,7 +19,7 @@ export default function InboxClosedChannelHint() {
 
 export function InboxListMetaText({ text, badge = false }) {
   if (!text) return null;
-  const isOpportunity = badge || /回信機會|尚餘.*次來回/.test(text);
+  const isOpportunity = badge || /回信機會|尚餘.*次來回|月光低語/.test(text);
   return (
     <span className={`inbox-letter-row__opportunity${isOpportunity ? ' inbox-letter-row__opportunity--badge' : ''}`}>
       {isOpportunity && (

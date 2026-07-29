@@ -11,6 +11,7 @@ import { isBlocked, canSendActiveLetter, assertAndConsumeQuota, getQuotaUsage } 
 import { notifyMatchCard, notifyNewLetter, notifyPhotoExchangeRequest } from './notify.js';
 import { INBOX_MESSAGE_MAX_LENGTH } from './inbox-limits.js';
 import { enrichThreadWithChannel, enrichPhotoExchangeThread } from './inbox-channel.js';
+import { getMatchWhisperState, MATCH_WHISPER_SOURCE } from './inbox-match-whisper.js';
 import { getPhotoExchangesByIds } from './photo-exchange.js';
 import { normalizeLetterPrefs, validateLetterStyle } from './letter-gameplay.js';
 import { isSystemInboxThread } from './system-inbox.js';
@@ -317,6 +318,12 @@ export async function listThreads(userId, { limit = 20, offset = 0 } = {}) {
           ? enrichMatchThreadListItem({
             unreadCount,
             matchMessage: matchCardByThread[thread.id] || null,
+            whisper: getMatchWhisperState({
+              viewerId: userId,
+              messages: threadMessages,
+              isSolo: Boolean(soloPartner),
+            }),
+            viewerTier,
           })
           : enrichThreadWithChannel({
             threadId: thread.id,
@@ -328,6 +335,9 @@ export async function listThreads(userId, { limit = 20, offset = 0 } = {}) {
 
     const otherProfile = soloPartner ? null : profileById[otherId];
     const matchCard = matchCardByThread[thread.id] || null;
+    const latestWhisperLetter = thread.source_type === 'match'
+      ? [...threadMessages].reverse().find((m) => m.message_type === 'user_letter') || null
+      : null;
 
     const systemName = systemDisplayName || systemChannelName || '系統通知';
 
@@ -343,19 +353,25 @@ export async function listThreads(userId, { limit = 20, offset = 0 } = {}) {
         partner_response_id: soloPartner?.responseId || null,
       },
       unread_count: unreadCount,
-      latest_message: matchCard
+      latest_message: latestWhisperLetter
         ? {
-            content: matchCard.content?.slice(0, 80) || '',
-            message_type: 'match_card',
-            created_at: matchCard.created_at,
+            content: latestWhisperLetter.content?.slice(0, 80) || '',
+            message_type: latestWhisperLetter.message_type,
+            created_at: latestWhisperLetter.created_at,
           }
-        : latestMessage
+        : matchCard
           ? {
-              content: latestMessage.content?.slice(0, 80) || '',
-              message_type: latestMessage.message_type,
-              created_at: latestMessage.created_at,
+              content: matchCard.content?.slice(0, 80) || '',
+              message_type: 'match_card',
+              created_at: matchCard.created_at,
             }
-          : null,
+          : latestMessage
+            ? {
+                content: latestMessage.content?.slice(0, 80) || '',
+                message_type: latestMessage.message_type,
+                created_at: latestMessage.created_at,
+              }
+            : null,
       ...channelMeta,
     };
   });
@@ -602,6 +618,12 @@ export async function getThread(threadId, userId) {
           matchMessage: (messages || []).find((m) => m.message_type === 'match_card' && m.recipient_id === userId)
             || (messages || []).find((m) => m.message_type === 'match_card')
             || null,
+          whisper: getMatchWhisperState({
+            viewerId: userId,
+            messages: messages || [],
+            isSolo: isSoloMatchThread,
+          }),
+          viewerTier,
         })
         : enrichThreadWithChannel({
           threadId,
@@ -725,6 +747,7 @@ export async function sendLetter({
   const validatedStyle = validateLetterStyle(letterStyle, senderTier);
   const messagePayload = {
     letter_style: validatedStyle,
+    ...(action === 'whisper' ? { channel: MATCH_WHISPER_SOURCE } : {}),
   };
 
   // Insert message
@@ -893,6 +916,8 @@ export async function deliverMatchCard({
     response_b_id: responseBId,
     solo_partner: isSolo,
     solo_match_key: soloKey,
+    whisper_unlocked: !isSolo,
+    whisper_source: !isSolo ? MATCH_WHISPER_SOURCE : null,
   };
 
   const recipients = [...new Set([authA, authB].filter(Boolean))];
@@ -906,6 +931,7 @@ export async function deliverMatchCard({
       message_ids: existingCards.map((m) => m.id),
       already_exists: true,
       solo: isSolo,
+      whisper_unlocked: !isSolo,
     };
   }
 
@@ -941,6 +967,7 @@ export async function deliverMatchCard({
     message_ids: insertedIds,
     solo: isSolo,
     recipients,
+    whisper_unlocked: !isSolo,
   };
 }
 

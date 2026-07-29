@@ -34,6 +34,7 @@ import {
   HeaderMailIcon,
   UiFlagIcon,
 } from '../../components/UiIcons.js';
+import { captureProductEvent, MATCH_WHISPER_EVENTS } from '../../lib/product-analytics.js';
 
 function MirrorOwnerBioSection({ bio, displayName, variant = 'default' }) {
   const text = String(bio || '').trim();
@@ -441,6 +442,13 @@ export default function MirrorCardSlugPage({ seo = null }) {
       setLetterOpen(false);
       setLetterContent('');
       setLetterNotice({ ok: true, threadId: result.thread_id });
+      if (router.query?.from === 'match_whisper') {
+        captureProductEvent(MATCH_WHISPER_EVENTS.convertToPassport, {
+          intent: 'passport_letter_sent',
+          thread_id: result.thread_id || null,
+          mirror_slug: slug || null,
+        });
+      }
       await reloadCard();
     } catch {
       setLetterError('網路錯誤，請重試。');

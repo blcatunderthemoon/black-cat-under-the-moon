@@ -41,5 +41,11 @@ export default async function handler(req, res) {
     return res.status(200).json({ delivered: false, reason: result.reason, details: result.details });
   }
 
-  return res.status(200).json({ delivered: true, thread_id: result.thread_id, message_ids: result.message_ids });
+  return res.status(200).json({
+    delivered: true,
+    thread_id: result.thread_id,
+    message_ids: result.message_ids,
+    whisper_unlocked: Boolean(result.whisper_unlocked),
+    solo: Boolean(result.solo),
+  });
 }

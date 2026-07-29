@@ -62,6 +62,7 @@ export default function ForumCommunityActivities({ onRankClick } = {}) {
           <ForumMoonIcon size={14} className="forum-community-activities__title-icon" />
           社群活動
         </h2>
+        <p className="forum-community-activities__sub">一鍵去玩 · 圍爐以外嘅月光日常</p>
       </div>
       <ul className="forum-community-activities__grid">
         {ACTIVITIES.map(({ id, href, title, hint, Icon, isRank }) => (
@@ -69,7 +70,7 @@ export default function ForumCommunityActivities({ onRankClick } = {}) {
             {isRank ? (
               <a
                 href={href}
-                className="forum-community-activities__tile"
+                className="forum-community-activities__tile forum-community-activities__tile--rank"
                 aria-label={`${title}：${hint}`}
                 onClick={(e) => {
                   e.preventDefault();
@@ -84,11 +85,12 @@ export default function ForumCommunityActivities({ onRankClick } = {}) {
                   <span className="forum-community-activities__name">{title}</span>
                   <span className="forum-community-activities__hint">{hint}</span>
                 </span>
+                <span className="forum-community-activities__chevron" aria-hidden="true">›</span>
               </a>
             ) : (
               <Link
                 href={href}
-                className="forum-community-activities__tile"
+                className={`forum-community-activities__tile forum-community-activities__tile--${id}`}
                 aria-label={`${title}：${hint}`}
               >
                 <span className="forum-community-activities__icon" aria-hidden="true">

@@ -70,6 +70,8 @@ export default async function handler(req, res) {
       reply_used: '本次通道的來回次數已用完',
       open_from_mirror_only: '請到對方的 Mirror Card 投出下一封信',
       photo_exchange_thread: '請使用交換相對話',
+      whisper_exhausted: '月光低語已用完，請到對方的 Mirror Card 開啟月光信',
+      whisper_solo_unavailable: '對方尚未註冊帳號，暫時未能使用月光低語',
     };
     return res.status(status).json({
       error: reasons[err.reason] || err.message || '發送失敗',
