@@ -3,7 +3,7 @@
  */
 
 import Link from 'next/link';
-import { MOONLIGHT_PASSPORT_BRAND } from '../lib/premium.js';
+import { isPassportGatingDisabled, MOONLIGHT_PASSPORT_BRAND } from '../lib/premium.js';
 import PixelMixedLabel from './PixelMixedLabel.js';
 
 export function buildMirrorVisitorPremiumPerks({
@@ -12,6 +12,7 @@ export function buildMirrorVisitorPremiumPerks({
   photoExchange,
   session,
 }) {
+  if (isPassportGatingDisabled()) return [];
   const perks = [];
   if (premiumLocked) perks.push('完整 Mirror Card 詳細資料');
   if (session && messaging?.reason === 'premium_required') {
@@ -24,6 +25,7 @@ export function buildMirrorVisitorPremiumPerks({
 }
 
 export default function MirrorVisitorPremiumUpsell({ perks }) {
+  if (isPassportGatingDisabled()) return null;
   if (!perks?.length) return null;
 
   return (

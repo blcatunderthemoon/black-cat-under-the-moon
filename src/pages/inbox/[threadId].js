@@ -24,7 +24,7 @@ import {
   MATCH_WHISPER_MAX_MESSAGES,
 } from '../../lib/inbox-match-whisper.js';
 import { captureProductEvent, MATCH_WHISPER_EVENTS } from '../../lib/product-analytics.js';
-import { MOONLIGHT_PASSPORT_BRAND } from '../../lib/premium.js';
+import { isPassportGatingDisabled, MOONLIGHT_PASSPORT_BRAND } from '../../lib/premium.js';
 import MatchWhisperOpeners, { MatchWhisperSendConfirm } from '../../components/MatchWhisperOpeners.js';
 import { DEFAULT_LETTER_PREFS } from '../../lib/letter-gameplay.js';
 import MoonLoading from '../../components/MoonLoading.js';
@@ -545,7 +545,7 @@ export default function ThreadPage() {
                 {whisperClosed ? '前往 Mirror Card 開啟月光信 →' : '前往對方 Mirror Card →'}
               </Link>
             )}
-            {whisperClosed && data?.viewer_tier !== 'premium' && (
+            {whisperClosed && data?.viewer_tier !== 'premium' && !isPassportGatingDisabled() && (
               <Link
                 href="/premium"
                 className="channel-status-footer__mirror-link pixel-link"

@@ -1,9 +1,20 @@
+import { isPassportGatingDisabled } from './passport-gating.js';
+
 /** User-facing membership brand (DB tier key remains `premium`). */
 export const MOONLIGHT_PASSPORT_BRAND = 'Moonlight Passport';
 
-/** True when /api/me payload shows an active premium tier (expires server-side). */
+export { isPassportGatingDisabled } from './passport-gating.js';
+
+/** True when /api/me (or env soft-unlock) grants Passport entitlements. */
 export function isPremiumUser(meData) {
+  if (isPassportGatingDisabled()) return true;
+  if (meData?.passport_gating_disabled) return true;
   return meData?.profile?.subscription_tier === 'premium';
+}
+
+/** Paid / granted subscription row present (not only soft-unlock entitlements). */
+export function hasRealPassportSubscription(meData) {
+  return Boolean(meData?.subscription?.status);
 }
 
 /** Billing channel: paypal (auto-renew), stripe (legacy), or manual (PayMe/FPS). */
@@ -13,6 +24,10 @@ export function getSubscriptionChannel(meData) {
   if (provider === 'stripe') return 'stripe';
   if (provider === 'manual') return 'manual';
   if (isPremiumUser(meData)) {
+    // Soft unlock without a billing row is not a payment channel.
+    if ((meData?.passport_gating_disabled || isPassportGatingDisabled()) && !meData?.subscription) {
+      return null;
+    }
     const status = meData?.subscription?.status;
     if (status === 'manual') return 'manual';
     if (status === 'active' || status === 'past_due') return 'paypal';
@@ -67,6 +82,10 @@ export function getPremiumDaysRemaining(meData) {
 
 export function getPremiumStatusMessage(meData) {
   if (!isPremiumUser(meData)) return null;
+  const openAccess = meData?.passport_gating_disabled || isPassportGatingDisabled();
+  if (openAccess && !hasRealPassportSubscription(meData)) {
+    return `${MOONLIGHT_PASSPORT_BRAND} 功能開放試用中`;
+  }
   const days = getPremiumDaysRemaining(meData);
   if (days === null) return `${MOONLIGHT_PASSPORT_BRAND} 會籍長期有效`;
   if (days <= 0) return `${MOONLIGHT_PASSPORT_BRAND} 會籍即將結束`;

@@ -9,6 +9,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { resolveSafeDisplayName, DISPLAY_NAME_MAX_LENGTH } from './display-name-policy.js';
 import { isDisplayNameTaken, isDisplayNameUniqueViolation } from './display-name-uniqueness.js';
+import { isPassportGatingDisabled } from './passport-gating.js';
 import { isProduction } from './production-guard.js';
 
 const supabaseUrl =
@@ -215,8 +216,13 @@ export function resolveSubscriptionTier(subscription) {
  * Returns 'free' if no subscription row or expired.
  * Falls back to profiles.subscription_tier when the subscriptions ledger has no active row
  * (covers manual grants / sync lag so Passport UI is not stuck on free).
+ *
+ * When PASSPORT_GATING_DISABLED is on, returns 'premium' entitlements without
+ * changing billing rows (see src/lib/passport-gating.js).
  */
 export async function getSubscriptionTier(userId) {
+  if (isPassportGatingDisabled()) return 'premium';
+
   const admin = getAdminClient();
   const { data } = await admin
     .from('subscriptions')
@@ -246,6 +252,11 @@ export async function getSubscriptionTiers(userIds) {
   const tiers = Object.fromEntries(unique.map((id) => [id, 'free']));
   if (!unique.length) return tiers;
 
+  if (isPassportGatingDisabled()) {
+    for (const id of unique) tiers[id] = 'premium';
+    return tiers;
+  }
+
   const admin = getAdminClient();
   const { data: rows } = await admin
     .from('subscriptions')
@@ -270,7 +281,8 @@ export async function getSubscriptionTiers(userIds) {
 }
 
 /**
- * Returns true if the user currently has an active premium subscription.
+ * Returns true if the user currently has an active premium subscription
+ * (or Passport gating is soft-disabled).
  */
 export async function isPremium(userId) {
   const tier = await getSubscriptionTier(userId);

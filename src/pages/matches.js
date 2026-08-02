@@ -10,7 +10,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '../lib/auth-context.js';
 import AppShell from '../components/AppShell.js';
 import AppHeaderAuth from '../components/AppHeaderAuth.js';
-import { MOONLIGHT_PASSPORT_BRAND } from '../lib/premium.js';
+import { isPassportGatingDisabled, MOONLIGHT_PASSPORT_BRAND } from '../lib/premium.js';
 import MoonLoading from '../components/MoonLoading.js';
 import { HeaderMailIcon, ForumLockIcon, ForumPawIcon } from '../components/UiIcons.js';
 
@@ -285,13 +285,23 @@ function LockedScreen() {
         <div style={{ fontSize: 36 }} aria-hidden="true"><ForumLockIcon size={36} /></div>
         <h2 className="pixel-title" style={{ fontSize: 10 }}>{MOONLIGHT_PASSPORT_BRAND}</h2>
         <p className="pixel-subtitle" style={{ lineHeight: 1.7 }}>
-          升級 {MOONLIGHT_PASSPORT_BRAND} 即可查看所有連線成功的成員<br />
-          及對方的詳細共鳴摘要與鏡像卡
+          {isPassportGatingDisabled()
+            ? `而家 ${MOONLIGHT_PASSPORT_BRAND} 功能開放試用中。請重新整理頁面後再試；若仍無法查看，請登出後重新登入。`
+            : (
+              <>
+                升級 {MOONLIGHT_PASSPORT_BRAND} 即可查看所有連線成功的成員<br />
+                及對方的詳細共鳴摘要與鏡像卡
+              </>
+            )}
         </p>
-        <Link href="/premium" className="pixel-btn pixel-btn--primary" style={{ width: 'auto', textDecoration: 'none', marginTop: 8 }}>
-          <PixelMixedLabel text={`升級 ${MOONLIGHT_PASSPORT_BRAND} ▸`} />
-        </Link>
-        <p className="pixel-subtitle" style={{ fontSize: 12 }}>HKD 58 / 月 · 隨時取消</p>
+        {!isPassportGatingDisabled() && (
+          <>
+            <Link href="/premium" className="pixel-btn pixel-btn--primary" style={{ width: 'auto', textDecoration: 'none', marginTop: 8 }}>
+              <PixelMixedLabel text={`升級 ${MOONLIGHT_PASSPORT_BRAND} ▸`} />
+            </Link>
+            <p className="pixel-subtitle" style={{ fontSize: 12 }}>HKD 58 / 月 · 隨時取消</p>
+          </>
+        )}
       </div>
     </div>
   );

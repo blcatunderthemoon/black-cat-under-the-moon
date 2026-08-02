@@ -15,7 +15,7 @@ import AppHeaderAuth from '../components/AppHeaderAuth.js';
 import AccountMirrorFamilySummary from '../components/AccountMirrorFamilySummary.js';
 import PixelMoonIcon from '../components/PixelMoonIcon.js';
 import PremiumMoonBadge from '../components/PremiumMoonBadge.js';
-import { MOONLIGHT_PASSPORT_BRAND } from '../lib/premium.js';
+import { isPassportGatingDisabled, hasRealPassportSubscription, MOONLIGHT_PASSPORT_BRAND } from '../lib/premium.js';
 import AccountSubscriptionPanel from '../components/AccountSubscriptionPanel.js';
 import { validateDisplayName, sanitizeDisplayNameInput, DISPLAY_NAME_MAX_LENGTH } from '../lib/display-name-policy.js';
 import { validatePassword, PASSWORD_MIN_LENGTH, PASSWORD_REQUIREMENTS_LABEL } from '../lib/auth-credentials-policy.js';
@@ -305,6 +305,8 @@ export default function AccountPage() {
   if (!session) return null;
 
   const tier = profile?.profile?.subscription_tier || 'free';
+  const openAccess = isPassportGatingDisabled() || profile?.passport_gating_disabled;
+  const hasPaidPassport = hasRealPassportSubscription(profile);
 
   return (
     <>
@@ -417,7 +419,7 @@ export default function AccountPage() {
             <span style={{ color: 'var(--text-muted)' }}>會員等級</span>
             {tier === 'premium' ? (
               <span className="account-tier-value account-tier-value--premium">
-                {MOONLIGHT_PASSPORT_BRAND}
+                {openAccess && !hasPaidPassport ? `${MOONLIGHT_PASSPORT_BRAND}（開放試用）` : MOONLIGHT_PASSPORT_BRAND}
                 <PremiumMoonBadge className="account-tier-moon" />
               </span>
             ) : (

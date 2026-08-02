@@ -14,6 +14,7 @@ import { buildMoonJourneySummary } from '../../lib/moon-journey.js';
 import { getForumRole, canModerateForum, canAdminForum } from '../../lib/forum-roles.js';
 import { getModeratorTopicsForUser } from '../../lib/forum-moderator-assignments.js';
 import { databaseNowIso } from '../../lib/hong-kong-time.js';
+import { isPassportGatingDisabled } from '../../lib/passport-gating.js';
 
 export default async function handler(req, res) {
   if (req.method === 'GET') return handleGet(req, res);
@@ -51,9 +52,12 @@ async function handleGet(req, res) {
     admin.from('user_cats').select('skin_id').eq('user_id', user.id).maybeSingle(),
   ]);
 
-  const subscriptionTier = subscription
+  const gatingDisabled = isPassportGatingDisabled();
+  const billedTier = subscription
     ? resolveSubscriptionTier(subscription)
     : (profile.subscription_tier === 'premium' ? 'premium' : 'free');
+  // Soft unlock: client sees premium entitlements; billing row stays as-is.
+  const subscriptionTier = gatingDisabled ? 'premium' : billedTier;
 
   const [activeLetterQuota, photoExchangeQuota] = subscriptionTier === 'premium'
     ? await Promise.all([
@@ -106,13 +110,15 @@ async function handleGet(req, res) {
       ? { response_id: claimedResponse.id, claimed_at: claimedResponse.created_at }
       : null,
     unread_inbox_count: unreadCount ?? 0,
-    subscription: subscriptionTier === 'premium' && subscription
+    // Real billing row only — soft unlock does not fabricate a subscription.
+    subscription: billedTier === 'premium' && subscription
       ? {
           provider: subscription.provider || null,
           status: subscription.status,
           current_period_end: subscription.current_period_end || null,
         }
       : null,
+    passport_gating_disabled: gatingDisabled,
     active_letter_quota: activeLetterQuota,
     photo_exchange_quota: photoExchangeQuota,
     moon_journey: moonJourney,

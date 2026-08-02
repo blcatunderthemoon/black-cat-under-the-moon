@@ -9,6 +9,8 @@ import {
   getPremiumPeriodEnd,
   isManualSubscription,
   isAutoRenewSubscription,
+  isPassportGatingDisabled,
+  hasRealPassportSubscription,
   MOONLIGHT_PASSPORT_BRAND,
 } from '../lib/premium.js';
 import { MANUAL_PAYMENT_SUPPORT_EMAIL } from '../lib/manual-payment.js';
@@ -25,6 +27,8 @@ export default function AccountSubscriptionPanel({ profile, session, tier }) {
   const [portalLoading, setPortalLoading] = useState(false);
   const [portalError, setPortalError] = useState('');
 
+  const openAccess = isPassportGatingDisabled() || profile?.passport_gating_disabled;
+  const hasPaid = hasRealPassportSubscription(profile);
   const isManual = isManualSubscription(profile);
   const isAutoRenew = isAutoRenewSubscription(profile);
   const periodEnd = formatPremiumPeriodEnd(getPremiumPeriodEnd(profile));
@@ -51,12 +55,24 @@ export default function AccountSubscriptionPanel({ profile, session, tier }) {
     }
   }
 
-  if (tier !== 'premium') {
+  if (openAccess && !hasPaid) {
+    return (
+      <p className="pixel-subtitle account-subscription-open-access">
+        而家 {MOONLIGHT_PASSPORT_BRAND} 功能開放試用中，無需升級即可使用進階權限。
+      </p>
+    );
+  }
+
+  if (tier !== 'premium' && !openAccess) {
     return (
       <Link href="/premium" className="pixel-link account-subscription-upgrade">
         升級 {MOONLIGHT_PASSPORT_BRAND} →
       </Link>
     );
+  }
+
+  if (tier !== 'premium') {
+    return null;
   }
 
   if (isManual) {

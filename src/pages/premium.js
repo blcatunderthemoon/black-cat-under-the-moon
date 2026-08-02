@@ -24,7 +24,7 @@ import {
   MANUAL_PAYMENT_FPS_NOTE,
   MANUAL_PAYMENT_SUPPORT_EMAIL,
 } from '../lib/manual-payment.js';
-import { isPremiumUser, getPremiumStatusMessage, getActiveLetterQuotaLine, MOONLIGHT_PASSPORT_BRAND } from '../lib/premium.js';
+import { isPremiumUser, getPremiumStatusMessage, getActiveLetterQuotaLine, isPassportGatingDisabled, hasRealPassportSubscription, MOONLIGHT_PASSPORT_BRAND } from '../lib/premium.js';
 
 const BENEFITS = [
   { Icon: ForumSearchIcon, title: '查看詳細 Mirror Card', desc: '從月光圍爐、我的連線查看任何人的深層 Mirror 分析與關係期待。' },
@@ -49,6 +49,9 @@ export default function PremiumPage() {
   }, []);
 
   const isPremium = isPremiumUser(profile);
+  const openAccess = isPassportGatingDisabled() || profile?.passport_gating_disabled;
+  const hasPaid = hasRealPassportSubscription(profile);
+  const showOpenAccessBanner = openAccess && !hasPaid;
   const premiumStatusLine = isPremium ? getPremiumStatusMessage(profile) : null;
   const letterQuotaLine = isPremium ? getActiveLetterQuotaLine(profile) : null;
   const photoQuotaLine = isPremium && profile?.photo_exchange_quota
@@ -107,10 +110,35 @@ export default function PremiumPage() {
             <PixelMoonIcon size={52} />
           </p>
           <h1 className="pixel-title" style={{ fontSize: 14 }}>{MOONLIGHT_PASSPORT_BRAND}</h1>
-          <p className="pixel-subtitle">{MOONLIGHT_PASSPORT_BRAND} — 解鎖進階 Mirror Card、主動投信、交換相與更多社群功能</p>
+          <p className="pixel-subtitle">
+            {showOpenAccessBanner
+              ? `${MOONLIGHT_PASSPORT_BRAND} 功能而家開放試用中 — 登入即可使用進階 Mirror、主動投信、交換相與論壇無限發文。`
+              : `${MOONLIGHT_PASSPORT_BRAND} — 解鎖進階 Mirror Card、主動投信、交換相與更多社群功能`}
+          </p>
         </div>
 
-        {isPremium && (
+        {showOpenAccessBanner && (
+          <section className="premium-member-status" aria-label="開放試用說明">
+            <div className="premium-member-status__glow" aria-hidden="true" />
+            <div className="premium-member-status__inner">
+              <div className="premium-member-status__badge">
+                <PixelMoonIcon size={34} className="premium-member-status__moon" />
+                <span className="premium-member-status__label font-zpix">開放試用</span>
+              </div>
+              <div className="premium-member-status__copy">
+                <p className="premium-member-status__title">暫時無需付費升級</p>
+                <p className="premium-member-status__thanks">
+                  早期社群試用期間，所有登入會員可使用 {MOONLIGHT_PASSPORT_BRAND} 權限。之後若恢復訂閱會提前公告。
+                </p>
+              </div>
+              <Link href="/forum" className="pixel-btn pixel-btn--primary premium-member-status__cta">
+                前往月光圍爐
+              </Link>
+            </div>
+          </section>
+        )}
+
+        {hasPaid && (
           <section className="premium-member-status" aria-label={`${MOONLIGHT_PASSPORT_BRAND} 會員狀態`}>
             <div className="premium-member-status__glow" aria-hidden="true" />
             <div className="premium-member-status__inner">
@@ -158,7 +186,7 @@ export default function PremiumPage() {
           ))}
         </div>
 
-        {!isPremium && (
+        {!isPremium && !openAccess && (
           <div className="premium-pricing">
             <p className="pixel-section-title pixel-section-title--zh" style={{ margin: 0 }}>月費方案</p>
             <p style={{ fontSize: 18, color: 'var(--text-dim)', margin: 0 }}>

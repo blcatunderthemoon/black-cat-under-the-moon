@@ -3,7 +3,7 @@
  */
 
 import Link from 'next/link';
-import { MOONLIGHT_PASSPORT_BRAND } from '../lib/premium.js';
+import { isPassportGatingDisabled, MOONLIGHT_PASSPORT_BRAND } from '../lib/premium.js';
 import { UiCameraIcon } from './UiIcons.js';
 
 function OwnerPhotoPreview({ ownerPhoto, ownerName }) {
@@ -154,7 +154,7 @@ export default function PhotoExchangePanel({
         </div>
       )}
 
-      {photoExchange.reason === 'premium_required' && !photoExchange.can_respond && (
+      {photoExchange.reason === 'premium_required' && !photoExchange.can_respond && !isPassportGatingDisabled() && (
         <div className="photo-exchange-panel__upsell">
           <p className="photo-exchange-panel__hint pixel-subtitle">
             {MOONLIGHT_PASSPORT_BRAND} 可發起真人相片交換邀請（每月 3 次）

@@ -9,7 +9,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '../../lib/auth-context.js';
 import MirrorPersonalityCard from '../../components/MirrorPersonalityCard.js';
 import PixelMixedLabel from '../../components/PixelMixedLabel.js';
-import { MOONLIGHT_PASSPORT_BRAND } from '../../lib/premium.js';
+import { isPassportGatingDisabled, MOONLIGHT_PASSPORT_BRAND } from '../../lib/premium.js';
 import LetterComposeForm from '../../components/LetterComposeForm.js';
 import AppShell, { AppHeaderMixedText } from '../../components/AppShell.js';
 import AppHeaderAuth from '../../components/AppHeaderAuth.js';
@@ -837,7 +837,7 @@ export default function MirrorCardSlugPage({ seo = null }) {
                         </Link>
                       )}
 
-                      {!messaging.can_send && messaging.reason === 'premium_required' && !showVisitorPremiumUpsell && (
+                      {!messaging.can_send && messaging.reason === 'premium_required' && !showVisitorPremiumUpsell && !isPassportGatingDisabled() && (
                         <div className="mirror-letter-upsell">
                           <p className="mirror-letter-upsell__text">{MOONLIGHT_PASSPORT_BRAND} 可主動留信聯絡有共鳴的人</p>
                           <Link href="/premium" className="mirror-letter-btn mirror-letter-btn--ghost">
