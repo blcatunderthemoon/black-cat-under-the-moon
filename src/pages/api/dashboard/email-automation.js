@@ -1,8 +1,15 @@
 /**
  * /api/dashboard/email-automation
  *
- * GET  ?mode=pairs&minScore=60  → all global pairs above threshold,
- *                                 annotated with already_sent and in_draft
+ * Pair list source of truth (who appears / already sent):
+ *   - `responses`  → live score + hard filters (latest row per email)
+ *   - `sent_matches` → already_sent / quota used /「已發送」history
+ *
+ * Secondary annotation only (does NOT invent pairs):
+ *   - `email_drafts` → in_draft badge
+ *   - `subscriptions` → Passport / unlimited quota badges
+ *
+ * GET  ?mode=pairs&minScore=60  → pairs above threshold + annotations
  * GET  ?mode=drafts              → list email_drafts with user names
  * POST {action:'save_draft', pairs:[{userAId,userBId,match_score}]}
  *                                → upsert pairs into email_drafts
