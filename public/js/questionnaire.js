@@ -653,6 +653,8 @@ var quizInitialRevealPending = false;
 var quizBootFailsafeTimer = null;
 var QUIZ_BOOT_FETCH_TIMEOUT_MS = 8000;
 var QUIZ_BOOT_FAILSAFE_MS = 12000;
+/** Only the intentional "open form" path may set this — boot failsafe must not force Q1. */
+var echoGateMayOpenQuestionnaire = false;
 
 function finishMirrorPageBoot() {
   if (document.body.dataset.automode === 'mirror') {
@@ -733,6 +735,12 @@ function setQuizBooting(active) {
     quizBootFailsafeTimer = setTimeout(function () {
       quizBootFailsafeTimer = null;
       if (!document.body.classList.contains('mirror-booting') && !document.body.classList.contains('match-booting')) {
+        return;
+      }
+      // Never force-open the questionnaire while the Echo gate is still deciding
+      // (Passport /api/matches can exceed this timeout). Opening QUESTIONS here
+      // was the Q1/32 bug for already-submitted logged-in users.
+      if (document.body.dataset.automode === 'match' && !echoGateMayOpenQuestionnaire) {
         return;
       }
       quizInitialRevealPending = false;
@@ -2268,6 +2276,36 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
     return;
   }
 
+  // Prefetch may be a Promise (in-flight /api/matches) or a resolved status object.
+  // Show the thank-you / results shell immediately so a slow Passport discovery
+  // cannot leave the user staring at the boot loader (or worse, the failsafe form).
+  $progressWrap.style.display = 'block';
+  $progressWrap.classList.add('mode-top-bar--result');
+  if ($progressFill) $progressFill.style.width = '100%';
+  if ($progressText) {
+    $progressText.textContent = '月下緣份';
+    $progressText.classList.add('mode-top-bar__center--zh');
+  }
+  if ($already) {
+    $already.classList.add('active', 'overlay-screen--match-results');
+  }
+  if (resultsPanel) {
+    resultsPanel.style.display = '';
+    var emptyElBoot = document.getElementById('match-results-empty');
+    if (emptyElBoot) emptyElBoot.style.display = '';
+  }
+  if (staticView) staticView.style.display = 'none';
+  $loading.classList.remove('active');
+  finishQuizPageBoot();
+
+  if (prefetchedMatches && typeof prefetchedMatches.then === 'function') {
+    try {
+      prefetchedMatches = await prefetchedMatches;
+    } catch (e) {
+      prefetchedMatches = null;
+    }
+  }
+
   // Prefetch shape: either { matches } from /api/matches, or { isPremium, matches } from helper
   if (prefetchedMatches && typeof prefetchedMatches.isPremium === 'boolean') {
     isPremium = prefetchedMatches.isPremium;
@@ -2285,6 +2323,7 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
     if (status.token) token = status.token;
   }
 
+  // Re-apply result chrome (already painted above; keep in sync after fetch).
   $progressWrap.style.display = 'block';
   $progressWrap.classList.add('mode-top-bar--result');
   if ($progressFill) $progressFill.style.width = '100%';
@@ -2334,6 +2373,7 @@ async function startMatchMode() {
 async function startMatchModeImpl() {
   isMirrorMode = false;
   lastPart = 0;
+  echoGateMayOpenQuestionnaire = false;
   document.getElementById('mode-select').classList.remove('active');
 
   setQuizBooting(true);
@@ -2346,28 +2386,45 @@ async function startMatchModeImpl() {
       token = await waitForSupabaseAuthToken(authWaitMs);
     }
 
-    var matchesPrefetch = null;
-    if (token) {
-      matchesPrefetch = fetchEchoPremiumAndMatches(token);
-    }
+    // Start matches prefetch early, but NEVER block the submitted gate on it —
+    // Passport discovery can take well over the 12s boot failsafe.
+    var matchesPrefetch = token ? fetchEchoPremiumAndMatches(token) : null;
 
     var submitted = token ? await userHasMatchSubmission(token) : false;
-    var prefetched = matchesPrefetch ? await matchesPrefetch : null;
-    if (prefetched && prefetched.token) token = prefetched.token;
 
-    if (!submitted && prefetched && prefetched.hasSubmitted === true) {
-      submitted = true;
-      var accountEmailForMark = await resolveMatchAccountEmail(token);
-      markMatchSubmittedLocally(accountEmailForMark || getLocalMatchSubmittedEmail() || '');
-    }
-    if (!submitted && prefetched && (prefetched.matches || []).length > 0) {
-      submitted = true;
-    }
-
-    // Logged-in returning submitter: never open the questionnaire.
+    // Logged-in returning submitter: leave the form immediately (don't await matches).
     if (token && submitted) {
       quizInitialRevealPending = false;
-      await showMatchAlreadySubmitted(prefetched);
+      echoGateMayOpenQuestionnaire = false;
+      await showMatchAlreadySubmitted(matchesPrefetch || null);
+      return;
+    }
+
+    // Only if status said "not submitted", peek at matches as a secondary signal.
+    // Cap wait so a hung discovery cannot strand the user on the loading screen.
+    var prefetched = null;
+    if (matchesPrefetch) {
+      prefetched = await Promise.race([
+        matchesPrefetch,
+        new Promise(function (resolve) {
+          setTimeout(function () { resolve(null); }, 4000);
+        }),
+      ]);
+      if (prefetched && prefetched.token) token = prefetched.token;
+      if (!submitted && prefetched && prefetched.hasSubmitted === true) {
+        submitted = true;
+        var accountEmailForMark = await resolveMatchAccountEmail(token);
+        markMatchSubmittedLocally(accountEmailForMark || getLocalMatchSubmittedEmail() || '');
+      }
+      if (!submitted && prefetched && (prefetched.matches || []).length > 0) {
+        submitted = true;
+      }
+    }
+
+    if (token && submitted) {
+      quizInitialRevealPending = false;
+      echoGateMayOpenQuestionnaire = false;
+      await showMatchAlreadySubmitted(prefetched || matchesPrefetch || null);
       return;
     }
 
@@ -2379,12 +2436,14 @@ async function startMatchModeImpl() {
       answers.email = accountEmail;
     }
 
+    echoGateMayOpenQuestionnaire = true;
     beginQuizQuestionnaire();
 
     // Late auth / late status: jump off the form if this account already submitted.
     scheduleEchoSubmittedGateRecovery();
   } catch (err) {
     quizInitialRevealPending = false;
+    echoGateMayOpenQuestionnaire = false;
     releaseQuizBootScreen();
     showErrorOverlay(err);
   }
@@ -2404,17 +2463,14 @@ async function tryRecoverEchoSubmittedResults() {
   var token = await getAuthTokenForEchoGate();
   if (!token) return false;
 
-  var status = await fetchEchoPremiumAndMatches(token);
-  if (status.token) token = status.token;
-
-  var ok = status.hasSubmitted === true || (status.matches && status.matches.length > 0);
-  if (!ok) {
-    ok = await userHasMatchSubmission(token);
-  }
+  // Fast path: match-status only (must not wait on slow /api/matches discovery).
+  var ok = await userHasMatchSubmission(token);
   if (!ok) return false;
 
   quizInitialRevealPending = false;
-  await showMatchAlreadySubmitted(status);
+  echoGateMayOpenQuestionnaire = false;
+  // Show thank-you / results shell immediately; matches load inside showMatchAlreadySubmitted.
+  await showMatchAlreadySubmitted(null);
   return true;
 }
 

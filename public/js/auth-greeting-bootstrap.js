@@ -103,11 +103,9 @@
 
     activeUserId = payload.sub;
     var cached = readMeCache(payload.sub);
+    // Only use profile.display_name from me cache — never JWT signup metadata / email.
     var name = String(
-      (cached && cached.profile && cached.profile.display_name) ||
-      (payload.user_metadata && payload.user_metadata.display_name) ||
-      payload.email ||
-      ''
+      (cached && cached.profile && cached.profile.display_name) || ''
     ).trim();
     if (!name) return;
 

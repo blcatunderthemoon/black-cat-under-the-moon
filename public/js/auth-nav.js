@@ -661,9 +661,11 @@
   function showLoggedIn(displayName, unreadCount, isPremium, meData, options) {
     options = options || {};
     var profilePending = !!options.profilePending;
-    var name = displayName || '貓咪';
+    var trimmed = String(displayName || '').trim();
+    // Never invent a label from JWT signup metadata; wait for profile.display_name.
+    var name = trimmed || (profilePending ? '' : '貓咪');
     var moon = isPremium ? premiumMoonHtml(meData || meCache) : '';
-    var showName = !profilePending || Boolean(String(displayName || '').trim());
+    var showName = Boolean(trimmed) || (!profilePending && Boolean(name));
     /* Index keeps time greeting; show full name + icon rail (same as app header). */
     var nameBlock = showName
       ? (
@@ -754,11 +756,8 @@
     }
     var payload = decodeJwt(token);
     var userId = payload && payload.sub;
-    var immediateName = (payload && (
-      (payload.user_metadata && payload.user_metadata.display_name) ||
-      payload.email
-    )) || null;
     var cached = userId ? readMeCache(userId) : null;
+    var cachedName = (cached && cached.profile && cached.profile.display_name) || '';
     var unread = (cached && cached.unread_inbox_count) || 0;
     var isPremium = !!(cached && cached.profile && cached.profile.subscription_tier === 'premium');
 
@@ -781,16 +780,19 @@
       })
       .then(function (data) {
         if (!data) {
+          // Keep profile cache name only — never flash JWT signup / email name.
           if (!(meCacheApi.isFresh && meCacheApi.isFresh(userId))) {
-            showLoggedIn(immediateName, unread, isPremium, cached);
+            showLoggedIn(cachedName, unread, isPremium, cached, {
+              profilePending: !cachedName,
+            });
           }
           return null;
         }
         meCache = data;
         if (userId) writeMeCache(userId, data);
-        var serverName = data.profile && data.profile.display_name;
+        var serverName = (data.profile && data.profile.display_name) || '';
         showLoggedIn(
-          serverName || immediateName,
+          serverName,
           data.unread_inbox_count || 0,
           !!(data.profile && data.profile.subscription_tier === 'premium'),
           data
@@ -800,7 +802,9 @@
       })
       .catch(function () {
         if (!(meCacheApi.isFresh && meCacheApi.isFresh(userId))) {
-          showLoggedIn(immediateName, unread, isPremium, cached);
+          showLoggedIn(cachedName, unread, isPremium, cached, {
+            profilePending: !cachedName,
+          });
         }
         return null;
       })
@@ -857,18 +861,16 @@
       } catch (e) {}
       return;
     }
-    var immediateName = (payload && (
-      (payload.user_metadata && payload.user_metadata.display_name) ||
-      payload.email
-    )) || null;
     var userId = payload && payload.sub;
     activeUserId = userId;
     var cached = userId ? readMeCache(userId) : null;
     if (cached) meCache = cached;
-    var cachedName = cached && cached.profile && cached.profile.display_name;
+    // Only paint profile.display_name from /api/me cache — never JWT signup name / email
+    // (those stale values flash before the latest profile arrives).
+    var cachedName = (cached && cached.profile && cached.profile.display_name) || '';
     var isPremium = !!(cached && cached.profile && cached.profile.subscription_tier === 'premium');
     var unread = (cached && cached.unread_inbox_count) || 0;
-    showLoggedIn(cachedName || immediateName, unread, isPremium, cached, { profilePending: !cached });
+    showLoggedIn(cachedName, unread, isPremium, cached, { profilePending: !cachedName });
 
     // Always revalidate /api/me so unread badges (e.g. 月光聚會) stay correct even when
     // the session cache is still "fresh". Instant UI comes from cache above.
