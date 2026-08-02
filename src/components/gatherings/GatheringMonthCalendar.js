@@ -163,18 +163,22 @@ export default function GatheringMonthCalendar({
               onClick={() => cell.inMonth && onSelectDate?.(cell.dateKey)}
             >
               <span className="gathering-cal__day-num">{cell.day}</span>
-              {featured && (
-                <span className="gathering-cal__day-chip" aria-hidden="true">
-                  {featured.featured_label || '官方'}
-                </span>
-              )}
-              {activeCount > 0 && (
-                <span className={`gathering-cal__marker${markerPastOnly ? ' is-past' : ''}`}>
-                  <span className="gathering-cal__marker-moon" aria-hidden="true">
-                    <ForumMoonIcon size={11} />
-                  </span>
-                  {activeCount > 1 && (
-                    <span className="gathering-cal__marker-count" aria-hidden="true">{activeCount}</span>
+              {(featured || activeCount > 0) && (
+                <span className={`gathering-cal__marks${markerPastOnly ? ' is-past' : ''}${featured ? ' has-featured' : ''}`}>
+                  {featured && (
+                    <span className="gathering-cal__day-chip" aria-hidden="true">
+                      {featured.featured_label || '官方'}
+                    </span>
+                  )}
+                  {activeCount > 0 && (
+                    <span className="gathering-cal__marker" aria-hidden="true">
+                      <span className="gathering-cal__marker-moon">
+                        <ForumMoonIcon size={15} />
+                      </span>
+                      {activeCount > 1 && (
+                        <span className="gathering-cal__marker-count">{activeCount}</span>
+                      )}
+                    </span>
                   )}
                 </span>
               )}
