@@ -335,6 +335,7 @@ export default function MoonlightApplicationAckPanel({ variant = 'card' }) {
         <strong>conduct_score = 0</strong>
         {' '}
         會自動略過。
+        已建草稿／已寄出會自動移出名單；人手寄過嘅揀中後撳下面「標記已寄出」。
       </p>
 
       <form className="mi-fields" onSubmit={handlePreview}>
@@ -402,6 +403,16 @@ export default function MoonlightApplicationAckPanel({ variant = 'card' }) {
               type="button"
               className="pixel-btn pixel-btn--ghost mi-submit"
               disabled={draftBusy || previewBusy || !selectedCount}
+              onClick={handleMarkSelectedSent}
+            >
+              <span className="pixel-btn__zh">
+                {draftBusy ? '處理中…' : '標記已寄出'}
+              </span>
+            </button>
+            <button
+              type="button"
+              className="pixel-btn pixel-btn--ghost mi-submit"
+              disabled={draftBusy || previewBusy || !selectedCount}
               onClick={handleCreateBatchDrafts}
             >
               <span className="pixel-btn__zh">
@@ -420,16 +431,6 @@ export default function MoonlightApplicationAckPanel({ variant = 'card' }) {
                 {draftBusy
                   ? '發送中…'
                   : `分批發送（本批最多 ${SEND_CHUNK}・約 2 秒／封）`}
-              </span>
-            </button>
-            <button
-              type="button"
-              className="pixel-btn pixel-btn--ghost mi-submit"
-              disabled={draftBusy || previewBusy || !selectedCount}
-              onClick={handleMarkSelectedSent}
-            >
-              <span className="pixel-btn__zh">
-                {draftBusy ? '處理中…' : '標記已寄出（人手寄過）'}
               </span>
             </button>
           </div>
