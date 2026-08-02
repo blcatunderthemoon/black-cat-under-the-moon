@@ -10582,7 +10582,7 @@
   display: contents;
 }
 
-/* Desktop: shared shell with forum-layout — brand left, actions right. */
+/* Desktop: shared shell with forum-layout — 主頁 left, logo centered, actions right. */
 @media (min-width: 900px) {
   .app-page--forum > .app-header.app-header--forum:not(.app-header--breadcrumbs) {
     display: flex;
@@ -10593,10 +10593,11 @@
   }
 
   .app-page--forum > .app-header.app-header--forum:not(.app-header--breadcrumbs) .app-header__shell--forum {
-    display: flex;
-    flex-direction: row;
+    /* Equal side columns keep the logo truly centered even when nav is wider than 主頁. */
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
-    gap: 12px;
+    column-gap: 12px;
     width: 100%;
     max-width: var(--forum-shell-max);
     margin: 0 auto;
@@ -10605,26 +10606,23 @@
     min-width: 0;
   }
 
+  .app-page--forum > .app-header.app-header--forum:not(.app-header--breadcrumbs) .app-header__back {
+    grid-column: 1;
+    justify-self: start;
+    flex-shrink: 0;
+  }
+
   .app-page--forum > .app-header.app-header--forum:not(.app-header--breadcrumbs) .app-header__brand {
-    order: 0;
-    grid-column: unset;
-    justify-self: unset;
+    grid-column: 2;
+    justify-self: center;
     margin: -6px 0;
     flex-shrink: 0;
   }
 
-  .app-page--forum > .app-header.app-header--forum:not(.app-header--breadcrumbs) .app-header__back {
-    order: 1;
-    grid-column: unset;
-    justify-self: unset;
-    flex-shrink: 0;
-  }
-
   .app-page--forum > .app-header.app-header--forum:not(.app-header--breadcrumbs) .app-header__nav {
-    order: 2;
-    grid-column: unset;
-    justify-self: unset;
-    margin-left: auto;
+    grid-column: 3;
+    justify-self: end;
+    margin-left: 0;
     min-width: 0;
     gap: 8px;
   }

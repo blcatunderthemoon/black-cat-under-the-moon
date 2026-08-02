@@ -2586,6 +2586,52 @@
   color: var(--gathering-accent, #ffe066);
 }
 
+/* Desktop: tall square-ish cells — date at top, 官方/moon anchored to bottom */
+@media (min-width: 900px) {
+  .gathering-cal__day {
+    min-height: 4.75rem;
+    aspect-ratio: 1 / 1;
+    justify-content: flex-start;
+    gap: 0.25rem;
+    padding: 0.4rem 0.28rem 0.38rem;
+  }
+
+  .gathering-cal__day-num {
+    align-self: stretch;
+    text-align: center;
+    font-size: 0.95rem;
+    line-height: 1.1;
+  }
+
+  .gathering-cal__marks {
+    margin-top: auto;
+    margin-bottom: 0.05rem;
+    flex-wrap: nowrap;
+    gap: 0.28rem;
+    width: 100%;
+  }
+
+  .gathering-cal__day-chip {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.18rem 0.4rem;
+    letter-spacing: 0.06em;
+    border-radius: 4px;
+    border-color: rgba(255, 224, 102, 0.55);
+    background: rgba(255, 224, 102, 0.16);
+    box-shadow: 0 0 10px rgba(255, 224, 102, 0.12);
+  }
+
+  .gathering-cal__marks.has-featured .gathering-cal__marker-moon {
+    filter: drop-shadow(0 0 6px rgba(255, 224, 102, 0.9));
+  }
+
+  .gathering-cal__marker-moon svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
 /* Past-only event days = cool muted moon, no glow pulse */
 .gathering-cal__day.has-events--past:not(.has-events--live) {
   background: rgba(140, 150, 190, 0.06);
