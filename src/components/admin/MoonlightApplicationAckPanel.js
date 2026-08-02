@@ -120,17 +120,20 @@ export default function MoonlightApplicationAckPanel({ variant = 'card' }) {
     try {
       const data = await adminAckFetch({ action: 'preview' });
       setSkippedConduct(Number(data.skipped_conduct_count) || 0);
-      const list = (data.candidates || []).filter(
-        (c) => !sentEmails.has(String(c.email || '').toLowerCase()),
-      );
+      const list = data.candidates || [];
       setCandidates(list);
       setSelectedIds(list.slice(0, SEND_CHUNK).map((c) => String(c.id)));
-      const hidden = (data.candidates || []).length - list.length;
+      const hidden = Number(data.hidden_already_sent) || 0;
+      const sentTotal = Number(data.already_sent_total) || 0;
       setDraftMsg(
         `搵到 ${list.length} 位可寄申請人`
-        + `${hidden ? `，已隱藏 ${hidden} 位今次 session 已寄過` : ''}`
+        + `${hidden ? `，已隱藏 ${hidden} 位已寄／已建草稿` : ''}`
+        + `${sentTotal ? `（累計已處理 ${sentTotal}）` : ''}`
         + `${data.skipped_conduct_count ? `，略過 ${data.skipped_conduct_count} 位 conduct_score=0` : ''}。`
-        + ` 預設已選最頂 ${Math.min(SEND_CHUNK, list.length)} 位。`,
+        + ` 預設已選最頂 ${Math.min(SEND_CHUNK, list.length)} 位。`
+        + (list.length && !sentTotal
+          ? ' 若你已人手寄過，可揀人後撳「標記已寄出」。'
+          : ''),
       );
     } catch (err) {
       setCandidates(null);
@@ -156,11 +159,50 @@ export default function MoonlightApplicationAckPanel({ variant = 'card' }) {
         action: 'create_batch',
         application_ids: chunk,
       });
-      const doneIds = new Set((data.results || []).filter((r) => r.saved).map((r) => String(r.id)));
+      const savedRows = (data.results || []).filter((r) => r.saved);
+      markEmailsSent(savedRows.map((r) => r.email));
+      const doneIds = new Set(savedRows.map((r) => String(r.id)));
       setSelectedIds((prev) => prev.filter((id) => !doneIds.has(String(id))));
+      setCandidates((prev) => (prev || []).filter((c) => !doneIds.has(String(c.id))));
       setDraftMsg(data.message || `已建立 ${doneIds.size} 封草稿。`);
     } catch (err) {
       setDraftErr(err.message || '建立草稿失敗');
+    } finally {
+      setDraftBusy(false);
+    }
+  }
+
+  async function handleMarkSelectedSent(e) {
+    e.preventDefault();
+    setDraftMsg('');
+    setDraftErr('');
+    if (!selectedIds.length) {
+      setDraftErr('請至少揀一位已寄出嘅申請人。');
+      return;
+    }
+    const ok = window.confirm(
+      `將標記已選 ${selectedIds.length} 人為「已寄／已處理」。\n`
+      + '之後預覽名單唔會再出現佢哋。\n\n確定？',
+    );
+    if (!ok) return;
+
+    setDraftBusy(true);
+    try {
+      const data = await adminAckFetch({
+        action: 'mark_sent',
+        application_ids: selectedIds.map(String),
+      });
+      const byId = new Map((candidates || []).map((c) => [String(c.id), c]));
+      const emails = selectedIds
+        .map((id) => byId.get(String(id))?.email)
+        .filter(Boolean);
+      markEmailsSent(emails);
+      const doneIds = new Set(selectedIds.map(String));
+      setSelectedIds([]);
+      setCandidates((prev) => (prev || []).filter((c) => !doneIds.has(String(c.id))));
+      setDraftMsg(data.message || `已標記 ${emails.length} 人。`);
+    } catch (err) {
+      setDraftErr(err.message || '標記失敗');
     } finally {
       setDraftBusy(false);
     }
@@ -189,6 +231,8 @@ export default function MoonlightApplicationAckPanel({ variant = 'card' }) {
       const sentRows = (data.results || []).filter((r) => r.sent);
       const failedRows = (data.results || []).filter((r) => !r.sent);
       markEmailsSent(sentRows.map((r) => r.email));
+      const sentIds = new Set(sentRows.map((r) => String(r.id)));
+      setCandidates((prev) => (prev || []).filter((c) => !sentIds.has(String(c.id))));
       const remain = Math.max(0, selectedIds.length - sentRows.length);
       setDraftMsg(
         (data.message || `已發送 ${sentRows.length} 封。`)
@@ -376,6 +420,16 @@ export default function MoonlightApplicationAckPanel({ variant = 'card' }) {
                 {draftBusy
                   ? '發送中…'
                   : `分批發送（本批最多 ${SEND_CHUNK}・約 2 秒／封）`}
+              </span>
+            </button>
+            <button
+              type="button"
+              className="pixel-btn pixel-btn--ghost mi-submit"
+              disabled={draftBusy || previewBusy || !selectedCount}
+              onClick={handleMarkSelectedSent}
+            >
+              <span className="pixel-btn__zh">
+                {draftBusy ? '處理中…' : '標記已寄出（人手寄過）'}
               </span>
             </button>
           </div>

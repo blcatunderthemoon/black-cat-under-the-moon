@@ -131,16 +131,19 @@ export default function MoonlightInviteEmailPanel({ variant = 'card' }) {
         age_min: filterAgeMin === '' ? null : Number(filterAgeMin),
         age_max: filterAgeMax === '' ? null : Number(filterAgeMax),
       });
-      const list = (data.candidates || []).filter(
-        (c) => !sentEmails.has(String(c.email || '').toLowerCase()),
-      );
+      const list = data.candidates || [];
       setCandidates(list);
       setSelectedIds(list.map((c) => c.id));
-      const hidden = (data.candidates || []).length - list.length;
+      const hidden = Number(data.hidden_already_sent) || 0;
+      const sentTotal = Number(data.already_sent_total) || 0;
       setDraftMsg(
         `搵到 ${list.length} 位可寄（已去重 email）`
-        + `${hidden ? `，已隱藏 ${hidden} 位今次 session 已寄過` : ''}。`
-        + '預設全選，可再剔走。',
+        + `${hidden ? `，已隱藏 ${hidden} 位已寄／已建草稿` : ''}`
+        + `${sentTotal ? `（累計已處理 ${sentTotal}）` : ''}。`
+        + '預設全選，可再剔走。'
+        + (list.length && !sentTotal
+          ? ' 若你已人手寄過，可揀人後撳「標記已寄出」。'
+          : ''),
       );
     } catch (err) {
       setCandidates(null);
@@ -166,8 +169,11 @@ export default function MoonlightInviteEmailPanel({ variant = 'card' }) {
         action: 'create_batch',
         response_ids: chunk,
       });
-      const doneIds = new Set((data.results || []).filter((r) => r.saved).map((r) => r.id));
+      const savedRows = (data.results || []).filter((r) => r.saved);
+      markEmailsSent(savedRows.map((r) => r.email));
+      const doneIds = new Set(savedRows.map((r) => r.id));
       setSelectedIds((prev) => prev.filter((id) => !doneIds.has(id)));
+      setCandidates((prev) => (prev || []).filter((c) => !doneIds.has(c.id)));
       const remain = Math.max(0, selectedIds.length - chunk.length);
       setDraftMsg(
         (data.message || `已建立 ${doneIds.size} 封獨立草稿。`)
@@ -205,6 +211,8 @@ export default function MoonlightInviteEmailPanel({ variant = 'card' }) {
       const sentRows = (data.results || []).filter((r) => r.sent);
       const failedRows = (data.results || []).filter((r) => !r.sent);
       markEmailsSent(sentRows.map((r) => r.email));
+      const sentIds = new Set(sentRows.map((r) => r.id));
+      setCandidates((prev) => (prev || []).filter((c) => !sentIds.has(c.id)));
       const remain = Math.max(0, selectedIds.length - sentRows.length);
       setDraftMsg(
         (data.message || `已發送 ${sentRows.length} 封。`)
@@ -222,6 +230,42 @@ export default function MoonlightInviteEmailPanel({ variant = 'card' }) {
         (err.message || '發送失敗')
         + '（若剛寄過一批，可能係 Gmail 限速或請求 timeout；請隔幾分鐘再試，每批唔好超過 8 封。）',
       );
+    } finally {
+      setDraftBusy(false);
+    }
+  }
+
+  async function handleMarkSelectedSent(e) {
+    e.preventDefault();
+    setDraftMsg('');
+    setDraftErr('');
+    if (!selectedIds.length) {
+      setDraftErr('請至少揀一位已寄出嘅人。');
+      return;
+    }
+    const ok = window.confirm(
+      `將標記已選 ${selectedIds.length} 人為「已寄／已處理」。\n`
+      + '之後預覽名單唔會再出現佢哋（跨裝置／重新登入都記得）。\n\n確定？',
+    );
+    if (!ok) return;
+
+    setDraftBusy(true);
+    try {
+      const data = await adminDraftFetch({
+        action: 'mark_sent',
+        response_ids: selectedIds,
+      });
+      const byId = new Map((candidates || []).map((c) => [c.id, c]));
+      const emails = selectedIds
+        .map((id) => byId.get(id)?.email)
+        .filter(Boolean);
+      markEmailsSent(emails);
+      const doneIds = new Set(selectedIds);
+      setSelectedIds([]);
+      setCandidates((prev) => (prev || []).filter((c) => !doneIds.has(c.id)));
+      setDraftMsg(data.message || `已標記 ${emails.length} 人。`);
+    } catch (err) {
+      setDraftErr(err.message || '標記失敗');
     } finally {
       setDraftBusy(false);
     }
@@ -303,6 +347,7 @@ export default function MoonlightInviteEmailPanel({ variant = 'card' }) {
         {' '}
         <strong>Moonlight Gathering #001 邀請</strong>
         （每批最多 {SEND_CHUNK} 封、間隔約 2 秒；寄完請隔 1–2 分鐘再下一批，避免 Gmail／timeout）。
+        已建草稿／已寄出會自動移出名單；人手寄過嘅可揀人後撳「標記已寄出」。
       </p>
 
       <form className="mi-fields" onSubmit={handlePreviewCandidates}>
@@ -431,6 +476,16 @@ export default function MoonlightInviteEmailPanel({ variant = 'card' }) {
                 {draftBusy
                   ? '發送中…'
                   : `分批發送（本批最多 ${SEND_CHUNK}・約 2 秒／封）`}
+              </span>
+            </button>
+            <button
+              type="button"
+              className="pixel-btn pixel-btn--ghost mi-submit"
+              disabled={draftBusy || previewBusy || !selectedCount}
+              onClick={handleMarkSelectedSent}
+            >
+              <span className="pixel-btn__zh">
+                {draftBusy ? '處理中…' : '標記已寄出（人手寄過）'}
               </span>
             </button>
           </div>

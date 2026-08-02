@@ -10,6 +10,7 @@
  *   send_batch   — SMTP send (max 8, ~2s apart)
  *   send_one     — one manual test send
  *   create_one   — one manual draft
+ *   mark_sent    — record emails as already drafted/sent (hide from preview)
  *
  * Auth: station dashboard key OR forum admin Bearer.
  */
@@ -24,6 +25,12 @@ import {
   buildMoonlightApplicationAckSubject,
   buildMoonlightApplicationAckText,
 } from '../../../lib/moonlight-interest-email.js';
+import {
+  MOONLIGHT_ACK_SENT_OPS_KEY,
+  filterCandidatesExcludingSent,
+  loadMoonlightOutreachSentEmails,
+  recordMoonlightOutreachSentEmails,
+} from '../../../lib/moonlight-outreach-sent.js';
 
 export const config = {
   maxDuration: 60,
@@ -45,6 +52,14 @@ function parseBody(req) {
 
 function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
+}
+
+function normalizeEmailListCount(emails) {
+  return new Set(
+    (emails || [])
+      .map((e) => normalizeEmail(e))
+      .filter((e) => e && EMAIL_RE.test(e)),
+  ).size;
 }
 
 function parseIdList(body) {
@@ -201,6 +216,7 @@ export default async function handler(req, res) {
   }
 
   const action = typeof body.action === 'string' ? body.action.trim() : 'create_one';
+  const admin = getAdminClient();
 
   if (action === 'preview') {
     const { error, candidates, skipped_conduct_count } = await loadApplicantsPreview();
@@ -213,11 +229,44 @@ export default async function handler(req, res) {
           : '無法讀取參加表申請人。',
       });
     }
+
+    const sentEmails = await loadMoonlightOutreachSentEmails(admin, MOONLIGHT_ACK_SENT_OPS_KEY);
+    const { visible, hidden } = filterCandidatesExcludingSent(candidates, sentEmails);
+
     return res.status(200).json({
       success: true,
-      count: candidates.length,
-      candidates,
+      count: visible.length,
+      hidden_already_sent: hidden,
+      already_sent_total: sentEmails.length,
+      candidates: visible,
       skipped_conduct_count,
+    });
+  }
+
+  if (action === 'mark_sent') {
+    const fromIds = parseIdList(body);
+    const fromEmails = Array.isArray(body.emails) ? body.emails : [];
+    let emails = [...fromEmails];
+    if (fromIds.length) {
+      const { error, recipients } = await resolveApplicantsByIds(fromIds);
+      if (error) {
+        return res.status(500).json({ error: '無法讀取選定嘅申請人。' });
+      }
+      emails = emails.concat(recipients.map((r) => r.email));
+    }
+    const recorded = await recordMoonlightOutreachSentEmails(
+      admin,
+      MOONLIGHT_ACK_SENT_OPS_KEY,
+      emails,
+    );
+    if (!recorded.ok) {
+      return res.status(503).json({ error: recorded.error });
+    }
+    return res.status(200).json({
+      success: true,
+      already_sent_total: recorded.emails.length,
+      recorded_count: normalizeEmailListCount(emails),
+      message: `已標記 ${normalizeEmailListCount(emails)} 個電郵為已處理，之後預覽唔會再出現。`,
     });
   }
 
@@ -270,6 +319,13 @@ export default async function handler(req, res) {
       }
     }
 
+    const savedEmails = results.filter((r) => r.saved).map((r) => r.email);
+    const recorded = await recordMoonlightOutreachSentEmails(
+      admin,
+      MOONLIGHT_ACK_SENT_OPS_KEY,
+      savedEmails,
+    );
+
     return res.status(200).json({
       success: true,
       sent: false,
@@ -280,10 +336,14 @@ export default async function handler(req, res) {
       skipped,
       max_batch: MAX_DRAFT_BATCH,
       results,
+      already_sent_total: recorded.ok ? recorded.emails.length : null,
       message:
         `已建立 ${saved} 封「已收到申請」Gmail 草稿（未發送）`
         + `${failed ? `，失敗 ${failed}` : ''}`
-        + `${skipped.length ? `，略過 ${skipped.length}` : ''}。`,
+        + `${skipped.length ? `，略過 ${skipped.length}` : ''}。`
+        + (recorded.ok
+          ? ' 呢啲人已移出預覽名單。'
+          : ` 草稿已建立，但未能記住名單：${recorded.error || '未知錯誤'}`),
     });
   }
 
@@ -342,6 +402,13 @@ export default async function handler(req, res) {
       }
     }
 
+    const sentEmails = results.filter((r) => r.sent).map((r) => r.email);
+    const recorded = await recordMoonlightOutreachSentEmails(
+      admin,
+      MOONLIGHT_ACK_SENT_OPS_KEY,
+      sentEmails,
+    );
+
     return res.status(200).json({
       success: true,
       sent: true,
@@ -354,10 +421,14 @@ export default async function handler(req, res) {
       max_batch: MAX_SEND_BATCH,
       processed_ids: results.filter((r) => r.sent).map((r) => r.id),
       results,
+      already_sent_total: recorded.ok ? recorded.emails.length : null,
       message:
         `已發送 ${sentCount} 封「已收到申請／感謝」電郵（每封間隔約 ${SEND_DELAY_MS / 1000} 秒）`
         + `${failed ? `，失敗 ${failed}` : ''}`
-        + `${skipped.length ? `，略過 ${skipped.length}` : ''}。`,
+        + `${skipped.length ? `，略過 ${skipped.length}` : ''}。`
+        + (recorded.ok
+          ? ' 已寄出嘅人唔會再出現喺預覽名單。'
+          : ` 已寄出，但未能記住名單：${recorded.error || '未知錯誤'}`),
     });
   }
 
