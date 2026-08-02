@@ -65,6 +65,9 @@ export default function GatheringMonthCalendar({
     else upcoming.push(g);
   }
   const selectedIsPastDay = Boolean(selectedDate && selectedDate < todayKey);
+  const selectedFeatured = selectedList.find((g) => g.featured) || null;
+  const selectedLiveCount = upcoming.length;
+  const selectedPastCount = past.length;
 
   function go(delta) {
     const next = shiftGatheringYm(year, month, delta);
@@ -104,7 +107,7 @@ export default function GatheringMonthCalendar({
         </button>
       </div>
 
-      <p className="gathering-cal__hint">點日子睇詳情 · 左右換月</p>
+      <p className="gathering-cal__hint">點日子睇當日聚會 · 左右換月</p>
 
       <div className="gathering-cal__weekdays" aria-hidden="true">
         {weekdays.map((label) => (
@@ -121,11 +124,6 @@ export default function GatheringMonthCalendar({
           const featured = dayList.find((g) => g.featured);
           const selected = selectedDate === cell.dateKey;
           const markerPastOnly = pastCount > 0 && liveCount === 0;
-          const markerTip = featured
-            ? `${featured.title}${featured.seats_left != null ? ` · 仲有 ${featured.seats_left} 個位` : ''}`
-            : (markerPastOnly
-              ? '已結束'
-              : (liveCount > 0 && pastCount > 0 ? '進行中 · 已結束' : '進行中'));
           return (
             <button
               key={cell.dateKey + (cell.inMonth ? '' : '-out')}
@@ -154,11 +152,7 @@ export default function GatheringMonthCalendar({
                 </span>
               )}
               {activeCount > 0 && (
-                <span
-                  className={`gathering-cal__marker${markerPastOnly ? ' is-past' : ''}`}
-                  data-tip={markerTip}
-                  title={markerTip}
-                >
+                <span className={`gathering-cal__marker${markerPastOnly ? ' is-past' : ''}`}>
                   <span className="gathering-cal__marker-moon" aria-hidden="true">
                     <ForumMoonIcon size={11} />
                   </span>
@@ -177,6 +171,31 @@ export default function GatheringMonthCalendar({
           <h3 className="gathering-cal__panel-title">
             {selectedDate ? formatSelectedLabel(selectedDate) : '揀一日睇聚會'}
           </h3>
+          {selectedDate && selectedList.length > 0 && (
+            <p className="gathering-cal__day-teaser" aria-live="polite">
+              {selectedFeatured ? (
+                <>
+                  <span className="gathering-cal__day-teaser__badge">
+                    {selectedFeatured.featured_label || '官方'}
+                  </span>
+                  <span className="gathering-cal__day-teaser__title">{selectedFeatured.title}</span>
+                  {selectedFeatured.seats_left != null && (
+                    <span className="gathering-cal__day-teaser__meta">
+                      仲有 {selectedFeatured.seats_left} 個位
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span className="gathering-cal__day-teaser__meta">
+                  {selectedLiveCount > 0 && selectedPastCount > 0
+                    ? `${selectedLiveCount} 場進行中 · ${selectedPastCount} 場已結束`
+                    : selectedLiveCount > 0
+                      ? `${selectedLiveCount} 場進行中`
+                      : `${selectedPastCount} 場已結束`}
+                </span>
+              )}
+            </p>
+          )}
         </div>
 
         {loading ? (

@@ -1210,6 +1210,9 @@ export default function ForumPage() {
             </div>
 
             <ForumCommunityActivities
+              onOpenChange={(isOpen) => {
+                if (isOpen) setShowHotPanel(true);
+              }}
               onRankClick={() => {
                 setShowHotPanel(true);
                 window.setTimeout(() => {
@@ -1218,18 +1221,14 @@ export default function ForumPage() {
                   window.setTimeout(() => scrollForumHotPanelIntoView(), 120);
                 }, 40);
               }}
-            />
-
-            {topic === '全部' && (
-              <>
+            >
+              {topic === '全部' && (
                 <div className="forum-treehole-panels forum-treehole-panels--mobile">
                   <FeaturedPostsPanel featuredPosts={featuredPosts} />
-                  {showHotPanel && (
-                    <HotTopicsPanel hotPosts={meta?.hot_posts} sparksMode={meta?.sparks_mode} />
-                  )}
+                  <HotTopicsPanel hotPosts={meta?.hot_posts} sparksMode={meta?.sparks_mode} />
                 </div>
-              </>
-            )}
+              )}
+            </ForumCommunityActivities>
 
             <div className={`forum-feed${feedRefreshing ? ' forum-feed--refreshing' : ''}`}>
                 {feedRefreshing && (

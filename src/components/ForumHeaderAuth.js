@@ -82,80 +82,83 @@ export default function ForumHeaderAuth({ extra = null, moonJourney = null, redi
 
   return (
     <>
-      <span className="forum-header-name-group">
-        {profileHydrated && name ? (
-          <NavLink href="/mirror-card/me">{name}</NavLink>
-        ) : (
-          <span className="forum-header-name-placeholder" aria-hidden="true" />
-        )}
-        {isPremium && (
-          <HeaderPremiumMoon profile={meData} className="forum-header-moon" />
-        )}
-      </span>
-      <span className="forum-header-actions">
-        <HeaderIconScrollGroup>
-          <button
-            type="button"
-            className="app-header__nav-link app-header__nav-link--icon forum-header-bookmark-btn"
-            title="我的收藏"
-            aria-label="我的收藏"
-            onClick={openBookmarks}
-          >
-            <span className="app-header__nav-icon forum-header-bookmark-btn__icon" aria-hidden="true">
-              <HeaderBookmarkIcon />
-            </span>
-          </button>
-          {!onGatheringsPage && (
-            <Link
-              href="/gatherings"
-              className="app-header__nav-link app-header__nav-link--icon"
-              title="月光聚會"
-              aria-label="月光聚會"
-            >
-              <span className="app-header__nav-icon" aria-hidden="true"><HeaderCalendarIcon /></span>
-            </Link>
+      {/* user-bar: desktop = name | actions inline; mobile = name row + scrollable actions */}
+      <span className="forum-header-user-bar">
+        <span className="forum-header-name-group">
+          {profileHydrated && name ? (
+            <NavLink href="/mirror-card/me">{name}</NavLink>
+          ) : (
+            <span className="forum-header-name-placeholder" aria-hidden="true" />
           )}
-          {!onWishesPage && (
-            <Link
-              href="/wishes"
-              className="app-header__nav-link app-header__nav-link--icon"
-              title="月光心願"
-              aria-label="月光心願"
-            >
-              <span className="app-header__nav-icon" aria-hidden="true"><HeaderWishIcon /></span>
-            </Link>
+          {isPremium && (
+            <HeaderPremiumMoon profile={meData} className="forum-header-moon" />
           )}
-          <Link
-            href="/inbox"
-            className={`app-header__nav-link app-header__nav-link--icon${unread > 0 ? ' app-header__nav-link--inbox-unread' : ''}`}
-            title={unread > 0 ? `收件箱（${unread > 99 ? '99+' : unread}）未讀` : '收件箱'}
-          >
-            <span className="app-header__nav-icon" aria-hidden="true"><HeaderMailIcon /></span>
-            {unread > 0 && (
-              <span data-unread className="auth-nav-badge__unread forum-nav-unread">{unread > 99 ? '99+' : unread}</span>
+        </span>
+        <span className="forum-header-actions">
+          <HeaderIconScrollGroup>
+            <button
+              type="button"
+              className="app-header__nav-link app-header__nav-link--icon forum-header-bookmark-btn"
+              title="我的收藏"
+              aria-label="我的收藏"
+              onClick={openBookmarks}
+            >
+              <span className="app-header__nav-icon forum-header-bookmark-btn__icon" aria-hidden="true">
+                <HeaderBookmarkIcon />
+              </span>
+            </button>
+            {!onGatheringsPage && (
+              <Link
+                href="/gatherings"
+                className="app-header__nav-link app-header__nav-link--icon"
+                title="月光聚會"
+                aria-label="月光聚會"
+              >
+                <span className="app-header__nav-icon" aria-hidden="true"><HeaderCalendarIcon /></span>
+              </Link>
             )}
-          </Link>
-          <Link href="/account" className="app-header__nav-link app-header__nav-link--icon" title="設定">
-            <span className="app-header__nav-icon" aria-hidden="true"><HeaderSettingsIcon /></span>
-          </Link>
-          {moonJourney}
-          <HeaderMyCatLink variant="forum" needsFeedBadge={meData?.my_cat?.needs_feed_badge === true} skinId={meData?.my_cat?.skin_id} />
-        </HeaderIconScrollGroup>
-        {isForumStaff && (
-          <Link
-            href="/forum/guardian"
-            className={`forum-header-guardian-link${onGuardianPage ? ' is-active' : ''}`}
-            title="月光守護者 · 版主工具"
-            aria-label="版主工具"
-            aria-current={onGuardianPage ? 'page' : undefined}
-          >
-            <span className="forum-header-guardian-link__icon" aria-hidden="true">
-              <HeaderShieldIcon size={15} />
-            </span>
-            <span className="forum-header-guardian-link__text">版主工具</span>
-          </Link>
-        )}
-        {extra}
+            {!onWishesPage && (
+              <Link
+                href="/wishes"
+                className="app-header__nav-link app-header__nav-link--icon"
+                title="月光心願"
+                aria-label="月光心願"
+              >
+                <span className="app-header__nav-icon" aria-hidden="true"><HeaderWishIcon /></span>
+              </Link>
+            )}
+            <Link
+              href="/inbox"
+              className={`app-header__nav-link app-header__nav-link--icon${unread > 0 ? ' app-header__nav-link--inbox-unread' : ''}`}
+              title={unread > 0 ? `收件箱（${unread > 99 ? '99+' : unread}）未讀` : '收件箱'}
+            >
+              <span className="app-header__nav-icon" aria-hidden="true"><HeaderMailIcon /></span>
+              {unread > 0 && (
+                <span data-unread className="auth-nav-badge__unread forum-nav-unread">{unread > 99 ? '99+' : unread}</span>
+              )}
+            </Link>
+            <Link href="/account" className="app-header__nav-link app-header__nav-link--icon" title="設定">
+              <span className="app-header__nav-icon" aria-hidden="true"><HeaderSettingsIcon /></span>
+            </Link>
+            {moonJourney}
+            <HeaderMyCatLink variant="forum" needsFeedBadge={meData?.my_cat?.needs_feed_badge === true} skinId={meData?.my_cat?.skin_id} />
+          </HeaderIconScrollGroup>
+          {isForumStaff && (
+            <Link
+              href="/forum/guardian"
+              className={`forum-header-guardian-link${onGuardianPage ? ' is-active' : ''}`}
+              title="月光守護者 · 版主工具"
+              aria-label="版主工具"
+              aria-current={onGuardianPage ? 'page' : undefined}
+            >
+              <span className="forum-header-guardian-link__icon" aria-hidden="true">
+                <HeaderShieldIcon size={15} />
+              </span>
+              <span className="forum-header-guardian-link__text">版主工具</span>
+            </Link>
+          )}
+          {extra}
+        </span>
       </span>
       <button type="button" className="app-header__action forum-header-logout-btn" onClick={handleLogout}>
         登出

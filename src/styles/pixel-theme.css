@@ -16151,6 +16151,39 @@
   margin: 0 0 0.7rem;
 }
 
+.forum-community-activities--collapsed .forum-community-activities__head {
+  margin-bottom: 0;
+}
+
+.forum-community-activities--collapsed {
+  padding-top: 0.7rem;
+  padding-bottom: 0.7rem;
+}
+
+.forum-community-activities__toggle {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.forum-community-activities__toggle:hover .forum-community-activities__title,
+.forum-community-activities__toggle:focus-visible .forum-community-activities__title {
+  color: #ffe9c8;
+}
+
+.forum-community-activities__toggle:focus-visible {
+  outline: 1px solid rgba(255, 200, 120, 0.45);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
 .forum-community-activities__title {
   display: inline-flex;
   align-items: center;
@@ -16160,12 +16193,22 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   color: rgba(255, 214, 140, 0.96);
+  transition: color 0.15s ease;
 }
 
 .forum-community-activities__title-icon {
   flex-shrink: 0;
   opacity: 0.95;
   color: rgba(255, 196, 110, 0.95);
+}
+
+.forum-community-activities__chevron-toggle {
+  flex-shrink: 0;
+  margin-left: 0.15rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255, 200, 140, 0.72);
+  line-height: 1;
 }
 
 .forum-community-activities__sub {
@@ -16176,6 +16219,21 @@
   line-height: 1.4;
 }
 
+.forum-community-activities--collapsed .forum-community-activities__sub {
+  display: none;
+}
+
+.forum-community-activities__body[hidden] {
+  display: none;
+}
+
+.forum-community-activities__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
 .forum-community-activities__grid {
   list-style: none;
   margin: 0;
@@ -16183,6 +16241,11 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.5rem;
+}
+
+.forum-community-activities .forum-treehole-panels--mobile {
+  order: unset;
+  margin: 0;
 }
 
 @media (min-width: 640px) {
@@ -20516,6 +20579,14 @@ button.forum-tag-chip:hover {
 .app-header.app-header--account .auth-nav-badge__moon {
   font-size: 11px;
   filter: drop-shadow(0 0 6px rgba(200, 220, 255, 0.45));
+}
+
+.forum-header-user-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 .forum-header-name-group {

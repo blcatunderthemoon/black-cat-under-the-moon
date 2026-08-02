@@ -1,8 +1,9 @@
 /**
  * Compact「社群活動」discovery strip for Forum (Community Hub).
- * Links only — no heavy fetch on first paint.
+ * Collapsed by default; when open shows activity tiles + optional panels (children).
  */
 
+import { useEffect, useId, useState } from 'react';
 import Link from 'next/link';
 import { getForumMoonlightGatheringTeaser } from '../lib/moonlight-gathering-001.js';
 import {
@@ -12,8 +13,11 @@ import {
   HeaderCalendarIcon,
 } from './ForumIcons.js';
 
+const STORAGE_KEY = 'bcutm_forum_community_activities_open';
+
 function buildActivities() {
   const gathering = getForumMoonlightGatheringTeaser();
+  // Mobile 2×2: top = 心願 / 簽到; bottom = 聚會 / 排行榜 (live / hub defaults)
   return [
     {
       id: 'wish',
@@ -23,19 +27,19 @@ function buildActivities() {
       Icon: ForumMoonIcon,
     },
     {
+      id: 'checkin',
+      href: '/my-cat',
+      title: '每日簽到',
+      hint: '餵養黑貓',
+      Icon: ForumPawIcon,
+    },
+    {
       id: 'gathering',
       href: gathering.href,
       title: '月光聚會',
       hint: gathering.hint,
       Icon: HeaderCalendarIcon,
       featured: gathering.featured,
-    },
-    {
-      id: 'checkin',
-      href: '/my-cat',
-      title: '每日簽到',
-      hint: '餵養黑貓',
-      Icon: ForumPawIcon,
     },
     {
       id: 'rank',
@@ -59,65 +63,115 @@ export function scrollForumHotPanelIntoView() {
   return true;
 }
 
-export default function ForumCommunityActivities({ onRankClick } = {}) {
+export default function ForumCommunityActivities({
+  onRankClick,
+  onOpenChange,
+  children = null,
+} = {}) {
   const activities = buildActivities();
+  const bodyId = useId();
+  const [open, setOpen] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return sessionStorage.getItem(STORAGE_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    if (typeof onOpenChange === 'function') onOpenChange(open);
+  }, [open, onOpenChange]);
+
+  function toggle() {
+    setOpen((prev) => {
+      const next = !prev;
+      try {
+        sessionStorage.setItem(STORAGE_KEY, next ? '1' : '0');
+      } catch {
+        /* private mode */
+      }
+      return next;
+    });
+  }
 
   return (
-    <section className="forum-community-activities" aria-labelledby="forum-community-activities-title">
+    <section
+      className={`forum-community-activities${open ? ' forum-community-activities--open' : ' forum-community-activities--collapsed'}`}
+      aria-labelledby="forum-community-activities-title"
+    >
       <div className="forum-community-activities__head">
-        <h2 id="forum-community-activities-title" className="forum-community-activities__title">
-          <ForumMoonIcon size={14} className="forum-community-activities__title-icon" />
-          社群活動
-        </h2>
-        <p className="forum-community-activities__sub">一鍵去玩 · 圍爐以外嘅月光日常</p>
+        <button
+          type="button"
+          className="forum-community-activities__toggle"
+          onClick={toggle}
+          aria-expanded={open}
+          aria-controls={bodyId}
+        >
+          <h2 id="forum-community-activities-title" className="forum-community-activities__title">
+            <ForumMoonIcon size={14} className="forum-community-activities__title-icon" />
+            社群活動
+            <span className="forum-community-activities__chevron-toggle" aria-hidden="true">
+              {open ? '▾' : '▸'}
+            </span>
+          </h2>
+          <p className="forum-community-activities__sub">一鍵去玩 · 圍爐以外嘅月光日常</p>
+        </button>
       </div>
-      <ul className="forum-community-activities__grid">
-        {activities.map(({ id, href, title, hint, Icon, isRank, featured }) => (
-          <li key={id}>
-            {isRank ? (
-              <a
-                href={href}
-                className="forum-community-activities__tile forum-community-activities__tile--rank"
-                aria-label={`${title}：${hint}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (typeof onRankClick === 'function') onRankClick();
-                  else scrollForumHotPanelIntoView();
-                }}
-              >
-                <span className="forum-community-activities__icon" aria-hidden="true">
-                  <Icon size={16} />
-                </span>
-                <span className="forum-community-activities__copy">
-                  <span className="forum-community-activities__name">{title}</span>
-                  <span className="forum-community-activities__hint">{hint}</span>
-                </span>
-                <span className="forum-community-activities__chevron" aria-hidden="true">›</span>
-              </a>
-            ) : (
-              <Link
-                href={href}
-                className={[
-                  'forum-community-activities__tile',
-                  `forum-community-activities__tile--${id}`,
-                  featured ? 'forum-community-activities__tile--featured' : '',
-                ].filter(Boolean).join(' ')}
-                aria-label={`${title}：${hint}`}
-              >
-                <span className="forum-community-activities__icon" aria-hidden="true">
-                  <Icon size={16} />
-                </span>
-                <span className="forum-community-activities__copy">
-                  <span className="forum-community-activities__name">{title}</span>
-                  <span className={`forum-community-activities__hint${featured ? ' forum-community-activities__hint--live' : ''}`}>
-                    {hint}
+      <div
+        id={bodyId}
+        className="forum-community-activities__body"
+        hidden={!open}
+      >
+        <ul className="forum-community-activities__grid">
+          {activities.map(({ id, href, title, hint, Icon, isRank, featured }) => (
+            <li key={id}>
+              {isRank ? (
+                <a
+                  href={href}
+                  className="forum-community-activities__tile forum-community-activities__tile--rank"
+                  aria-label={`${title}：${hint}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (typeof onRankClick === 'function') onRankClick();
+                    else scrollForumHotPanelIntoView();
+                  }}
+                >
+                  <span className="forum-community-activities__icon" aria-hidden="true">
+                    <Icon size={16} />
                   </span>
-                </span>
-              </Link>
-            )}
-          </li>
-        ))}
-      </ul>
+                  <span className="forum-community-activities__copy">
+                    <span className="forum-community-activities__name">{title}</span>
+                    <span className="forum-community-activities__hint">{hint}</span>
+                  </span>
+                  <span className="forum-community-activities__chevron" aria-hidden="true">›</span>
+                </a>
+              ) : (
+                <Link
+                  href={href}
+                  className={[
+                    'forum-community-activities__tile',
+                    `forum-community-activities__tile--${id}`,
+                    featured ? 'forum-community-activities__tile--featured' : '',
+                  ].filter(Boolean).join(' ')}
+                  aria-label={`${title}：${hint}`}
+                >
+                  <span className="forum-community-activities__icon" aria-hidden="true">
+                    <Icon size={16} />
+                  </span>
+                  <span className="forum-community-activities__copy">
+                    <span className="forum-community-activities__name">{title}</span>
+                    <span className={`forum-community-activities__hint${featured ? ' forum-community-activities__hint--live' : ''}`}>
+                      {hint}
+                    </span>
+                  </span>
+                </Link>
+              )}
+            </li>
+          ))}
+        </ul>
+        {children}
+      </div>
     </section>
   );
 }
