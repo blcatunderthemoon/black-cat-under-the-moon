@@ -21,13 +21,51 @@ import { hasMatchSubmission } from './match-submission.js';
 
 export const PREMIUM_MATCH_MIN_SCORE = 60;
 /** Batch size when scanning responses for premium discovery. */
-export const DISCOVER_BATCH_SIZE = 500;
+export const DISCOVER_BATCH_SIZE = 1000;
 /**
  * Soft ceiling on rows scanned (newest first). Kept high so Passport「即時連線」
  * covers the same candidate pool email-automation uses — a low cap caused ≥60%
  * pairs (esp. older / 單檔 rows) to appear in admin but not on echo.html.
  */
 export const DISCOVER_MAX_SCAN = 50000;
+
+/** Columns needed for hard-filter + computeCompatibility + Echo list labels. */
+const DISCOVER_RESPONSE_SELECT = [
+  'id',
+  'created_at',
+  'user_id',
+  'email',
+  'normalized_email',
+  'name',
+  'age',
+  'height',
+  'body_type',
+  'identity',
+  'bed_role',
+  'social_energy',
+  'weekend_mode',
+  'interests',
+  'exercise_habits',
+  'travel_mode',
+  'relationship_goal',
+  'time_commitment',
+  'deal_breakers',
+  'love_languages',
+  'security_needs',
+  'daily_love_ritual',
+  'decision_making',
+  'communication_style',
+  'expense_splitting',
+  'living_together',
+  'ideal_identity',
+  'ideal_body_type',
+  'ideal_height_gap',
+  'ideal_age_gap',
+  'ideal_appearance',
+  'preferred_attribute',
+  'claim_status',
+  'conduct_score',
+].join(', ');
 
 /** Coerce responses.id (PostgREST may return string) to a positive int. */
 export function toResponseId(value) {
@@ -44,28 +82,87 @@ function emailNotifiedFromSentRow(notes) {
  * Does not create or mutate rows.
  */
 async function loadSiblingResponseIds(admin, responseId) {
+  const map = await loadSiblingResponseIdsBatch(admin, [responseId]);
   const id = toResponseId(responseId);
-  if (!id) return [];
+  return id ? (map.get(id) || [id]) : [];
+}
 
-  const { data: row } = await admin
+/**
+ * Batch sibling expansion — one identity fetch + one OR query instead of 2N round-trips.
+ * @returns {Map<number, number[]>}
+ */
+async function loadSiblingResponseIdsBatch(admin, responseIds) {
+  const ids = [...new Set((responseIds || []).map(toResponseId).filter(Boolean))];
+  const out = new Map();
+  if (!ids.length) return out;
+
+  const { data: rows } = await admin
     .from('responses')
     .select('id, user_id, email, normalized_email')
-    .eq('id', id)
-    .maybeSingle();
-  if (!row) return [];
+    .in('id', ids);
+
+  const byId = Object.fromEntries(
+    (rows || []).map((r) => [toResponseId(r.id), r]),
+  );
 
   const orParts = [];
-  if (row.user_id) orParts.push(`user_id.eq.${row.user_id}`);
-  orParts.push(...responseEmailMatchOrParts(row.normalized_email || row.email));
-  if (!orParts.length) return [id];
+  const seenOr = new Set();
+  for (const id of ids) {
+    const row = byId[id];
+    if (!row) {
+      out.set(id, [id]);
+      continue;
+    }
+    if (row.user_id) {
+      const part = `user_id.eq.${row.user_id}`;
+      if (!seenOr.has(part)) {
+        seenOr.add(part);
+        orParts.push(part);
+      }
+    }
+    for (const part of responseEmailMatchOrParts(row.normalized_email || row.email)) {
+      if (!seenOr.has(part)) {
+        seenOr.add(part);
+        orParts.push(part);
+      }
+    }
+  }
 
-  const { data: siblings } = await admin
-    .from('responses')
-    .select('id')
-    .or(orParts.join(','));
+  let siblingRows = [];
+  if (orParts.length) {
+    // PostgREST OR clauses can get long; chunk to stay under URL limits.
+    const CHUNK = 40;
+    for (let i = 0; i < orParts.length; i += CHUNK) {
+      const chunk = orParts.slice(i, i + CHUNK);
+      const { data } = await admin
+        .from('responses')
+        .select('id, user_id, email, normalized_email')
+        .or(chunk.join(','));
+      if (data?.length) siblingRows = siblingRows.concat(data);
+    }
+  }
 
-  const ids = [...new Set((siblings || []).map((r) => toResponseId(r.id)).filter(Boolean))];
-  return ids.length ? ids : [id];
+  const allRows = [...(rows || []), ...siblingRows];
+  const personToIds = new Map();
+  for (const r of allRows) {
+    const rid = toResponseId(r.id);
+    if (!rid) continue;
+    const key = personKeyForResponse(r) || `rid:${rid}`;
+    if (!personToIds.has(key)) personToIds.set(key, []);
+    personToIds.get(key).push(rid);
+  }
+
+  for (const id of ids) {
+    const row = byId[id];
+    if (!row) {
+      out.set(id, [id]);
+      continue;
+    }
+    const key = personKeyForResponse(row) || `rid:${id}`;
+    const sibs = [...new Set(personToIds.get(key) || [id])];
+    out.set(id, sibs.length ? sibs : [id]);
+  }
+  return out;
 }
 
 /**
@@ -491,7 +588,10 @@ async function discoverPremiumMatches(admin, userId, userEmail, existingMatches,
 
   // Match using only the viewer's latest submission (ids are newest-first).
   const latestMyId = ids[0];
-  const { data: myRows } = await admin.from('responses').select('*').eq('id', latestMyId);
+  const { data: myRows } = await admin
+    .from('responses')
+    .select(DISCOVER_RESPONSE_SELECT)
+    .eq('id', latestMyId);
   if (!myRows?.length) return [];
   const myKey = personKeyForResponse(myRows[0]);
 
@@ -521,7 +621,7 @@ async function discoverPremiumMatches(admin, userId, userEmail, existingMatches,
     const rangeEnd = Math.min(offset + DISCOVER_BATCH_SIZE - 1, DISCOVER_MAX_SCAN - 1);
     let candidateQuery = admin
       .from('responses')
-      .select('*')
+      .select(DISCOVER_RESPONSE_SELECT)
       .or('claim_status.neq.duplicate,claim_status.is.null')
       .or('conduct_score.gte.50,conduct_score.is.null')
       // Include unclaimed rows (user_id IS NULL). Plain `.neq('user_id', me)` drops
@@ -628,16 +728,19 @@ async function annotateEmailNotifiedFromSentMatches(
     .filter(Boolean);
   if (!myIds.length) return matches;
 
-  const mySibLists = await Promise.all(myIds.map((id) => loadSiblingResponseIds(admin, id)));
-  const myIdSet = new Set(mySibLists.flat().concat(myIds));
-
   const partnerIds = [
     ...new Set(matches.map((m) => toResponseId(m.partner_response_id)).filter(Boolean)),
   ];
-  const partnerSibLists = await Promise.all(
-    partnerIds.map((id) => loadSiblingResponseIds(admin, id)),
-  );
-  const partnerIdSet = new Set(partnerSibLists.flat().concat(partnerIds));
+
+  const siblingMap = await loadSiblingResponseIdsBatch(admin, [...myIds, ...partnerIds]);
+  const myIdSet = new Set();
+  for (const id of myIds) {
+    for (const sid of siblingMap.get(id) || [id]) myIdSet.add(sid);
+  }
+  const partnerIdSet = new Set();
+  for (const id of partnerIds) {
+    for (const sid of siblingMap.get(id) || [id]) partnerIdSet.add(sid);
+  }
 
   const myIdList = [...myIdSet];
   const partnerIdList = [...partnerIdSet];
@@ -646,8 +749,6 @@ async function annotateEmailNotifiedFromSentMatches(
   const [
     { data: sentMeA },
     { data: sentMeB },
-    { data: sentPaA },
-    { data: sentPaB },
   ] = await Promise.all([
     admin
       .from('sent_matches')
@@ -657,24 +758,11 @@ async function annotateEmailNotifiedFromSentMatches(
       .from('sent_matches')
       .select('user_a_id, user_b_id, match_score, notes, sent_at')
       .in('user_b_id', myIdList),
-    admin
-      .from('sent_matches')
-      .select('user_a_id, user_b_id, match_score, notes, sent_at')
-      .in('user_a_id', partnerIdList),
-    admin
-      .from('sent_matches')
-      .select('user_a_id, user_b_id, match_score, notes, sent_at')
-      .in('user_b_id', partnerIdList),
   ]);
 
   const seenPairs = new Set();
   const sentRows = [];
-  for (const row of [
-    ...(sentMeA || []),
-    ...(sentMeB || []),
-    ...(sentPaA || []),
-    ...(sentPaB || []),
-  ]) {
+  for (const row of [...(sentMeA || []), ...(sentMeB || [])]) {
     const a = toResponseId(row.user_a_id);
     const b = toResponseId(row.user_b_id);
     if (!a || !b) continue;
@@ -721,23 +809,6 @@ async function annotateEmailNotifiedFromSentMatches(
     return false;
   }
 
-  /** True when this response id is (or remaps to) the viewer — incl. via siblings. */
-  async function sideIsMeExpanded(responseId) {
-    const rid = toResponseId(responseId);
-    if (!rid) return false;
-    if (sideIsMe(rid)) return true;
-    const sibs = await loadSiblingResponseIds(admin, rid);
-    for (const sid of sibs) {
-      myIdSet.add(sid);
-      if (sideIsMe(sid)) return true;
-      const row = byId[sid];
-      if (!row) continue;
-      const pk = personKeyForResponse(row);
-      if (pk && myPersonKeys.has(pk)) return true;
-    }
-    return false;
-  }
-
   /** @type {Map<string, { score: number|null }>} */
   const notifiedByKey = new Map();
 
@@ -755,22 +826,33 @@ async function annotateEmailNotifiedFromSentMatches(
   for (const row of sentRows) {
     const a = toResponseId(row.user_a_id);
     const b = toResponseId(row.user_b_id);
-    const aIsMe = await sideIsMeExpanded(a);
-    const bIsMe = await sideIsMeExpanded(b);
+    const aIsMe = sideIsMe(a);
+    const bIsMe = sideIsMe(b);
 
-    // Must be exactly one side = viewer (Circle), the other = partner.
+    // Must be exactly one side = viewer, the other = partner.
     if (aIsMe === bIsMe) continue;
     const partnerRid = aIsMe ? b : a;
 
-    const partnerSibs = await loadSiblingResponseIds(admin, partnerRid);
+    const partnerSibs = siblingMap.get(partnerRid)
+      || (partnerIdSet.has(partnerRid) ? [partnerRid] : null);
     const onEchoList = partnerIdSet.has(partnerRid)
-      || partnerSibs.some((sid) => partnerIdSet.has(sid));
+      || (partnerSibs && partnerSibs.some((sid) => partnerIdSet.has(sid)))
+      || (() => {
+        const pk = personKeyForResponse(byId[partnerRid]);
+        if (!pk) return false;
+        for (const pid of partnerIdList) {
+          if (personKeyForResponse(byId[pid]) === pk) return true;
+        }
+        return false;
+      })();
     if (!onEchoList) continue;
 
     markPartner(partnerRid, row.match_score);
-    for (const sid of partnerSibs) {
-      markPartner(sid, row.match_score);
-      partnerIdSet.add(sid);
+    if (partnerSibs) {
+      for (const sid of partnerSibs) {
+        markPartner(sid, row.match_score);
+        partnerIdSet.add(sid);
+      }
     }
   }
 

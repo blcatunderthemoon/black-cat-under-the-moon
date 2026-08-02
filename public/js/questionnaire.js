@@ -2277,8 +2277,8 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
   }
 
   // Prefetch may be a Promise (in-flight /api/matches) or a resolved status object.
-  // Show the thank-you / results shell immediately so a slow Passport discovery
-  // cannot leave the user staring at the boot loader (or worse, the failsafe form).
+  // Show the thank-you / results shell immediately with a loading state — never the
+  // settled「暫無連線紀錄」empty copy while discovery is still running.
   $progressWrap.style.display = 'block';
   $progressWrap.classList.add('mode-top-bar--result');
   if ($progressFill) $progressFill.style.width = '100%';
@@ -2292,17 +2292,26 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
   if (resultsPanel) {
     resultsPanel.style.display = '';
     var emptyElBoot = document.getElementById('match-results-empty');
-    if (emptyElBoot) emptyElBoot.style.display = '';
+    if (emptyElBoot) {
+      emptyElBoot.style.display = '';
+      emptyElBoot.setAttribute('data-loading', '1');
+      var bootMsg = emptyElBoot.querySelector('.thankyou-msg');
+      var bootHint = emptyElBoot.querySelector('.already-submitted-hint');
+      if (bootMsg) bootMsg.textContent = '連線載入中…';
+      if (bootHint) bootHint.textContent = '即時掃描同步率中，請稍候';
+    }
   }
   if (staticView) staticView.style.display = 'none';
   $loading.classList.remove('active');
   finishQuizPageBoot();
 
+  var matchesLoadFailed = false;
   if (prefetchedMatches && typeof prefetchedMatches.then === 'function') {
     try {
       prefetchedMatches = await prefetchedMatches;
     } catch (e) {
       prefetchedMatches = null;
+      matchesLoadFailed = true;
     }
   }
 
@@ -2311,16 +2320,46 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
     isPremium = prefetchedMatches.isPremium;
     matches = Array.isArray(prefetchedMatches.matches) ? prefetchedMatches.matches : [];
     discoveryEnabled = !!prefetchedMatches.discoveryEnabled;
+    // fetchEchoPremiumAndMatches soft-fails to [] without throwing — detect that.
+    if (
+      isPremium
+      && prefetchedMatches.hasSubmitted == null
+      && !(matches && matches.length)
+    ) {
+      matchesLoadFailed = true;
+    }
   } else if (prefetchedMatches && Array.isArray(prefetchedMatches.matches)) {
     matches = prefetchedMatches.matches;
     isPremium = true;
     discoveryEnabled = true;
   } else {
-    var status = await fetchEchoPremiumAndMatches(token);
-    isPremium = status.isPremium;
-    matches = status.matches || [];
-    discoveryEnabled = !!status.discoveryEnabled;
-    if (status.token) token = status.token;
+    try {
+      var status = await fetchEchoPremiumAndMatches(token);
+      isPremium = status.isPremium;
+      matches = status.matches || [];
+      discoveryEnabled = !!status.discoveryEnabled;
+      if (status.token) token = status.token;
+      if (status.hasSubmitted === null && !(status.matches && status.matches.length)) {
+        // /api/matches likely failed (timeout / 5xx) — keep loading/error UX, not false empty.
+        matchesLoadFailed = true;
+      }
+    } catch (e2) {
+      matchesLoadFailed = true;
+    }
+  }
+
+  var emptyElDone = document.getElementById('match-results-empty');
+  if (emptyElDone) {
+    emptyElDone.removeAttribute('data-loading');
+    var doneMsg = emptyElDone.querySelector('.thankyou-msg');
+    var doneHint = emptyElDone.querySelector('.already-submitted-hint');
+    if (matchesLoadFailed && (!matches || !matches.length)) {
+      if (doneMsg) doneMsg.textContent = '連線載入失敗';
+      if (doneHint) doneHint.textContent = '請重新整理頁面再試';
+    } else {
+      if (doneMsg) doneMsg.textContent = '暫無連線紀錄';
+      if (doneHint) doneHint.textContent = '連線出現後會顯示於此';
+    }
   }
 
   // Re-apply result chrome (already painted above; keep in sync after fetch).

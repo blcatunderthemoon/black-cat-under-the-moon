@@ -9,6 +9,10 @@
 import { requireUser, sendAuthError, getAdminClient, isPremium } from '../../lib/server-auth.js';
 import { loadUserMatches } from '../../lib/user-matches.js';
 
+export const config = {
+  maxDuration: 60,
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
