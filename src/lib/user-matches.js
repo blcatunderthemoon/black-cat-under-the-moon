@@ -731,6 +731,23 @@ async function annotateEmailNotifiedFromSentMatches(
     return false;
   }
 
+  /** True when this response id is (or remaps to) the viewer — incl. via siblings. */
+  async function sideIsMeExpanded(responseId) {
+    const rid = toResponseId(responseId);
+    if (!rid) return false;
+    if (sideIsMe(rid)) return true;
+    const sibs = await loadSiblingResponseIds(admin, rid);
+    for (const sid of sibs) {
+      myIdSet.add(sid);
+      if (sideIsMe(sid)) return true;
+      const row = byId[sid];
+      if (!row) continue;
+      const pk = personKeyForResponse(row);
+      if (pk && myPersonKeys.has(pk)) return true;
+    }
+    return false;
+  }
+
   /** @type {Map<string, { score: number|null }>} */
   const notifiedByKey = new Map();
 
@@ -748,14 +765,20 @@ async function annotateEmailNotifiedFromSentMatches(
   for (const row of sentRows) {
     const a = toResponseId(row.user_a_id);
     const b = toResponseId(row.user_b_id);
-    const aIsMe = sideIsMe(a);
-    const bIsMe = sideIsMe(b);
-    if (aIsMe === bIsMe) continue; // neither or both — not a Circle↔partner send
+    const aIsMe = await sideIsMeExpanded(a);
+    const bIsMe = await sideIsMeExpanded(b);
+
+    // Must be exactly one side = viewer (Circle), the other = partner.
+    if (aIsMe === bIsMe) continue;
     const partnerRid = aIsMe ? b : a;
-    // Only annotate partners that appear (or are siblings of someone) on this Echo list.
-    if (!partnerIdSet.has(partnerRid) && !byId[partnerRid]) continue;
+
+    const partnerSibs = await loadSiblingResponseIds(admin, partnerRid);
+    const onEchoList = partnerIdSet.has(partnerRid)
+      || partnerSibs.some((sid) => partnerIdSet.has(sid));
+    if (!onEchoList) continue;
+
     markPartner(partnerRid, row.match_score);
-    for (const sid of await loadSiblingResponseIds(admin, partnerRid)) {
+    for (const sid of partnerSibs) {
       markPartner(sid, row.match_score);
       partnerIdSet.add(sid);
     }

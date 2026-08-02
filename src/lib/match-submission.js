@@ -2,6 +2,14 @@
 import { databaseNowIso } from './hong-kong-time.js';
 import { normalizeEmailForPersonKey, responseEmailMatchOrParts } from './response-dedupe.js';
 
+/**
+ * Rows that still count as "this person filled Echo".
+ * Must stay aligned with `userHasSubmitted` in user-matches.js — otherwise
+ * logged-in users with a non-duplicate response (e.g. disputed, or odd legacy
+ * claim_status) get the questionnaire again instead of results / thank-you.
+ */
+const NON_DUPLICATE_CLAIM_OR = 'claim_status.neq.duplicate,claim_status.is.null';
+
 const ACTIVE_CLAIM_OR = 'claim_status.is.null,claim_status.eq.unclaimed,claim_status.eq.claimed';
 
 const LEGACY_LINKABLE_OR = 'claim_status.is.null,claim_status.eq.unclaimed';
@@ -61,27 +69,29 @@ const RESPONSE_ANSWER_SELECT = [
   'feedback',
 ].join(', ');
 
-async function findResponseByUserId(admin, userId, { full = false } = {}) {
+async function findResponseByUserId(admin, userId, { full = false, forHasSubmitted = false } = {}) {
   if (!userId) return null;
+  const claimOr = forHasSubmitted ? NON_DUPLICATE_CLAIM_OR : ACTIVE_CLAIM_OR;
   const { data } = await admin
     .from('responses')
     .select(full ? RESPONSE_ANSWER_SELECT : 'id')
     .eq('user_id', userId)
-    .or(ACTIVE_CLAIM_OR)
+    .or(claimOr)
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
   return data;
 }
 
-async function findResponseByEmail(admin, normalized, { full = false } = {}) {
+async function findResponseByEmail(admin, normalized, { full = false, forHasSubmitted = false } = {}) {
   const emailOr = responseEmailMatchOrParts(normalized);
   if (!emailOr.length) return null;
+  const claimOr = forHasSubmitted ? NON_DUPLICATE_CLAIM_OR : ACTIVE_CLAIM_OR;
   const { data } = await admin
     .from('responses')
     .select(full ? RESPONSE_ANSWER_SELECT : 'id')
     .or(emailOr.join(','))
-    .or(ACTIVE_CLAIM_OR)
+    .or(claimOr)
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -93,11 +103,11 @@ async function findResponseByEmail(admin, normalized, { full = false } = {}) {
  * Prefer user-linked row; fall back to email match for legacy submissions.
  */
 export async function findLatestMatchResponse(admin, { userId, email, emails, profileEmail } = {}) {
-  const byUser = await findResponseByUserId(admin, userId, { full: true });
+  const byUser = await findResponseByUserId(admin, userId, { full: true, forHasSubmitted: true });
   if (byUser) return byUser;
 
   for (const normalized of collectEmails({ email, emails, profileEmail })) {
-    const byEmail = await findResponseByEmail(admin, normalized, { full: true });
+    const byEmail = await findResponseByEmail(admin, normalized, { full: true, forHasSubmitted: true });
     if (byEmail) return byEmail;
   }
   return null;
@@ -105,10 +115,10 @@ export async function findLatestMatchResponse(admin, { userId, email, emails, pr
 
 /** Whether a non-duplicate match-mode response exists for this user and/or email(s). */
 export async function hasMatchSubmission(admin, { userId, email, emails, profileEmail } = {}) {
-  if (await findResponseByUserId(admin, userId)) return true;
+  if (await findResponseByUserId(admin, userId, { forHasSubmitted: true })) return true;
 
   for (const normalized of collectEmails({ email, emails, profileEmail })) {
-    if (await findResponseByEmail(admin, normalized)) return true;
+    if (await findResponseByEmail(admin, normalized, { forHasSubmitted: true })) return true;
   }
   return false;
 }

@@ -1,0 +1,23 @@
+---
+description: Echo / email automation must share one person-key + email normalize (no local trim-only)
+alwaysApply: true
+---
+
+# Matching — one person identity, one email normalize
+
+Do **not** invent a local `email.toLowerCase().trim()` (or similar) when deciding “same person” for Echo, email automation, claim/link, submit, or `sent_matches` lookups.
+
+## Required
+
+1. Use shared helpers from `src/lib/response-dedupe.js`:
+   - `normalizeEmailForPersonKey` — canonical email (also when writing `normalized_email`)
+   - `personKeyForResponse` / `pickLatestResponsesPerPerson` — who is the same person
+   - `responseEmailMatchOrParts` — any PostgREST filter on `email` / `normalized_email` (must match legacy spellings e.g. trailing `.`; values are double-quoted for PostgREST)
+2. Remap historical `responses.id` in `sent_matches` / drafts via person key / siblings (`match-person-remap.js`, `loadSiblingResponseIds`) — never assume ids are stable across resubmits.
+3. Echo「已通知」comes only from successful `sent_matches` (annotate); do not use raw id-only joins that automation already remaps in memory.
+
+## Why
+
+Email automation grouped people in memory with normalize; Echo used exact DB email strings → same human looked like two people; sent badge and scores diverged.
+
+Full rule + checklist: `docs/matching/PERSON-IDENTITY-AND-EMAIL-NORMALIZE.md`

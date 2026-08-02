@@ -10,6 +10,9 @@
  * A person is keyed by their email when present (stable across logged-in and
  * legacy rows for the same address), otherwise by user_id, otherwise the row is
  * treated as its own person.
+ *
+ * Doc (asymmetry Echo vs automation — do not reintroduce): 
+ * docs/matching/PERSON-IDENTITY-AND-EMAIL-NORMALIZE.md
  */
 
 /**
@@ -19,6 +22,15 @@
  */
 export function normalizeEmailForPersonKey(email) {
   return String(email || '').toLowerCase().trim().replace(/\.+$/, '');
+}
+
+/**
+ * Quote a filter value for PostgREST `.or()` / logical filters.
+ * Emails always contain `.` (reserved); trailing `.` typos especially break
+ * unquoted values (`user@gmail.com.` parsed as value + stray operator).
+ */
+export function quotePostgrestFilterValue(value) {
+  return `"${String(value ?? '').replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
 }
 
 /**
@@ -35,8 +47,9 @@ export function responseEmailMatchOrParts(email) {
   if (raw) variants.add(raw);
   const parts = [];
   for (const v of variants) {
-    parts.push(`normalized_email.eq.${v}`);
-    parts.push(`email.ilike.${v}`);
+    const q = quotePostgrestFilterValue(v);
+    parts.push(`normalized_email.eq.${q}`);
+    parts.push(`email.ilike.${q}`);
   }
   return parts;
 }

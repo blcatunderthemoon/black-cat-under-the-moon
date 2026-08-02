@@ -1357,19 +1357,21 @@ async function userHasMatchSubmission() {
 
   try {
     var statusResp = await fetchMatchStatusAuthed(token);
-    if (statusResp.ok) {
+    if (statusResp && statusResp.ok) {
       var statusData = await statusResp.json().catch(function() { return {}; });
       if (statusData.has_submitted) {
         markMatchSubmittedLocally(accountEmail || getLocalMatchSubmittedEmail() || '');
         return true;
       }
+      // Authoritative "not submitted" — clear stale local flag.
       clearLocalMatchSubmission();
       return false;
     }
   } catch (e) {}
 
+  // API timeout / error: do not send a known submitted user back into the form.
   if (hasLocalMatchSubmission()) {
-    clearLocalMatchSubmission();
+    return true;
   }
   return false;
 }
@@ -2069,7 +2071,13 @@ async function openMyAnswersPanel() {
 }
 
 async function fetchEchoPremiumAndMatches(token) {
-  var result = { isPremium: false, matches: [], discoveryEnabled: false, token: token || null };
+  var result = {
+    isPremium: false,
+    matches: [],
+    discoveryEnabled: false,
+    hasSubmitted: null,
+    token: token || null,
+  };
   if (!token) return result;
 
   var authToken = token;
@@ -2143,6 +2151,9 @@ async function fetchEchoPremiumAndMatches(token) {
         result.isPremium = matchesData.premium;
       }
       result.discoveryEnabled = !!matchesData.discovery_enabled;
+      if (typeof matchesData.has_submitted === 'boolean') {
+        result.hasSubmitted = matchesData.has_submitted;
+      }
     }
   } catch (e3) {}
 
@@ -2254,9 +2265,12 @@ async function startMatchMode() {
   quizInitialRevealPending = document.body.dataset.automode === 'match';
 
   try {
+    // Wait longer on echo.html — auth-nav loads after this script; session may
+    // appear a beat after DOMContentLoaded.
+    var authWaitMs = document.body.dataset.automode === 'match' ? 8000 : 3000;
     var token = getSupabaseAuthToken();
     if (!token) {
-      token = await waitForSupabaseAuthToken(3000);
+      token = await waitForSupabaseAuthToken(authWaitMs);
     }
 
     var matchesPrefetch = null;
@@ -2264,9 +2278,24 @@ async function startMatchMode() {
       matchesPrefetch = fetchEchoPremiumAndMatches(token);
     }
 
-    if (token && await userHasMatchSubmission()) {
+    var submitted = token ? await userHasMatchSubmission() : false;
+    var prefetched = matchesPrefetch ? await matchesPrefetch : null;
+    if (prefetched && prefetched.token) token = prefetched.token;
+
+    // /api/matches.has_submitted uses the same non-duplicate rule as Echo list —
+    // trust it if match-status was slow/false-negative.
+    if (!submitted && prefetched && prefetched.hasSubmitted === true) {
+      submitted = true;
+      var accountEmailForMark = await resolveMatchAccountEmail();
+      markMatchSubmittedLocally(accountEmailForMark || getLocalMatchSubmittedEmail() || '');
+    }
+    if (!submitted && prefetched && (prefetched.matches || []).length > 0) {
+      // Delivered connections imply this account already completed Echo.
+      submitted = true;
+    }
+
+    if (token && submitted) {
       quizInitialRevealPending = false;
-      var prefetched = matchesPrefetch ? await matchesPrefetch : null;
       await showMatchAlreadySubmitted(prefetched);
       return;
     }
