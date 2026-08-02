@@ -2647,65 +2647,64 @@
 
 .gathering-cal__panel-head {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.45rem;
-  margin-bottom: 0.75rem;
-  min-width: 0;
-}
-
-.gathering-cal__day-teaser {
-  display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem 0.5rem;
-  margin: 0;
-  padding: 0.45rem 0.55rem;
-  border: 1px solid rgba(255, 224, 102, 0.28);
-  border-radius: 6px;
-  background:
-    linear-gradient(135deg, rgba(255, 224, 102, 0.1) 0%, transparent 55%),
-    rgba(18, 14, 28, 0.72);
-  box-shadow: inset 0 1px 0 rgba(255, 224, 102, 0.06);
-  min-width: 0;
-  max-width: 100%;
+  align-items: baseline;
+  gap: 0.35rem 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
-.gathering-cal__day-teaser__badge {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  padding: 0.12rem 0.4rem;
-  border-radius: 3px;
-  border: 1px solid rgba(255, 224, 102, 0.4);
-  background: rgba(255, 224, 102, 0.12);
-  color: rgba(255, 224, 102, 0.95);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  line-height: 1.2;
+/* Brief glow on event cards when a calendar day is picked */
+.gatherings-list__item--flash .gathering-card {
+  animation: gathering-detail-flash 1.05s ease-out both;
+  animation-delay: calc(0.05s * var(--i, 0));
 }
 
-.gathering-cal__day-teaser__title {
-  flex: 1 1 auto;
-  min-width: 0;
-  color: var(--gathering-cream);
-  font-size: 0.78rem;
-  font-weight: 600;
-  line-height: 1.35;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+.gatherings-list__item--flash .gathering-card__glow {
+  animation: gathering-detail-glow-pulse 1.05s ease-out both;
+  animation-delay: calc(0.05s * var(--i, 0));
 }
 
-.gathering-cal__day-teaser__meta {
-  flex: 0 1 auto;
-  min-width: 0;
-  color: rgba(255, 214, 140, 0.88);
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  line-height: 1.35;
-  overflow-wrap: anywhere;
+@keyframes gathering-detail-flash {
+  0% {
+    box-shadow:
+      0 0 0 1px rgba(255, 224, 102, 0.55),
+      0 0 26px rgba(255, 200, 100, 0.55),
+      0 8px 24px rgba(0, 0, 0, 0.35);
+    filter: brightness(1.12);
+  }
+  40% {
+    box-shadow:
+      0 0 0 1px rgba(255, 224, 102, 0.75),
+      0 0 34px rgba(255, 210, 120, 0.65),
+      0 10px 28px rgba(0, 0, 0, 0.4);
+    filter: brightness(1.18);
+  }
+  100% {
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(120, 110, 190, 0.12), 0 0 18px rgba(120, 110, 200, 0.12);
+    filter: brightness(1);
+  }
+}
+
+@keyframes gathering-detail-glow-pulse {
+  0% {
+    opacity: 0.2;
+    background: radial-gradient(circle, rgba(255, 224, 102, 0.28) 0%, transparent 70%);
+  }
+  35% {
+    opacity: 1;
+    background: radial-gradient(circle, rgba(255, 224, 102, 0.38) 0%, transparent 70%);
+  }
+  100% {
+    opacity: 0.15;
+    background: radial-gradient(circle, rgba(232, 240, 255, 0.08) 0%, transparent 70%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gatherings-list__item--flash .gathering-card,
+  .gatherings-list__item--flash .gathering-card__glow {
+    animation: none;
+  }
 }
 
 .gathering-cal__sections {

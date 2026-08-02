@@ -2,6 +2,7 @@
  * HKT month calendar for Moonlight Gatherings.
  */
 
+import { useEffect, useState } from 'react';
 import {
   GATHERING_CALENDAR_MIN,
   buildGatheringMonthGrid,
@@ -27,12 +28,16 @@ function formatSelectedLabel(dateKey) {
   return `${Number(m[1])}年${Number(m[2])}月${Number(m[3])}日`;
 }
 
-function DayEventList({ items, past = false }) {
+function DayEventList({ items, past = false, flash = false }) {
   if (!items.length) return null;
   return (
-    <div className={`gatherings-list${past ? ' gatherings-list--past' : ''}`}>
+    <div className={`gatherings-list${past ? ' gatherings-list--past' : ''}${flash ? ' is-flash' : ''}`}>
       {items.map((g, i) => (
-        <div key={g.id} className="gatherings-list__item" style={{ '--i': i }}>
+        <div
+          key={g.id}
+          className={`gatherings-list__item${flash ? ' gatherings-list__item--flash' : ''}`}
+          style={{ '--i': i }}
+        >
           <GatheringCard gathering={g} past={past} />
         </div>
       ))}
@@ -65,9 +70,21 @@ export default function GatheringMonthCalendar({
     else upcoming.push(g);
   }
   const selectedIsPastDay = Boolean(selectedDate && selectedDate < todayKey);
-  const selectedFeatured = selectedList.find((g) => g.featured) || null;
-  const selectedLiveCount = upcoming.length;
-  const selectedPastCount = past.length;
+  const [detailFlash, setDetailFlash] = useState(false);
+
+  useEffect(() => {
+    if (!selectedDate || selectedList.length === 0) {
+      setDetailFlash(false);
+      return undefined;
+    }
+    setDetailFlash(false);
+    const start = window.requestAnimationFrame(() => setDetailFlash(true));
+    const stop = window.setTimeout(() => setDetailFlash(false), 1100);
+    return () => {
+      window.cancelAnimationFrame(start);
+      window.clearTimeout(stop);
+    };
+  }, [selectedDate]); // eslint-disable-line react-hooks/exhaustive-deps -- flash on date pick only
 
   function go(delta) {
     const next = shiftGatheringYm(year, month, delta);
@@ -171,31 +188,6 @@ export default function GatheringMonthCalendar({
           <h3 className="gathering-cal__panel-title">
             {selectedDate ? formatSelectedLabel(selectedDate) : '揀一日睇聚會'}
           </h3>
-          {selectedDate && selectedList.length > 0 && (
-            <p className="gathering-cal__day-teaser" aria-live="polite">
-              {selectedFeatured ? (
-                <>
-                  <span className="gathering-cal__day-teaser__badge">
-                    {selectedFeatured.featured_label || '官方'}
-                  </span>
-                  <span className="gathering-cal__day-teaser__title">{selectedFeatured.title}</span>
-                  {selectedFeatured.seats_left != null && (
-                    <span className="gathering-cal__day-teaser__meta">
-                      仲有 {selectedFeatured.seats_left} 個位
-                    </span>
-                  )}
-                </>
-              ) : (
-                <span className="gathering-cal__day-teaser__meta">
-                  {selectedLiveCount > 0 && selectedPastCount > 0
-                    ? `${selectedLiveCount} 場進行中 · ${selectedPastCount} 場已結束`
-                    : selectedLiveCount > 0
-                      ? `${selectedLiveCount} 場進行中`
-                      : `${selectedPastCount} 場已結束`}
-                </span>
-              )}
-            </p>
-          )}
         </div>
 
         {loading ? (
@@ -210,7 +202,7 @@ export default function GatheringMonthCalendar({
             <p className="gatherings-empty-panel__lead">未有聚會 —— 撳右下角「發起聚會」做召集人。</p>
           </div>
         ) : (
-          <div className="gathering-cal__sections">
+          <div className={`gathering-cal__sections${detailFlash ? ' is-flash' : ''}`}>
             {upcoming.length > 0 && (
               <section className="gathering-cal__section" aria-label="進行中">
                 {(past.length > 0 || cancelled.length > 0) && (
@@ -218,7 +210,7 @@ export default function GatheringMonthCalendar({
                     進行中
                   </h4>
                 )}
-                <DayEventList items={upcoming} />
+                <DayEventList items={upcoming} flash={detailFlash} />
               </section>
             )}
             {past.length > 0 && (
@@ -228,7 +220,7 @@ export default function GatheringMonthCalendar({
                     已結束
                   </h4>
                 )}
-                <DayEventList items={past} past />
+                <DayEventList items={past} past flash={detailFlash} />
               </section>
             )}
             {cancelled.length > 0 && (
@@ -238,7 +230,7 @@ export default function GatheringMonthCalendar({
                     已取消
                   </h4>
                 )}
-                <DayEventList items={cancelled} />
+                <DayEventList items={cancelled} flash={detailFlash} />
               </section>
             )}
           </div>
