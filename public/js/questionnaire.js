@@ -775,11 +775,13 @@ function beginQuizQuestionnaire() {
   if ($progressWrap) $progressWrap.style.display = 'block';
   showQuizSiteHeader();
   if ($main) {
+    $main.style.removeProperty('display');
     $main.style.display = 'block';
     $main.hidden = false;
     $main.removeAttribute('aria-hidden');
   }
   if ($card) {
+    $card.style.removeProperty('display');
     $card.hidden = false;
     $card.removeAttribute('aria-hidden');
   }
@@ -1403,6 +1405,15 @@ function hasLocalMatchSubmission() {
   }
 }
 
+/** Only trust the local flag when it belongs to this account (avoid cross-account bleed). */
+function hasLocalMatchSubmissionForAccount(accountEmail) {
+  if (!hasLocalMatchSubmission()) return false;
+  var stored = getLocalMatchSubmittedEmail();
+  var mine = String(accountEmail || '').toLowerCase().trim();
+  if (!mine || !stored) return false;
+  return String(stored).toLowerCase().trim() === mine;
+}
+
 function getLocalMatchSubmittedEmail() {
   try {
     var raw = localStorage.getItem(MATCH_SUBMITTED_STORAGE_KEY);
@@ -1432,14 +1443,14 @@ async function userHasMatchSubmission(tokenOverride) {
         markMatchSubmittedLocally(accountEmail || getLocalMatchSubmittedEmail() || '');
         return true;
       }
-      // Authoritative "not submitted" — clear stale local flag.
+      // Authoritative "not submitted" — clear stale local flag and open the form.
       clearLocalMatchSubmission();
       return false;
     }
   } catch (e) {}
 
-  // API timeout / error: do not send a known submitted user back into the form.
-  if (hasLocalMatchSubmission()) {
+  // API timeout / error: only trust local flag for THIS account's email.
+  if (hasLocalMatchSubmissionForAccount(accountEmail)) {
     return true;
   }
   return false;
@@ -2166,80 +2177,89 @@ async function fetchEchoPremiumAndMatches(token) {
 
   var authToken = token;
 
-  try {
-    var meResp = await fetch('/api/me', {
-      headers: { Authorization: 'Bearer ' + authToken },
-      cache: 'no-store',
-    });
-    if (meResp.status === 401) {
-      var refreshed = await refreshSupabaseAuthToken();
-      if (refreshed) {
-        authToken = refreshed;
-        result.token = refreshed;
-        meResp = await fetch('/api/me', {
-          headers: { Authorization: 'Bearer ' + authToken },
-          cache: 'no-store',
-        });
-      }
+  function applyMeData(meData) {
+    if (!meData) return;
+    if (meData.profile && meData.profile.subscription_tier === 'premium') {
+      result.isPremium = true;
     }
-    if (meResp.ok) {
-      var meData = await meResp.json().catch(function() { return {}; });
-      if (meData.profile && meData.profile.subscription_tier === 'premium') {
-        result.isPremium = true;
-      }
-      if (meData.passport_gating_disabled) {
-        result.isPremium = true;
-      }
-      try {
-        var uid = meData.user && meData.user.id;
-        if (uid && window.BcutmMeCache) window.BcutmMeCache.write(uid, meData);
-      } catch (e) {}
+    if (meData.passport_gating_disabled) {
+      result.isPremium = true;
     }
-  } catch (e) {}
-
-  if (!result.isPremium) {
     try {
-      var stored = getSupabaseAuthStorage();
-      var uid2 = stored && stored.session && stored.session.user && stored.session.user.id;
-      var cached = uid2 && window.BcutmMeCache ? window.BcutmMeCache.read(uid2) : null;
-      if (cached && (
-        (cached.profile && cached.profile.subscription_tier === 'premium')
-        || cached.passport_gating_disabled
-      )) {
-        result.isPremium = true;
-      }
-    } catch (e2) {}
+      var uid = meData.user && meData.user.id;
+      if (uid && window.BcutmMeCache) window.BcutmMeCache.write(uid, meData);
+    } catch (e) {}
   }
 
-  // Free + Passport both load matches; server omits live discovery for free.
+  // Prefer cache for premium flag so /api/matches can start immediately.
   try {
-    var matchesResp = await fetch('/api/matches', {
-      headers: { Authorization: 'Bearer ' + authToken },
-      cache: 'no-store',
-    });
-    if (matchesResp.status === 401) {
-      var refreshed2 = await refreshSupabaseAuthToken();
-      if (refreshed2) {
-        authToken = refreshed2;
-        result.token = refreshed2;
-        matchesResp = await fetch('/api/matches', {
-          headers: { Authorization: 'Bearer ' + authToken },
-          cache: 'no-store',
-        });
-      }
+    var stored = getSupabaseAuthStorage();
+    var uidCached = stored && stored.session && stored.session.user && stored.session.user.id;
+    var cached = uidCached && window.BcutmMeCache ? window.BcutmMeCache.read(uidCached) : null;
+    if (cached && (
+      (cached.profile && cached.profile.subscription_tier === 'premium')
+      || cached.passport_gating_disabled
+    )) {
+      result.isPremium = true;
     }
-    if (matchesResp.ok) {
-      var matchesData = await matchesResp.json().catch(function() { return {}; });
-      result.matches = matchesData.matches || [];
-      if (typeof matchesData.premium === 'boolean') {
-        result.isPremium = matchesData.premium;
+  } catch (e0) {}
+
+  async function fetchMe() {
+    try {
+      var meResp = await fetch('/api/me', {
+        headers: { Authorization: 'Bearer ' + authToken },
+        cache: 'no-store',
+      });
+      if (meResp.status === 401) {
+        var refreshed = await refreshSupabaseAuthToken();
+        if (refreshed) {
+          authToken = refreshed;
+          result.token = refreshed;
+          meResp = await fetch('/api/me', {
+            headers: { Authorization: 'Bearer ' + authToken },
+            cache: 'no-store',
+          });
+        }
       }
-      result.discoveryEnabled = !!matchesData.discovery_enabled;
-      if (typeof matchesData.has_submitted === 'boolean') {
-        result.hasSubmitted = matchesData.has_submitted;
+      if (meResp.ok) {
+        applyMeData(await meResp.json().catch(function () { return {}; }));
       }
-    }
-  } catch (e3) {}
+    } catch (e) {}
+  }
+
+  async function fetchMatches() {
+    try {
+      var matchesResp = await fetch('/api/matches', {
+        headers: { Authorization: 'Bearer ' + authToken },
+        cache: 'no-store',
+      });
+      if (matchesResp.status === 401) {
+        var refreshed2 = await refreshSupabaseAuthToken();
+        if (refreshed2) {
+          authToken = refreshed2;
+          result.token = refreshed2;
+          matchesResp = await fetch('/api/matches', {
+            headers: { Authorization: 'Bearer ' + authToken },
+            cache: 'no-store',
+          });
+        }
+      }
+      if (matchesResp.ok) {
+        var matchesData = await matchesResp.json().catch(function () { return {}; });
+        result.matches = matchesData.matches || [];
+        if (typeof matchesData.premium === 'boolean') {
+          result.isPremium = matchesData.premium;
+        }
+        result.discoveryEnabled = !!matchesData.discovery_enabled;
+        if (typeof matchesData.has_submitted === 'boolean') {
+          result.hasSubmitted = matchesData.has_submitted;
+        }
+      }
+    } catch (e3) {}
+  }
+
+  // Run in parallel — serial /api/me → /api/matches added a full RTT to every Echo boot.
+  await Promise.all([fetchMe(), fetchMatches()]);
 
   return result;
 }
@@ -2269,6 +2289,7 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
   var matches = [];
   var discoveryEnabled = false;
   var matchesLoadFailed = false;
+  var hasSubmitted = null;
 
   if (!token) {
     paintEchoAlreadySubmittedView({
@@ -2297,9 +2318,12 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
     isPremium = prefetchedMatches.isPremium;
     matches = Array.isArray(prefetchedMatches.matches) ? prefetchedMatches.matches : [];
     discoveryEnabled = !!prefetchedMatches.discoveryEnabled;
+    if (typeof prefetchedMatches.hasSubmitted === 'boolean') {
+      hasSubmitted = prefetchedMatches.hasSubmitted;
+    }
     if (
       isPremium
-      && prefetchedMatches.hasSubmitted == null
+      && hasSubmitted == null
       && !(matches && matches.length)
     ) {
       matchesLoadFailed = true;
@@ -2308,6 +2332,7 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
     matches = prefetchedMatches.matches;
     isPremium = true;
     discoveryEnabled = true;
+    hasSubmitted = true;
   } else {
     try {
       setEchoBootLoadingLabel('掃描月下緣份中');
@@ -2316,11 +2341,31 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
       matches = status.matches || [];
       discoveryEnabled = !!status.discoveryEnabled;
       if (status.token) token = status.token;
-      if (status.hasSubmitted === null && !(status.matches && status.matches.length)) {
+      if (typeof status.hasSubmitted === 'boolean') {
+        hasSubmitted = status.hasSubmitted;
+      }
+      if (hasSubmitted === null && !(status.matches && status.matches.length)) {
         matchesLoadFailed = true;
       }
     } catch (e2) {
       matchesLoadFailed = true;
+    }
+  }
+
+  // Authoritative: no Echo questionnaire on file → open the form (never empty results).
+  if (hasSubmitted === false && !(matches && matches.length)) {
+    clearLocalMatchSubmission();
+    await openEchoQuestionnaireForAccount(token);
+    return;
+  }
+
+  // Double-check when matches are empty and status was ambiguous (stale local / race).
+  if (!(matches && matches.length) && hasSubmitted !== true) {
+    var stillSubmitted = await userHasMatchSubmission(token);
+    if (!stillSubmitted) {
+      clearLocalMatchSubmission();
+      await openEchoQuestionnaireForAccount(token);
+      return;
     }
   }
 
@@ -2334,6 +2379,29 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
     discoveryEnabled: discoveryEnabled,
     matchesLoadFailed: matchesLoadFailed,
   });
+}
+
+/** Open Echo Q1 for a logged-in user who has not submitted yet. */
+async function openEchoQuestionnaireForAccount(token) {
+  echoGateMayOpenQuestionnaire = true;
+  quizInitialRevealPending = document.body.dataset.automode === 'match';
+  if ($already) {
+    $already.classList.remove('active', 'overlay-screen--match-results', 'overlay-screen--my-answers');
+  }
+  var resultsPanel = document.getElementById('match-results-panel');
+  var staticView = document.getElementById('already-submitted-static');
+  if (resultsPanel) resultsPanel.style.display = 'none';
+  if (staticView) staticView.style.display = 'none';
+  hideMyAnswersPanel();
+
+  var accountEmail = await resolveMatchAccountEmail(token);
+  activeQuestions = matchQuestionsForAccount(accountEmail);
+  activeTotal = activeQuestions.length;
+  answers = {};
+  if (accountEmail) answers.email = accountEmail;
+
+  beginQuizQuestionnaire();
+  scheduleEchoSubmittedGateRecovery();
 }
 
 function setEchoBootLoadingLabel(text) {
@@ -2430,64 +2498,20 @@ async function startMatchModeImpl() {
       token = await waitForSupabaseAuthToken(authWaitMs);
     }
 
-    // Start matches prefetch early, but NEVER reveal the results shell until it settles.
-    var matchesPrefetch = null;
-    if (token) {
-      setEchoBootLoadingLabel('掃描月下緣份中');
-      matchesPrefetch = fetchEchoPremiumAndMatches(token);
-    }
-
+    // Gate on match-status first. Only start heavy /api/matches after we know
+    // they submitted — avoids burning discovery for users who still need the form.
     var submitted = token ? await userHasMatchSubmission(token) : false;
 
-    // Logged-in returning submitter: keep moon loader until matches paint.
     if (token && submitted) {
+      setEchoBootLoadingLabel('掃描月下緣份中');
       quizInitialRevealPending = false;
       echoGateMayOpenQuestionnaire = false;
-      await showMatchAlreadySubmitted(matchesPrefetch || null);
+      await showMatchAlreadySubmitted(fetchEchoPremiumAndMatches(token));
       return;
     }
 
-    // Only if status said "not submitted", peek at matches as a secondary signal.
-    // Cap wait so a hung discovery cannot strand the user on the loading screen.
-    var prefetched = null;
-    if (matchesPrefetch) {
-      prefetched = await Promise.race([
-        matchesPrefetch,
-        new Promise(function (resolve) {
-          setTimeout(function () { resolve(null); }, 4000);
-        }),
-      ]);
-      if (prefetched && prefetched.token) token = prefetched.token;
-      if (!submitted && prefetched && prefetched.hasSubmitted === true) {
-        submitted = true;
-        var accountEmailForMark = await resolveMatchAccountEmail(token);
-        markMatchSubmittedLocally(accountEmailForMark || getLocalMatchSubmittedEmail() || '');
-      }
-      if (!submitted && prefetched && (prefetched.matches || []).length > 0) {
-        submitted = true;
-      }
-    }
-
-    if (token && submitted) {
-      quizInitialRevealPending = false;
-      echoGateMayOpenQuestionnaire = false;
-      await showMatchAlreadySubmitted(prefetched || matchesPrefetch || null);
-      return;
-    }
-
-    var accountEmail = await resolveMatchAccountEmail(token);
-    activeQuestions = matchQuestionsForAccount(accountEmail);
-    activeTotal = activeQuestions.length;
-    answers = {};
-    if (accountEmail) {
-      answers.email = accountEmail;
-    }
-
-    echoGateMayOpenQuestionnaire = true;
-    beginQuizQuestionnaire();
-
-    // Late auth / late status: jump off the form if this account already submitted.
-    scheduleEchoSubmittedGateRecovery();
+    // Not submitted (or guest): questionnaire — do not wait on Passport discovery.
+    await openEchoQuestionnaireForAccount(token);
   } catch (err) {
     quizInitialRevealPending = false;
     echoGateMayOpenQuestionnaire = false;
