@@ -2112,6 +2112,29 @@ body:has(#thankyou-screen.active) {
   padding-right: max(12px, env(safe-area-inset-right, 0px));
 }
 
+/* Echo already-submitted / match list / my-answers:
+   Use document flow (not a fixed 100vh overlay). Fixed + justify-content:center
+   clipped long「我的答案」lists mid-section with no usable scroll. */
+#already-screen.overlay-screen.scrollable.active {
+  position: relative;
+  inset: auto;
+  top: auto;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  width: 100%;
+  height: auto;
+  min-height: 100dvh;
+  min-height: 100svh;
+  max-height: none;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  z-index: 50;
+}
+
 #already-screen.overlay-screen--match-results {
   padding-top: calc(var(--mode-top-bar-h, 44px) + env(safe-area-inset-top, 0) + 20px);
 }
@@ -2160,8 +2183,16 @@ body:has(#already-screen.active) #progress-wrap.mode-top-bar--result {
   opacity: 1 !important;
 }
 
+body:has(#already-screen.active) {
+  overflow-x: clip;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Footer follows document content — never cover the answers list */
 body:has(#already-screen.active) #site-footer {
-  z-index: 300;
+  position: relative;
+  z-index: 1;
 }
 
 #already-screen.overlay-screen--topbar.active {
@@ -2171,10 +2202,15 @@ body:has(#already-screen.active) #site-footer {
 #already-screen.overlay-screen--topbar.active.overlay-screen--match-results {
   background: var(--bg-deep);
 }
-#already-screen.overlay-screen--topbar.active:not(.overlay-screen--match-results) {
+/* Short thank-you can vertically center; long my-answers must stay flex-start
+   (center + fixed viewport was chopping section 05+). */
+#already-screen.overlay-screen--topbar.active:not(.overlay-screen--match-results):not(:has(#my-answers-panel:not([hidden]))) {
   justify-content: center;
   min-height: 100dvh;
   min-height: 100svh;
+}
+#already-screen.overlay-screen--topbar.active:has(#my-answers-panel:not([hidden])) {
+  justify-content: flex-start;
 }
 #already-screen > .thankyou-content {
   margin: 16px auto 28px;

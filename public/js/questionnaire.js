@@ -2053,6 +2053,7 @@ function restoreAlreadySubmittedMainView() {
   var resultsPanel = document.getElementById('match-results-panel');
   var $already = document.getElementById('already-screen');
   hideMyAnswersPanel();
+  if ($already) $already.classList.remove('overlay-screen--my-answers');
 
   if (myAnswersReturnMode === 'results') {
     if (staticView) staticView.style.display = 'none';
@@ -2065,6 +2066,9 @@ function restoreAlreadySubmittedMainView() {
     if ($already) $already.classList.remove('overlay-screen--match-results');
     setMyAnswersEntryVisible(true);
   }
+  try {
+    window.scrollTo(0, 0);
+  } catch (eScroll) {}
 }
 
 function bindMyAnswersUi() {
@@ -2111,8 +2115,15 @@ async function openMyAnswersPanel() {
   if (staticView) staticView.style.display = 'none';
   if (resultsPanel) resultsPanel.style.display = 'none';
   setMyAnswersEntryVisible(false);
-  if ($already) $already.classList.remove('overlay-screen--match-results');
+  // Keep match-results layout (flex-start + document scroll). Removing it used to
+  // apply justify-content:center on a fixed overlay and chop long answer lists.
+  if ($already) {
+    $already.classList.add('overlay-screen--match-results', 'overlay-screen--my-answers');
+  }
   showMyAnswersPanelEl();
+  try {
+    window.scrollTo(0, 0);
+  } catch (eScroll) {}
   if (list) {
     list.innerHTML = window.MoonLoadingHtml
       ? window.MoonLoadingHtml('載入中...', { size: 36 })
@@ -2237,7 +2248,10 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
   suppressHomeConfirm = true;
   setQuizViewport(false);
   hideQuizQuestionnaireUi({ keepTopBar: true });
-  $loading.classList.add('active');
+  // Stay on the site moon loader until matches are ready — no second「連線載入中」shell.
+  setQuizBooting(true);
+  if ($loading) $loading.classList.add('active');
+  setEchoBootLoadingLabel('掃描月下緣份中');
   bindMyAnswersUi();
   hideMyAnswersPanel();
 
@@ -2254,58 +2268,22 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
   var isPremium = false;
   var matches = [];
   var discoveryEnabled = false;
+  var matchesLoadFailed = false;
 
   if (!token) {
-    $progressWrap.style.display = 'block';
-    $progressWrap.classList.add('mode-top-bar--result');
-    if ($progressFill) $progressFill.style.width = '100%';
-    if ($progressText) {
-      $progressText.textContent = '月下緣份';
-      $progressText.classList.add('mode-top-bar__center--zh');
-    }
-    if (staticView) staticView.style.display = '';
-    if (premiumBlock) premiumBlock.style.display = 'none';
-    if (resultsPanel) resultsPanel.style.display = 'none';
-    setMyAnswersEntryVisible(false);
-    if ($already) {
-      $already.classList.remove('overlay-screen--match-results');
-      $already.classList.add('active');
-    }
-    $loading.classList.remove('active');
-    finishQuizPageBoot();
+    paintEchoAlreadySubmittedView({
+      staticView: staticView,
+      resultsPanel: resultsPanel,
+      premiumBlock: premiumBlock,
+      already: $already,
+      isPremium: false,
+      matches: [],
+      discoveryEnabled: false,
+      matchesLoadFailed: false,
+    });
     return;
   }
 
-  // Prefetch may be a Promise (in-flight /api/matches) or a resolved status object.
-  // Show the thank-you / results shell immediately with a loading state — never the
-  // settled「暫無連線紀錄」empty copy while discovery is still running.
-  $progressWrap.style.display = 'block';
-  $progressWrap.classList.add('mode-top-bar--result');
-  if ($progressFill) $progressFill.style.width = '100%';
-  if ($progressText) {
-    $progressText.textContent = '月下緣份';
-    $progressText.classList.add('mode-top-bar__center--zh');
-  }
-  if ($already) {
-    $already.classList.add('active', 'overlay-screen--match-results');
-  }
-  if (resultsPanel) {
-    resultsPanel.style.display = '';
-    var emptyElBoot = document.getElementById('match-results-empty');
-    if (emptyElBoot) {
-      emptyElBoot.style.display = '';
-      emptyElBoot.setAttribute('data-loading', '1');
-      var bootMsg = emptyElBoot.querySelector('.thankyou-msg');
-      var bootHint = emptyElBoot.querySelector('.already-submitted-hint');
-      if (bootMsg) bootMsg.textContent = '連線載入中…';
-      if (bootHint) bootHint.textContent = '即時掃描同步率中，請稍候';
-    }
-  }
-  if (staticView) staticView.style.display = 'none';
-  $loading.classList.remove('active');
-  finishQuizPageBoot();
-
-  var matchesLoadFailed = false;
   if (prefetchedMatches && typeof prefetchedMatches.then === 'function') {
     try {
       prefetchedMatches = await prefetchedMatches;
@@ -2315,12 +2293,10 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
     }
   }
 
-  // Prefetch shape: either { matches } from /api/matches, or { isPremium, matches } from helper
   if (prefetchedMatches && typeof prefetchedMatches.isPremium === 'boolean') {
     isPremium = prefetchedMatches.isPremium;
     matches = Array.isArray(prefetchedMatches.matches) ? prefetchedMatches.matches : [];
     discoveryEnabled = !!prefetchedMatches.discoveryEnabled;
-    // fetchEchoPremiumAndMatches soft-fails to [] without throwing — detect that.
     if (
       isPremium
       && prefetchedMatches.hasSubmitted == null
@@ -2334,13 +2310,13 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
     discoveryEnabled = true;
   } else {
     try {
+      setEchoBootLoadingLabel('掃描月下緣份中');
       var status = await fetchEchoPremiumAndMatches(token);
       isPremium = status.isPremium;
       matches = status.matches || [];
       discoveryEnabled = !!status.discoveryEnabled;
       if (status.token) token = status.token;
       if (status.hasSubmitted === null && !(status.matches && status.matches.length)) {
-        // /api/matches likely failed (timeout / 5xx) — keep loading/error UX, not false empty.
         matchesLoadFailed = true;
       }
     } catch (e2) {
@@ -2348,12 +2324,42 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
     }
   }
 
+  paintEchoAlreadySubmittedView({
+    staticView: staticView,
+    resultsPanel: resultsPanel,
+    premiumBlock: premiumBlock,
+    already: $already,
+    isPremium: isPremium,
+    matches: matches,
+    discoveryEnabled: discoveryEnabled,
+    matchesLoadFailed: matchesLoadFailed,
+  });
+}
+
+function setEchoBootLoadingLabel(text) {
+  var el = document.querySelector('#loading-screen .loading-text');
+  if (!el) return;
+  var label = String(text || '載入中');
+  el.innerHTML = label + '<span class="loading-dots"></span>';
+}
+
+/** Reveal thank-you / match list only after data is ready (single paint after boot loader). */
+function paintEchoAlreadySubmittedView(opts) {
+  var staticView = opts.staticView;
+  var resultsPanel = opts.resultsPanel;
+  var premiumBlock = opts.premiumBlock;
+  var $already = opts.already;
+  var isPremium = !!opts.isPremium;
+  var matches = Array.isArray(opts.matches) ? opts.matches : [];
+  var discoveryEnabled = !!opts.discoveryEnabled;
+  var matchesLoadFailed = !!opts.matchesLoadFailed;
+
   var emptyElDone = document.getElementById('match-results-empty');
   if (emptyElDone) {
     emptyElDone.removeAttribute('data-loading');
     var doneMsg = emptyElDone.querySelector('.thankyou-msg');
     var doneHint = emptyElDone.querySelector('.already-submitted-hint');
-    if (matchesLoadFailed && (!matches || !matches.length)) {
+    if (matchesLoadFailed && !matches.length) {
       if (doneMsg) doneMsg.textContent = '連線載入失敗';
       if (doneHint) doneHint.textContent = '請重新整理頁面再試';
     } else {
@@ -2362,7 +2368,6 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
     }
   }
 
-  // Re-apply result chrome (already painted above; keep in sync after fetch).
   $progressWrap.style.display = 'block';
   $progressWrap.classList.add('mode-top-bar--result');
   if ($progressFill) $progressFill.style.width = '100%';
@@ -2371,7 +2376,6 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
     $progressText.classList.add('mode-top-bar__center--zh');
   }
 
-  // Show connection list when Passport (live discovery) OR free user already has deliveries.
   var showResults = isPremium || matches.length > 0;
   if (showResults) {
     if (premiumBlock) premiumBlock.style.display = 'none';
@@ -2395,7 +2399,7 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
   }
 
   if ($already) $already.classList.add('active');
-  $loading.classList.remove('active');
+  if ($loading) $loading.classList.remove('active');
   finishQuizPageBoot();
 }
 
@@ -2417,6 +2421,7 @@ async function startMatchModeImpl() {
 
   setQuizBooting(true);
   quizInitialRevealPending = document.body.dataset.automode === 'match';
+  setEchoBootLoadingLabel('載入中');
 
   try {
     var authWaitMs = document.body.dataset.automode === 'match' ? 10000 : 3000;
@@ -2425,13 +2430,16 @@ async function startMatchModeImpl() {
       token = await waitForSupabaseAuthToken(authWaitMs);
     }
 
-    // Start matches prefetch early, but NEVER block the submitted gate on it —
-    // Passport discovery can take well over the 12s boot failsafe.
-    var matchesPrefetch = token ? fetchEchoPremiumAndMatches(token) : null;
+    // Start matches prefetch early, but NEVER reveal the results shell until it settles.
+    var matchesPrefetch = null;
+    if (token) {
+      setEchoBootLoadingLabel('掃描月下緣份中');
+      matchesPrefetch = fetchEchoPremiumAndMatches(token);
+    }
 
     var submitted = token ? await userHasMatchSubmission(token) : false;
 
-    // Logged-in returning submitter: leave the form immediately (don't await matches).
+    // Logged-in returning submitter: keep moon loader until matches paint.
     if (token && submitted) {
       quizInitialRevealPending = false;
       echoGateMayOpenQuestionnaire = false;
@@ -2508,7 +2516,7 @@ async function tryRecoverEchoSubmittedResults() {
 
   quizInitialRevealPending = false;
   echoGateMayOpenQuestionnaire = false;
-  // Show thank-you / results shell immediately; matches load inside showMatchAlreadySubmitted.
+  // Show thank-you / results after moon loader fetches matches.
   await showMatchAlreadySubmitted(null);
   return true;
 }
