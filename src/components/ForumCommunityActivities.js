@@ -15,8 +15,8 @@ import {
 
 const STORAGE_KEY = 'bcutm_forum_community_activities_open';
 
-function buildActivities() {
-  const gathering = getForumMoonlightGatheringTeaser();
+function buildActivities(gatheringTeaser) {
+  const gathering = gatheringTeaser || getForumMoonlightGatheringTeaser();
   // Mobile 2×2: top = 心願 / 簽到; bottom = 聚會 / 排行榜 (live / hub defaults)
   return [
     {
@@ -68,8 +68,9 @@ export default function ForumCommunityActivities({
   onOpenChange,
   children = null,
 } = {}) {
-  const activities = buildActivities();
   const bodyId = useId();
+  const [gatheringTeaser, setGatheringTeaser] = useState(() => getForumMoonlightGatheringTeaser());
+  const activities = buildActivities(gatheringTeaser);
   const [open, setOpen] = useState(() => {
     if (typeof window === 'undefined') return false;
     try {
@@ -78,6 +79,18 @@ export default function ForumCommunityActivities({
       return false;
     }
   });
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/gatherings/moonlight-001', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled || !data?.card) return;
+        setGatheringTeaser(getForumMoonlightGatheringTeaser(new Date(), data.card));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     if (typeof onOpenChange === 'function') onOpenChange(open);

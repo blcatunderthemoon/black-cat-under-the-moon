@@ -18,7 +18,33 @@ import {
   getAttendanceMap,
   maybeMarkCompleted,
 } from '../../../lib/gatherings.js';
-import { databaseNowIso } from '../../../lib/hong-kong-time.js';
+import { databaseNowIso, getHongKongDateParts } from '../../../lib/hong-kong-time.js';
+import {
+  resolveMoonlightGathering001Card,
+  withFeaturedMoonlightGatherings,
+} from '../../../lib/moonlight-gathering-001.js';
+
+function monthFromIsoRange(from, to) {
+  // Prefer `from` when listing a calendar month.
+  const iso = from || to;
+  if (!iso) return null;
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return null;
+    // Use HKT calendar month of the range start
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Hong_Kong',
+      year: 'numeric',
+      month: 'numeric',
+    }).formatToParts(d);
+    const year = Number(parts.find((p) => p.type === 'year')?.value);
+    const month = Number(parts.find((p) => p.type === 'month')?.value);
+    if (!year || !month) return null;
+    return { year, month };
+  } catch {
+    return null;
+  }
+}
 
 async function handleGet(req, res) {
   let user = null;
@@ -131,7 +157,26 @@ async function handleGet(req, res) {
     myAttendance: attendanceMap.get(row.id) || null,
   }));
 
-  return res.status(200).json({ gatherings, total: gatherings.length });
+  // Inject official #001 with live ops capacity when the query covers Sep 2026.
+  const ym = monthFromIsoRange(from, to) || (() => {
+    const p = getHongKongDateParts();
+    return { year: p.year, month: p.month };
+  })();
+  let featured = null;
+  try {
+    featured = await resolveMoonlightGathering001Card(admin);
+  } catch (err) {
+    console.warn('[gatherings] moonlight-001 card:', err?.message || err);
+  }
+  const merged = withFeaturedMoonlightGatherings(
+    gatherings,
+    ym.year,
+    ym.month,
+    new Date(),
+    featured,
+  );
+
+  return res.status(200).json({ gatherings: merged, total: merged.length });
 }
 
 async function handlePost(req, res) {

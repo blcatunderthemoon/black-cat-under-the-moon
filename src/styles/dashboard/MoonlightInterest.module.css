@@ -252,3 +252,133 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* —— Gathering #001 ops editor —— */
+.editorCard {
+  margin: 0 0 22px;
+  padding: 18px 18px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 224, 102, 0.18);
+  background: linear-gradient(165deg, rgba(255, 224, 102, 0.06), rgba(18, 17, 29, 0.92));
+}
+
+.editorHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.editorTitle {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  color: #ffe066;
+  letter-spacing: 0.02em;
+}
+
+.editorHint {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: rgba(200, 190, 220, 0.75);
+  max-width: 52rem;
+}
+
+.editorHint code {
+  font-size: 0.78em;
+  color: #c4b5fd;
+}
+
+.editorError {
+  margin: 0 0 10px;
+  color: #fb7185;
+  font-size: 0.88rem;
+}
+
+.editorOk {
+  margin: 0 0 10px;
+  color: #34d399;
+  font-size: 0.88rem;
+}
+
+.editorPreview {
+  margin: 0 0 14px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.28);
+  color: rgba(240, 235, 216, 0.88);
+  font-size: 0.88rem;
+}
+
+.editorForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.editorRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.editorField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: rgba(200, 190, 220, 0.8);
+}
+
+.editorField input {
+  appearance: none;
+  border: 1px solid rgba(124, 92, 252, 0.35);
+  background: rgba(10, 8, 20, 0.75);
+  color: #f0ebd8;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.92rem;
+}
+
+.editorField input:focus {
+  outline: none;
+  border-color: rgba(255, 224, 102, 0.55);
+  box-shadow: 0 0 0 2px rgba(255, 224, 102, 0.12);
+}
+
+.editorActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.editorSave {
+  appearance: none;
+  border: 1.5px solid rgba(255, 224, 102, 0.55);
+  background: rgba(255, 224, 102, 0.12);
+  color: #ffe066;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.editorSave:hover:not(:disabled) {
+  background: rgba(255, 224, 102, 0.88);
+  color: #0d0b18;
+}
+
+.editorSave:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 720px) {
+  .editorRow {
+    grid-template-columns: 1fr;
+  }
+}
+
