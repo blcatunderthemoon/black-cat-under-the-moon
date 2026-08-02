@@ -1044,26 +1044,44 @@ function emailFromSupabaseSession(session) {
   if (session.user && session.user.email) return String(session.user.email).trim();
   var payload = decodeSupabaseJwtPayload(session.access_token);
   if (payload && payload.email) return String(payload.email).trim();
+  if (payload && payload.user_metadata && payload.user_metadata.email) {
+    return String(payload.user_metadata.email).trim();
+  }
   return null;
 }
 
-async function ensureSupabaseAuthToken() {
+/**
+ * Echo gate token — same acceptance rules as auth-nav (JWT not past exp).
+ * Prefer refresh when near expiry, but do not null-out a still-valid JWT
+ * that auth-nav is already using to paint the logged-in header.
+ */
+async function getAuthTokenForEchoGate() {
   var stored = getSupabaseAuthStorage();
   if (!stored || !stored.session || !stored.session.access_token) return null;
 
   var token = stored.session.access_token;
   var payload = decodeSupabaseJwtPayload(token);
   var jwtExpMs = payload && payload.exp ? payload.exp * 1000 : 0;
+
+  // Hard-expired: try refresh once, else treat as logged out (match auth-nav).
+  if (jwtExpMs && Date.now() > jwtExpMs) {
+    var refreshedExpired = await refreshSupabaseAuthToken();
+    return refreshedExpired || null;
+  }
+
+  // Near expiry: best-effort refresh; keep current token if refresh fails.
   var expiresAt = stored.session.expires_at;
-  var expiredBySession = expiresAt && Date.now() >= (Number(expiresAt) * 1000) - 60000;
-  var expiredByJwt = jwtExpMs && Date.now() >= jwtExpMs - 60000;
-  if (expiredBySession || expiredByJwt) {
+  var nearExpiry = (expiresAt && Date.now() >= (Number(expiresAt) * 1000) - 60000)
+    || (jwtExpMs && Date.now() >= jwtExpMs - 60000);
+  if (nearExpiry) {
     var refreshed = await refreshSupabaseAuthToken();
     if (refreshed) return refreshed;
-    // Expired + refresh failed — do not treat as logged-in for Echo gate.
-    if (jwtExpMs && Date.now() > jwtExpMs) return null;
   }
   return token;
+}
+
+async function ensureSupabaseAuthToken() {
+  return getAuthTokenForEchoGate();
 }
 
 function fetchWithTimeout(url, options, timeoutMs) {
@@ -1081,12 +1099,12 @@ function fetchWithTimeout(url, options, timeoutMs) {
 }
 
 async function waitForSupabaseAuthToken(maxWaitMs) {
-  var immediate = getSupabaseAuthToken();
+  var immediate = await getAuthTokenForEchoGate();
   if (immediate) return immediate;
 
   var deadline = Date.now() + (maxWaitMs || 2500);
   while (Date.now() < deadline) {
-    var token = await ensureSupabaseAuthToken();
+    var token = await getAuthTokenForEchoGate();
     if (token) return token;
     await new Promise(function (r) { setTimeout(r, 100); });
   }
@@ -1388,12 +1406,15 @@ function getLocalMatchSubmittedEmail() {
   }
 }
 
-async function userHasMatchSubmission() {
-  var token = await ensureSupabaseAuthToken();
-  // Revisit screen is only for logged-in users confirmed by the server.
+/**
+ * @param {string} [tokenOverride] Token already resolved by the Echo gate —
+ *   do not re-ensure in a way that can null out a JWT auth-nav is using.
+ */
+async function userHasMatchSubmission(tokenOverride) {
+  var token = tokenOverride || (await getAuthTokenForEchoGate());
   if (!token) return false;
 
-  var accountEmail = await resolveMatchAccountEmail();
+  var accountEmail = await resolveMatchAccountEmail(token);
 
   try {
     var statusResp = await fetchMatchStatusAuthed(token);
@@ -1422,12 +1443,18 @@ function getLoggedInAccountEmailFromStorage() {
   return emailFromSupabaseSession(stored.session);
 }
 
-async function resolveMatchAccountEmail() {
+async function resolveMatchAccountEmail(tokenOverride) {
   var fromStorage = getLoggedInAccountEmailFromStorage();
   if (fromStorage) return fromStorage;
 
-  var token = await ensureSupabaseAuthToken();
+  var token = tokenOverride || (await getAuthTokenForEchoGate());
   if (!token) return null;
+
+  var payload = decodeSupabaseJwtPayload(token);
+  if (payload && payload.email) return String(payload.email).trim();
+  if (payload && payload.user_metadata && payload.user_metadata.email) {
+    return String(payload.user_metadata.email).trim();
+  }
 
   try {
     var resp = await fetchWithTimeout('/api/me', {
@@ -2313,13 +2340,10 @@ async function startMatchModeImpl() {
   quizInitialRevealPending = document.body.dataset.automode === 'match';
 
   try {
-    // Wait for a usable session (auth-nav paints Circle from the same localStorage).
-    // Prefer ensureSupabaseAuthToken so near-expiry tokens are refreshed first.
     var authWaitMs = document.body.dataset.automode === 'match' ? 10000 : 3000;
-    var token = await ensureSupabaseAuthToken();
+    var token = await getAuthTokenForEchoGate();
     if (!token) {
       token = await waitForSupabaseAuthToken(authWaitMs);
-      if (token) token = (await ensureSupabaseAuthToken()) || token;
     }
 
     var matchesPrefetch = null;
@@ -2327,29 +2351,27 @@ async function startMatchModeImpl() {
       matchesPrefetch = fetchEchoPremiumAndMatches(token);
     }
 
-    var submitted = token ? await userHasMatchSubmission() : false;
+    var submitted = token ? await userHasMatchSubmission(token) : false;
     var prefetched = matchesPrefetch ? await matchesPrefetch : null;
     if (prefetched && prefetched.token) token = prefetched.token;
 
-    // /api/matches.has_submitted uses the same non-duplicate rule as Echo list —
-    // trust it if match-status was slow/false-negative.
     if (!submitted && prefetched && prefetched.hasSubmitted === true) {
       submitted = true;
-      var accountEmailForMark = await resolveMatchAccountEmail();
+      var accountEmailForMark = await resolveMatchAccountEmail(token);
       markMatchSubmittedLocally(accountEmailForMark || getLocalMatchSubmittedEmail() || '');
     }
     if (!submitted && prefetched && (prefetched.matches || []).length > 0) {
-      // Delivered connections imply this account already completed Echo.
       submitted = true;
     }
 
+    // Logged-in returning submitter: never open the questionnaire.
     if (token && submitted) {
       quizInitialRevealPending = false;
       await showMatchAlreadySubmitted(prefetched);
       return;
     }
 
-    var accountEmail = await resolveMatchAccountEmail();
+    var accountEmail = await resolveMatchAccountEmail(token);
     activeQuestions = matchQuestionsForAccount(accountEmail);
     activeTotal = activeQuestions.length;
     answers = {};
@@ -2359,11 +2381,8 @@ async function startMatchModeImpl() {
 
     beginQuizQuestionnaire();
 
-    // Late auth: header may show Circle after we already opened the guest form.
-    // If the account has already submitted, jump to results / thank-you.
-    if (!submitted) {
-      scheduleEchoSubmittedGateRecovery();
-    }
+    // Late auth / late status: jump off the form if this account already submitted.
+    scheduleEchoSubmittedGateRecovery();
   } catch (err) {
     quizInitialRevealPending = false;
     releaseQuizBootScreen();
@@ -2373,49 +2392,59 @@ async function startMatchModeImpl() {
 
 var echoSubmittedGateRecoveryTimer = null;
 var echoSubmittedGateRecoveryTries = 0;
+var echoSubmittedGateRecoveryBound = false;
+
+async function tryRecoverEchoSubmittedResults() {
+  // Only recover while the questionnaire is still showing (not thank-you / results).
+  if ($already && $already.classList.contains('active')) return true;
+  if ($thankyou && $thankyou.classList.contains('active')) return true;
+  if (!$main || $main.hidden) return false;
+  if ($main.style.display === 'none') return false;
+
+  var token = await getAuthTokenForEchoGate();
+  if (!token) return false;
+
+  var status = await fetchEchoPremiumAndMatches(token);
+  if (status.token) token = status.token;
+
+  var ok = status.hasSubmitted === true || (status.matches && status.matches.length > 0);
+  if (!ok) {
+    ok = await userHasMatchSubmission(token);
+  }
+  if (!ok) return false;
+
+  quizInitialRevealPending = false;
+  await showMatchAlreadySubmitted(status);
+  return true;
+}
 
 function scheduleEchoSubmittedGateRecovery() {
+  if (!echoSubmittedGateRecoveryBound) {
+    echoSubmittedGateRecoveryBound = true;
+    window.addEventListener('bcm:auth-ready', function onAuthReadyRecover() {
+      tryRecoverEchoSubmittedResults().then(function (done) {
+        if (done && echoSubmittedGateRecoveryTimer) {
+          clearInterval(echoSubmittedGateRecoveryTimer);
+          echoSubmittedGateRecoveryTimer = null;
+        }
+      });
+    });
+  }
+
   if (echoSubmittedGateRecoveryTimer) return;
   echoSubmittedGateRecoveryTries = 0;
   echoSubmittedGateRecoveryTimer = setInterval(async function () {
     echoSubmittedGateRecoveryTries += 1;
-    if (echoSubmittedGateRecoveryTries > 20) {
+    if (echoSubmittedGateRecoveryTries > 30) {
       clearInterval(echoSubmittedGateRecoveryTimer);
       echoSubmittedGateRecoveryTimer = null;
       return;
     }
-    // Only recover while the questionnaire is still showing (not thank-you / results).
-    if ($already && $already.classList.contains('active')) {
+    var done = await tryRecoverEchoSubmittedResults();
+    if (done) {
       clearInterval(echoSubmittedGateRecoveryTimer);
       echoSubmittedGateRecoveryTimer = null;
-      return;
     }
-    if ($thankyou && $thankyou.classList.contains('active')) {
-      clearInterval(echoSubmittedGateRecoveryTimer);
-      echoSubmittedGateRecoveryTimer = null;
-      return;
-    }
-    if (!$main || $main.style.display === 'none' || $main.hidden) return;
-
-    var token = await ensureSupabaseAuthToken();
-    if (!token) return;
-    var ok = await userHasMatchSubmission();
-    if (!ok) {
-      var status = await fetchEchoPremiumAndMatches(token);
-      ok = status.hasSubmitted === true || (status.matches && status.matches.length > 0);
-      if (ok) {
-        clearInterval(echoSubmittedGateRecoveryTimer);
-        echoSubmittedGateRecoveryTimer = null;
-        quizInitialRevealPending = false;
-        await showMatchAlreadySubmitted(status);
-        return;
-      }
-      return;
-    }
-    clearInterval(echoSubmittedGateRecoveryTimer);
-    echoSubmittedGateRecoveryTimer = null;
-    quizInitialRevealPending = false;
-    await showMatchAlreadySubmitted();
   }, 500);
 }
 

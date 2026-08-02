@@ -17,6 +17,7 @@ import {
   responseEmailMatchOrParts,
 } from './response-dedupe.js';
 import { isSuccessfulSentMatchNote } from './match-sent-record.js';
+import { hasMatchSubmission } from './match-submission.js';
 
 export const PREMIUM_MATCH_MIN_SCORE = 60;
 /** Batch size when scanning responses for premium discovery. */
@@ -100,18 +101,7 @@ export async function resolveLatestActiveResponseId(admin, responseId) {
 }
 
 async function userHasSubmitted(admin, userId, userEmail) {
-  const orParts = [`user_id.eq.${userId}`];
-  orParts.push(...responseEmailMatchOrParts(userEmail));
-
-  const { data } = await admin
-    .from('responses')
-    .select('id')
-    .or(orParts.join(','))
-    .or('claim_status.neq.duplicate,claim_status.is.null')
-    .limit(1)
-    .maybeSingle();
-
-  return !!data;
+  return hasMatchSubmission(admin, { userId, email: userEmail });
 }
 
 export async function loadUserResponseIds(admin, userId, userEmail) {

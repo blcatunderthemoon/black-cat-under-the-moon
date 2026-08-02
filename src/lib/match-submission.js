@@ -117,6 +117,46 @@ async function findResponseByEmail(admin, normalized, { full = false, forHasSubm
   return null;
 }
 
+async function findAnyResponseByUserId(admin, userId) {
+  if (!userId) return null;
+  const { data } = await admin
+    .from('responses')
+    .select('id')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data;
+}
+
+async function findAnyResponseByEmail(admin, normalized) {
+  const key = normalizeEmailForPersonKey(normalized);
+  if (!key) return null;
+  const raw = String(normalized || '').toLowerCase().trim();
+  const variants = [...new Set([key, `${key}.`, raw].filter(Boolean))];
+
+  for (const v of variants) {
+    const { data: byNorm } = await admin
+      .from('responses')
+      .select('id')
+      .eq('normalized_email', v)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (byNorm) return byNorm;
+
+    const { data: byEmail } = await admin
+      .from('responses')
+      .select('id')
+      .ilike('email', v)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (byEmail) return byEmail;
+  }
+  return null;
+}
+
 /**
  * Latest active Echo response owned by this account (user_id and/or matching email).
  * Prefer user-linked row; fall back to email match for legacy submissions.
@@ -138,6 +178,12 @@ export async function hasMatchSubmission(admin, { userId, email, emails, profile
 
   for (const normalized of collectEmails({ email, emails, profileEmail })) {
     if (await findResponseByEmail(admin, normalized, { forHasSubmitted: true })) return true;
+  }
+
+  // Fallback: any prior row (incl. duplicate) — returning users must not re-enter the form.
+  if (await findAnyResponseByUserId(admin, userId)) return true;
+  for (const normalized of collectEmails({ email, emails, profileEmail })) {
+    if (await findAnyResponseByEmail(admin, normalized)) return true;
   }
   return false;
 }
