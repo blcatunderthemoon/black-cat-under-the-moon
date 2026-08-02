@@ -1680,11 +1680,11 @@ function renderMatchResultsOnMatchPage(matches) {
       ? '<a class="match-result-card__name" href="/mirror-card/' + escHtml(slug) + '">' + escHtml(name) + '</a>'
       : '<span class="match-result-card__name">' + escHtml(name) + '</span>';
 
-    var emailLabel = match.email_notified ? '已通知' : '—';
+    var emailLabel = match.email_notified ? '已寄信' : '—';
     var emailClass = match.email_notified ? 'match-result-card__email--yes' : 'match-result-card__email--no';
     var emailHtml = match.email_notified
-      ? '<span class="match-result-card__email ' + emailClass + '"><span class="status-dot" aria-hidden="true"></span>' + escHtml(emailLabel) + '</span>'
-      : '<span class="match-result-card__email ' + emailClass + '">' + escHtml(emailLabel) + '</span>';
+      ? '<span class="match-result-card__email ' + emailClass + '" title="管理員已手動寄出配對通知電郵"><span class="status-dot" aria-hidden="true"></span>' + escHtml(emailLabel) + '</span>'
+      : '<span class="match-result-card__email ' + emailClass + '" title="尚未經管理員寄出配對電郵（Passport 即時連線唔等於已寄信）">' + escHtml(emailLabel) + '</span>';
 
     var scoreHtml = '<span class="match-result-card__score-tag">' + escHtml(formatMatchScore(match.match_score)) + '</span>';
 

@@ -3,12 +3,17 @@
  * Generate match card HTML for a verified match pair.
  * Passport: any pair with sent_matches or live score ≥ 60.
  * Free: only pairs recorded in sent_matches (delivered connection).
+ *
+ * Stale questionnaire ids (after register / resubmit) are resolved to the same
+ * person's latest response — no duplicate match rows are created.
  */
 
 import { requireUser, sendAuthError, getAdminClient, isPremium } from '../../../lib/server-auth.js';
 import {
   loadAuthorizedMatchPair,
   loadUserResponseIds,
+  resolveLatestActiveResponseId,
+  toResponseId,
 } from '../../../lib/user-matches.js';
 import { buildMatchCardHtml } from '../../../lib/match-card-html.js';
 import { getSiteUrlFromRequest } from '../../../lib/site-seo.js';
@@ -23,8 +28,8 @@ export default async function handler(req, res) {
     const premium = await isPremium(user.id);
 
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
-    const partnerResponseId = Number(body.partner_response_id);
-    const requestedMyId = Number(body.my_response_id) || null;
+    const partnerResponseId = toResponseId(body.partner_response_id);
+    const requestedMyId = toResponseId(body.my_response_id);
     if (!partnerResponseId) {
       return res.status(400).json({ error: 'partner_response_id is required' });
     }
@@ -35,16 +40,28 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'Match not found' });
     }
 
-    const candidateMyIds = requestedMyId ? [requestedMyId] : myResponseIds;
+    const resolvedPartnerId = await resolveLatestActiveResponseId(admin, partnerResponseId);
+    if (!resolvedPartnerId) {
+      return res.status(404).json({ error: 'Match not found' });
+    }
+
+    // Prefer the id from the list row, then every owned submission (latest first).
+    const candidateMyIds = [];
+    if (requestedMyId && myResponseIds.includes(requestedMyId)) {
+      candidateMyIds.push(requestedMyId);
+    }
+    for (const id of myResponseIds) {
+      if (!candidateMyIds.includes(id)) candidateMyIds.push(id);
+    }
+
     let pair = null;
     for (const myId of candidateMyIds) {
-      if (!myResponseIds.includes(myId)) continue;
       pair = await loadAuthorizedMatchPair(
         admin,
         user.id,
         user.email,
         myId,
-        partnerResponseId,
+        resolvedPartnerId,
         myResponseIds,
         { deliveredOnly: !premium },
       );

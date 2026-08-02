@@ -3,7 +3,8 @@
  *
  * Body: {
  *   pairs: [{ userAId, userBId, match_score }],
- *   deliver_inbox?: boolean,   // when true, also push Inbox for registered users
+ *   deliver_inbox?: boolean,   // MUST be true to push Inbox; only set by admin manual send
+ *                              // (Passport echo / discovery never opens Inbox)
  *   skip_quota_check?: boolean // admin override (use sparingly)
  * }
  */

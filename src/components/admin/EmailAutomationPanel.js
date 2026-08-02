@@ -551,7 +551,7 @@ export function EmailAutomationPanel() {
               <div>
                 <p className={styles.premiumPanelTitle}>⚡ Moonlight Passport 即時連線</p>
                 <p className={styles.premiumPanelCopy}>
-                  付費會員配額無限制。已認領問卷且雙方 Inbox 就緒的配對，可一鍵發送 Email + Inbox 高亮。
+                  付費會員配額無限制。「Inbox 就緒」= 雙方已註冊。你撳發送 Email 時先會寄信；雙方都註冊先會一併投 Inbox。唔會自動寄。
                 </p>
               </div>
               <button
@@ -782,7 +782,12 @@ export function EmailAutomationPanel() {
                             <span className={`${styles.badge} ${styles.badgePremium}`}>🌙 Passport</span>
                           )}
                           {p.inbox_ready && !isAutomationPairSent(p) && (
-                            <span className={`${styles.badge} ${styles.badgeInbox}`}>📬 Inbox 就緒</span>
+                            <span
+                              className={`${styles.badge} ${styles.badgeInbox}`}
+                              title="雙方已註冊 — 撳發送 Email 時會寄信並投 Inbox；唔會自動寄"
+                            >
+                              Inbox 就緒
+                            </span>
                           )}
                           {p.quota_blocked && !isAutomationPairSent(p) && (
                             <span className={`${styles.badge} ${styles.badgeQuota}`}>⚠ 配額已滿</span>

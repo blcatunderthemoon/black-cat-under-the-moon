@@ -18,9 +18,84 @@ export const DISCOVER_BATCH_SIZE = 500;
  */
 export const DISCOVER_MAX_SCAN = 50000;
 
+/** Coerce responses.id (PostgREST may return string) to a positive int. */
+export function toResponseId(value) {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
 function emailNotifiedFromSentRow(notes) {
   if (!notes) return true;
   return !/失敗|failed/i.test(String(notes));
+}
+
+/**
+ * All response ids for the same person (incl. superseded), for sent_matches lookup.
+ * Does not create or mutate rows.
+ */
+async function loadSiblingResponseIds(admin, responseId) {
+  const id = toResponseId(responseId);
+  if (!id) return [];
+
+  const { data: row } = await admin
+    .from('responses')
+    .select('id, user_id, email, normalized_email')
+    .eq('id', id)
+    .maybeSingle();
+  if (!row) return [];
+
+  const orParts = [];
+  if (row.user_id) orParts.push(`user_id.eq.${row.user_id}`);
+  const email = String(row.normalized_email || row.email || '').toLowerCase().trim();
+  if (email) {
+    orParts.push(`normalized_email.eq.${email}`);
+    orParts.push(`email.ilike.${email}`);
+  }
+  if (!orParts.length) return [id];
+
+  const { data: siblings } = await admin
+    .from('responses')
+    .select('id')
+    .or(orParts.join(','));
+
+  const ids = [...new Set((siblings || []).map((r) => toResponseId(r.id)).filter(Boolean))];
+  return ids.length ? ids : [id];
+}
+
+/**
+ * Map any historical responses.id → that person's latest non-duplicate row.
+ * Used when someone registered / resubmitted after a match was listed.
+ */
+export async function resolveLatestActiveResponseId(admin, responseId) {
+  const id = toResponseId(responseId);
+  if (!id) return null;
+
+  const { data: row } = await admin
+    .from('responses')
+    .select('id, user_id, email, normalized_email')
+    .eq('id', id)
+    .maybeSingle();
+  if (!row) return null;
+
+  const orParts = [];
+  if (row.user_id) orParts.push(`user_id.eq.${row.user_id}`);
+  const email = String(row.normalized_email || row.email || '').toLowerCase().trim();
+  if (email) {
+    orParts.push(`normalized_email.eq.${email}`);
+    orParts.push(`email.ilike.${email}`);
+  }
+  if (!orParts.length) return id;
+
+  const { data: latest } = await admin
+    .from('responses')
+    .select('id')
+    .or(orParts.join(','))
+    .or('claim_status.neq.duplicate,claim_status.is.null')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  return toResponseId(latest?.id) || id;
 }
 
 async function userHasSubmitted(admin, userId, userEmail) {
@@ -58,7 +133,7 @@ export async function loadUserResponseIds(admin, userId, userEmail) {
     .order('created_at', { ascending: false });
 
   // Newest first: callers treat ids[0] as this person's latest submission.
-  return (data || []).map((r) => r.id);
+  return (data || []).map((r) => toResponseId(r.id)).filter(Boolean);
 }
 
 async function enrichOtherUsers(admin, userIds) {
@@ -179,18 +254,21 @@ async function loadInboxMatches(admin, userId, myResponseIds) {
 }
 
 async function loadSentMatches(admin, userId, userEmail, myResponseIds) {
-  const ids = myResponseIds || await loadUserResponseIds(admin, userId, userEmail);
+  const ids = (myResponseIds || await loadUserResponseIds(admin, userId, userEmail))
+    .map(toResponseId)
+    .filter(Boolean);
   if (!ids.length) return [];
+  const idSet = new Set(ids);
 
   const [{ data: sentAsA, error: errA }, { data: sentAsB, error: errB }] = await Promise.all([
     admin
       .from('sent_matches')
       .select('user_a_id, user_b_id, match_score, notes, sent_at')
-      .in('user_a_id', myResponseIds),
+      .in('user_a_id', ids),
     admin
       .from('sent_matches')
       .select('user_a_id, user_b_id, match_score, notes, sent_at')
-      .in('user_b_id', myResponseIds),
+      .in('user_b_id', ids),
   ]);
 
   if (errA || errB) return [];
@@ -198,7 +276,10 @@ async function loadSentMatches(admin, userId, userEmail, myResponseIds) {
   const sentRows = [...(sentAsA || []), ...(sentAsB || [])];
   const seenPairs = new Set();
   const uniqueSentRows = sentRows.filter((row) => {
-    const key = `${Math.min(row.user_a_id, row.user_b_id)}-${Math.max(row.user_a_id, row.user_b_id)}`;
+    const a = toResponseId(row.user_a_id);
+    const b = toResponseId(row.user_b_id);
+    if (!a || !b) return false;
+    const key = `${Math.min(a, b)}-${Math.max(a, b)}`;
     if (seenPairs.has(key)) return false;
     seenPairs.add(key);
     return true;
@@ -206,33 +287,44 @@ async function loadSentMatches(admin, userId, userEmail, myResponseIds) {
 
   if (!uniqueSentRows.length) return [];
 
-  const partnerResponseIds = uniqueSentRows.map((row) =>
-    ids.includes(row.user_a_id) ? row.user_b_id : row.user_a_id
-  );
+  const partnerResponseIds = uniqueSentRows.map((row) => {
+    const a = toResponseId(row.user_a_id);
+    const b = toResponseId(row.user_b_id);
+    return idSet.has(a) ? b : a;
+  });
 
   const { data: partnerResponses } = await admin
     .from('responses')
     .select('id, name, user_id, identity')
     .in('id', [...new Set(partnerResponseIds)]);
 
-  const responseById = Object.fromEntries((partnerResponses || []).map((r) => [r.id, r]));
+  const responseById = Object.fromEntries(
+    (partnerResponses || []).map((r) => [toResponseId(r.id), r]),
+  );
   const partnerUserIds = (partnerResponses || []).map((r) => r.user_id).filter(Boolean);
   const { profileById, mirrorByUserId } = await enrichOtherUsers(admin, partnerUserIds);
 
   const results = [];
 
   for (const row of uniqueSentRows) {
-    const partnerResponseId = ids.includes(row.user_a_id) ? row.user_b_id : row.user_a_id;
-    const myResponseId = ids.includes(row.user_a_id) ? row.user_a_id : row.user_b_id;
+    const a = toResponseId(row.user_a_id);
+    const b = toResponseId(row.user_b_id);
+    const partnerResponseId = idSet.has(a) ? b : a;
+    const myResponseId = idSet.has(a) ? a : b;
     const partner = responseById[partnerResponseId];
     if (!partner) continue;
+
+    // Prefer latest questionnaire for display / card open after partner registered.
+    const latestPartnerId = partner.user_id
+      ? (await resolveLatestActiveResponseId(admin, partnerResponseId)) || partnerResponseId
+      : partnerResponseId;
 
     const profile = partner.user_id ? profileById[partner.user_id] : null;
     const displayName = profile?.display_name || partner.name || '神秘貓咪';
 
     results.push({
       my_response_id: myResponseId,
-      partner_response_id: partnerResponseId,
+      partner_response_id: latestPartnerId,
       thread_id: null,
       match_score: row.match_score == null ? null : Number(row.match_score),
       match_summary: {},
@@ -510,6 +602,8 @@ function filterPremiumMatches(matches) {
 
 /**
  * Fast path for match card: verify a single pair without scanning all responses.
+ * Resolves stale questionnaire ids (register / resubmit) to the same person's
+ * latest row — never inserts duplicate match records.
  */
 export async function loadAuthorizedMatchPair(
   admin,
@@ -520,12 +614,23 @@ export async function loadAuthorizedMatchPair(
   myResponseIds = null,
   opts = {},
 ) {
-  const myId = Number(myResponseId);
-  const partnerId = Number(partnerResponseId);
+  let myId = toResponseId(myResponseId);
+  let partnerId = toResponseId(partnerResponseId);
   if (!myId || !partnerId) return null;
 
-  const ids = myResponseIds || await loadUserResponseIds(admin, userId, userEmail);
-  if (!ids.includes(myId)) return null;
+  const ids = (myResponseIds || await loadUserResponseIds(admin, userId, userEmail))
+    .map(toResponseId)
+    .filter(Boolean);
+  if (!ids.length) return null;
+
+  // Prefer caller's id when still owned; otherwise fall back to latest submission.
+  if (!ids.includes(myId)) {
+    myId = ids[0];
+  }
+
+  const resolvedPartnerId = await resolveLatestActiveResponseId(admin, partnerId);
+  if (!resolvedPartnerId) return null;
+  partnerId = resolvedPartnerId;
 
   const { data: rows, error } = await admin
     .from('responses')
@@ -534,27 +639,38 @@ export async function loadAuthorizedMatchPair(
 
   if (error || !rows?.length) return null;
 
-  const myRow = rows.find((r) => Number(r.id) === myId);
-  const partnerRow = rows.find((r) => Number(r.id) === partnerId);
+  const myRow = rows.find((r) => toResponseId(r.id) === myId);
+  const partnerRow = rows.find((r) => toResponseId(r.id) === partnerId);
   if (!myRow || !partnerRow) return null;
   if (partnerRow.user_id && partnerRow.user_id === userId) return null;
 
-  const [{ data: sentA }, { data: sentB }] = await Promise.all([
-    admin
-      .from('sent_matches')
-      .select('match_score')
-      .eq('user_a_id', myId)
-      .eq('user_b_id', partnerId)
-      .maybeSingle(),
-    admin
-      .from('sent_matches')
-      .select('match_score')
-      .eq('user_a_id', partnerId)
-      .eq('user_b_id', myId)
-      .maybeSingle(),
+  // sent_matches may still point at pre-registration / pre-resubmit ids — search
+  // sibling ids for the same people instead of inserting a new row.
+  const [mySiblings, partnerSiblings] = await Promise.all([
+    loadSiblingResponseIds(admin, myId),
+    loadSiblingResponseIds(admin, partnerId),
   ]);
+  const mySet = new Set(mySiblings.length ? mySiblings : [myId]);
+  const partnerSet = new Set(partnerSiblings.length ? partnerSiblings : [partnerId]);
 
-  const sentRow = sentA || sentB;
+  let sentRow = null;
+  const siblingIds = [...new Set([...mySet, ...partnerSet])];
+  if (siblingIds.length) {
+    const [{ data: sentAsA }, { data: sentAsB }] = await Promise.all([
+      admin
+        .from('sent_matches')
+        .select('match_score, user_a_id, user_b_id')
+        .in('user_a_id', [...mySet])
+        .in('user_b_id', [...partnerSet]),
+      admin
+        .from('sent_matches')
+        .select('match_score, user_a_id, user_b_id')
+        .in('user_a_id', [...partnerSet])
+        .in('user_b_id', [...mySet]),
+    ]);
+    sentRow = (sentAsA && sentAsA[0]) || (sentAsB && sentAsB[0]) || null;
+  }
+
   const intelligence = computeCompatibility(myRow, partnerRow);
   // Free tier: only pairs that were actually delivered (sent_matches).
   // Passport: delivered OR live score ≥ PREMIUM_MATCH_MIN_SCORE.

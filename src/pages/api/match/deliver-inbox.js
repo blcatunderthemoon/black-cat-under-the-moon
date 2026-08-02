@@ -1,7 +1,8 @@
 /**
  * POST /api/match/deliver-inbox
- * Delivers match results as Inbox match cards for claimed users.
- * Called by admin/scheduler after a matching job runs.
+ * Ops-only Inbox delivery WITHOUT sending email (DASHBOARD_SECRET).
+ * Prefer /api/dashboard/send-emails with deliver_inbox:true so email + Inbox stay in sync.
+ * Not called by Passport discovery or user-facing match APIs.
  *
  * Body: { user_a_id: number, user_b_id: number, match_score: number, match_summary?: object }
  * user_a_id / user_b_id are responses.id integers.

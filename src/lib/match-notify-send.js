@@ -21,7 +21,7 @@ import {
   resolveResponseAuthUserId,
   resolveResponseDeliveryEmail,
 } from './match-response-auth.js';
-import { isSuccessfulSentMatchNote, shouldDeliverInboxForPair } from './match-sent-record.js';
+import { isSuccessfulSentMatchNote, shouldPushInboxOnManualSend } from './match-sent-record.js';
 import { fetchAllRows } from './supabase-fetch-all.js';
 import { buildMatchCardHtml } from '../pages/api/match_card/template.js';
 
@@ -124,7 +124,9 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
     if (authA && !userA.user_id) authA = await linkResponseToAuthUser(supabase, userA, authA);
     if (authB && !userB.user_id) authB = await linkResponseToAuthUser(supabase, userB, authB);
 
-    const shouldDeliverInbox = shouldDeliverInboxForPair(authA, authB) || deliverInbox;
+    // Inbox ONLY on dashboard「發送」with deliver_inbox:true, and ONLY when both
+    // users are registered. Echo discovery never sets deliverInbox.
+    const shouldDeliverInbox = shouldPushInboxOnManualSend(deliverInbox, authA, authB);
 
     if (!skipQuotaCheck && !pairCanDeliverMatch(quotaA, quotaB)) {
       results.push({
@@ -203,6 +205,8 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
         matchSummary: intelligence.dimensionScores || {},
         skipEmailNotify: true,
       });
+    } else if (!deliverInbox) {
+      inbox = { delivered: false, reason: 'inbox_not_requested', skipped: true };
     } else {
       inbox = { delivered: false, reason: 'no_registered_users', skipped: true };
     }
@@ -210,7 +214,8 @@ export async function sendMatchNotificationPairs(pairs, opts = {}) {
     const [normA, normB] = normalisePair(aId, bId);
     const sameAuthUser = !!(authA && authB && authA === authB);
     const anyDelivered = deliveries.some((d) => d.delivered);
-    const inboxRequired = !!(authA || authB);
+    // Only require Inbox success when this manual send asked for Inbox push.
+    const inboxRequired = shouldDeliverInbox;
     const inboxOk = !inboxRequired || !!inbox?.delivered;
     const recorded = (anyDelivered || !!inbox?.delivered) && inboxOk;
     const noteParts = [];
