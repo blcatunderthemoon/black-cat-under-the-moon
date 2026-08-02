@@ -1017,6 +1017,7 @@ export default function ForumPage() {
   const showEmptyState = isEmpty && !loadError;
   const showWelcomeCard = topic !== '全部' && sort !== 'clan' && !loadError && !feedLoading;
   const canEditWelcome = canEditWelcomeTopic(profile, topic);
+  const showRightSidebar = (Array.isArray(featuredPosts) && featuredPosts.length > 0) || showHotPanel;
 
   if (shellLoading) {
     return (
@@ -1447,12 +1448,14 @@ export default function ForumPage() {
             </div>
           </div>
 
-          <div className="forum-sidebar forum-sidebar--right">
-            <FeaturedPostsPanel featuredPosts={featuredPosts} />
-            {showHotPanel && (
-              <HotTopicsPanel hotPosts={meta?.hot_posts} sparksMode={meta?.sparks_mode} />
-            )}
-          </div>
+          {showRightSidebar && (
+            <div className="forum-sidebar forum-sidebar--right">
+              <FeaturedPostsPanel featuredPosts={featuredPosts} />
+              {showHotPanel && (
+                <HotTopicsPanel hotPosts={meta?.hot_posts} sparksMode={meta?.sparks_mode} />
+              )}
+            </div>
+          )}
           <div className="forum-scroll-end" data-scroll-end aria-hidden="true" />
         </div>
 

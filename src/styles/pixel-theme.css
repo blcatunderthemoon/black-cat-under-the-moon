@@ -16093,7 +16093,7 @@
   grid-template-columns: 1fr;
   gap: 24px;
   width: 100%;
-  max-width: 1400px;
+  max-width: 1080px;
   margin: 0 auto;
   padding: 24px 20px 32px;
   box-sizing: border-box;
@@ -16101,10 +16101,15 @@
 
 @media (min-width: 900px) {
   .forum-layout {
-    grid-template-columns: minmax(0, 1fr) minmax(240px, 280px);
     align-items: start;
     gap: 28px;
     padding: 28px 28px 40px;
+  }
+
+  /* Only reserve the right rail when it has content — avoids empty right gap. */
+  .forum-layout:has(> .forum-sidebar--right) {
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 280px);
+    max-width: 1400px;
   }
 }
 
@@ -16392,7 +16397,9 @@
 }
 
 @media (min-width: 900px) {
-  .forum-sidebar { display: flex; }
+  .forum-layout:has(> .forum-sidebar--right) .forum-sidebar--right {
+    display: flex;
+  }
 }
 
 .forum-sidebar--mobile {
