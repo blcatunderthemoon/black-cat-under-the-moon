@@ -1,12 +1,13 @@
 /** Active rows: legacy null, unclaimed, or already claimed — not duplicate/disputed. */
 import { databaseNowIso } from './hong-kong-time.js';
+import { normalizeEmailForPersonKey, responseEmailMatchOrParts } from './response-dedupe.js';
 
 const ACTIVE_CLAIM_OR = 'claim_status.is.null,claim_status.eq.unclaimed,claim_status.eq.claimed';
 
 const LEGACY_LINKABLE_OR = 'claim_status.is.null,claim_status.eq.unclaimed';
 
 function normalizeEmail(email) {
-  return (email || '').toLowerCase().trim();
+  return normalizeEmailForPersonKey(email);
 }
 
 function collectEmails({ email, emails, profileEmail } = {}) {
@@ -74,11 +75,12 @@ async function findResponseByUserId(admin, userId, { full = false } = {}) {
 }
 
 async function findResponseByEmail(admin, normalized, { full = false } = {}) {
-  if (!normalized) return null;
+  const emailOr = responseEmailMatchOrParts(normalized);
+  if (!emailOr.length) return null;
   const { data } = await admin
     .from('responses')
     .select(full ? RESPONSE_ANSWER_SELECT : 'id')
-    .or(`normalized_email.eq.${normalized},email.ilike.${normalized}`)
+    .or(emailOr.join(','))
     .or(ACTIVE_CLAIM_OR)
     .order('created_at', { ascending: false })
     .limit(1)
@@ -117,14 +119,15 @@ export async function hasMatchSubmission(admin, { userId, email, emails, profile
  */
 export async function autoLinkLegacyMatchResponses(admin, userId, email) {
   const normalized = normalizeEmail(email);
-  if (!userId || !normalized) return false;
+  const emailOr = responseEmailMatchOrParts(normalized);
+  if (!userId || !emailOr.length) return false;
 
   if (await findResponseByUserId(admin, userId)) return true;
 
   const { data: otherClaim } = await admin
     .from('responses')
     .select('id')
-    .or(`normalized_email.eq.${normalized},email.ilike.${normalized}`)
+    .or(emailOr.join(','))
     .eq('claim_status', 'claimed')
     .not('user_id', 'is', null)
     .neq('user_id', userId)
@@ -136,7 +139,7 @@ export async function autoLinkLegacyMatchResponses(admin, userId, email) {
   const { data: candidates, error } = await admin
     .from('responses')
     .select('id')
-    .or(`normalized_email.eq.${normalized},email.ilike.${normalized}`)
+    .or(emailOr.join(','))
     .or(LEGACY_LINKABLE_OR)
     .is('user_id', null)
     .order('created_at', { ascending: false });

@@ -12,9 +12,33 @@
  * treated as its own person.
  */
 
-/** Lowercase trim — shared so automation + Echo collapse the same duplicates. */
+/**
+ * Canonical email for person keys + writes to `normalized_email`.
+ * Lowercase, trim, strip trailing dots (typo: user@gmail.com.).
+ * Email automation already groups via this; Echo DB lookups must use the same.
+ */
 export function normalizeEmailForPersonKey(email) {
-  return String(email || '').toLowerCase().trim();
+  return String(email || '').toLowerCase().trim().replace(/\.+$/, '');
+}
+
+/**
+ * PostgREST `.or(...)` fragments that match both canonical and legacy-stored forms.
+ * Older rows may have trailing dots in `email` / `normalized_email` because submit
+ * used to only lower+trim — automation still collapses those in memory, Echo must
+ * query both spellings or sibling /「已通知」lookups miss.
+ */
+export function responseEmailMatchOrParts(email) {
+  const key = normalizeEmailForPersonKey(email);
+  if (!key) return [];
+  const variants = new Set([key, `${key}.`]);
+  const raw = String(email || '').toLowerCase().trim();
+  if (raw) variants.add(raw);
+  const parts = [];
+  for (const v of variants) {
+    parts.push(`normalized_email.eq.${v}`);
+    parts.push(`email.ilike.${v}`);
+  }
+  return parts;
 }
 
 /** Stable identity key for grouping a person's response rows. */

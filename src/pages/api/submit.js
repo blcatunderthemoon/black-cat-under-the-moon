@@ -4,6 +4,10 @@ import { Redis } from '@upstash/redis';
 import { checkIp } from '../../lib/ip-guard.js';
 import { getOptionalUser, getAdminClient } from '../../lib/server-auth.js';
 import { databaseNowIso } from '../../lib/hong-kong-time.js';
+import {
+  normalizeEmailForPersonKey,
+  responseEmailMatchOrParts,
+} from '../../lib/response-dedupe.js';
 
 const ratelimit = process.env.UPSTASH_REDIS_REST_URL
   ? new Ratelimit({
@@ -162,9 +166,9 @@ export default async function handler(req, res) {
       }
     }
 
-    // Set normalized_email for legacy claim matching
+    // Set normalized_email for legacy claim matching (same rules as Echo / automation)
     const rawEmail = payload.email || '';
-    const normalizedEmail = rawEmail ? rawEmail.toLowerCase().trim() : '';
+    const normalizedEmail = normalizeEmailForPersonKey(rawEmail);
     if (normalizedEmail) {
       payload.normalized_email = normalizedEmail;
     }
@@ -181,10 +185,11 @@ export default async function handler(req, res) {
     // normalized_email (new rows) OR the raw email column (legacy rows), and only
     // skip rows explicitly marked as duplicate (NULL means unclaimed/active).
     if (!authUser && normalizedEmail) {
+      const emailOr = responseEmailMatchOrParts(rawEmail || normalizedEmail);
       const { data: existing } = await supabase
         .from('responses')
         .select('id, created_at')
-        .or(`normalized_email.eq.${normalizedEmail},email.ilike.${rawEmail}`)
+        .or(emailOr.join(','))
         .or('claim_status.neq.duplicate,claim_status.is.null')
         .order('created_at', { ascending: false })
         .limit(1)
@@ -225,12 +230,13 @@ export default async function handler(req, res) {
 
         // Unclaimed legacy rows for the same email (not linked to any account).
         if (normalizedEmail) {
+          const emailOr = responseEmailMatchOrParts(rawEmail || normalizedEmail);
           await admin
             .from('responses')
             .update(retire)
             .is('user_id', null)
             .neq('id', newId)
-            .or(`normalized_email.eq.${normalizedEmail},email.ilike.${rawEmail}`)
+            .or(emailOr.join(','))
             .or('claim_status.neq.duplicate,claim_status.is.null');
         }
       } catch (retireErr) {

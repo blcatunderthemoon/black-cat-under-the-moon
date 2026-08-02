@@ -3,9 +3,10 @@
  */
 
 import { getAdminClient } from './server-auth.js';
+import { normalizeEmailForPersonKey } from './response-dedupe.js';
 
 function normalizeEmail(email) {
-  return String(email || '').trim().toLowerCase();
+  return normalizeEmailForPersonKey(email);
 }
 
 export function normalizeResponseEmail(email) {
