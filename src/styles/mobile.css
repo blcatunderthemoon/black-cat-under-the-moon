@@ -506,13 +506,13 @@
     padding: 16px 10px 24px;
   }
 
-  /* Forum header — row 1: back + logo + logout; row 2: name + actions */
+  /* Forum header — row 1: back + logo + logout; row 2: full name; row 3: scrollable actions */
   .app-header--forum:not(.app-header--breadcrumbs) {
     display: grid;
     /* 1fr auto 1fr keeps the centre logo truly centred relative to the header,
        regardless of the differing widths of the 主頁 / 登出 side buttons. */
     grid-template-columns: 1fr auto 1fr;
-    grid-template-rows: auto auto;
+    grid-template-rows: auto auto auto;
     align-items: center;
     position: relative;
     padding: 8px 10px 10px;
@@ -682,24 +682,25 @@
   }
 
   .app-header--forum:not(.app-header--breadcrumbs) .forum-header-name-group {
-    grid-column: 1;
+    grid-column: 1 / -1;
     grid-row: 2;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
+    width: 100%;
+    max-width: 100%;
     min-width: 0;
-    max-width: min(120px, 30vw);
-    min-height: 32px;
+    min-height: 28px;
     padding-top: 10px;
     align-self: center;
     justify-self: start;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .app-header--forum:not(.app-header--breadcrumbs) .forum-header-name-group .app-header__nav-link {
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    max-width: none;
+    overflow: visible;
+    text-overflow: unset;
     white-space: nowrap;
     font-size: 13px;
     font-weight: 600;
@@ -709,47 +710,59 @@
   }
 
   .app-header--forum:not(.app-header--breadcrumbs) .forum-header-actions {
-    grid-column: 2 / -1;
-    grid-row: 2;
+    grid-column: 1 / -1;
+    grid-row: 3;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-start;
     gap: 8px;
     min-width: 0;
     width: 100%;
-    padding-top: 10px;
+    max-width: 100%;
+    padding: 2px 2px 4px;
     align-self: center;
     justify-self: stretch;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+    mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 18px), transparent 100%);
+  }
+
+  .app-header--forum:not(.app-header--breadcrumbs) .forum-header-actions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .app-header--forum:not(.app-header--breadcrumbs) .forum-header-actions > *,
+  .app-header--forum:not(.app-header--breadcrumbs) .forum-header-actions .header-icon-scroll,
+  .app-header--forum:not(.app-header--breadcrumbs) .forum-header-actions .forum-header-icon-group,
+  .app-header--forum:not(.app-header--breadcrumbs) .forum-header-actions .forum-header-guardian-link,
+  .app-header--forum:not(.app-header--breadcrumbs) .forum-header-actions .forum-compose-btn {
+    flex-shrink: 0;
   }
 
   .app-header--forum:not(.app-header--breadcrumbs) .forum-header-actions .header-icon-scroll {
-    flex: 1 1 auto;
+    flex: 0 0 auto;
     min-width: 0;
-    max-width: 100%;
-    justify-content: flex-end;
+    max-width: none;
+    justify-content: flex-start;
   }
 
   .app-header--forum:not(.app-header--breadcrumbs) .forum-header-actions .forum-header-icon-group {
     display: inline-flex;
     align-items: center;
     gap: 2px;
-    flex: 0 1 auto;
+    flex: 0 0 auto;
     width: max-content;
     min-width: 0;
-    margin-left: auto;
+    max-width: none;
+    margin-left: 0;
     padding: 2px 4px;
     border-radius: 10px;
     background: rgba(15, 10, 6, 0.55);
     border: 1px solid rgba(255, 159, 67, 0.18);
-    max-width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-
-  .app-header--forum:not(.app-header--breadcrumbs) .forum-header-actions .forum-header-icon-group::-webkit-scrollbar {
-    display: none;
+    overflow: visible;
   }
 
   .app-header--forum:not(.app-header--breadcrumbs) .forum-header-icon-group .app-header__nav-link--icon,
@@ -849,10 +862,10 @@
   .app-header--breadcrumbs.app-header--forum .app-header__inner--spread {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-rows: auto auto;
+    grid-template-rows: auto auto auto;
     align-items: center;
     padding: 0;
-    gap: 8px 10px;
+    gap: 6px 10px;
   }
 
   .app-header--breadcrumbs.app-header--forum .app-header__breadcrumbs {
@@ -895,24 +908,25 @@
   }
 
   .app-header--breadcrumbs.app-header--forum .forum-header-name-group {
-    grid-column: 1;
+    grid-column: 1 / -1;
     grid-row: 2;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
+    width: 100%;
+    max-width: 100%;
     min-width: 0;
-    max-width: none;
-    min-height: 34px;
-    flex-shrink: 1;
-    overflow: hidden;
+    min-height: 28px;
+    flex-shrink: 0;
+    overflow: visible;
     padding-top: 8px;
     align-self: center;
   }
 
   .app-header--breadcrumbs.app-header--forum .forum-header-name-group .app-header__nav-link {
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    max-width: none;
+    overflow: visible;
+    text-overflow: unset;
     white-space: nowrap;
     font-size: 13px;
     font-weight: 600;
@@ -921,39 +935,66 @@
     padding: 0;
   }
 
+  /* Icons + 版主工具 + 發文: one horizontal scroller (name stays fully visible above). */
   .app-header--breadcrumbs.app-header--forum .forum-header-actions {
-    grid-column: 2;
-    grid-row: 2;
+    grid-column: 1 / -1;
+    grid-row: 3;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-start;
     gap: 8px;
+    width: 100%;
     min-width: 0;
-    padding-top: 8px;
+    max-width: 100%;
+    padding: 2px 2px 4px;
     align-self: center;
-  }
-
-  .app-header--breadcrumbs.app-header--forum .forum-header-actions .header-icon-scroll {
-    min-width: 0;
-    max-width: 100%;
-  }
-
-  .app-header--breadcrumbs.app-header--forum .forum-header-actions .forum-header-icon-group {
-    margin-left: 0;
-    padding-top: 0;
-    max-width: 100%;
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    overscroll-behavior-x: contain;
+    mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 18px), transparent 100%);
   }
 
-  .app-header--breadcrumbs.app-header--forum .forum-header-icon-group {
+  .app-header--breadcrumbs.app-header--forum .forum-header-actions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .app-header--breadcrumbs.app-header--forum .forum-header-actions > *,
+  .app-header--breadcrumbs.app-header--forum .forum-header-actions .header-icon-scroll,
+  .app-header--breadcrumbs.app-header--forum .forum-header-actions .forum-header-icon-group,
+  .app-header--breadcrumbs.app-header--forum .forum-header-actions .forum-header-guardian-link,
+  .app-header--breadcrumbs.app-header--forum .forum-header-actions .forum-compose-btn {
+    flex-shrink: 0;
+  }
+
+  .app-header--breadcrumbs.app-header--forum .forum-header-actions .header-icon-scroll {
+    flex: 0 0 auto;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .app-header--breadcrumbs.app-header--forum .forum-header-actions .forum-header-icon-group {
     display: inline-flex;
     align-items: center;
     gap: 2px;
-    flex: 0 1 auto;
+    flex: 0 0 auto;
+    width: max-content;
     min-width: 0;
+    max-width: none;
+    margin-left: 0;
+    padding: 2px 4px;
+    border-radius: 10px;
+    background: rgba(15, 10, 6, 0.55);
+    border: 1px solid rgba(255, 159, 67, 0.18);
+    overflow: visible;
+  }
+
+  .app-header--breadcrumbs.app-header--forum .forum-header-guardian-link {
+    min-height: 32px;
+    height: 32px;
+    padding: 0 9px;
+    font-size: 11px;
   }
 
   .app-header--breadcrumbs.app-header--forum .forum-header-logout-btn,
@@ -1003,7 +1044,7 @@
 
   .app-header--breadcrumbs.app-header--forum .app-header__nav > *:not(.forum-header-name-group):not(.forum-header-actions):not(.forum-header-icon-group):not(.forum-header-logout-btn):not(.forum-header-guest-group):not(.auth-nav-badge):not(.app-header-logout-btn) {
     grid-column: 1 / -1;
-    grid-row: 3;
+    grid-row: 4;
   }
 
   .app-header--breadcrumbs.app-header--forum .forum-header-guest-group {
@@ -1247,13 +1288,13 @@
 }
 
 @media (max-width: 768px) {
-  /* Forum header — two-row grid on all mobile widths */
+  /* Forum header — row 1 logo; row 2 full name; row 3 scrollable actions */
   .app-header--forum:not(.app-header--breadcrumbs) {
     display: grid;
     /* 1fr auto 1fr keeps the centre logo truly centred relative to the header,
        regardless of the differing widths of the 主頁 / 登出 side buttons. */
     grid-template-columns: 1fr auto 1fr;
-    grid-template-rows: auto auto;
+    grid-template-rows: auto auto auto;
     align-items: center;
     position: relative;
     padding: 8px 10px 10px;
@@ -1381,56 +1422,89 @@
   }
 
   .app-header--forum:not(.app-header--breadcrumbs) .forum-header-name-group {
-    grid-column: 1;
+    grid-column: 1 / -1;
     grid-row: 2;
-    max-width: min(120px, 30vw);
-    min-height: 32px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 28px;
     padding-top: 10px;
     align-self: center;
     justify-self: start;
+    overflow: visible;
+  }
+
+  .app-header--forum:not(.app-header--breadcrumbs) .forum-header-name-group .app-header__nav-link {
+    max-width: none;
+    overflow: visible;
+    text-overflow: unset;
+    white-space: nowrap;
   }
 
   .app-header--forum:not(.app-header--breadcrumbs) .forum-header-actions {
-    grid-column: 2 / -1;
-    grid-row: 2;
+    grid-column: 1 / -1;
+    grid-row: 3;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-start;
     gap: 8px;
     min-width: 0;
     width: 100%;
-    padding-top: 10px;
+    max-width: 100%;
+    padding: 2px 2px 4px;
     align-self: center;
     justify-self: stretch;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+    mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 18px), transparent 100%);
+  }
+
+  .app-header--forum:not(.app-header--breadcrumbs) .forum-header-actions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .app-header--forum:not(.app-header--breadcrumbs) .forum-header-actions > *,
+  .app-header--forum:not(.app-header--breadcrumbs) .forum-header-actions .header-icon-scroll,
+  .app-header--forum:not(.app-header--breadcrumbs) .forum-header-actions .forum-header-icon-group,
+  .app-header--forum:not(.app-header--breadcrumbs) .forum-header-actions .forum-header-guardian-link,
+  .app-header--forum:not(.app-header--breadcrumbs) .forum-header-actions .forum-compose-btn {
+    flex-shrink: 0;
   }
 
   .app-header--forum:not(.app-header--breadcrumbs) .forum-header-actions .header-icon-scroll {
-    flex: 1 1 auto;
+    flex: 0 0 auto;
     min-width: 0;
-    max-width: 100%;
-    justify-content: flex-end;
+    max-width: none;
+    justify-content: flex-start;
   }
 
   .app-header--forum:not(.app-header--breadcrumbs) .forum-header-actions .forum-header-icon-group {
     display: inline-flex;
     align-items: center;
     gap: 2px;
-    flex: 0 1 auto;
+    flex: 0 0 auto;
     width: max-content;
     min-width: 0;
-    margin-left: auto;
+    max-width: none;
+    margin-left: 0;
     padding: 2px 4px;
     border-radius: 10px;
     background: rgba(15, 10, 6, 0.55);
     border: 1px solid rgba(255, 159, 67, 0.18);
-    max-width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scrollbar-width: none;
+    overflow: visible;
   }
 
-  .app-header--forum:not(.app-header--breadcrumbs) .forum-header-actions .forum-header-icon-group::-webkit-scrollbar {
-    display: none;
+  .app-header--forum:not(.app-header--breadcrumbs) .forum-header-guardian-link {
+    min-height: 32px;
+    height: 32px;
+    padding: 0 9px;
+    font-size: 11px;
   }
 
   .app-header--forum:not(.app-header--breadcrumbs) .forum-compose-btn {
@@ -1439,6 +1513,61 @@
     height: 32px;
     margin-top: 0;
     padding: 0 10px;
+  }
+
+  /* Post detail breadcrumb header — same name + scrollable actions pattern */
+  .app-header--breadcrumbs.app-header--forum .app-header__inner,
+  .app-header--breadcrumbs.app-header--forum .app-header__inner--spread {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto auto;
+    align-items: center;
+    padding: 0;
+    gap: 6px 10px;
+  }
+
+  .app-header--breadcrumbs.app-header--forum .forum-header-name-group {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    max-width: 100%;
+    overflow: visible;
+  }
+
+  .app-header--breadcrumbs.app-header--forum .forum-header-name-group .app-header__nav-link {
+    max-width: none;
+    overflow: visible;
+    text-overflow: unset;
+    white-space: nowrap;
+  }
+
+  .app-header--breadcrumbs.app-header--forum .forum-header-actions {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    justify-content: flex-start;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 18px), transparent 100%);
+  }
+
+  .app-header--breadcrumbs.app-header--forum .forum-header-actions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .app-header--breadcrumbs.app-header--forum .forum-header-actions > *,
+  .app-header--breadcrumbs.app-header--forum .forum-header-actions .header-icon-scroll,
+  .app-header--breadcrumbs.app-header--forum .forum-header-actions .forum-header-icon-group {
+    flex-shrink: 0;
+  }
+
+  .app-header--breadcrumbs.app-header--forum .forum-header-actions .header-icon-scroll,
+  .app-header--breadcrumbs.app-header--forum .forum-header-actions .forum-header-icon-group {
+    max-width: none;
+    overflow: visible;
   }
 }
 
@@ -1819,10 +1948,6 @@
 
   .app-header--forum:not(.app-header--breadcrumbs) .app-header__title {
     font-size: 0.8125rem;
-  }
-
-  .app-header--forum:not(.app-header--breadcrumbs) .forum-header-name-group {
-    max-width: min(100px, 28vw);
   }
 
   .app-header--forum:not(.app-header--breadcrumbs) .forum-header-actions {
