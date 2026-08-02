@@ -414,8 +414,10 @@ export function EmailAutomationPanel() {
       }
       setSendResults(resultMap);
 
-      // Refresh data
+      // Refresh data — jump to「已發送」so newly recorded pairs are visible
+      const anyRecorded = (data.results || []).some((r) => r.recorded);
       await Promise.all([fetchPairs(), fetchDrafts()]);
+      if (anyRecorded) setSentFilter('sent');
       setChecked({});
     } finally {
       setSending(false);
@@ -793,6 +795,22 @@ export function EmailAutomationPanel() {
                           )}
                           {isAutomationPairSent(p) && (
                             <span className={`${styles.badge} ${styles.badgeSent}`}>✉ 已發送</span>
+                          )}
+                          {isAutomationPairSent(p) && p.below_live_threshold && (
+                            <span
+                              className={`${styles.badge} ${styles.badgeDraft}`}
+                              title="此配對已成功發送，但以目前分數門檻／過濾條件不會再出現在未發送清單"
+                            >
+                              歷史記錄
+                            </span>
+                          )}
+                          {p.conduct_blocked && (
+                            <span
+                              className={`${styles.badge} ${styles.badgeError}`}
+                              title={`Conduct 分數過低（A:${p.user_a_conduct ?? '—'} / B:${p.user_b_conduct ?? '—'}），唔會再入新配對`}
+                            >
+                              Conduct 過低
+                            </span>
                           )}
                           {!isAutomationPairSent(p) && p.last_send_failed && (
                             <span

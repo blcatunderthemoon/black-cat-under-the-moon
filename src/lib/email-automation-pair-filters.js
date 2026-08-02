@@ -11,9 +11,25 @@ export function automationPairKey(pair) {
   return a <= b ? `${a}:${b}` : `${b}:${a}`;
 }
 
-/** True when this exact pair exists in sent_matches (by sent_match_id). */
+/**
+ * True when this pair exists in sent_matches.
+ * Prefer sent_match_id; also honour already_sent so a remapped/historical row
+ * never leaks into「未發送」if the id annotation was dropped.
+ */
 export function isAutomationPairSent(pair) {
-  return pair?.sent_match_id != null;
+  if (pair?.sent_match_id != null) return true;
+  if (pair?.already_sent === true) return true;
+  return false;
+}
+
+/** Conduct &lt; 50 (or explicit conduct_blocked) — must not appear on「未發送」. */
+export function pairFailsConduct(pair) {
+  if (pair?.conduct_blocked) return true;
+  const a = pair?.user_a_conduct;
+  const b = pair?.user_b_conduct;
+  if (a != null && Number.isFinite(Number(a)) && Number(a) < 50) return true;
+  if (b != null && Number.isFinite(Number(b)) && Number(b) < 50) return true;
+  return false;
 }
 
 /** True when both sides share the same questionnaire email. */
@@ -52,7 +68,11 @@ export function filterVisibleAutomationPairs(
     // pairs even if the server response wasn't premium-filtered (stale/racey refetch).
     if (premiumOnly && !pair.has_premium) return false;
     const sent = isAutomationPairSent(pair);
-    if (sentFilter === 'unsent' && sent) return false;
+    if (sentFilter === 'unsent') {
+      // sent_matches rows never belong on「未發送」; conduct-suspended neither.
+      if (sent) return false;
+      if (pairFailsConduct(pair)) return false;
+    }
     if (sentFilter === 'sent' && !sent) return false;
     if (hideQuotaFull && pair.quota_blocked && !sent) return false;
     return true;
@@ -108,9 +128,13 @@ export function countAutomationPairsBySent(pairs, { hideQuotaFull = false, premi
     if (!hideQuotaFull) return true;
     return !(pair.quota_blocked && !isAutomationPairSent(pair));
   });
+  //「未發送」count matches filterVisibleAutomationPairs(sentFilter:'unsent'):
+  // exclude successful sent_matches AND conduct-suspended pairs.
+  const unsent = list.filter((p) => !isAutomationPairSent(p) && !pairFailsConduct(p)).length;
+  const sent = list.filter((p) => isAutomationPairSent(p)).length;
   return {
-    unsent: list.filter((p) => !isAutomationPairSent(p)).length,
-    sent: list.filter((p) => isAutomationPairSent(p)).length,
+    unsent,
+    sent,
     all: list.length,
   };
 }

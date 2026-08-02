@@ -10,7 +10,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { passesHardFilter } from '../../../lib/matching.js';
+import { passesHardFilter, passesConductFilter } from '../../../lib/matching.js';
 import { computeCompatibility } from '../../../lib/intelligence.js';
 import {
   buildMonthlyMatchCounts,
@@ -23,6 +23,11 @@ import { pickLatestResponsesPerPerson } from '../../../lib/response-dedupe.js';
 import { buildLatestResponseIdResolver, remapPairRowToLatest } from '../../../lib/match-person-remap.js';
 import { fetchAllRows } from '../../../lib/supabase-fetch-all.js';
 import { authorizeStationOrForumAdmin } from '../../../lib/station-or-forum-admin-auth.js';
+import {
+  buildAutomationUserStub,
+  buildSentMatchLookups,
+  listMissingSuccessfulSentPairs,
+} from '../../../lib/email-automation-sent-merge.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -89,14 +94,17 @@ async function handleGet(req, res) {
 
   // Count only each person's latest submission — ignore older/superseded rows
   // (including historical duplicates not yet marked) so matching uses fresh data.
-  const users = pickLatestResponsesPerPerson(allUsers || []);
-  if (users.length < 2) return res.status(200).json({ pairs: [], total: 0 });
+  const usersLatest = pickLatestResponsesPerPerson(allUsers || []);
+  // Conduct < 50 (incl. 0) must not enter live pairing. Null score still counts as 100.
+  // Keep usersLatest for historical「已發送」merge even when the live pool is tiny.
+  const users = usersLatest.filter((u) => passesConductFilter(u));
+  const excludedConductCount = usersLatest.length - users.length;
 
   // Fetch sent_matches, email_drafts and the full response identity index in
   // parallel for annotation. The identity index MUST include superseded/duplicate
   // rows so we can map old sent/draft response ids back to a person's latest row.
   const [sentResult, draftResult, allResponseKeysResult] = await Promise.all([
-    fetchAllRows(() => supabase.from('sent_matches').select('id, user_a_id, user_b_id, sent_at, notes')),
+    fetchAllRows(() => supabase.from('sent_matches').select('id, user_a_id, user_b_id, match_score, sent_at, notes')),
     fetchAllRows(() => supabase.from('email_drafts').select('id, user_a_id, user_b_id')),
     fetchAllRows(() => supabase.from('responses').select('id, email, normalized_email, user_id')),
   ]);
@@ -108,25 +116,23 @@ async function handleGet(req, res) {
   // a person resubmits the questionnaire they get a NEW latest id, so match those
   // records by PERSON (latest id) — otherwise already-sent pairs wrongly reappear
   // as unsent and monthly quota undercounts. Falls back to raw ids when unknown.
-  const resolveLatestId = buildLatestResponseIdResolver(
-    allResponseKeysResult.error ? (allUsers || []) : (allResponseKeysResult.data || []),
-    users,
-  );
+  const identityRows = allResponseKeysResult.error
+    ? (allUsers || [])
+    : (allResponseKeysResult.data || []);
+  const resolveLatestId = buildLatestResponseIdResolver(identityRows, usersLatest);
   const sentRows  = rawSentRows.map((r) => remapPairRowToLatest(resolveLatestId, r));
   const draftRows = rawDraftRows.map((r) => remapPairRowToLatest(resolveLatestId, r));
   const successfulSentRows = filterSuccessfulSentRows(sentRows);
 
-  // Build lookup map with normalised pair keys "smallId:largeId" → sent_matches.id
-  const sentMap = new Map(
-    successfulSentRows.map((r) => {
-      const [a, b] = normalisePair(Number(r.user_a_id), Number(r.user_b_id));
-      return [`${a}:${b}`, Number(r.id)];
-    }),
+  // Response-id pair + person-key pair → sent_matches.id (person key covers resubmits).
+  const { lookupSentMatchId } = buildSentMatchLookups(
+    identityRows,
+    successfulSentRows,
+    normalisePair,
   );
   // Failed attempts: a sent_matches row exists but its notes mark it as a failed
-  // delivery. These are intentionally excluded from `sentMap` so the pair remains
-  // available for retry — we surface them via `last_send_failed` so admins know
-  // WHY a pair reappears in the unsent list.
+  // delivery. These are intentionally excluded from successful lookups so the pair
+  // remains available for retry — we surface them via `last_send_failed`.
   const failedMap = new Map(
     sentRows
       .filter((r) => isFailedSentMatchNote(r.notes))
@@ -187,6 +193,9 @@ async function handleGet(req, res) {
       const inboxReady = claimedFirst && claimedSecond;
       const sameEmailBlocked = pairHasSameResponseEmail(first, second);
 
+      const sentMatchId = lookupSentMatchId(normA, normB);
+      const alreadySent = sentMatchId != null;
+
       pairs.push({
         user_a: {
           id: first.id,
@@ -210,10 +219,10 @@ async function handleGet(req, res) {
         user_b_id: normB,
         match_score: finalScore,
         score_breakdown: dimensionScores,
-        sent_match_id: sentMap.get(pairKey) ?? null,
-        already_sent: sentMap.has(pairKey),
-        last_send_failed: !sentMap.has(pairKey) && failedMap.has(pairKey),
-        last_send_failed_at: (!sentMap.has(pairKey) && failedMap.get(pairKey)?.at) || null,
+        sent_match_id: sentMatchId,
+        already_sent: alreadySent,
+        last_send_failed: !alreadySent && failedMap.has(pairKey),
+        last_send_failed_at: (!alreadySent && failedMap.get(pairKey)?.at) || null,
         in_draft: draftMap.has(pairKey),
         draft_id: draftMap.get(pairKey) ?? null,
         user_a_quota: quotaFirst,
@@ -221,10 +230,71 @@ async function handleGet(req, res) {
         has_premium: hasPremium,
         inbox_ready: inboxReady,
         same_email_blocked: sameEmailBlocked,
-        premium_instant_ready: hasPremium && inboxReady && !sentMap.has(pairKey) && quotaFirst.can_receive && quotaSecond.can_receive && !sameEmailBlocked,
+        premium_instant_ready: hasPremium && inboxReady && !alreadySent && quotaFirst.can_receive && quotaSecond.can_receive && !sameEmailBlocked,
         quota_blocked: !quotaFirst.can_receive || !quotaSecond.can_receive,
+        below_live_threshold: false,
+        conduct_blocked: false,
+        user_a_conduct: first.conduct_score ?? 100,
+        user_b_conduct: second.conduct_score ?? 100,
       });
     }
+  }
+
+  // Live scoring can drop historical sends below minScore / hard-filter — still
+  // surface those successful sent_matches so the「已發送」tab is complete.
+  const userById = new Map(usersLatest.map((u) => [Number(u.id), u]));
+  const existingPairKeys = new Set(
+    pairs.map((p) => `${Number(p.user_a_id)}:${Number(p.user_b_id)}`),
+  );
+  for (const missing of listMissingSuccessfulSentPairs(existingPairKeys, successfulSentRows, normalisePair)) {
+    const firstRow = userById.get(missing.user_a_id);
+    const secondRow = userById.get(missing.user_b_id);
+    if (!firstRow || !secondRow) continue;
+
+    let finalScore = missing.row.match_score != null ? Number(missing.row.match_score) : null;
+    let dimensionScores = null;
+    if (passesHardFilter(firstRow, secondRow)) {
+      const result = computeCompatibility(firstRow, secondRow);
+      if (result?.match) {
+        finalScore = result.finalScore;
+        dimensionScores = result.dimensionScores;
+      }
+    }
+
+    const quotaFirst = quotaForResponse(firstRow);
+    const quotaSecond = quotaForResponse(secondRow);
+    const hasPremium = quotaFirst.is_premium || quotaSecond.is_premium;
+    const claimedFirst = !!firstRow.user_id;
+    const claimedSecond = !!secondRow.user_id;
+    const pairKey = missing.key;
+    const conductBlocked = !passesConductFilter(firstRow) || !passesConductFilter(secondRow);
+
+    pairs.push({
+      user_a: buildAutomationUserStub(firstRow),
+      user_b: buildAutomationUserStub(secondRow),
+      user_a_id: missing.user_a_id,
+      user_b_id: missing.user_b_id,
+      match_score: finalScore,
+      score_breakdown: dimensionScores,
+      sent_match_id: lookupSentMatchId(missing.user_a_id, missing.user_b_id) ?? Number(missing.row.id) ?? null,
+      already_sent: true,
+      last_send_failed: false,
+      last_send_failed_at: null,
+      in_draft: draftMap.has(pairKey),
+      draft_id: draftMap.get(pairKey) ?? null,
+      user_a_quota: quotaFirst,
+      user_b_quota: quotaSecond,
+      has_premium: hasPremium,
+      inbox_ready: claimedFirst && claimedSecond,
+      same_email_blocked: pairHasSameResponseEmail(firstRow, secondRow),
+      premium_instant_ready: false,
+      quota_blocked: !quotaFirst.can_receive || !quotaSecond.can_receive,
+      below_live_threshold: true,
+      conduct_blocked: conductBlocked,
+      user_a_conduct: firstRow.conduct_score ?? 100,
+      user_b_conduct: secondRow.conduct_score ?? 100,
+      sent_at: missing.row.sent_at || null,
+    });
   }
 
   let filteredPairs = pairs;
@@ -236,7 +306,7 @@ async function handleGet(req, res) {
   filteredPairs.sort((a, b) => {
     if (a.already_sent !== b.already_sent) return a.already_sent ? 1 : -1;
     if (a.premium_instant_ready !== b.premium_instant_ready) return a.premium_instant_ready ? -1 : 1;
-    return b.match_score - a.match_score;
+    return (Number(b.match_score) || 0) - (Number(a.match_score) || 0);
   });
 
   const summary = {
@@ -247,6 +317,7 @@ async function handleGet(req, res) {
     sent_in_list: filteredPairs.filter((p) => p.sent_match_id != null).length,
     sent_in_db: successfulSentRows.length,
     last_send_failed: filteredPairs.filter((p) => p.last_send_failed).length,
+    excluded_conduct: excludedConductCount,
   };
 
   return res.status(200).json({

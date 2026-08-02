@@ -1,6 +1,7 @@
 /**
- * /matches — View successfully matched users (≥60 score)
- * Premium-gated. Free users see a locked screen with upgrade CTA.
+ * /matches — View connection records.
+ * Passport: live discovery of ≥60% pairs + deliveries.
+ * Free: inbox + sent_matches (notified) only.
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -10,9 +11,9 @@ import { useRouter } from 'next/router';
 import { useAuth } from '../lib/auth-context.js';
 import AppShell from '../components/AppShell.js';
 import AppHeaderAuth from '../components/AppHeaderAuth.js';
-import { isPassportGatingDisabled, MOONLIGHT_PASSPORT_BRAND } from '../lib/premium.js';
+import { MOONLIGHT_PASSPORT_BRAND } from '../lib/premium.js';
 import MoonLoading from '../components/MoonLoading.js';
-import { HeaderMailIcon, ForumLockIcon, ForumPawIcon } from '../components/UiIcons.js';
+import { HeaderMailIcon, ForumPawIcon } from '../components/UiIcons.js';
 
 function ScoreRing({ score }) {
   const r = 24;
@@ -265,54 +266,13 @@ function MatchCard({ match, onOpenCard }) {
   );
 }
 
-function LockedScreen() {
-  return (
-    <div className="match-locked-wrap">
-      <div className="match-locked-blur" aria-hidden="true">
-        {[82, 76, 71].map((score, i) => (
-          <div key={i} className="match-card">
-            <div className="match-card__top">
-              <ScoreRing score={score} />
-              <div style={{ flex: 1 }}>
-                <div style={{ background: 'rgba(255,255,255,.08)', width: 80, height: 16, marginBottom: 6 }} />
-                <div style={{ background: 'rgba(255,255,255,.06)', width: 120, height: 12 }} />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="match-locked-overlay">
-        <div style={{ fontSize: 36 }} aria-hidden="true"><ForumLockIcon size={36} /></div>
-        <h2 className="pixel-title" style={{ fontSize: 10 }}>{MOONLIGHT_PASSPORT_BRAND}</h2>
-        <p className="pixel-subtitle" style={{ lineHeight: 1.7 }}>
-          {isPassportGatingDisabled()
-            ? `而家 ${MOONLIGHT_PASSPORT_BRAND} 功能開放試用中。請重新整理頁面後再試；若仍無法查看，請登出後重新登入。`
-            : (
-              <>
-                升級 {MOONLIGHT_PASSPORT_BRAND} 即可查看所有連線成功的成員<br />
-                及對方的詳細共鳴摘要與鏡像卡
-              </>
-            )}
-        </p>
-        {!isPassportGatingDisabled() && (
-          <>
-            <Link href="/premium" className="pixel-btn pixel-btn--primary" style={{ width: 'auto', textDecoration: 'none', marginTop: 8 }}>
-              <PixelMixedLabel text={`升級 ${MOONLIGHT_PASSPORT_BRAND} ▸`} />
-            </Link>
-            <p className="pixel-subtitle" style={{ fontSize: 12 }}>HKD 58 / 月 · 隨時取消</p>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
 export default function MatchesPage() {
   const { session, loading } = useAuth();
   const router = useRouter();
   const [state, setState] = useState('loading');
   const [matches, setMatches] = useState([]);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [discoveryEnabled, setDiscoveryEnabled] = useState(false);
   const [drawerMatch, setDrawerMatch] = useState(null);
 
   useEffect(() => {
@@ -328,14 +288,11 @@ export default function MatchesPage() {
       const r = await fetch('/api/matches', {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
-      if (r.status === 403) {
-        const d = await r.json();
-        if (d.premium_required) { setState('locked'); return; }
-      }
       if (!r.ok) { setState('error'); return; }
       const data = await r.json();
       setMatches(data.matches || []);
       setHasSubmitted(!!data.has_submitted);
+      setDiscoveryEnabled(!!data.discovery_enabled);
       setState(data.matches?.length ? 'ready' : 'empty');
     } catch {
       setState('error');
@@ -374,8 +331,6 @@ export default function MatchesPage() {
       >
         {state === 'loading' && <MoonLoading variant="hero" />}
 
-        {state === 'locked' && <LockedScreen />}
-
         {state === 'error' && (
           <div className="pixel-empty">
             <p className="pixel-subtitle">載入失敗，請稍後再試。</p>
@@ -391,10 +346,18 @@ export default function MatchesPage() {
             </p>
             <p className="pixel-subtitle" style={{ lineHeight: 1.7 }}>
               {hasSubmitted ? (
-                <>
-                  黑貓已記錄你的問卷；所有連線記錄會顯示於此<br />
-                  電郵通知欄會標示是否已寄出連線通知
-                </>
+                discoveryEnabled ? (
+                  <>
+                    黑貓已記錄你的問卷；所有 ≥60% 同步率連線會顯示於此<br />
+                    電郵通知欄會標示是否已寄出連線通知
+                  </>
+                ) : (
+                  <>
+                    已電郵／Inbox 通知嘅連線會顯示於此<br />
+                    即時掃描全部 ≥60% 連線需要{' '}
+                    <Link href="/premium" className="pixel-link">{MOONLIGHT_PASSPORT_BRAND}</Link>
+                  </>
+                )
               ) : (
                 <>
                   填寫 Echo Mode 問卷後，黑貓會為你分析心靈契合度<br />
@@ -413,6 +376,13 @@ export default function MatchesPage() {
             <p className="pixel-subtitle" style={{ fontSize: 13, marginBottom: 0 }}>
               找到 {matches.length} 個連線
             </p>
+            {!discoveryEnabled && (
+              <p className="pixel-subtitle" style={{ fontSize: 12, lineHeight: 1.6, marginTop: 4 }}>
+                目前只顯示已通知／已投送嘅連線。
+                <Link href="/premium" className="pixel-link"> {MOONLIGHT_PASSPORT_BRAND}</Link>
+                {' '}可即時查看所有 ≥60% 同步率連線。
+              </p>
+            )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {matches.map((m, i) => (
                 <MatchCard

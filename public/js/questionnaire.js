@@ -2057,7 +2057,7 @@ async function openMyAnswersPanel() {
 }
 
 async function fetchEchoPremiumAndMatches(token) {
-  var result = { isPremium: false, matches: [], token: token || null };
+  var result = { isPremium: false, matches: [], discoveryEnabled: false, token: token || null };
   if (!token) return result;
 
   var authToken = token;
@@ -2083,6 +2083,9 @@ async function fetchEchoPremiumAndMatches(token) {
       if (meData.profile && meData.profile.subscription_tier === 'premium') {
         result.isPremium = true;
       }
+      if (meData.passport_gating_disabled) {
+        result.isPremium = true;
+      }
       try {
         var uid = meData.user && meData.user.id;
         if (uid && window.BcutmMeCache) window.BcutmMeCache.write(uid, meData);
@@ -2095,38 +2098,41 @@ async function fetchEchoPremiumAndMatches(token) {
       var stored = getSupabaseAuthStorage();
       var uid2 = stored && stored.session && stored.session.user && stored.session.user.id;
       var cached = uid2 && window.BcutmMeCache ? window.BcutmMeCache.read(uid2) : null;
-      if (cached && cached.profile && cached.profile.subscription_tier === 'premium') {
+      if (cached && (
+        (cached.profile && cached.profile.subscription_tier === 'premium')
+        || cached.passport_gating_disabled
+      )) {
         result.isPremium = true;
       }
     } catch (e2) {}
   }
 
-  if (result.isPremium) {
-    try {
-      var matchesResp = await fetch('/api/matches', {
-        headers: { Authorization: 'Bearer ' + authToken },
-        cache: 'no-store',
-      });
-      if (matchesResp.status === 401) {
-        var refreshed2 = await refreshSupabaseAuthToken();
-        if (refreshed2) {
-          authToken = refreshed2;
-          result.token = refreshed2;
-          matchesResp = await fetch('/api/matches', {
-            headers: { Authorization: 'Bearer ' + authToken },
-            cache: 'no-store',
-          });
-        }
+  // Free + Passport both load matches; server omits live discovery for free.
+  try {
+    var matchesResp = await fetch('/api/matches', {
+      headers: { Authorization: 'Bearer ' + authToken },
+      cache: 'no-store',
+    });
+    if (matchesResp.status === 401) {
+      var refreshed2 = await refreshSupabaseAuthToken();
+      if (refreshed2) {
+        authToken = refreshed2;
+        result.token = refreshed2;
+        matchesResp = await fetch('/api/matches', {
+          headers: { Authorization: 'Bearer ' + authToken },
+          cache: 'no-store',
+        });
       }
-      if (matchesResp.ok) {
-        var matchesData = await matchesResp.json().catch(function() { return {}; });
-        result.matches = matchesData.matches || [];
-      } else if (matchesResp.status === 403) {
-        // /api/me said premium but matches gate disagreed — still show Passport UI
-        result.matches = [];
+    }
+    if (matchesResp.ok) {
+      var matchesData = await matchesResp.json().catch(function() { return {}; });
+      result.matches = matchesData.matches || [];
+      if (typeof matchesData.premium === 'boolean') {
+        result.isPremium = matchesData.premium;
       }
-    } catch (e3) {}
-  }
+      result.discoveryEnabled = !!matchesData.discovery_enabled;
+    }
+  } catch (e3) {}
 
   return result;
 }
@@ -2151,6 +2157,7 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
   var token = getSupabaseAuthToken();
   var isPremium = false;
   var matches = [];
+  var discoveryEnabled = false;
 
   if (!token) {
     $progressWrap.style.display = 'block';
@@ -2177,14 +2184,16 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
   if (prefetchedMatches && typeof prefetchedMatches.isPremium === 'boolean') {
     isPremium = prefetchedMatches.isPremium;
     matches = Array.isArray(prefetchedMatches.matches) ? prefetchedMatches.matches : [];
+    discoveryEnabled = !!prefetchedMatches.discoveryEnabled;
   } else if (prefetchedMatches && Array.isArray(prefetchedMatches.matches)) {
-    // Legacy: successful /api/matches response implies Passport
     matches = prefetchedMatches.matches;
     isPremium = true;
+    discoveryEnabled = true;
   } else {
     var status = await fetchEchoPremiumAndMatches(token);
     isPremium = status.isPremium;
     matches = status.matches || [];
+    discoveryEnabled = !!status.discoveryEnabled;
     if (status.token) token = status.token;
   }
 
@@ -2196,7 +2205,9 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
     $progressText.classList.add('mode-top-bar__center--zh');
   }
 
-  if (isPremium) {
+  // Show connection list when Passport (live discovery) OR free user already has deliveries.
+  var showResults = isPremium || matches.length > 0;
+  if (showResults) {
     if (premiumBlock) premiumBlock.style.display = 'none';
     if (staticView) staticView.style.display = 'none';
     if (resultsPanel) resultsPanel.style.display = '';
@@ -2204,6 +2215,10 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
     if ($already) $already.classList.add('overlay-screen--match-results');
     myAnswersReturnMode = 'results';
     setMyAnswersEntryVisible(false);
+    var freeHint = document.getElementById('match-results-free-hint');
+    if (freeHint) {
+      freeHint.style.display = (!discoveryEnabled && matches.length) ? '' : 'none';
+    }
   } else {
     if (premiumBlock) premiumBlock.style.display = '';
     if (staticView) staticView.style.display = '';

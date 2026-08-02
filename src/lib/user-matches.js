@@ -11,8 +11,12 @@ import { personKeyForResponse } from './response-dedupe.js';
 export const PREMIUM_MATCH_MIN_SCORE = 60;
 /** Batch size when scanning responses for premium discovery. */
 export const DISCOVER_BATCH_SIZE = 500;
-/** Max rows to scan (newest first) — avoids missing older ≥60% pairs after a single-batch cap. */
-export const DISCOVER_MAX_SCAN = 5000;
+/**
+ * Soft ceiling on rows scanned (newest first). Kept high so Passport「即時連線」
+ * covers the same candidate pool email-automation uses — a low cap caused ≥60%
+ * pairs (esp. older / 單檔 rows) to appear in admin but not on echo.html.
+ */
+export const DISCOVER_MAX_SCAN = 50000;
 
 function emailNotifiedFromSentRow(notes) {
   if (!notes) return true;
@@ -418,7 +422,10 @@ async function discoverPremiumMatches(admin, userId, userEmail, existingMatches,
       .select('*')
       .or('claim_status.neq.duplicate,claim_status.is.null')
       .or('conduct_score.gte.50,conduct_score.is.null')
-      .neq('user_id', userId)
+      // Include unclaimed rows (user_id IS NULL). Plain `.neq('user_id', me)` drops
+      // NULLs in PostgREST/SQL, which hid「單檔」partners from Passport echo while
+      // email-automation still listed them.
+      .or(`user_id.is.null,user_id.neq.${userId}`)
       .order('created_at', { ascending: false })
       .range(offset, rangeEnd);
 
@@ -499,7 +506,15 @@ function filterPremiumMatches(matches) {
 /**
  * Fast path for match card: verify a single pair without scanning all responses.
  */
-export async function loadAuthorizedMatchPair(admin, userId, userEmail, myResponseId, partnerResponseId, myResponseIds = null) {
+export async function loadAuthorizedMatchPair(
+  admin,
+  userId,
+  userEmail,
+  myResponseId,
+  partnerResponseId,
+  myResponseIds = null,
+  opts = {},
+) {
   const myId = Number(myResponseId);
   const partnerId = Number(partnerResponseId);
   if (!myId || !partnerId) return null;
@@ -536,7 +551,11 @@ export async function loadAuthorizedMatchPair(admin, userId, userEmail, myRespon
 
   const sentRow = sentA || sentB;
   const intelligence = computeCompatibility(myRow, partnerRow);
-  const authorized = !!sentRow || intelligence.finalScore >= PREMIUM_MATCH_MIN_SCORE;
+  // Free tier: only pairs that were actually delivered (sent_matches).
+  // Passport: delivered OR live score ≥ PREMIUM_MATCH_MIN_SCORE.
+  const authorized = opts.deliveredOnly
+    ? !!sentRow
+    : (!!sentRow || intelligence.finalScore >= PREMIUM_MATCH_MIN_SCORE);
   if (!authorized) return null;
 
   const score = sentRow?.match_score != null
@@ -546,7 +565,14 @@ export async function loadAuthorizedMatchPair(admin, userId, userEmail, myRespon
   return { myRow, partnerRow, intelligence, match_score: score };
 }
 
-export async function loadUserMatches(admin, userId, userEmail) {
+/**
+ * @param {{ includeDiscovery?: boolean }} [opts]
+ *   includeDiscovery (default true): scan all responses for ≥60 pairs (Passport).
+ *   Free users should pass false — they only see inbox + sent_matches deliveries.
+ */
+export async function loadUserMatches(admin, userId, userEmail, opts = {}) {
+  const includeDiscovery = opts.includeDiscovery !== false;
+
   const [has_submitted, myResponseIds] = await Promise.all([
     userHasSubmitted(admin, userId, userEmail),
     loadUserResponseIds(admin, userId, userEmail),
@@ -558,12 +584,14 @@ export async function loadUserMatches(admin, userId, userEmail) {
   ]);
 
   const merged = mergeMatches(inboxMatches, sentMatches);
+  const enrichedMerged = await enrichMatchScores(admin, userId, userEmail, merged, myResponseIds);
 
-  const [discovered, enrichedMerged] = await Promise.all([
-    discoverPremiumMatches(admin, userId, userEmail, merged, myResponseIds),
-    enrichMatchScores(admin, userId, userEmail, merged, myResponseIds),
-  ]);
+  if (!includeDiscovery) {
+    enrichedMerged.sort((a, b) => (b.match_score ?? -1) - (a.match_score ?? -1));
+    return { matches: enrichedMerged, has_submitted };
+  }
 
+  const discovered = await discoverPremiumMatches(admin, userId, userEmail, enrichedMerged, myResponseIds);
   const matches = filterPremiumMatches([...enrichedMerged, ...discovered]);
   return { matches, has_submitted };
 }

@@ -1,7 +1,8 @@
 /**
  * POST /api/matches/card
- * Premium-gated: generate match card HTML for a user's verified match pair.
- * Body: { partner_response_id: number, my_response_id?: number }
+ * Generate match card HTML for a verified match pair.
+ * Passport: any pair with sent_matches or live score ≥ 60.
+ * Free: only pairs recorded in sent_matches (delivered connection).
  */
 
 import { requireUser, sendAuthError, getAdminClient, isPremium } from '../../../lib/server-auth.js';
@@ -20,9 +21,6 @@ export default async function handler(req, res) {
     try { user = await requireUser(req); } catch (err) { return sendAuthError(res, err); }
 
     const premium = await isPremium(user.id);
-    if (!premium) {
-      return res.status(403).json({ premium_required: true });
-    }
 
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
     const partnerResponseId = Number(body.partner_response_id);
@@ -48,6 +46,7 @@ export default async function handler(req, res) {
         myId,
         partnerResponseId,
         myResponseIds,
+        { deliveredOnly: !premium },
       );
       if (pair) break;
     }
