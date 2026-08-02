@@ -51,3 +51,19 @@ export function withFeaturedMoonlightGatherings(gatherings, year, month, now = n
   const withoutDup = list.filter((g) => String(g?.id) !== featured.id);
   return [featured, ...withoutDup];
 }
+
+/** Compact teaser for Forum「社群活動」tile. */
+export function getForumMoonlightGatheringTeaser(now = new Date()) {
+  const card = buildMoonlightGathering001Card(now);
+  if (card.status === 'completed') {
+    return { href: '/gatherings', hint: '約人出沒', featured: false };
+  }
+  if (card.status === 'full') {
+    return { href: card.href, hint: '已滿額', featured: true };
+  }
+  return {
+    href: card.href,
+    hint: `仲有 ${card.seats_left} 個位`,
+    featured: true,
+  };
+}

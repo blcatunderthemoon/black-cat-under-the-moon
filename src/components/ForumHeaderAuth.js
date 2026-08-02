@@ -68,10 +68,17 @@ export default function ForumHeaderAuth({ extra = null, moonJourney = null, redi
   const name = profileHydrated ? (displayName || '') : '';
   const unread = meData?.unread_inbox_count || 0;
   const isPremium = isPremiumUser(meData);
-  const isForumStaff = canModerateForum(meData?.profile?.forum_role);
+  const forumProfile = meData?.profile;
+  // Prefer explicit staff flags from /api/me; fall back to forum_role.
+  const isForumStaff = Boolean(
+    forumProfile?.is_forum_staff
+    || forumProfile?.can_admin_forum
+    || canModerateForum(forumProfile?.forum_role),
+  );
   const path = (router.asPath || router.pathname || '').split(/[?#]/)[0];
   const onGatheringsPage = path === '/gatherings' || path.startsWith('/gatherings/');
   const onWishesPage = path === '/wishes' || path.startsWith('/wishes/');
+  const onGuardianPage = path === '/forum/guardian' || path.startsWith('/forum/guardian/');
 
   return (
     <>
@@ -87,16 +94,6 @@ export default function ForumHeaderAuth({ extra = null, moonJourney = null, redi
       </span>
       <span className="forum-header-actions">
         <HeaderIconScrollGroup>
-          {isForumStaff && (
-            <Link
-              href="/forum/guardian"
-              className="app-header__nav-link app-header__nav-link--icon forum-header-guardian-btn"
-              title="月光守護者"
-              aria-label="月光守護者治理面板"
-            >
-              <span className="app-header__nav-icon" aria-hidden="true"><HeaderShieldIcon /></span>
-            </Link>
-          )}
           <button
             type="button"
             className="app-header__nav-link app-header__nav-link--icon forum-header-bookmark-btn"
@@ -144,6 +141,20 @@ export default function ForumHeaderAuth({ extra = null, moonJourney = null, redi
           {moonJourney}
           <HeaderMyCatLink variant="forum" needsFeedBadge={meData?.my_cat?.needs_feed_badge === true} skinId={meData?.my_cat?.skin_id} />
         </HeaderIconScrollGroup>
+        {isForumStaff && (
+          <Link
+            href="/forum/guardian"
+            className={`forum-header-guardian-link${onGuardianPage ? ' is-active' : ''}`}
+            title="月光守護者 · 版主工具"
+            aria-label="版主工具"
+            aria-current={onGuardianPage ? 'page' : undefined}
+          >
+            <span className="forum-header-guardian-link__icon" aria-hidden="true">
+              <HeaderShieldIcon size={15} />
+            </span>
+            <span className="forum-header-guardian-link__text">版主工具</span>
+          </Link>
+        )}
         {extra}
       </span>
       <button type="button" className="app-header__action forum-header-logout-btn" onClick={handleLogout}>

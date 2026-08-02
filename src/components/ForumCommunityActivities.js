@@ -4,6 +4,7 @@
  */
 
 import Link from 'next/link';
+import { getForumMoonlightGatheringTeaser } from '../lib/moonlight-gathering-001.js';
 import {
   ForumMoonIcon,
   ForumTrophyIcon,
@@ -11,37 +12,41 @@ import {
   HeaderCalendarIcon,
 } from './ForumIcons.js';
 
-const ACTIVITIES = [
-  {
-    id: 'wish',
-    href: '/wishes',
-    title: '月光心願',
-    hint: '心願牆',
-    Icon: ForumMoonIcon,
-  },
-  {
-    id: 'gathering',
-    href: '/gatherings',
-    title: '月光聚會',
-    hint: '約人出沒',
-    Icon: HeaderCalendarIcon,
-  },
-  {
-    id: 'checkin',
-    href: '/my-cat',
-    title: '每日簽到',
-    hint: '餵養黑貓',
-    Icon: ForumPawIcon,
-  },
-  {
-    id: 'rank',
-    href: '#forum-hot',
-    title: '排行榜',
-    hint: '本週火種',
-    Icon: ForumTrophyIcon,
-    isRank: true,
-  },
-];
+function buildActivities() {
+  const gathering = getForumMoonlightGatheringTeaser();
+  return [
+    {
+      id: 'wish',
+      href: '/wishes',
+      title: '月光心願',
+      hint: '心願牆',
+      Icon: ForumMoonIcon,
+    },
+    {
+      id: 'gathering',
+      href: gathering.href,
+      title: '月光聚會',
+      hint: gathering.hint,
+      Icon: HeaderCalendarIcon,
+      featured: gathering.featured,
+    },
+    {
+      id: 'checkin',
+      href: '/my-cat',
+      title: '每日簽到',
+      hint: '餵養黑貓',
+      Icon: ForumPawIcon,
+    },
+    {
+      id: 'rank',
+      href: '#forum-hot',
+      title: '排行榜',
+      hint: '本週火種',
+      Icon: ForumTrophyIcon,
+      isRank: true,
+    },
+  ];
+}
 
 export function scrollForumHotPanelIntoView() {
   if (typeof document === 'undefined') return false;
@@ -55,6 +60,8 @@ export function scrollForumHotPanelIntoView() {
 }
 
 export default function ForumCommunityActivities({ onRankClick } = {}) {
+  const activities = buildActivities();
+
   return (
     <section className="forum-community-activities" aria-labelledby="forum-community-activities-title">
       <div className="forum-community-activities__head">
@@ -65,7 +72,7 @@ export default function ForumCommunityActivities({ onRankClick } = {}) {
         <p className="forum-community-activities__sub">一鍵去玩 · 圍爐以外嘅月光日常</p>
       </div>
       <ul className="forum-community-activities__grid">
-        {ACTIVITIES.map(({ id, href, title, hint, Icon, isRank }) => (
+        {activities.map(({ id, href, title, hint, Icon, isRank, featured }) => (
           <li key={id}>
             {isRank ? (
               <a
@@ -90,7 +97,11 @@ export default function ForumCommunityActivities({ onRankClick } = {}) {
             ) : (
               <Link
                 href={href}
-                className={`forum-community-activities__tile forum-community-activities__tile--${id}`}
+                className={[
+                  'forum-community-activities__tile',
+                  `forum-community-activities__tile--${id}`,
+                  featured ? 'forum-community-activities__tile--featured' : '',
+                ].filter(Boolean).join(' ')}
                 aria-label={`${title}：${hint}`}
               >
                 <span className="forum-community-activities__icon" aria-hidden="true">
@@ -98,7 +109,9 @@ export default function ForumCommunityActivities({ onRankClick } = {}) {
                 </span>
                 <span className="forum-community-activities__copy">
                   <span className="forum-community-activities__name">{title}</span>
-                  <span className="forum-community-activities__hint">{hint}</span>
+                  <span className={`forum-community-activities__hint${featured ? ' forum-community-activities__hint--live' : ''}`}>
+                    {hint}
+                  </span>
                 </span>
               </Link>
             )}

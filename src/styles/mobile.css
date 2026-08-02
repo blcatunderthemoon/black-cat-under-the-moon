@@ -772,6 +772,14 @@
     font-size: 10px;
   }
 
+  .app-header--forum:not(.app-header--breadcrumbs) .forum-header-guardian-link {
+    min-height: 32px;
+    height: 32px;
+    padding: 0 9px;
+    font-size: 11px;
+    border-radius: 8px;
+  }
+
   .app-header--forum:not(.app-header--breadcrumbs) .forum-compose-btn {
     display: inline-flex;
     align-items: center;
