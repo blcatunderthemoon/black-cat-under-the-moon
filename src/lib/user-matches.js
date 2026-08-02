@@ -1,6 +1,9 @@
 /**
- * Load matches for a user from inbox + sent_matches (email notifications).
- * Premium list also includes computed pairs ≥ PREMIUM_MATCH_MIN_SCORE.
+ * Load matches for a user.
+ * Passport Echo (`responsesOnly`): live scan of `responses` only.
+ * Free / delivered: inbox + sent_matches.
+ * Premium list also includes computed pairs ≥ PREMIUM_MATCH_MIN_SCORE when discovery is on
+ * without responsesOnly (legacy merge path).
  */
 
 import { isLegacySoloMatchThread, isSoloMatchPayload, soloPartnerResponseId } from './inbox-solo-anchor.js';
@@ -740,42 +743,58 @@ async function authorizeMatchPairOnce(admin, userId, myId, partnerId, myOwnedIds
   ]);
   sentRow = (sentAsA && sentAsA[0]) || (sentAsB && sentAsB[0]) || null;
 
-  const inboxDelivery = (!sentRow)
-    ? await findInboxDeliveredScore(admin, userId, mySet, partnerSet)
-    : null;
-
   const intelligence = computeCompatibility(myRow, partnerRow);
   const liveOk = intelligence.finalScore >= PREMIUM_MATCH_MIN_SCORE;
-  const deliveredOk = !!(sentRow || inboxDelivery);
 
-  // Free: must have been delivered (email send → sent_matches and/or Inbox card).
-  // Passport: delivered OR live ≥ 60 (same bar as Echo list discovery).
-  const authorized = opts.deliveredOnly
-    ? deliveredOk
-    : (deliveredOk || liveOk);
+  // Free (deliveredOnly): must exist in sent_matches / Inbox delivery tables.
+  // Passport Echo: authorize from `responses` live score only — same bar as the list.
+  let authorized = false;
+  let score = intelligence.finalScore;
+  if (opts.deliveredOnly) {
+    const inboxDelivery = (!sentRow)
+      ? await findInboxDeliveredScore(admin, userId, mySet, partnerSet)
+      : null;
+    authorized = !!(sentRow || inboxDelivery);
+    if (sentRow?.match_score != null) score = Number(sentRow.match_score);
+    else if (inboxDelivery?.match_score != null) score = Number(inboxDelivery.match_score);
+  } else {
+    authorized = liveOk;
+    score = intelligence.finalScore;
+  }
   if (!authorized) return null;
-
-  const score = sentRow?.match_score != null
-    ? Number(sentRow.match_score)
-    : (inboxDelivery?.match_score != null
-      ? Number(inboxDelivery.match_score)
-      : intelligence.finalScore);
 
   return { myRow, partnerRow, intelligence, match_score: score };
 }
 
 /**
- * @param {{ includeDiscovery?: boolean }} [opts]
- *   includeDiscovery (default true): scan all responses for ≥60 pairs (Passport).
- *   Free users should pass false — they only see inbox + sent_matches deliveries.
+ * @param {{ includeDiscovery?: boolean, responsesOnly?: boolean }} [opts]
+ *   includeDiscovery: scan `responses` for ≥60 pairs (Passport Echo).
+ *   responsesOnly: when true with discovery, IGNORE inbox/sent_matches for the list
+ *   so Echo is not polluted by historical delivery rows.
+ *   Free users pass includeDiscovery:false — delivered tables only.
  */
 export async function loadUserMatches(admin, userId, userEmail, opts = {}) {
   const includeDiscovery = opts.includeDiscovery !== false;
+  const responsesOnly = opts.responsesOnly === true;
 
   const [has_submitted, myResponseIds] = await Promise.all([
     userHasSubmitted(admin, userId, userEmail),
     loadUserResponseIds(admin, userId, userEmail),
   ]);
+
+  // Passport Echo: list is computed only from `responses` (latest per email).
+  if (includeDiscovery && responsesOnly) {
+    const discovered = await discoverPremiumMatches(
+      admin,
+      userId,
+      userEmail,
+      [],
+      myResponseIds,
+    );
+    const matches = filterPremiumMatches(discovered);
+    matches.sort((a, b) => (b.match_score ?? -1) - (a.match_score ?? -1));
+    return { matches, has_submitted };
+  }
 
   const [inboxMatches, sentMatches] = await Promise.all([
     loadInboxMatches(admin, userId, myResponseIds),
@@ -792,7 +811,6 @@ export async function loadUserMatches(admin, userId, userEmail, opts = {}) {
     ])
     : enrichedMerged;
 
-  // Collapse same-email / same-person partners to one row (latest response wins upstream).
   const partnerIds = [
     ...new Set(combined.map((m) => toResponseId(m.partner_response_id)).filter(Boolean)),
   ];

@@ -1,12 +1,8 @@
 /**
  * POST /api/matches/card
  * Generate match card HTML for a verified match pair.
- * Passport: any pair with sent_matches or live score ≥ 60.
- * Free: only pairs recorded in sent_matches (delivered connection).
- *
- * Stale questionnaire ids (after register / resubmit) are resolved to the same
- * person's latest response — no duplicate match rows are created.
- * Inbox-delivered pairs stay openable even if live recompute dips below 60.
+ * Passport Echo: pair must clear live `responses` score ≥ 60 (same as list).
+ * Free: only pairs recorded in sent_matches / Inbox delivery.
  */
 
 import { requireUser, sendAuthError, getAdminClient, isPremium } from '../../../lib/server-auth.js';
