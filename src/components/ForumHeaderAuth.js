@@ -142,21 +142,20 @@ export default function ForumHeaderAuth({ extra = null, moonJourney = null, redi
             </Link>
             {moonJourney}
             <HeaderMyCatLink variant="forum" needsFeedBadge={meData?.my_cat?.needs_feed_badge === true} skinId={meData?.my_cat?.skin_id} />
+            {isForumStaff && (
+              <Link
+                href="/forum/guardian"
+                className={`app-header__nav-link app-header__nav-link--icon forum-header-guardian-icon${onGuardianPage ? ' is-active' : ''}`}
+                title="月光守護者 · 版主工具"
+                aria-label="版主工具"
+                aria-current={onGuardianPage ? 'page' : undefined}
+              >
+                <span className="app-header__nav-icon" aria-hidden="true">
+                  <HeaderShieldIcon size={16} />
+                </span>
+              </Link>
+            )}
           </HeaderIconScrollGroup>
-          {isForumStaff && (
-            <Link
-              href="/forum/guardian"
-              className={`forum-header-guardian-link${onGuardianPage ? ' is-active' : ''}`}
-              title="月光守護者 · 版主工具"
-              aria-label="版主工具"
-              aria-current={onGuardianPage ? 'page' : undefined}
-            >
-              <span className="forum-header-guardian-link__icon" aria-hidden="true">
-                <HeaderShieldIcon size={15} />
-              </span>
-              <span className="forum-header-guardian-link__text">版主工具</span>
-            </Link>
-          )}
           {extra}
         </span>
       </span>

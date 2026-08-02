@@ -1017,7 +1017,10 @@ export default function ForumPage() {
   const showEmptyState = isEmpty && !loadError;
   const showWelcomeCard = topic !== '全部' && sort !== 'clan' && !loadError && !feedLoading;
   const canEditWelcome = canEditWelcomeTopic(profile, topic);
-  const showRightSidebar = (Array.isArray(featuredPosts) && featuredPosts.length > 0) || showHotPanel;
+  const hasFeatured = Array.isArray(featuredPosts) && featuredPosts.length > 0;
+  const hasHot = Array.isArray(meta?.hot_posts) && meta.hot_posts.length > 0;
+  // Desktop rail: show whenever「全部」has featured and/or sparks — avoid empty right void.
+  const showRightSidebar = topic === '全部' && (hasFeatured || hasHot || showHotPanel);
 
   if (shellLoading) {
     return (
@@ -1450,9 +1453,7 @@ export default function ForumPage() {
           {showRightSidebar && (
             <div className="forum-sidebar forum-sidebar--right">
               <FeaturedPostsPanel featuredPosts={featuredPosts} />
-              {showHotPanel && (
-                <HotTopicsPanel hotPosts={meta?.hot_posts} sparksMode={meta?.sparks_mode} />
-              )}
+              <HotTopicsPanel hotPosts={meta?.hot_posts} sparksMode={meta?.sparks_mode} />
             </div>
           )}
           <div className="forum-scroll-end" data-scroll-end aria-hidden="true" />

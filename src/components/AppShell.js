@@ -63,6 +63,8 @@ export default function AppShell({
   );
   const isAccountHeader = headerVariant === 'account';
 
+  const isForumHeader = headerVariant === 'forum';
+
   const headerClass = [
     'app-header',
     headerVariant ? `app-header--${headerVariant}` : '',
@@ -91,6 +93,31 @@ export default function AppShell({
     }
     return title;
   }
+
+  const standardHeaderContent = (
+    <>
+      <a
+        href={backHref}
+        className="app-header__back"
+      >
+        {backLabel === '主頁' ? '⌂ 主頁' : `← ${backLabel}`}
+      </a>
+      {headerBrand ? (
+        <div className="app-header__brand">{headerBrand}</div>
+      ) : title && (
+        headerSubtitle ? (
+          <div className="app-header__title-wrap">
+            <h1 className="app-header__title">{title}</h1>
+            <p className="app-header__subtitle">{headerSubtitle}</p>
+          </div>
+        ) : (
+          <h1 className="app-header__title">{title}</h1>
+        )
+      )}
+      {!headerBrand && !title && <div style={{ flex: 1 }} />}
+      <div className="app-header__nav">{nav || null}</div>
+    </>
+  );
 
   const headerContent = breadcrumbs ? (
     <>
@@ -127,28 +154,7 @@ export default function AppShell({
       <div className="app-header__nav mode-top-bar__nav-slot">{nav || null}</div>
     </div>
   ) : (
-    <>
-      <a
-        href={backHref}
-        className="app-header__back"
-      >
-        {backLabel === '主頁' ? '⌂ 主頁' : `← ${backLabel}`}
-      </a>
-      {headerBrand ? (
-        <div className="app-header__brand">{headerBrand}</div>
-      ) : title && (
-        headerSubtitle ? (
-          <div className="app-header__title-wrap">
-            <h1 className="app-header__title">{title}</h1>
-            <p className="app-header__subtitle">{headerSubtitle}</p>
-          </div>
-        ) : (
-          <h1 className="app-header__title">{title}</h1>
-        )
-      )}
-      {!headerBrand && !title && <div style={{ flex: 1 }} />}
-      <div className="app-header__nav">{nav || null}</div>
-    </>
+    standardHeaderContent
   );
 
   return (
@@ -163,6 +169,10 @@ export default function AppShell({
             </div>
           ) : constrainHeader ? (
             <div className="app-header__inner" style={{ maxWidth }}>
+              {headerContent}
+            </div>
+          ) : isForumHeader ? (
+            <div className="app-header__shell app-header__shell--forum">
               {headerContent}
             </div>
           ) : (
