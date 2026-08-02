@@ -2406,12 +2406,31 @@
 
 /* ── Month calendar ── */
 .gatherings-hero--cal {
-  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
   margin-bottom: 1.25rem;
 }
 
+.gatherings-hero--cal .gatherings-hero__copy {
+  width: 100%;
+}
+
+.gatherings-hero--cal .gathering-tabs {
+  width: 100%;
+  flex: 0 0 auto;
+  align-self: stretch;
+  box-sizing: border-box;
+}
+
 .gathering-cal {
+  display: block;
+  width: 100%;
+  max-width: none;
   margin: 0 0 0.75rem;
+  padding: 0.85rem 0.85rem 1rem;
+  box-sizing: border-box;
   animation: gatherings-fade-rise 0.65s ease both;
 }
 
@@ -2586,13 +2605,14 @@
   color: var(--gathering-accent, #ffe066);
 }
 
-/* Desktop: match page column / safety tips width — balanced, not a pinched island */
+/* Desktop: keep day cells compact (flat, not giant squares); width already 100% */
 @media (min-width: 900px) {
   .gathering-cal {
-    max-width: 100%;
     width: 100%;
+    max-width: none;
     margin-left: 0;
     margin-right: 0;
+    padding: 1rem 1rem 1.15rem;
   }
 
   .gathering-cal__weekdays,
@@ -3961,6 +3981,9 @@
 }
 
 .gathering-cal {
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
   border: 1px solid rgba(255, 224, 102, 0.28);
   background:
     linear-gradient(180deg, rgba(255, 224, 102, 0.05) 0%, transparent 30%),

@@ -114,12 +114,13 @@ async function loadInboxMatches(admin, userId, myResponseIds) {
   if (uniqueOtherIds.length) {
     const { data: partnerRows } = await admin
       .from('responses')
-      .select('id, user_id')
+      .select('id, user_id, identity')
       .in('user_id', uniqueOtherIds)
-      .or('claim_status.neq.duplicate,claim_status.is.null');
+      .or('claim_status.neq.duplicate,claim_status.is.null')
+      .order('created_at', { ascending: false });
     for (const row of partnerRows || []) {
       if (row.user_id && !responseByUserId[row.user_id]) {
-        responseByUserId[row.user_id] = row.id;
+        responseByUserId[row.user_id] = row;
       }
     }
   }
@@ -147,13 +148,15 @@ async function loadInboxMatches(admin, userId, myResponseIds) {
     const card = cardByThread[t.id];
     const otherId = t.participant_a === userId ? t.participant_b : t.participant_a;
     const isSolo = isSoloMatchPayload(card.payload) || isLegacySoloMatchThread(t);
-    const partnerResponseId = isSolo
-      ? soloPartnerResponseId(card.payload, myResponseIds)
-      : (responseByUserId[otherId] || null);
-    const profile = isSolo ? {} : (profileById[otherId] || {});
-    const rawScore = card.payload?.match_score;
     const rA = Number(card.payload?.response_a_id);
     const rB = Number(card.payload?.response_b_id);
+    const payloadPartnerId = myIdSet.has(rA) ? rB : myIdSet.has(rB) ? rA : null;
+    const partnerRow = !isSolo && otherId ? responseByUserId[otherId] : null;
+    const partnerResponseId = isSolo
+      ? soloPartnerResponseId(card.payload, myResponseIds)
+      : (partnerRow?.id || payloadPartnerId || null);
+    const profile = isSolo ? {} : (profileById[otherId] || {});
+    const rawScore = card.payload?.match_score;
     return {
       thread_id: t.id,
       my_response_id: myIdSet.has(rA) ? rA : myIdSet.has(rB) ? rB : defaultMyId,
@@ -169,6 +172,7 @@ async function loadInboxMatches(admin, userId, myResponseIds) {
           || profile.display_name
           || '神秘貓咪',
         mirror_card_slug: isSolo ? null : (mirrorByUserId[otherId] || null),
+        identity: partnerRow?.identity || null,
       },
     };
   });
@@ -318,7 +322,8 @@ async function enrichMatchScores(admin, userId, userEmail, matches, myResponseId
       .from('responses')
       .select('id, user_id')
       .in('user_id', missingUserIds)
-      .or('claim_status.neq.duplicate,claim_status.is.null');
+      .or('claim_status.neq.duplicate,claim_status.is.null')
+      .order('created_at', { ascending: false });
 
     const byUserId = {};
     for (const row of partnerRows || []) {
@@ -593,5 +598,6 @@ export async function loadUserMatches(admin, userId, userEmail, opts = {}) {
 
   const discovered = await discoverPremiumMatches(admin, userId, userEmail, enrichedMerged, myResponseIds);
   const matches = filterPremiumMatches([...enrichedMerged, ...discovered]);
+  matches.sort((a, b) => (b.match_score ?? -1) - (a.match_score ?? -1));
   return { matches, has_submitted };
 }

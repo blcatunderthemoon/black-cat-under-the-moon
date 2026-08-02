@@ -1655,7 +1655,15 @@ function renderMatchResultsOnMatchPage(matches) {
     countEl.style.display = '';
   }
 
-  matches.forEach(function(match) {
+  var ranked = matches.slice().sort(function(a, b) {
+    var sa = a && a.match_score != null ? Number(a.match_score) : -1;
+    var sb = b && b.match_score != null ? Number(b.match_score) : -1;
+    if (Number.isNaN(sa)) sa = -1;
+    if (Number.isNaN(sb)) sb = -1;
+    return sb - sa;
+  });
+
+  ranked.forEach(function(match) {
     var other = match.other_user || {};
     var name = other.display_name || '神秘貓咪';
     var slug = other.mirror_card_slug;
