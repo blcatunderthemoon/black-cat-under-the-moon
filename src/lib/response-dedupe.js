@@ -2,23 +2,30 @@
  * Canonical "latest questionnaire response per person" helpers.
  *
  * People frequently resubmit the Echo-mode questionnaire, producing several
- * `responses` rows for the same person. Registration linking, email automation,
- * and dashboard matching must all count ONLY the latest submission and ignore
- * the older ones. These helpers give every consumer one shared definition of
- * "person identity" and "latest wins" so behaviour stays consistent.
+ * `responses` rows for the same person (often the same email). Registration
+ * linking, email automation, and Echo matching must all count ONLY the latest
+ * submission and ignore older ones. These helpers give every consumer one
+ * shared definition of "person identity" and "latest wins".
  *
  * A person is keyed by their email when present (stable across logged-in and
  * legacy rows for the same address), otherwise by user_id, otherwise the row is
  * treated as its own person.
  */
 
+/** Lowercase trim — shared so automation + Echo collapse the same duplicates. */
+export function normalizeEmailForPersonKey(email) {
+  return String(email || '').toLowerCase().trim();
+}
+
 /** Stable identity key for grouping a person's response rows. */
 export function personKeyForResponse(row) {
   if (!row) return null;
-  const email = String(row.normalized_email || row.email || '').toLowerCase().trim();
+  const email = normalizeEmailForPersonKey(row.normalized_email || row.email);
   if (email) return `email:${email}`;
   if (row.user_id) return `uid:${row.user_id}`;
-  return `rid:${row.id}`;
+  const id = Number(row.id);
+  if (Number.isFinite(id) && id > 0) return `rid:${id}`;
+  return null;
 }
 
 /** True when row `a` is a newer submission than row `b`. */
@@ -33,11 +40,13 @@ export function isNewerResponse(a, b) {
 /**
  * Reduce a list of response rows to the single latest submission per person.
  * Rows must include at least { id, created_at } plus email/user_id for keying.
+ * Same-email rows (even if claim_status was never marked duplicate) collapse to one.
  */
 export function pickLatestResponsesPerPerson(rows) {
   const latestByKey = new Map();
   for (const row of rows || []) {
     const key = personKeyForResponse(row);
+    if (key == null) continue;
     const existing = latestByKey.get(key);
     if (!existing || isNewerResponse(row, existing)) {
       latestByKey.set(key, row);
@@ -48,6 +57,59 @@ export function pickLatestResponsesPerPerson(rows) {
 
 /** IDs of the rows that are NOT the latest for their person (i.e. superseded). */
 export function supersededResponseIds(rows) {
-  const latestIds = new Set(pickLatestResponsesPerPerson(rows).map((r) => r.id));
-  return (rows || []).filter((r) => !latestIds.has(r.id)).map((r) => r.id);
+  const latestIds = new Set(pickLatestResponsesPerPerson(rows).map((r) => Number(r.id)));
+  return (rows || [])
+    .filter((r) => !latestIds.has(Number(r.id)))
+    .map((r) => r.id);
+}
+
+/**
+ * Partner identity for an Echo/list match row.
+ * Prefer the responses row (email-first) so uid-linked + email-only rows merge.
+ */
+export function matchPartnerPersonKey(match, responseRowById = {}) {
+  if (!match) return null;
+  const rid = Number(match.partner_response_id);
+  const row = Number.isFinite(rid) && rid > 0 ? responseRowById[rid] : null;
+  if (row) return personKeyForResponse(row);
+  const uid = match.other_user?.user_id;
+  if (uid) return `uid:${uid}`;
+  if (Number.isFinite(rid) && rid > 0) return `rid:${rid}`;
+  return null;
+}
+
+function matchDeliveryRank(match) {
+  if (match?.email_notified || match?.source === 'email') return 3;
+  if (match?.source === 'inbox' || match?.thread_id) return 2;
+  return 1;
+}
+
+/** Keep a single list row per partner person (prefer delivered, then higher score). */
+export function dedupeMatchesByPartnerPerson(matches, responseRowById = {}) {
+  const bestByKey = new Map();
+  for (const match of matches || []) {
+    const key = matchPartnerPersonKey(match, responseRowById);
+    if (key == null) continue;
+    const prev = bestByKey.get(key);
+    if (!prev) {
+      bestByKey.set(key, match);
+      continue;
+    }
+    const ra = matchDeliveryRank(match);
+    const rb = matchDeliveryRank(prev);
+    if (ra !== rb) {
+      if (ra > rb) bestByKey.set(key, match);
+      continue;
+    }
+    const sa = match.match_score ?? -1;
+    const sb = prev.match_score ?? -1;
+    if (sa !== sb) {
+      if (sa > sb) bestByKey.set(key, match);
+      continue;
+    }
+    if (Number(match.partner_response_id || 0) > Number(prev.partner_response_id || 0)) {
+      bestByKey.set(key, match);
+    }
+  }
+  return [...bestByKey.values()];
 }

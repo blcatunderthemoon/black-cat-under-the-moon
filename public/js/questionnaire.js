@@ -1456,7 +1456,7 @@ function matchCardDrawerErrorMessage(status, body) {
   if (body && body.premium_required) return '需要 Moonlight Passport 才能查看共鳴分析卡';
   if (status === 401) return '登入已過期，請重新整理頁面';
   if (status === 403) return '需要 Moonlight Passport 才能查看共鳴分析卡';
-  if (status === 404) return '找不到此連線記錄';
+  if (status === 404) return (body && body.error) || '找不到此連線記錄';
   if (status >= 500) return '伺服器暫時無法產生共鳴分析卡，請稍後再試';
   return '載入失敗，請稍後再試';
 }

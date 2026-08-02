@@ -6,7 +6,10 @@
 import { isLegacySoloMatchThread, isSoloMatchPayload, soloPartnerResponseId } from './inbox-solo-anchor.js';
 import { passesHardFilter } from './matching.js';
 import { computeCompatibility } from './intelligence.js';
-import { personKeyForResponse } from './response-dedupe.js';
+import {
+  dedupeMatchesByPartnerPerson,
+  personKeyForResponse,
+} from './response-dedupe.js';
 
 export const PREMIUM_MATCH_MIN_SCORE = 60;
 /** Batch size when scanning responses for premium discovery. */
@@ -486,15 +489,17 @@ async function enrichMatchScores(admin, userId, userEmail, matches, myResponseId
 }
 
 async function discoverPremiumMatches(admin, userId, userEmail, existingMatches, myResponseIds) {
-  const ids = myResponseIds || await loadUserResponseIds(admin, userId, userEmail);
+  const ids = (myResponseIds || await loadUserResponseIds(admin, userId, userEmail))
+    .map(toResponseId)
+    .filter(Boolean);
   if (!ids.length) return [];
 
   const myIdSet = new Set(ids);
   const knownPartners = new Set(
-    existingMatches.map((m) => m.partner_response_id).filter(Boolean)
+    existingMatches.map((m) => toResponseId(m.partner_response_id)).filter(Boolean),
   );
   const knownPartnerUsers = new Set(
-    existingMatches.map((m) => m.other_user?.user_id).filter(Boolean)
+    existingMatches.map((m) => m.other_user?.user_id).filter(Boolean),
   );
 
   const excludeIds = [...ids, ...knownPartners];
@@ -503,6 +508,7 @@ async function discoverPremiumMatches(admin, userId, userEmail, existingMatches,
   const latestMyId = ids[0];
   const { data: myRows } = await admin.from('responses').select('*').eq('id', latestMyId);
   if (!myRows?.length) return [];
+  const myKey = personKeyForResponse(myRows[0]);
 
   const discovered = [];
   const seenPartners = new Set(knownPartners);
@@ -510,6 +516,20 @@ async function discoverPremiumMatches(admin, userId, userEmail, existingMatches,
   // Skip older duplicate submissions of a person we've already considered
   // (candidates are scanned newest-first, so the latest wins).
   const seenPartnerKeys = new Set();
+  if (myKey) seenPartnerKeys.add(myKey);
+
+  // Seed person keys from inbox/sent partners so a newer duplicate-email row
+  // cannot appear as a second Echo connection for the same person.
+  if (knownPartners.size) {
+    const { data: existingPartnerRows } = await admin
+      .from('responses')
+      .select('id, email, normalized_email, user_id')
+      .in('id', [...knownPartners]);
+    for (const r of existingPartnerRows || []) {
+      const key = personKeyForResponse(r);
+      if (key) seenPartnerKeys.add(key);
+    }
+  }
 
   let offset = 0;
   while (offset < DISCOVER_MAX_SCAN) {
@@ -533,25 +553,26 @@ async function discoverPremiumMatches(admin, userId, userEmail, existingMatches,
     const { data: candidateRows } = await candidateQuery;
     if (!candidateRows?.length) break;
 
-    const candidates = candidateRows.filter((r) => !myIdSet.has(r.id));
+    const candidates = candidateRows.filter((r) => !myIdSet.has(toResponseId(r.id)));
 
     for (const myRow of myRows) {
       for (const candidate of candidates) {
         if (candidate.user_id && candidate.user_id === userId) continue;
-        if (seenPartners.has(candidate.id)) continue;
+        const candidateId = toResponseId(candidate.id);
+        if (candidateId && seenPartners.has(candidateId)) continue;
         if (candidate.user_id && seenPartnerUsers.has(candidate.user_id)) continue;
         // Candidates are newest-first: the first row per person is their latest.
-        // Mark the person seen immediately so any older submission is ignored,
-        // even if this latest row is filtered out or scores too low.
+        // Mark the person seen immediately so any older same-email submission is
+        // ignored, even if this latest row is filtered out or scores too low.
         const candidateKey = personKeyForResponse(candidate);
-        if (seenPartnerKeys.has(candidateKey)) continue;
+        if (!candidateKey || seenPartnerKeys.has(candidateKey)) continue;
         seenPartnerKeys.add(candidateKey);
         if (!passesHardFilter(myRow, candidate)) continue;
 
         const intel = computeCompatibility(myRow, candidate);
         if (intel.finalScore < PREMIUM_MATCH_MIN_SCORE) continue;
 
-        seenPartners.add(candidate.id);
+        if (candidateId) seenPartners.add(candidateId);
         if (candidate.user_id) seenPartnerUsers.add(candidate.user_id);
         discovered.push({
           my_response_id: myRow.id,
@@ -604,6 +625,10 @@ function filterPremiumMatches(matches) {
  * Fast path for match card: verify a single pair without scanning all responses.
  * Resolves stale questionnaire ids (register / resubmit) to the same person's
  * latest row — never inserts duplicate match records.
+ *
+ * Echo list can show an Inbox-stored score while live recompute on the latest
+ * questionnaire dips below 60 — still authorize via Inbox / sent_matches so the
+ * drawer never says「Match not found」for a row that is already on the list.
  */
 export async function loadAuthorizedMatchPair(
   admin,
@@ -614,24 +639,72 @@ export async function loadAuthorizedMatchPair(
   myResponseIds = null,
   opts = {},
 ) {
-  let myId = toResponseId(myResponseId);
-  let partnerId = toResponseId(partnerResponseId);
-  if (!myId || !partnerId) return null;
+  const listedMyId = toResponseId(myResponseId);
+  const listedPartnerId = toResponseId(partnerResponseId);
+  if (!listedPartnerId) return null;
 
   const ids = (myResponseIds || await loadUserResponseIds(admin, userId, userEmail))
     .map(toResponseId)
     .filter(Boolean);
   if (!ids.length) return null;
 
-  // Prefer caller's id when still owned; otherwise fall back to latest submission.
-  if (!ids.includes(myId)) {
-    myId = ids[0];
+  let myId = listedMyId && ids.includes(listedMyId) ? listedMyId : ids[0];
+
+  // Try the id Echo listed first, then the same person's latest active row.
+  const latestPartnerId = await resolveLatestActiveResponseId(admin, listedPartnerId);
+  const partnerCandidates = [];
+  for (const pid of [listedPartnerId, latestPartnerId]) {
+    if (pid && !partnerCandidates.includes(pid)) partnerCandidates.push(pid);
   }
 
-  const resolvedPartnerId = await resolveLatestActiveResponseId(admin, partnerId);
-  if (!resolvedPartnerId) return null;
-  partnerId = resolvedPartnerId;
+  let best = null;
+  for (const partnerId of partnerCandidates) {
+    const got = await authorizeMatchPairOnce(
+      admin,
+      userId,
+      myId,
+      partnerId,
+      ids,
+      opts,
+    );
+    if (got) {
+      // Prefer a pair that clears the live ≥60 bar; otherwise keep first authorized.
+      if (got.intelligence?.finalScore >= PREMIUM_MATCH_MIN_SCORE) return got;
+      if (!best) best = got;
+    }
+  }
+  return best;
+}
 
+async function findInboxDeliveredScore(admin, userId, mySet, partnerSet) {
+  const myList = [...mySet];
+  const partnerList = [...partnerSet];
+  if (!myList.length || !partnerList.length) return null;
+
+  // Match cards store the response ids used at delivery time (may be pre-resubmit).
+  const { data: cards } = await admin
+    .from('inbox_messages')
+    .select('payload')
+    .eq('message_type', 'match_card')
+    .eq('recipient_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(80);
+
+  for (const card of cards || []) {
+    const a = toResponseId(card.payload?.response_a_id);
+    const b = toResponseId(card.payload?.response_b_id);
+    if (!a || !b) continue;
+    const hit = (mySet.has(a) && partnerSet.has(b)) || (mySet.has(b) && partnerSet.has(a));
+    if (!hit) continue;
+    const score = card.payload?.match_score;
+    return {
+      match_score: score == null ? null : Number(score),
+    };
+  }
+  return null;
+}
+
+async function authorizeMatchPairOnce(admin, userId, myId, partnerId, myOwnedIds, opts) {
   const { data: rows, error } = await admin
     .from('responses')
     .select('*')
@@ -643,9 +716,8 @@ export async function loadAuthorizedMatchPair(
   const partnerRow = rows.find((r) => toResponseId(r.id) === partnerId);
   if (!myRow || !partnerRow) return null;
   if (partnerRow.user_id && partnerRow.user_id === userId) return null;
+  if (!myOwnedIds.includes(myId)) return null;
 
-  // sent_matches may still point at pre-registration / pre-resubmit ids — search
-  // sibling ids for the same people instead of inserting a new row.
   const [mySiblings, partnerSiblings] = await Promise.all([
     loadSiblingResponseIds(admin, myId),
     loadSiblingResponseIds(admin, partnerId),
@@ -654,34 +726,40 @@ export async function loadAuthorizedMatchPair(
   const partnerSet = new Set(partnerSiblings.length ? partnerSiblings : [partnerId]);
 
   let sentRow = null;
-  const siblingIds = [...new Set([...mySet, ...partnerSet])];
-  if (siblingIds.length) {
-    const [{ data: sentAsA }, { data: sentAsB }] = await Promise.all([
-      admin
-        .from('sent_matches')
-        .select('match_score, user_a_id, user_b_id')
-        .in('user_a_id', [...mySet])
-        .in('user_b_id', [...partnerSet]),
-      admin
-        .from('sent_matches')
-        .select('match_score, user_a_id, user_b_id')
-        .in('user_a_id', [...partnerSet])
-        .in('user_b_id', [...mySet]),
-    ]);
-    sentRow = (sentAsA && sentAsA[0]) || (sentAsB && sentAsB[0]) || null;
-  }
+  const [{ data: sentAsA }, { data: sentAsB }] = await Promise.all([
+    admin
+      .from('sent_matches')
+      .select('match_score, user_a_id, user_b_id')
+      .in('user_a_id', [...mySet])
+      .in('user_b_id', [...partnerSet]),
+    admin
+      .from('sent_matches')
+      .select('match_score, user_a_id, user_b_id')
+      .in('user_a_id', [...partnerSet])
+      .in('user_b_id', [...mySet]),
+  ]);
+  sentRow = (sentAsA && sentAsA[0]) || (sentAsB && sentAsB[0]) || null;
+
+  const inboxDelivery = (!sentRow)
+    ? await findInboxDeliveredScore(admin, userId, mySet, partnerSet)
+    : null;
 
   const intelligence = computeCompatibility(myRow, partnerRow);
-  // Free tier: only pairs that were actually delivered (sent_matches).
-  // Passport: delivered OR live score ≥ PREMIUM_MATCH_MIN_SCORE.
+  const liveOk = intelligence.finalScore >= PREMIUM_MATCH_MIN_SCORE;
+  const deliveredOk = !!(sentRow || inboxDelivery);
+
+  // Free: must have been delivered (email send → sent_matches and/or Inbox card).
+  // Passport: delivered OR live ≥ 60 (same bar as Echo list discovery).
   const authorized = opts.deliveredOnly
-    ? !!sentRow
-    : (!!sentRow || intelligence.finalScore >= PREMIUM_MATCH_MIN_SCORE);
+    ? deliveredOk
+    : (deliveredOk || liveOk);
   if (!authorized) return null;
 
   const score = sentRow?.match_score != null
     ? Number(sentRow.match_score)
-    : intelligence.finalScore;
+    : (inboxDelivery?.match_score != null
+      ? Number(inboxDelivery.match_score)
+      : intelligence.finalScore);
 
   return { myRow, partnerRow, intelligence, match_score: score };
 }
@@ -707,13 +785,29 @@ export async function loadUserMatches(admin, userId, userEmail, opts = {}) {
   const merged = mergeMatches(inboxMatches, sentMatches);
   const enrichedMerged = await enrichMatchScores(admin, userId, userEmail, merged, myResponseIds);
 
-  if (!includeDiscovery) {
-    enrichedMerged.sort((a, b) => (b.match_score ?? -1) - (a.match_score ?? -1));
-    return { matches: enrichedMerged, has_submitted };
+  const combined = includeDiscovery
+    ? filterPremiumMatches([
+      ...enrichedMerged,
+      ...(await discoverPremiumMatches(admin, userId, userEmail, enrichedMerged, myResponseIds)),
+    ])
+    : enrichedMerged;
+
+  // Collapse same-email / same-person partners to one row (latest response wins upstream).
+  const partnerIds = [
+    ...new Set(combined.map((m) => toResponseId(m.partner_response_id)).filter(Boolean)),
+  ];
+  let responseRowById = {};
+  if (partnerIds.length) {
+    const { data: partnerRows } = await admin
+      .from('responses')
+      .select('id, email, normalized_email, user_id')
+      .in('id', partnerIds);
+    responseRowById = Object.fromEntries(
+      (partnerRows || []).map((r) => [toResponseId(r.id), r]),
+    );
   }
 
-  const discovered = await discoverPremiumMatches(admin, userId, userEmail, enrichedMerged, myResponseIds);
-  const matches = filterPremiumMatches([...enrichedMerged, ...discovered]);
+  const matches = dedupeMatchesByPartnerPerson(combined, responseRowById);
   matches.sort((a, b) => (b.match_score ?? -1) - (a.match_score ?? -1));
   return { matches, has_submitted };
 }

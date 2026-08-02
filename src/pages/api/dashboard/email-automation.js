@@ -92,9 +92,10 @@ async function handleGet(req, res) {
 
   if (usersError) return res.status(500).json({ error: usersError.message });
 
-  // Count only each person's latest submission — ignore older/superseded rows
-  // (including historical duplicates not yet marked) so matching uses fresh data.
+  // Same email (or same user_id) → one person. Always pair with the latest row only,
+  // even when older copies were never marked claim_status=duplicate.
   const usersLatest = pickLatestResponsesPerPerson(allUsers || []);
+  const excludedDuplicateCount = (allUsers || []).length - usersLatest.length;
   // Conduct < 50 (incl. 0) must not enter live pairing. Null score still counts as 100.
   // Keep usersLatest for historical「已發送」merge even when the live pool is tiny.
   const users = usersLatest.filter((u) => passesConductFilter(u));
@@ -318,6 +319,7 @@ async function handleGet(req, res) {
     sent_in_db: successfulSentRows.length,
     last_send_failed: filteredPairs.filter((p) => p.last_send_failed).length,
     excluded_conduct: excludedConductCount,
+    excluded_duplicate_responses: excludedDuplicateCount,
   };
 
   return res.status(200).json({

@@ -6,13 +6,13 @@
  *
  * Stale questionnaire ids (after register / resubmit) are resolved to the same
  * person's latest response — no duplicate match rows are created.
+ * Inbox-delivered pairs stay openable even if live recompute dips below 60.
  */
 
 import { requireUser, sendAuthError, getAdminClient, isPremium } from '../../../lib/server-auth.js';
 import {
   loadAuthorizedMatchPair,
   loadUserResponseIds,
-  resolveLatestActiveResponseId,
   toResponseId,
 } from '../../../lib/user-matches.js';
 import { buildMatchCardHtml } from '../../../lib/match-card-html.js';
@@ -37,14 +37,10 @@ export default async function handler(req, res) {
     const admin = getAdminClient();
     const myResponseIds = await loadUserResponseIds(admin, user.id, user.email);
     if (!myResponseIds.length) {
-      return res.status(404).json({ error: 'Match not found' });
+      return res.status(404).json({ error: '找不到此連線記錄' });
     }
 
-    const resolvedPartnerId = await resolveLatestActiveResponseId(admin, partnerResponseId);
-    if (!resolvedPartnerId) {
-      return res.status(404).json({ error: 'Match not found' });
-    }
-
+    // Pass the Echo list id through — loadAuthorizedMatchPair tries listed + latest.
     // Prefer the id from the list row, then every owned submission (latest first).
     const candidateMyIds = [];
     if (requestedMyId && myResponseIds.includes(requestedMyId)) {
@@ -61,7 +57,7 @@ export default async function handler(req, res) {
         user.id,
         user.email,
         myId,
-        resolvedPartnerId,
+        partnerResponseId,
         myResponseIds,
         { deliveredOnly: !premium },
       );
@@ -69,7 +65,7 @@ export default async function handler(req, res) {
     }
 
     if (!pair) {
-      return res.status(404).json({ error: 'Match not found' });
+      return res.status(404).json({ error: '找不到此連線記錄' });
     }
 
     const { myRow, partnerRow, intelligence, match_score: score } = pair;
