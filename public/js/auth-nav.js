@@ -840,6 +840,9 @@
     var token = getToken();
     if (!token) {
       if (!loggedInOnly) showLoggedOut();
+      try {
+        window.dispatchEvent(new CustomEvent('bcm:auth-ready', { detail: { loggedIn: false } }));
+      } catch (e) {}
       return;
     }
 
@@ -849,6 +852,9 @@
       var sbKey = getStorageKey();
       if (sbKey) { try { localStorage.removeItem(sbKey); } catch (e) {} }
       if (!loggedInOnly) showLoggedOut();
+      try {
+        window.dispatchEvent(new CustomEvent('bcm:auth-ready', { detail: { loggedIn: false } }));
+      } catch (e) {}
       return;
     }
     var immediateName = (payload && (
@@ -867,6 +873,9 @@
     // Always revalidate /api/me so unread badges (e.g. 月光聚會) stay correct even when
     // the session cache is still "fresh". Instant UI comes from cache above.
     fetchMeAndPaint();
+    try {
+      window.dispatchEvent(new CustomEvent('bcm:auth-ready', { detail: { loggedIn: true } }));
+    } catch (e) {}
   }
 
   if (document.readyState === 'loading') {

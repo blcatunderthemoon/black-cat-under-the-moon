@@ -1,6 +1,6 @@
 /** Active rows: legacy null, unclaimed, or already claimed — not duplicate/disputed. */
 import { databaseNowIso } from './hong-kong-time.js';
-import { normalizeEmailForPersonKey, responseEmailMatchOrParts } from './response-dedupe.js';
+import { normalizeEmailForPersonKey } from './response-dedupe.js';
 
 /**
  * Rows that still count as "this person filled Echo".
@@ -84,18 +84,37 @@ async function findResponseByUserId(admin, userId, { full = false, forHasSubmitt
 }
 
 async function findResponseByEmail(admin, normalized, { full = false, forHasSubmitted = false } = {}) {
-  const emailOr = responseEmailMatchOrParts(normalized);
-  if (!emailOr.length) return null;
+  const key = normalizeEmailForPersonKey(normalized);
+  if (!key) return null;
   const claimOr = forHasSubmitted ? NON_DUPLICATE_CLAIM_OR : ACTIVE_CLAIM_OR;
-  const { data } = await admin
-    .from('responses')
-    .select(full ? RESPONSE_ANSWER_SELECT : 'id')
-    .or(emailOr.join(','))
-    .or(claimOr)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  return data;
+  const select = full ? RESPONSE_ANSWER_SELECT : 'id';
+  // Prefer column filters (.eq / .ilike) over `.or("email.eq.…")` strings —
+  // emails contain `.` which breaks PostgREST or-grammar unless perfectly quoted.
+  const raw = String(normalized || '').toLowerCase().trim();
+  const variants = [...new Set([key, `${key}.`, raw].filter(Boolean))];
+
+  for (const v of variants) {
+    const { data: byNorm } = await admin
+      .from('responses')
+      .select(select)
+      .eq('normalized_email', v)
+      .or(claimOr)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (byNorm) return byNorm;
+
+    const { data: byEmail } = await admin
+      .from('responses')
+      .select(select)
+      .ilike('email', v)
+      .or(claimOr)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (byEmail) return byEmail;
+  }
+  return null;
 }
 
 /**
@@ -129,15 +148,14 @@ export async function hasMatchSubmission(admin, { userId, email, emails, profile
  */
 export async function autoLinkLegacyMatchResponses(admin, userId, email) {
   const normalized = normalizeEmail(email);
-  const emailOr = responseEmailMatchOrParts(normalized);
-  if (!userId || !emailOr.length) return false;
+  if (!userId || !normalized) return false;
 
   if (await findResponseByUserId(admin, userId)) return true;
 
   const { data: otherClaim } = await admin
     .from('responses')
     .select('id')
-    .or(emailOr.join(','))
+    .eq('normalized_email', normalized)
     .eq('claim_status', 'claimed')
     .not('user_id', 'is', null)
     .neq('user_id', userId)
@@ -146,15 +164,35 @@ export async function autoLinkLegacyMatchResponses(admin, userId, email) {
 
   if (otherClaim) return false;
 
-  const { data: candidates, error } = await admin
-    .from('responses')
-    .select('id')
-    .or(emailOr.join(','))
-    .or(LEGACY_LINKABLE_OR)
-    .is('user_id', null)
-    .order('created_at', { ascending: false });
+  // Also try legacy trailing-dot spelling + raw email column.
+  const emailVariants = [...new Set([normalized, `${normalized}.`])];
+  let candidates = [];
+  for (const v of emailVariants) {
+    const { data, error } = await admin
+      .from('responses')
+      .select('id')
+      .eq('normalized_email', v)
+      .or(LEGACY_LINKABLE_OR)
+      .is('user_id', null)
+      .order('created_at', { ascending: false });
+    if (!error && data?.length) {
+      candidates = data;
+      break;
+    }
+    const { data: byEmail, error: err2 } = await admin
+      .from('responses')
+      .select('id')
+      .ilike('email', v)
+      .or(LEGACY_LINKABLE_OR)
+      .is('user_id', null)
+      .order('created_at', { ascending: false });
+    if (!err2 && byEmail?.length) {
+      candidates = byEmail;
+      break;
+    }
+  }
 
-  if (error || !candidates?.length) return false;
+  if (!candidates.length) return false;
 
   const now = databaseNowIso();
   const [primary, ...dupes] = candidates;

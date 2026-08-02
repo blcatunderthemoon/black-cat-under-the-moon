@@ -899,7 +899,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const autoMode = document.body.dataset.automode;
   if (autoMode === 'match') {
     initMatchCardDrawer();
-    startMatchMode();
+    var echoBootStarted = false;
+    function startEchoOnce() {
+      if (echoBootStarted) return;
+      echoBootStarted = true;
+      window.removeEventListener('bcm:auth-ready', startEchoOnce);
+      startMatchMode();
+    }
+    window.addEventListener('bcm:auth-ready', startEchoOnce);
+    // auth-nav loads before this script; if it already fired, or is slow, still boot.
+    setTimeout(startEchoOnce, 400);
   } else if (autoMode === 'mirror') {
     startMirrorMode();
   }
@@ -1001,7 +1010,7 @@ function getSupabaseAuthStorage() {
       var k = localStorage.key(i);
       if (k && k.startsWith('sb-') && k.endsWith('-auth-token')) {
         var session = JSON.parse(localStorage.getItem(k) || 'null');
-        if (session) return { key: k, session: session };
+        if (session && session.access_token) return { key: k, session: session };
       }
     }
   } catch (e) {}
@@ -1013,15 +1022,46 @@ function getSupabaseAuthToken() {
   return stored && stored.session && stored.session.access_token ? stored.session.access_token : null;
 }
 
+/** Decode JWT payload (same approach as auth-nav) — email may be here when session.user is thin. */
+function decodeSupabaseJwtPayload(token) {
+  try {
+    var parts = String(token || '').split('.');
+    if (parts.length !== 3) return null;
+    var b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    var json = decodeURIComponent(
+      atob(b64).split('').map(function (c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join('')
+    );
+    return JSON.parse(json);
+  } catch (e) {
+    return null;
+  }
+}
+
+function emailFromSupabaseSession(session) {
+  if (!session) return null;
+  if (session.user && session.user.email) return String(session.user.email).trim();
+  var payload = decodeSupabaseJwtPayload(session.access_token);
+  if (payload && payload.email) return String(payload.email).trim();
+  return null;
+}
+
 async function ensureSupabaseAuthToken() {
   var stored = getSupabaseAuthStorage();
   if (!stored || !stored.session || !stored.session.access_token) return null;
 
   var token = stored.session.access_token;
+  var payload = decodeSupabaseJwtPayload(token);
+  var jwtExpMs = payload && payload.exp ? payload.exp * 1000 : 0;
   var expiresAt = stored.session.expires_at;
-  if (expiresAt && Date.now() >= (Number(expiresAt) * 1000) - 60000) {
+  var expiredBySession = expiresAt && Date.now() >= (Number(expiresAt) * 1000) - 60000;
+  var expiredByJwt = jwtExpMs && Date.now() >= jwtExpMs - 60000;
+  if (expiredBySession || expiredByJwt) {
     var refreshed = await refreshSupabaseAuthToken();
     if (refreshed) return refreshed;
+    // Expired + refresh failed — do not treat as logged-in for Echo gate.
+    if (jwtExpMs && Date.now() > jwtExpMs) return null;
   }
   return token;
 }
@@ -1379,9 +1419,7 @@ async function userHasMatchSubmission() {
 function getLoggedInAccountEmailFromStorage() {
   var stored = getSupabaseAuthStorage();
   if (!stored || !stored.session) return null;
-  var user = stored.session.user;
-  if (user && user.email) return String(user.email).trim();
-  return null;
+  return emailFromSupabaseSession(stored.session);
 }
 
 async function resolveMatchAccountEmail() {
@@ -2256,7 +2294,17 @@ async function showMatchAlreadySubmitted(prefetchedMatches) {
   finishQuizPageBoot();
 }
 
+var matchModeStartPromise = null;
+
 async function startMatchMode() {
+  if (matchModeStartPromise) return matchModeStartPromise;
+  matchModeStartPromise = startMatchModeImpl().finally(function () {
+    matchModeStartPromise = null;
+  });
+  return matchModeStartPromise;
+}
+
+async function startMatchModeImpl() {
   isMirrorMode = false;
   lastPart = 0;
   document.getElementById('mode-select').classList.remove('active');
@@ -2265,12 +2313,13 @@ async function startMatchMode() {
   quizInitialRevealPending = document.body.dataset.automode === 'match';
 
   try {
-    // Wait longer on echo.html — auth-nav loads after this script; session may
-    // appear a beat after DOMContentLoaded.
-    var authWaitMs = document.body.dataset.automode === 'match' ? 8000 : 3000;
-    var token = getSupabaseAuthToken();
+    // Wait for a usable session (auth-nav paints Circle from the same localStorage).
+    // Prefer ensureSupabaseAuthToken so near-expiry tokens are refreshed first.
+    var authWaitMs = document.body.dataset.automode === 'match' ? 10000 : 3000;
+    var token = await ensureSupabaseAuthToken();
     if (!token) {
       token = await waitForSupabaseAuthToken(authWaitMs);
+      if (token) token = (await ensureSupabaseAuthToken()) || token;
     }
 
     var matchesPrefetch = null;
@@ -2309,11 +2358,65 @@ async function startMatchMode() {
     }
 
     beginQuizQuestionnaire();
+
+    // Late auth: header may show Circle after we already opened the guest form.
+    // If the account has already submitted, jump to results / thank-you.
+    if (!submitted) {
+      scheduleEchoSubmittedGateRecovery();
+    }
   } catch (err) {
     quizInitialRevealPending = false;
     releaseQuizBootScreen();
     showErrorOverlay(err);
   }
+}
+
+var echoSubmittedGateRecoveryTimer = null;
+var echoSubmittedGateRecoveryTries = 0;
+
+function scheduleEchoSubmittedGateRecovery() {
+  if (echoSubmittedGateRecoveryTimer) return;
+  echoSubmittedGateRecoveryTries = 0;
+  echoSubmittedGateRecoveryTimer = setInterval(async function () {
+    echoSubmittedGateRecoveryTries += 1;
+    if (echoSubmittedGateRecoveryTries > 20) {
+      clearInterval(echoSubmittedGateRecoveryTimer);
+      echoSubmittedGateRecoveryTimer = null;
+      return;
+    }
+    // Only recover while the questionnaire is still showing (not thank-you / results).
+    if ($already && $already.classList.contains('active')) {
+      clearInterval(echoSubmittedGateRecoveryTimer);
+      echoSubmittedGateRecoveryTimer = null;
+      return;
+    }
+    if ($thankyou && $thankyou.classList.contains('active')) {
+      clearInterval(echoSubmittedGateRecoveryTimer);
+      echoSubmittedGateRecoveryTimer = null;
+      return;
+    }
+    if (!$main || $main.style.display === 'none' || $main.hidden) return;
+
+    var token = await ensureSupabaseAuthToken();
+    if (!token) return;
+    var ok = await userHasMatchSubmission();
+    if (!ok) {
+      var status = await fetchEchoPremiumAndMatches(token);
+      ok = status.hasSubmitted === true || (status.matches && status.matches.length > 0);
+      if (ok) {
+        clearInterval(echoSubmittedGateRecoveryTimer);
+        echoSubmittedGateRecoveryTimer = null;
+        quizInitialRevealPending = false;
+        await showMatchAlreadySubmitted(status);
+        return;
+      }
+      return;
+    }
+    clearInterval(echoSubmittedGateRecoveryTimer);
+    echoSubmittedGateRecoveryTimer = null;
+    quizInitialRevealPending = false;
+    await showMatchAlreadySubmitted();
+  }, 500);
 }
 
 async function startMirrorMode() {
