@@ -11,6 +11,7 @@ import { passesHardFilter } from './matching.js';
 import { computeCompatibility } from './intelligence.js';
 import {
   dedupeMatchesByPartnerPerson,
+  matchPartnerPersonKey,
   personKeyForResponse,
 } from './response-dedupe.js';
 
@@ -625,6 +626,65 @@ function filterPremiumMatches(matches) {
 }
 
 /**
+ * Overlay email_notified from sent_matches onto an existing Echo list.
+ * Does not add/remove partners — only flips「電郵通知」for pairs already shown.
+ */
+async function annotateEmailNotifiedFromSentMatches(
+  admin,
+  userId,
+  userEmail,
+  matches,
+  myResponseIds,
+) {
+  if (!matches?.length) return matches;
+
+  const sentMatches = await loadSentMatches(admin, userId, userEmail, myResponseIds);
+  const notifiedSent = (sentMatches || []).filter((s) => s.email_notified);
+  if (!notifiedSent.length) return matches;
+
+  const allPartnerIds = [
+    ...new Set([
+      ...matches.map((m) => toResponseId(m.partner_response_id)).filter(Boolean),
+      ...notifiedSent.map((s) => toResponseId(s.partner_response_id)).filter(Boolean),
+    ]),
+  ];
+
+  let byId = {};
+  if (allPartnerIds.length) {
+    const { data: rows } = await admin
+      .from('responses')
+      .select('id, email, normalized_email, user_id')
+      .in('id', allPartnerIds);
+    byId = Object.fromEntries((rows || []).map((r) => [toResponseId(r.id), r]));
+  }
+
+  const notifiedKeys = new Set();
+  for (const sent of notifiedSent) {
+    const key = matchPartnerPersonKey(sent, byId);
+    if (key) notifiedKeys.add(key);
+    const uid = sent.other_user?.user_id;
+    if (uid) notifiedKeys.add(`uid:${uid}`);
+    const rid = toResponseId(sent.partner_response_id);
+    if (rid) notifiedKeys.add(`rid:${rid}`);
+  }
+
+  for (const match of matches) {
+    const key = matchPartnerPersonKey(match, byId);
+    const uid = match.other_user?.user_id;
+    const rid = toResponseId(match.partner_response_id);
+    if (
+      (key && notifiedKeys.has(key))
+      || (uid && notifiedKeys.has(`uid:${uid}`))
+      || (rid && notifiedKeys.has(`rid:${rid}`))
+    ) {
+      match.email_notified = true;
+    }
+  }
+
+  return matches;
+}
+
+/**
  * Fast path for match card: verify a single pair without scanning all responses.
  * Resolves stale questionnaire ids (register / resubmit) to the same person's
  * latest row — never inserts duplicate match records.
@@ -782,7 +842,8 @@ export async function loadUserMatches(admin, userId, userEmail, opts = {}) {
     loadUserResponseIds(admin, userId, userEmail),
   ]);
 
-  // Passport Echo: list is computed only from `responses` (latest per email).
+  // Passport Echo: who appears = `responses` live scan only.
+  // `sent_matches` only annotates「電郵通知」— never adds extra people to the list.
   if (includeDiscovery && responsesOnly) {
     const discovered = await discoverPremiumMatches(
       admin,
@@ -792,6 +853,13 @@ export async function loadUserMatches(admin, userId, userEmail, opts = {}) {
       myResponseIds,
     );
     const matches = filterPremiumMatches(discovered);
+    await annotateEmailNotifiedFromSentMatches(
+      admin,
+      userId,
+      userEmail,
+      matches,
+      myResponseIds,
+    );
     matches.sort((a, b) => (b.match_score ?? -1) - (a.match_score ?? -1));
     return { matches, has_submitted };
   }

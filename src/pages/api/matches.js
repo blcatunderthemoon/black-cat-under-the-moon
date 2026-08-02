@@ -1,9 +1,9 @@
 /**
  * GET /api/matches
- * Echo list source of truth:
- * - Passport (or soft unlock): live pairs computed from `responses` only (≥60).
- *   Inbox / sent_matches do NOT add or keep people on this list.
- * - Free tier: delivered matches only (inbox + sent_matches) — no live scan.
+ * Echo list:
+ * - Passport: who appears = live `responses` pairs ≥60 only.
+ *   `sent_matches` only sets「電郵通知」(email_notified) on those rows.
+ * - Free: delivered matches (inbox + sent_matches).
  */
 
 import { requireUser, sendAuthError, getAdminClient, isPremium } from '../../lib/server-auth.js';
