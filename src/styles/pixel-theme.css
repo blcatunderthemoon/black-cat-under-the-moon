@@ -16248,6 +16248,16 @@
   margin: 0;
 }
 
+/* Instant with the 4 tiles — no delayed fade/slide on expand */
+.forum-community-activities .forum-panel--hot,
+.forum-community-activities .forum-panel--hot .forum-hot-list > li,
+.forum-community-activities .forum-panel--featured,
+.forum-community-activities .forum-panel--featured .forum-hot-list > li {
+  animation: none !important;
+  opacity: 1;
+  transform: none;
+}
+
 @media (min-width: 640px) {
   .forum-community-activities__grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));

@@ -218,7 +218,7 @@ function HotTopicsPanel({ hotPosts, sparksMode }) {
   if (!hotPosts?.length) {
     // Last-resort UI: still never announce a dead week
     return (
-      <aside data-forum-hot-panel className="forum-panel forum-panel--hot forum-panel--hot-reveal">
+      <aside data-forum-hot-panel className="forum-panel forum-panel--hot">
         <div className="forum-panel__head">
           <h3 className="forum-panel__title">
             <ForumSparkleIcon size={14} className="forum-panel__title-icon" />
@@ -234,7 +234,7 @@ function HotTopicsPanel({ hotPosts, sparksMode }) {
   }
 
   return (
-    <aside data-forum-hot-panel className="forum-panel forum-panel--hot forum-panel--hot-reveal">
+    <aside data-forum-hot-panel className="forum-panel forum-panel--hot">
       <div className="forum-panel__head">
         <h3 className="forum-panel__title">
           <TitleIcon size={14} className="forum-panel__title-icon" />

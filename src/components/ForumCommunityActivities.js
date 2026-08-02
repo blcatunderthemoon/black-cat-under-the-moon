@@ -81,7 +81,9 @@ export default function ForumCommunityActivities({
 
   useEffect(() => {
     if (typeof onOpenChange === 'function') onOpenChange(open);
-  }, [open, onOpenChange]);
+    // Sync once on mount (e.g. restored open from sessionStorage).
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount only
+  }, []);
 
   function toggle() {
     setOpen((prev) => {
@@ -91,6 +93,7 @@ export default function ForumCommunityActivities({
       } catch {
         /* private mode */
       }
+      if (typeof onOpenChange === 'function') onOpenChange(next);
       return next;
     });
   }
