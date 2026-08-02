@@ -11008,6 +11008,54 @@
     0 24px 64px rgba(0, 0, 0, 0.7);
 }
 
+/*
+ * iPhone / mobile keyboard: pin overlay to visualViewport (via --mobile-vv*)
+ * so the modal stays in the visible area above the keyboard, and top-align
+ * so focused fields can scroll into view.
+ */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  .forum-compose-overlay {
+    inset: auto;
+    top: var(--mobile-vv-offset-top, 0px);
+    left: 0;
+    right: 0;
+    bottom: auto;
+    width: 100%;
+    height: var(--mobile-vvh, 100dvh);
+    max-height: var(--mobile-vvh, 100dvh);
+    align-items: flex-start;
+    justify-content: center;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .forum-compose-overlay .forum-compose-modal {
+    max-height: calc(var(--mobile-vvh, 100dvh) - 20px);
+    margin: 0 auto;
+  }
+
+  html.mobile-keyboard-open .forum-compose-overlay {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+
+  html.mobile-keyboard-open .forum-compose-overlay .forum-compose-modal {
+    max-height: calc(var(--mobile-vvh, 100dvh) - 12px);
+  }
+
+  /* Full-bleed add-chapter still fills the (now VV-sized) overlay */
+  .forum-compose-overlay:has(.forum-compose-modal--add-chapter) {
+    padding: 0;
+  }
+
+  .forum-compose-overlay .forum-compose-modal--add-chapter {
+    max-height: 100%;
+  }
+}
+
 .forum-compose-modal__head {
   display: flex;
   align-items: flex-start;

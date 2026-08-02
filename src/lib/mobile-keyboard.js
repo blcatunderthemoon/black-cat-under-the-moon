@@ -36,11 +36,18 @@ function resolveScrollParent(focusTarget) {
 
   if (!focusTarget) return null;
 
+  // Prefer the compose modal (then overlay) even before overflow kicks in,
+  // so iOS keyboard open can scroll the field into the visual viewport.
+  if (isInComposeOverlay(focusTarget)) {
+    return focusTarget.closest?.('.forum-compose-modal')
+      || focusTarget.closest?.('.forum-compose-overlay')
+      || null;
+  }
+
   return focusTarget.closest?.('.pixel-form')
     || focusTarget.closest?.('.forum-story-add-chapter')
     || focusTarget.closest?.('.forum-story-synopsis-modal')
-    || focusTarget.closest?.('.forum-compose-modal')
-    || (isInComposeOverlay(focusTarget) ? focusTarget.closest('.forum-compose-overlay') : null);
+    || null;
 }
 
 function isContentEditableTarget(target) {
@@ -189,21 +196,30 @@ function ensureVisible(target, options = {}) {
     const bottomLimit = visibleBottom - (actionsRect ? Math.max(0, actionsRect.height + actionPad) : defaultPad);
 
     const scrollParent = resolveScrollParent(focusTarget);
+    const overlay = focusTarget.closest?.('.forum-compose-overlay');
 
-    if (rect.bottom > bottomLimit) {
-      const delta = rect.bottom - bottomLimit;
+    const applyScroll = (delta) => {
+      if (!delta) return;
       if (scrollParent) {
+        const before = scrollParent.scrollTop;
         scrollParent.scrollTop += delta;
+        const moved = scrollParent.scrollTop - before;
+        const remain = delta - moved;
+        // Modal may not overflow yet; finish the move on the overlay shell.
+        if (Math.abs(remain) > 1 && overlay && overlay !== scrollParent) {
+          overlay.scrollTop += remain;
+        }
+      } else if (overlay) {
+        overlay.scrollTop += delta;
       } else {
         window.scrollBy({ top: delta, behavior: 'auto' });
       }
+    };
+
+    if (rect.bottom > bottomLimit) {
+      applyScroll(rect.bottom - bottomLimit);
     } else if (rect.top < visibleTop) {
-      const delta = visibleTop - rect.top;
-      if (scrollParent) {
-        scrollParent.scrollTop -= delta;
-      } else {
-        window.scrollBy({ top: -delta, behavior: 'auto' });
-      }
+      applyScroll(-(visibleTop - rect.top));
     }
   };
 
