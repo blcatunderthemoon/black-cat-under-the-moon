@@ -638,6 +638,7 @@ const $nextBtn     = document.getElementById('next-btn');
 const $backBtn     = document.getElementById('back-btn');
 const $loading     = document.getElementById('loading-screen');
 const $thankyou    = document.getElementById('thankyou-screen');
+const $already     = document.getElementById('already-screen');
 const $error       = document.getElementById('error-screen');
 const $errorDetail = document.getElementById('error-detail');
 const $retryBtn    = document.getElementById('retry-btn');
@@ -2554,7 +2555,7 @@ function scheduleEchoSubmittedGateRecovery() {
           clearInterval(echoSubmittedGateRecoveryTimer);
           echoSubmittedGateRecoveryTimer = null;
         }
-      });
+      }).catch(function () { /* ignore recovery races */ });
     });
   }
 
@@ -2567,10 +2568,14 @@ function scheduleEchoSubmittedGateRecovery() {
       echoSubmittedGateRecoveryTimer = null;
       return;
     }
-    var done = await tryRecoverEchoSubmittedResults();
-    if (done) {
-      clearInterval(echoSubmittedGateRecoveryTimer);
-      echoSubmittedGateRecoveryTimer = null;
+    try {
+      var done = await tryRecoverEchoSubmittedResults();
+      if (done) {
+        clearInterval(echoSubmittedGateRecoveryTimer);
+        echoSubmittedGateRecoveryTimer = null;
+      }
+    } catch (e) {
+      /* ignore recovery races */
     }
   }, 500);
 }
