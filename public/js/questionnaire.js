@@ -618,6 +618,10 @@ function getThreadsShareText() {
 }
 
 // ===================== DOM REFS =====================
+// Echo overlays ($loading / $thankyou / $already / $error / $main) MUST be declared
+// here. Do not reference undeclared $already etc. in boot/gate helpers —
+// caused guest + login「月球連線失敗」($already is not defined). See:
+// docs/matching/ECHO-MODE-CLIENT.md
 const $welcome     = document.getElementById('welcome');
 const $progressWrap= document.getElementById('progress-wrap');
 const $progressFill= document.getElementById('progress-fill');

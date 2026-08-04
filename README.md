@@ -258,7 +258,7 @@ npm run dev
 2. **六維度引擎** — `src/lib/intelligence.js` 的 `computeCompatibility()`：火花、情感、生活、溝通、關係期望、衝突風險 → 0–100 分
 3. **等級** — 80+ 靈魂伴侶候選｜65+ 高度契合｜50+ 值得了解｜35+ 需磨合｜以下差異較大
 
-完整權重、非線性調整、地雷矩陣 → [docs/matching/SCORING.md](docs/matching/SCORING.md)
+完整權重、非線性調整、地雷矩陣 → [docs/matching/SCORING.md](docs/matching/SCORING.md)。Echo client boot／gate／已知事故 → [docs/matching/ECHO-MODE-CLIENT.md](docs/matching/ECHO-MODE-CLIENT.md)。
 Mirror 測驗規格 → [docs/mirror/MIRROR-MODE-SPEC.md](docs/mirror/MIRROR-MODE-SPEC.md)（v3 Trait 設計 → [docs/mirror/MIRROR-MODE-V3-DESIGN.md](docs/mirror/MIRROR-MODE-V3-DESIGN.md)）
 
 ---

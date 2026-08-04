@@ -1,0 +1,33 @@
+---
+description: Echo Mode client boot/gate — DOM refs, failsafe, no undeclared $already
+globs: public/js/questionnaire.js,public/echo.html,src/lib/match-submission.js,src/lib/user-matches.js,src/pages/api/matches.js,src/pages/api/match-status.js
+alwaysApply: false
+---
+
+# Echo Mode — client boot & DOM refs
+
+Echo（`/echo.html`）係核心配對表面。改相關檔案前讀：`docs/matching/ECHO-MODE-CLIENT.md`。
+
+## DOM refs（硬約束）
+
+Overlay／問卷 DOM **必須**喺 `questionnaire.js` 頂部 DOM REFS 用 `const $… = document.getElementById(…)` 宣告，包括至少：
+
+- `$loading` → `#loading-screen`
+- `$thankyou` → `#thankyou-screen`
+- `$already` → `#already-screen`
+- `$main` → `#main-content`
+- `$error` → `#error-screen`
+
+**禁止**喺函式入面直接用 `$already`／`$thankyou`／`$loading` 而頂部未宣告（會 `ReferenceError` →「月球連線失敗」）。  
+2026-08 已發生：guest + login 未提交路徑崩潰。函式內要用就本地 `getElementById` 或傳 `opts.already`。
+
+## Boot gate
+
+1. 先 `userHasMatchSubmission`；**只有**已提交先跑 `/api/matches`
+2. Failsafe：`echoGateMayOpenQuestionnaire === false` 時**唔好**強制開問卷（會變 Q1／32 bug）
+3. `has_submitted === false` → 開問卷，唔好空結果畫面
+4. 改完 `questionnaire.js` 必須 bump `public/echo.html` 嘅 `?v=` cache-bust
+
+## 回歸
+
+最少驗證：guest 開表、login 未提交開表、login 已提交見結果（唔見 Q1／32）。
