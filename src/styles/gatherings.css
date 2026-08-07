@@ -2635,18 +2635,29 @@
     line-height: 1.1;
   }
 
+  .gathering-cal__day.has-featured .gathering-cal__day-num {
+    padding-right: 2.1rem; /* room for top-right 官方 chip */
+  }
+
   .gathering-cal__marks {
-    margin-top: 0.08rem;
+    margin-top: auto;
     margin-bottom: 0;
     flex-wrap: nowrap;
     gap: 0.22rem;
     width: 100%;
+    justify-content: center;
   }
 
+  /* Desktop: 官方 label anchors top-right of the day cell */
   .gathering-cal__day-chip {
-    font-size: 0.62rem;
+    position: absolute;
+    top: 0.22rem;
+    right: 0.22rem;
+    z-index: 1;
+    max-width: calc(100% - 0.4rem);
+    font-size: 0.58rem;
     font-weight: 700;
-    padding: 0.1rem 0.28rem;
+    padding: 0.08rem 0.22rem;
     letter-spacing: 0.04em;
     border-radius: 3px;
     border-color: rgba(255, 224, 102, 0.55);

@@ -17233,6 +17233,48 @@
   gap: 8px;
 }
 
+/* Crawlable forum intro — H1 for「香港Les討論區」(see docs/ops/FORUM-SEO.md) */
+.forum-seo-intro.forum-panel {
+  margin: 0 0 4px;
+  padding: 12px 14px 11px;
+  border: 1px solid rgba(255, 159, 67, 0.22);
+  border-radius: 10px;
+  background: rgba(18, 12, 10, 0.55);
+}
+
+.forum-seo-intro__title {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--cream, #f0ebd8);
+  letter-spacing: 0.02em;
+}
+
+.forum-seo-intro__sep {
+  margin: 0 0.15em;
+  color: rgba(255, 200, 150, 0.45);
+  font-weight: 500;
+}
+
+.forum-seo-intro__keyword {
+  color: rgba(255, 180, 120, 0.95);
+  font-weight: 700;
+}
+
+.forum-seo-intro__desc {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: rgba(240, 235, 216, 0.72);
+}
+
+@media (min-width: 900px) {
+  .forum-main > .forum-seo-intro.forum-panel {
+    margin-bottom: 2px;
+  }
+}
+
 /* ?? ???????Dashboard ??? ?? */
 .forum-banner-ticker.forum-panel {
   position: relative;

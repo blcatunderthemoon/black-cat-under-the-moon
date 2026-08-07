@@ -14,7 +14,7 @@ import ForumAuthorName from '../../components/ForumAuthorName.js';
 import { isPremiumUser } from '../../lib/premium.js';
 import ForumCampfireGlow from '../../components/ForumCampfireGlow.js';
 import SeoHead from '../../components/SeoHead.js';
-import { organizationJsonLd, webSiteJsonLd } from '../../lib/structured-data.js';
+import { organizationJsonLd, webSiteJsonLd, discussionForumJsonLd, faqPageJsonLd, breadcrumbJsonLd } from '../../lib/structured-data.js';
 import {
   FORUM_TOPICS,
   TOPIC_STYLES,
@@ -93,6 +93,40 @@ const SORT_OPTIONS = [
   { id: 'popular', label: '熱門', hint: '依愛心數由高到低' },
   { id: 'clan', label: '同族', hint: '同家族的貼文', authOnly: true },
 ];
+
+const FORUM_SEO_DESCRIPTION = '香港Les討論區｜黑貓樹洞 — 香港女同志匿名分享心情、交流同認識同路朋友。';
+
+const FORUM_INDEX_FAQS = [
+  {
+    question: '香港Les討論區係咩？',
+    answer: '黑貓樹洞係 Black Cat Under The Moon 嘅香港Les討論區，畀香港女同志匿名或暱稱分享心情、交流同認識同路朋友，唔止係約會 App。',
+  },
+  {
+    question: '黑貓樹洞同交友 App 有咩分別？',
+    answer: '黑貓樹洞偏重社群圍爐同傾訴；想配對可以用 Echo Mode 月下緣份，想匿名傾訴可以用月光漂流瓶。',
+  },
+  {
+    question: '點樣開始用香港Les討論區？',
+    answer: '可以直接瀏覽公開貼文；登入後可以發文、留言同收藏。成熟話題版需要登入並確認年齡。',
+  },
+];
+
+function forumIndexJsonLd() {
+  return [
+    organizationJsonLd(),
+    webSiteJsonLd(),
+    discussionForumJsonLd({
+      name: `${FORUM_DISPLAY_NAME}｜香港Les討論區`,
+      description: FORUM_SEO_DESCRIPTION,
+      path: '/forum',
+    }),
+    breadcrumbJsonLd([
+      { name: '主頁', path: '/index.html' },
+      { name: '香港Les討論區｜黑貓樹洞', path: '/forum' },
+    ]),
+    faqPageJsonLd(FORUM_INDEX_FAQS),
+  ].filter(Boolean);
+}
 
 function timeAgo(dateStr) {
   if (!dateStr) return '';
@@ -1027,9 +1061,9 @@ export default function ForumPage() {
       <>
         <SeoHead
           title={FORUM_DISPLAY_NAME}
-          description="香港Les討論區・黑貓樹洞 — 香港女同志匿名分享同交流，認識同路朋友。"
+          description={FORUM_SEO_DESCRIPTION}
           path="/forum"
-          jsonLd={[organizationJsonLd(), webSiteJsonLd()]}
+          jsonLd={forumIndexJsonLd()}
         />
         <PageLoadingShell
           pageClassName="app-page--forum"
@@ -1057,10 +1091,12 @@ export default function ForumPage() {
         title={matureTopicActive ? `${MATURE_FORUM_TOPIC} · ${FORUM_DISPLAY_NAME}` : `${FORUM_DISPLAY_NAME}｜香港Les討論區`}
         description={matureTopicActive
           ? '黑貓樹洞成熟話題版 — 已登入會員的文字討論空間，分享親密關係、同意同界線。'
-          : '香港Les討論區｜黑貓樹洞 — 香港女同志匿名分享心情、交流同認識同路朋友。'}
+          : FORUM_SEO_DESCRIPTION}
         path="/forum"
         noindex={matureTopicActive}
-        jsonLd={[organizationJsonLd(), webSiteJsonLd()]}
+        jsonLd={matureTopicActive
+          ? [organizationJsonLd(), webSiteJsonLd()]
+          : forumIndexJsonLd()}
       />
       <AppShell
         headerBrand={<ForumHeaderLogo />}
@@ -1086,6 +1122,19 @@ export default function ForumPage() {
       >
         <div className="forum-layout">
           <div className="forum-main">
+            {!matureTopicActive && (
+              <header className="forum-seo-intro forum-panel">
+                <h1 className="forum-seo-intro__title">
+                  {FORUM_DISPLAY_NAME}
+                  <span className="forum-seo-intro__sep" aria-hidden="true">｜</span>
+                  <span className="forum-seo-intro__keyword">香港Les討論區</span>
+                </h1>
+                <p className="forum-seo-intro__desc">
+                  香港女同志討論區：匿名或暱稱分享心情、交流同認識同路朋友。圍爐傾訴，唔止約會。
+                </p>
+              </header>
+            )}
+
             <ForumBannerTicker />
 
             <div className="forum-filters-panel forum-panel">

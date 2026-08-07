@@ -98,3 +98,26 @@ export function breadcrumbJsonLd(items) {
     })),
   };
 }
+
+/**
+ * Forum index as a DiscussionForum — strengthens「香港Les討論區」entity signals.
+ */
+export function discussionForumJsonLd({
+  name = '黑貓樹洞｜香港Les討論區',
+  description = '香港Les討論區｜黑貓樹洞 — 香港女同志匿名分享心情、交流同認識同路朋友。',
+  path = '/forum',
+} = {}) {
+  const base = getSiteUrl();
+  const url = `${base}${path.startsWith('/') ? path : `/${path}`}`;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'DiscussionForum',
+    name,
+    alternateName: ['黑貓樹洞', '香港Les討論區', '香港女同志討論區'],
+    description,
+    url,
+    inLanguage: 'zh-Hant',
+    isPartOf: { '@type': 'WebSite', name: SITE_NAME, url: base },
+    publisher: { '@type': 'Organization', name: SITE_NAME, url: base },
+  };
+}
