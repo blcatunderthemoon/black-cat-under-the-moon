@@ -37,7 +37,8 @@
   var touchStartY = null;
   var knownIds = Object.create(null);
 
-  function typeClass(type) {
+  function typeClass(type, tag) {
+    if (type === 'gathering' && tag === '官方') return 'live-activity__tag--official';
     if (type === 'gathering') return 'live-activity__tag--gathering';
     if (type === 'member') return 'live-activity__tag--member';
     return 'live-activity__tag--post';
@@ -79,7 +80,7 @@
   }
 
   function fillTag(el, item) {
-    el.className = 'live-activity__tag ' + typeClass(item.type);
+    el.className = 'live-activity__tag ' + typeClass(item.type, item.tag);
     el.textContent = '';
     var ico = global.document.createElement('span');
     ico.className = 'live-activity__tag-ico-wrap';
@@ -300,7 +301,8 @@
       var isUnread = Number.isFinite(t) && t > seenAt;
       var isToastable = Number.isFinite(t) && t > Math.max(toastedAt, seenAt);
       // New members stay in the feed only — no popup toast.
-      var canToast = item.type !== 'member';
+      // Pinned official events stay first forever until done — don't toast every poll.
+      var canToast = item.type !== 'member' && !item.pinned;
 
       if (canToast) {
         if (opts.firstLoad) {

@@ -9,6 +9,7 @@ import { DISPLAY_NAME_MAX_LENGTH } from './display-name-policy.js';
 import { getHongKongDayStart } from './hong-kong-time.js';
 import { isSystemChannelDisplayName } from './system-inbox.js';
 import { SOLO_MATCH_ANCHOR_DISPLAY_NAME } from './inbox-solo-anchor.js';
+import { resolveMoonlightGathering001Card } from './moonlight-gathering-001.js';
 
 export const ACTIVITY_FEED_LIMIT = 8;
 export const ACTIVITY_SOURCE_LIMIT = 8;
@@ -26,6 +27,7 @@ export const ACTIVITY_POST_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
  *   text: string,
  *   href: string|null,
  *   created_at: string,
+ *   pinned?: boolean,
  * }} ActivityItem
  */
 
@@ -48,6 +50,41 @@ function isInternalSystemMemberName(raw) {
 }
 
 /**
+ * Unfinished official Moonlight #001 → pinned first in landing feed.
+ * @returns {Promise<ActivityItem|null>}
+ */
+async function loadPinnedOfficialGatheringActivity(admin) {
+  try {
+    const card = await resolveMoonlightGathering001Card(admin);
+    if (!card || card.status === 'completed') return null;
+
+    const title = clip(card.title, 28) || 'Moonlight Gathering';
+    let text;
+    if (card.status === 'full') {
+      text = `官方活動已滿額：「${title}」`;
+    } else if (typeof card.seats_left === 'number' && card.seats_left >= 0) {
+      text = `官方活動招募中：「${title}」· 仲有 ${card.seats_left} 個位`;
+    } else {
+      text = `官方活動招募中：「${title}」`;
+    }
+
+    return {
+      id: `gathering:${card.id}`,
+      type: 'gathering',
+      tag: '官方',
+      text,
+      href: card.href || '/gatherings',
+      // Keep relatively fresh so it stays visually current; client skips toast when pinned.
+      created_at: card.starts_at || new Date().toISOString(),
+      pinned: true,
+    };
+  } catch (err) {
+    console.warn('[site-activity] official pin:', err?.message || err);
+    return null;
+  }
+}
+
+/**
  * @param {import('@supabase/supabase-js').SupabaseClient} admin
  * @returns {Promise<ActivityItem[]>}
  */
@@ -55,7 +92,7 @@ export async function loadPublicActivityFeed(admin) {
   const memberSinceIso = getHongKongDayStart().toISOString();
   const postSinceIso = new Date(Date.now() - ACTIVITY_POST_MAX_AGE_MS).toISOString();
 
-  const [postsRes, membersRes, gatheringsRes] = await Promise.all([
+  const [postsRes, membersRes, gatheringsRes, pinnedOfficial] = await Promise.all([
     admin
       .from('forum_posts')
       .select('id, title, topic, created_at, hide_username, anonymous_name_snapshot')
@@ -78,6 +115,7 @@ export async function loadPublicActivityFeed(admin) {
       .in('status', ['open', 'full'])
       .order('created_at', { ascending: false })
       .limit(ACTIVITY_SOURCE_LIMIT),
+    loadPinnedOfficialGatheringActivity(admin),
   ]);
 
   const posts = postsRes.error ? [] : (postsRes.data || []);
@@ -130,8 +168,10 @@ export async function loadPublicActivityFeed(admin) {
     });
   }
 
+  const pinnedId = pinnedOfficial?.id || null;
   for (const row of gatherings) {
     if (!row?.id) continue;
+    if (pinnedId && `gathering:${row.id}` === pinnedId) continue;
     const title = clip(row.title, 36);
     if (!title) continue;
     const where = row.is_online ? '線上' : '線下';
@@ -161,6 +201,12 @@ export async function loadPublicActivityFeed(admin) {
     }
     balanced.push(item);
     if (balanced.length >= ACTIVITY_FEED_LIMIT) break;
+  }
+
+  // Official unfinished gathering stays slot #1 until completed.
+  if (pinnedOfficial) {
+    const rest = balanced.filter((item) => item.id !== pinnedOfficial.id);
+    return [pinnedOfficial, ...rest].slice(0, ACTIVITY_FEED_LIMIT);
   }
 
   return balanced;

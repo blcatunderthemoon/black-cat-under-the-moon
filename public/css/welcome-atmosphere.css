@@ -890,6 +890,12 @@ body.landing-document-scroll.welcome-active .site-presence__dot {
   background: rgba(255, 196, 80, 0.16);
 }
 
+.live-activity__tag--official {
+  color: #ffe066;
+  border: 1px solid rgba(255, 224, 102, 0.55);
+  background: rgba(255, 224, 102, 0.14);
+}
+
 .live-activity__tag--member {
   color: #ffd0e0;
   border: 1px solid rgba(255, 150, 190, 0.45);
