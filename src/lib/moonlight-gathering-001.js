@@ -14,7 +14,7 @@ export const MOONLIGHT_GATHERING_001_DEFAULTS = Object.freeze({
   title: 'Moonlight Gathering #001',
   capacity: 12,
   /** Remaining open seats (manual ops). approved = capacity − seats_left */
-  seats_left: 8,
+  seats_left: 7,
   starts_at: '2026-09-19T06:00:00.000Z', // 14:00 HKT
   ends_at: '2026-09-19T09:00:00.000Z', // 17:00 HKT
   starts_at_hk: '19/09/2026 (週六) 14:00',

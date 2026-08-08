@@ -2635,10 +2635,6 @@
     line-height: 1.1;
   }
 
-  .gathering-cal__day.has-featured .gathering-cal__day-num {
-    padding-right: 2.1rem; /* room for top-right 官方 chip */
-  }
-
   .gathering-cal__marks {
     margin-top: auto;
     margin-bottom: 0;
@@ -2648,13 +2644,15 @@
     justify-content: center;
   }
 
-  /* Desktop: 官方 label anchors top-right of the day cell */
+  /* Desktop: overlay 官方 chip — must not shift day number layout */
   .gathering-cal__day-chip {
     position: absolute;
     top: 0.22rem;
     right: 0.22rem;
     z-index: 1;
-    max-width: calc(100% - 0.4rem);
+    max-width: none;
+    margin: 0;
+    pointer-events: none;
     font-size: 0.58rem;
     font-weight: 700;
     padding: 0.08rem 0.22rem;
