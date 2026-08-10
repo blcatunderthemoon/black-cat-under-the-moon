@@ -3,9 +3,14 @@
  * so they stay off the admin draft candidate list across sessions.
  *
  * Stored in ops_settings (same table as gathering card capacity).
+ * Thank-you (ack) sent list also drives calendar attendance (approved / seats_left).
  */
 
 import { normalizeEmailForPersonKey } from './response-dedupe.js';
+import {
+  loadMoonlightGathering001Config,
+  saveMoonlightGathering001Config,
+} from './moonlight-gathering-001.js';
 
 export const MOONLIGHT_INVITE_SENT_OPS_KEY = 'moonlight_gathering_001_invite_sent';
 export const MOONLIGHT_ACK_SENT_OPS_KEY = 'moonlight_gathering_001_ack_sent';
@@ -45,8 +50,52 @@ export async function loadMoonlightOutreachSentEmails(admin, key) {
 }
 
 /**
+ * Thank-you（參加表）已寄名單 → 月曆出席人數。
+ * approved = unique ack emails（上限 capacity）；seats_left = capacity − approved.
+ * @returns {{ ok: true, approved: number, seats_left: number, capacity: number, skipped?: boolean } | { ok: false, error: string }}
+ */
+export async function syncMoonlight001AttendanceFromAckSent(admin) {
+  if (!admin) return { ok: false, error: 'No admin client' };
+  try {
+    const emails = await loadMoonlightOutreachSentEmails(admin, MOONLIGHT_ACK_SENT_OPS_KEY);
+    const current = await loadMoonlightGathering001Config(admin);
+    const capacity = current.capacity;
+    const approved = Math.max(0, Math.min(capacity, emails.length));
+    const seatsLeft = Math.max(0, capacity - approved);
+
+    if (current.seats_left === seatsLeft) {
+      return {
+        ok: true,
+        approved,
+        seats_left: seatsLeft,
+        capacity,
+        skipped: true,
+      };
+    }
+
+    const saved = await saveMoonlightGathering001Config(admin, {
+      seats_left: seatsLeft,
+      approved_count: approved,
+    });
+    if (!saved.ok) {
+      return { ok: false, error: saved.error || '無法更新出席人數' };
+    }
+    return {
+      ok: true,
+      approved,
+      seats_left: seatsLeft,
+      capacity,
+    };
+  } catch (err) {
+    console.warn('[moonlight-outreach] attendance sync failed:', err?.message || err);
+    return { ok: false, error: err?.message || 'attendance sync failed' };
+  }
+}
+
+/**
  * Merge emails into the persisted sent set.
- * @returns {{ ok: true, emails: string[] } | { ok: false, error: string }}
+ * When key is thank-you (ack), also refresh gathering #001 attendance.
+ * @returns {{ ok: true, emails: string[], attendance?: object } | { ok: false, error: string }}
  */
 export async function recordMoonlightOutreachSentEmails(admin, key, emailsToAdd) {
   const incoming = normalizeEmailList(emailsToAdd);
@@ -82,7 +131,14 @@ export async function recordMoonlightOutreachSentEmails(admin, key, emailsToAdd)
         : (error.message || '無法記錄已寄電郵'),
     };
   }
-  return { ok: true, emails: merged };
+
+  /** @type {{ ok: true, emails: string[], attendance?: object }} */
+  const result = { ok: true, emails: merged };
+  if (key === MOONLIGHT_ACK_SENT_OPS_KEY) {
+    const attendance = await syncMoonlight001AttendanceFromAckSent(admin);
+    result.attendance = attendance;
+  }
+  return result;
 }
 
 export function filterCandidatesExcludingSent(candidates, sentEmails) {

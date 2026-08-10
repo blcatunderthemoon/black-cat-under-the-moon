@@ -148,6 +148,7 @@ export default function MoonlightGathering001Editor({ apiFetch }) {
           <h2 className={styles.editorTitle}>聚會資料 · #001</h2>
           <p className={styles.editorHint}>
             改名額／剩餘座位／文案後會即時反映喺月光聚會月曆同 Forum「仲有 N 個位」。
+            Thank you 確認信寄出／建草稿／標記已寄出後，出席人數會跟參加表已寄名單自動更新。
             首次使用請喺 Supabase 執行 <code>scripts/sql/ops-settings.sql</code>。
           </p>
         </div>

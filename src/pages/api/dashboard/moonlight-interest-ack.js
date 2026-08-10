@@ -62,6 +62,12 @@ function normalizeEmailListCount(emails) {
   ).size;
 }
 
+function attendanceMessageSuffix(recorded) {
+  const att = recorded?.attendance;
+  if (!att?.ok) return '';
+  return ` 月曆出席已更新為 ${att.approved}/${att.capacity}（仲有 ${att.seats_left} 個位）。`;
+}
+
 function parseIdList(body) {
   const raw = Array.isArray(body.application_ids)
     ? body.application_ids
@@ -266,7 +272,10 @@ export default async function handler(req, res) {
       success: true,
       already_sent_total: recorded.emails.length,
       recorded_count: normalizeEmailListCount(emails),
-      message: `已標記 ${normalizeEmailListCount(emails)} 個電郵為已處理，之後預覽唔會再出現。`,
+      attendance: recorded.attendance || null,
+      message:
+        `已標記 ${normalizeEmailListCount(emails)} 個電郵為已處理，之後預覽唔會再出現。`
+        + attendanceMessageSuffix(recorded),
     });
   }
 
@@ -337,12 +346,13 @@ export default async function handler(req, res) {
       max_batch: MAX_DRAFT_BATCH,
       results,
       already_sent_total: recorded.ok ? recorded.emails.length : null,
+      attendance: recorded.ok ? (recorded.attendance || null) : null,
       message:
         `已建立 ${saved} 封「已收到申請」Gmail 草稿（未發送）`
         + `${failed ? `，失敗 ${failed}` : ''}`
         + `${skipped.length ? `，略過 ${skipped.length}` : ''}。`
         + (recorded.ok
-          ? ' 呢啲人已移出預覽名單。'
+          ? ` 呢啲人已移出預覽名單。${attendanceMessageSuffix(recorded)}`
           : ` 草稿已建立，但未能記住名單：${recorded.error || '未知錯誤'}`),
     });
   }
@@ -422,12 +432,13 @@ export default async function handler(req, res) {
       processed_ids: results.filter((r) => r.sent).map((r) => r.id),
       results,
       already_sent_total: recorded.ok ? recorded.emails.length : null,
+      attendance: recorded.ok ? (recorded.attendance || null) : null,
       message:
         `已發送 ${sentCount} 封「已收到申請／感謝」電郵（每封間隔約 ${SEND_DELAY_MS / 1000} 秒）`
         + `${failed ? `，失敗 ${failed}` : ''}`
         + `${skipped.length ? `，略過 ${skipped.length}` : ''}。`
         + (recorded.ok
-          ? ' 已寄出嘅人唔會再出現喺預覽名單。'
+          ? ` 已寄出嘅人唔會再出現喺預覽名單。${attendanceMessageSuffix(recorded)}`
           : ` 已寄出，但未能記住名單：${recorded.error || '未知錯誤'}`),
     });
   }
