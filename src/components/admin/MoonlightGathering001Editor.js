@@ -9,7 +9,7 @@ import styles from '../../styles/dashboard/MoonlightInterest.module.css';
 const EMPTY = {
   title: '',
   capacity: 12,
-  seats_left: 7,
+  seats_left: 6,
   approved_count: 4,
   time_range_hk: '',
   location_public: '',
@@ -42,7 +42,7 @@ export default function MoonlightGathering001Editor({ apiFetch }) {
       }
       const cfg = data.config || {};
       const capacity = Number(cfg.capacity) || 12;
-      const seatsLeft = Number(cfg.seats_left) ?? 7;
+      const seatsLeft = Number(cfg.seats_left) ?? 6;
       setForm({
         title: cfg.title || '',
         capacity,
