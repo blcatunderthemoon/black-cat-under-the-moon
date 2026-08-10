@@ -232,13 +232,33 @@ async function handlePost(req, res) {
     ...validated.data,
     status: 'open',
     approved_count: 0,
+    // Only Black Cat / forum admin hosts create official gatherings.
+    is_official: !!actor.isOfficialHost,
   };
 
-  const { data, error } = await admin
+  let { data, error } = await admin
     .from('gatherings')
     .insert(payload)
     .select('*')
     .single();
+
+  // Graceful if is_official column not migrated yet.
+  if (
+    error
+    && payload.is_official != null
+    && (/is_official|schema cache|PGRST204/i.test(String(error.message || ''))
+      || error.code === 'PGRST204')
+  ) {
+    const { is_official: _drop, ...withoutOfficial } = payload;
+    ({ data, error } = await admin
+      .from('gatherings')
+      .insert(withoutOfficial)
+      .select('*')
+      .single());
+    if (data && actor.isOfficialHost) {
+      data = { ...data, is_official: true };
+    }
+  }
 
   if (error) {
     console.error('[gatherings] create failed:', error.message, error.code, error.details);
@@ -269,6 +289,9 @@ async function handlePost(req, res) {
         id: user.id,
         display_name: actor.profile.display_name,
         mirror_type: actor.mirrorType,
+        forum_role: actor.profile.forum_role,
+        email: actor.profile.email,
+        is_official_host: !!actor.isOfficialHost,
       },
       includePrivate: true,
     }),

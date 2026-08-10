@@ -29,6 +29,7 @@ import {
   getGatheringDisplayStatus,
   isGatheringAcceptingApplications,
 } from './gathering-phase.js';
+import { isOfficialGatheringHost, withOfficialFeatureFlags } from './gathering-official.js';
 
 export { normalizeGatheringPrivateLocation } from './gathering-private-location.js';
 export {
@@ -78,7 +79,7 @@ export function tagLabelsForIds(tagIds) {
  */
 export async function loadGatheringActor(admin, userId) {
   const [{ data: profile }, { data: mirror }, journey] = await Promise.all([
-    admin.from('profiles').select('id, display_name, status, moon_journey_level').eq('id', userId).maybeSingle(),
+    admin.from('profiles').select('id, display_name, status, moon_journey_level, forum_role, email').eq('id', userId).maybeSingle(),
     admin.from('mirror_cards').select('mirror_type, shadow_type').eq('user_id', userId).maybeSingle(),
     getMoonJourneyForUser(admin, userId),
   ]);
@@ -96,6 +97,7 @@ export async function loadGatheringActor(admin, userId) {
     mirrorType: mirror?.mirror_type || null,
     shadowType: mirror?.shadow_type || null,
     level: journey?.level ?? profile.moon_journey_level ?? 1,
+    isOfficialHost: isOfficialGatheringHost(profile),
   };
 }
 
@@ -436,7 +438,7 @@ export function toPublicGathering(row, {
   if (!row) return null;
   const approvedCount = row.approved_count ?? 0;
   const max = row.max_participants ?? GATHERING_DEFAULT_MAX_PARTICIPANTS;
-  return {
+  const base = {
     id: row.id,
     host_id: row.host_id,
     host: host
@@ -478,6 +480,7 @@ export function toPublicGathering(row, {
     status: lazyUpdateStatus(row),
     cancel_reason: row.cancel_reason || null,
     cancelled_at: row.cancelled_at || null,
+    is_official: row.is_official === true,
     my_attendance: myAttendance
       ? {
         status: myAttendance.status,
@@ -486,6 +489,9 @@ export function toPublicGathering(row, {
       : null,
     created_at: row.created_at,
   };
+
+  // Official badge only for platform / Black Cat admin hosts — never user gatherings.
+  return withOfficialFeatureFlags(base, { host, row });
 }
 
 /** Lazy: mark past open/full gatherings as completed in the payload (DB cron later). */
@@ -516,7 +522,7 @@ export async function enrichHosts(admin, gatherings) {
   if (!hostIds.length) return new Map();
 
   const [{ data: profiles }, { data: mirrors }] = await Promise.all([
-    admin.from('profiles').select('id, display_name').in('id', hostIds),
+    admin.from('profiles').select('id, display_name, forum_role, email').in('id', hostIds),
     admin.from('mirror_cards').select('user_id, mirror_type').in('user_id', hostIds),
   ]);
 
@@ -527,6 +533,9 @@ export async function enrichHosts(admin, gatherings) {
       id: p.id,
       display_name: p.display_name,
       mirror_type: mirrorByUser.get(p.id) || null,
+      forum_role: p.forum_role || null,
+      email: p.email || null,
+      is_official_host: isOfficialGatheringHost(p),
     });
   }
   return map;

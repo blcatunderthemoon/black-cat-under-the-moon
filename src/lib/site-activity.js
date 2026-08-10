@@ -10,6 +10,7 @@ import { getHongKongDayStart } from './hong-kong-time.js';
 import { isSystemChannelDisplayName } from './system-inbox.js';
 import { SOLO_MATCH_ANCHOR_DISPLAY_NAME } from './inbox-solo-anchor.js';
 import { resolveMoonlightGathering001Card } from './moonlight-gathering-001.js';
+import { isOfficialGatheringHost } from './gathering-official.js';
 
 export const ACTIVITY_FEED_LIMIT = 8;
 export const ACTIVITY_SOURCE_LIMIT = 8;
@@ -50,38 +51,119 @@ function isInternalSystemMemberName(raw) {
 }
 
 /**
- * Unfinished official Moonlight #001 → pinned first in landing feed.
+ * Unfinished official gathering → pinned first in landing feed.
+ * Includes synthetic Moonlight #001 and DB gatherings marked official
+ * (Black Cat / forum-admin hosts only — never normal user hosts).
  * @returns {Promise<ActivityItem|null>}
  */
 async function loadPinnedOfficialGatheringActivity(admin) {
+  /** @type {ActivityItem[]} */
+  const candidates = [];
+
   try {
     const card = await resolveMoonlightGathering001Card(admin);
-    if (!card || card.status === 'completed') return null;
+    if (card && card.status !== 'completed') {
+      const title = clip(card.title, 28) || 'Moonlight Gathering';
+      let text;
+      if (card.status === 'full') {
+        text = `官方活動已滿額：「${title}」`;
+      } else if (typeof card.seats_left === 'number' && card.seats_left >= 0) {
+        text = `官方活動招募中：「${title}」· 仲有 ${card.seats_left} 個位`;
+      } else {
+        text = `官方活動招募中：「${title}」`;
+      }
+      candidates.push({
+        id: `gathering:${card.id}`,
+        type: 'gathering',
+        tag: '官方',
+        text,
+        href: card.href || '/gatherings',
+        created_at: card.starts_at || new Date().toISOString(),
+        pinned: true,
+        _sort_at: card.starts_at || '',
+      });
+    }
+  } catch (err) {
+    console.warn('[site-activity] official #001 pin:', err?.message || err);
+  }
 
-    const title = clip(card.title, 28) || 'Moonlight Gathering';
-    let text;
-    if (card.status === 'full') {
-      text = `官方活動已滿額：「${title}」`;
-    } else if (typeof card.seats_left === 'number' && card.seats_left >= 0) {
-      text = `官方活動招募中：「${title}」· 仲有 ${card.seats_left} 個位`;
-    } else {
-      text = `官方活動招募中：「${title}」`;
+  try {
+    let query = admin
+      .from('gatherings')
+      .select('id, title, starts_at, ends_at, status, is_online, max_participants, approved_count, is_official, host_id, is_hidden')
+      .eq('is_hidden', false)
+      .in('status', ['open', 'full'])
+      .order('starts_at', { ascending: true })
+      .limit(12);
+
+    // Prefer DB flag when migrated; else fall back to admin-hosted rows.
+    let { data: rows, error } = await query.eq('is_official', true);
+    if (error && /is_official|schema cache|PGRST204/i.test(String(error.message || ''))) {
+      ({ data: rows, error } = await admin
+        .from('gatherings')
+        .select('id, title, starts_at, ends_at, status, is_online, max_participants, approved_count, host_id, is_hidden')
+        .eq('is_hidden', false)
+        .in('status', ['open', 'full'])
+        .order('starts_at', { ascending: true })
+        .limit(12));
+      if (!error && rows?.length) {
+        const hostIds = [...new Set(rows.map((r) => r.host_id).filter(Boolean))];
+        const { data: profiles } = await admin
+          .from('profiles')
+          .select('id, forum_role, email')
+          .in('id', hostIds);
+        const officialHosts = new Set(
+          (profiles || [])
+            .filter((p) => isOfficialGatheringHost(p))
+            .map((p) => p.id),
+        );
+        rows = rows.filter((r) => officialHosts.has(r.host_id));
+      }
+    } else if (error) {
+      console.warn('[site-activity] official gatherings:', error.message);
+      rows = [];
     }
 
-    return {
-      id: `gathering:${card.id}`,
-      type: 'gathering',
-      tag: '官方',
-      text,
-      href: card.href || '/gatherings',
-      // Keep relatively fresh so it stays visually current; client skips toast when pinned.
-      created_at: card.starts_at || new Date().toISOString(),
-      pinned: true,
-    };
+    const now = Date.now();
+    for (const row of rows || []) {
+      if (!row?.id) continue;
+      if (String(row.id) === 'moonlight-gathering-001') continue;
+      const endMs = row.ends_at ? new Date(row.ends_at).getTime() : NaN;
+      if (Number.isFinite(endMs) && endMs <= now) continue;
+      const title = clip(row.title, 28);
+      if (!title) continue;
+      const max = Number(row.max_participants) || 0;
+      const approved = Number(row.approved_count) || 0;
+      const seatsLeft = max > 0 ? Math.max(0, max - approved) : null;
+      const where = row.is_online ? '線上' : '線下';
+      let text;
+      if (row.status === 'full' || (seatsLeft != null && seatsLeft <= 0 && max > 0)) {
+        text = `官方活動已滿額：「${title}」`;
+      } else if (seatsLeft != null) {
+        text = `官方${where}活動招募中：「${title}」· 仲有 ${seatsLeft} 個位`;
+      } else {
+        text = `官方${where}活動招募中：「${title}」`;
+      }
+      candidates.push({
+        id: `gathering:${row.id}`,
+        type: 'gathering',
+        tag: '官方',
+        text,
+        href: `/gatherings/${row.id}`,
+        created_at: row.starts_at || new Date().toISOString(),
+        pinned: true,
+        _sort_at: row.starts_at || '',
+      });
+    }
   } catch (err) {
-    console.warn('[site-activity] official pin:', err?.message || err);
-    return null;
+    console.warn('[site-activity] official DB pin:', err?.message || err);
   }
+
+  if (!candidates.length) return null;
+  candidates.sort((a, b) => String(a._sort_at).localeCompare(String(b._sort_at)));
+  const best = candidates[0];
+  delete best._sort_at;
+  return best;
 }
 
 /**
@@ -110,7 +192,7 @@ export async function loadPublicActivityFeed(admin) {
       .limit(ACTIVITY_SOURCE_LIMIT),
     admin
       .from('gatherings')
-      .select('id, title, created_at, starts_at, is_online, status, is_hidden')
+      .select('id, title, created_at, starts_at, is_online, status, is_hidden, is_official, host_id')
       .eq('is_hidden', false)
       .in('status', ['open', 'full'])
       .order('created_at', { ascending: false })
@@ -118,13 +200,27 @@ export async function loadPublicActivityFeed(admin) {
     loadPinnedOfficialGatheringActivity(admin),
   ]);
 
-  const posts = postsRes.error ? [] : (postsRes.data || []);
-  const members = membersRes.error ? [] : (membersRes.data || []);
-  const gatherings = gatheringsRes.error ? [] : (gatheringsRes.data || []);
+  let posts = postsRes.error ? [] : (postsRes.data || []);
+  let members = membersRes.error ? [] : (membersRes.data || []);
+  let gatherings = gatheringsRes.error ? [] : (gatheringsRes.data || []);
+
+  // If is_official column missing, keep list; official filter uses host role below.
+  if (gatheringsRes.error && /is_official|schema cache|PGRST204/i.test(String(gatheringsRes.error.message || ''))) {
+    const retry = await admin
+      .from('gatherings')
+      .select('id, title, created_at, starts_at, is_online, status, is_hidden, host_id')
+      .eq('is_hidden', false)
+      .in('status', ['open', 'full'])
+      .order('created_at', { ascending: false })
+      .limit(ACTIVITY_SOURCE_LIMIT);
+    gatherings = retry.error ? [] : (retry.data || []);
+    if (retry.error) console.warn('[site-activity] gatherings:', retry.error.message);
+  } else if (gatheringsRes.error) {
+    console.warn('[site-activity] gatherings:', gatheringsRes.error.message);
+  }
 
   if (postsRes.error) console.warn('[site-activity] posts:', postsRes.error.message);
   if (membersRes.error) console.warn('[site-activity] members:', membersRes.error.message);
-  if (gatheringsRes.error) console.warn('[site-activity] gatherings:', gatheringsRes.error.message);
 
   /** @type {ActivityItem[]} */
   const items = [];
@@ -169,9 +265,26 @@ export async function loadPublicActivityFeed(admin) {
   }
 
   const pinnedId = pinnedOfficial?.id || null;
+
+  // Exclude official / admin-hosted from the generic「活動」rows (they use the pinned「官方」slot).
+  const gatheringHostIds = [...new Set(gatherings.map((r) => r.host_id).filter(Boolean))];
+  let officialHostIds = new Set();
+  if (gatheringHostIds.length) {
+    const { data: hostProfiles } = await admin
+      .from('profiles')
+      .select('id, forum_role, email')
+      .in('id', gatheringHostIds);
+    officialHostIds = new Set(
+      (hostProfiles || [])
+        .filter((p) => isOfficialGatheringHost(p))
+        .map((p) => p.id),
+    );
+  }
+
   for (const row of gatherings) {
     if (!row?.id) continue;
     if (pinnedId && `gathering:${row.id}` === pinnedId) continue;
+    if (row.is_official === true || officialHostIds.has(row.host_id)) continue;
     const title = clip(row.title, 36);
     if (!title) continue;
     const where = row.is_online ? '線上' : '線下';
