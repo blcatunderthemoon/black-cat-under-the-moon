@@ -184,7 +184,7 @@
 .table th:first-child,
 .table td:first-child {
   padding-left: 16px;
-  width: 40px;
+  width: 44px;
 }
 
 .table td {
@@ -194,17 +194,46 @@
   white-space: nowrap;
 }
 
-.tableRow { transition: background var(--transition); }
+.tableRow { transition: background var(--transition); cursor: pointer; }
 .tableRow:hover td { background: rgba(124,92,252,0.06); color: var(--text); }
 .tableRow.checked td { background: rgba(124,92,252,0.13); color: var(--text); }
 .tableRow:last-child td { border-bottom: none; }
+
+/* Checkbox column — large hit target; keep above any row overlays */
+.checkCell {
+  position: relative;
+  z-index: 1;
+  width: 44px;
+  vertical-align: middle;
+  pointer-events: auto;
+}
+
+.checkLabel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: -10px -12px -10px -16px;
+  padding: 10px 12px 10px 16px;
+  min-height: 44px;
+  min-width: 44px;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.checkLabel:has(input:disabled) {
+  cursor: not-allowed;
+}
 
 /* Checkbox */
 .checkbox {
   width: 16px;
   height: 16px;
+  margin: 0;
   accent-color: var(--accent);
   cursor: pointer;
+  pointer-events: auto;
+  position: relative;
+  z-index: 1;
 }
 
 /* Score badge */
@@ -573,9 +602,29 @@
   cursor: not-allowed;
 }
 
-.rowNotSelectable .checkbox:disabled {
+.rowSent {
+  cursor: default;
+}
+
+.rowSent:hover td {
+  background: transparent;
+  color: var(--text-dim);
+}
+
+.rowNotSelectable .checkbox:disabled,
+.rowNotSelectable .checkLabel {
   cursor: not-allowed;
+}
+
+.rowNotSelectable .checkbox:disabled {
   opacity: 0.35;
+}
+
+.checkSentPlaceholder {
+  display: block;
+  width: 16px;
+  height: 16px;
+  margin: 0 auto;
 }
 
 @keyframes pulse {

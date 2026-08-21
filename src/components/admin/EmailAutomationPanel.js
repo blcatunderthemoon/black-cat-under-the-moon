@@ -178,8 +178,12 @@ export function EmailAutomationPanel() {
   // Checkbox helpers
   // ─────────────────────────────────────────────────────────────────────────
 
+  // Already-sent pairs are history-only: no checkbox, no re-send from this list.
   const isPairSelectable = (p) =>
-    (quotaOverride || !p.quota_blocked) && !p.same_email_blocked && !pairHasSameEmail(p);
+    !isAutomationPairSent(p)
+    && (quotaOverride || !p.quota_blocked)
+    && !p.same_email_blocked
+    && !pairHasSameEmail(p);
 
   // In override mode always reveal quota-full pairs so they can be picked.
   const effectiveHideQuotaFull = quotaOverride ? false : hideQuotaFull;
@@ -217,11 +221,14 @@ export function EmailAutomationPanel() {
   const toggleRow = (p) => {
     if (!isPairSelectable(p)) return;
     const key = pairKey(p);
-    const isCurrentlyChecked = !!checked[key];
+    if (!key) return;
 
     // Unchecking is always allowed.
-    if (isCurrentlyChecked) {
-      setChecked((prev) => ({ ...prev, [key]: false }));
+    if (checked[key]) {
+      setChecked((prev) => {
+        if (!prev[key]) return prev;
+        return { ...prev, [key]: false };
+      });
       return;
     }
 
@@ -234,7 +241,10 @@ export function EmailAutomationPanel() {
         return;
       }
     }
-    setChecked((prev) => ({ ...prev, [key]: true }));
+    setChecked((prev) => {
+      if (prev[key]) return prev;
+      return { ...prev, [key]: true };
+    });
   };
 
   const selectAll = () => {
@@ -269,6 +279,10 @@ export function EmailAutomationPanel() {
   );
   const selectedPairs = visiblePairs.filter((p) => isPairSelectable(p) && checked[pairKey(p)]);
   const selectedCount = selectedPairs.length;
+  const selectableVisibleCount = useMemo(
+    () => visiblePairs.filter(isPairSelectable).length,
+    [visiblePairs, quotaOverride],
+  );
   const skippedByQuota = useMemo(() => {
     if (quotaOverride) return 0;
     const runningUsage = new Map();
@@ -665,7 +679,7 @@ export function EmailAutomationPanel() {
               {viewMode === 'premium' ? 'Moonlight Passport 配對' : '全域配對清單'}
             </span>
             <div className={styles.bulkToolbar}>
-              {pairs !== null && visiblePairs.length > 0 && (
+              {pairs !== null && selectableVisibleCount > 0 && (
                 <>
                   <button type="button" className={styles.selectAllBtn} onClick={selectAll}>全選</button>
                   <button type="button" className={styles.selectAllBtn} onClick={deselectAll}>取消全選</button>
@@ -733,29 +747,48 @@ export function EmailAutomationPanel() {
                     const pendingA = selectedQuotaUsage.get(Number(p.user_a_id)) || 0;
                     const pendingB = selectedQuotaUsage.get(Number(p.user_b_id)) || 0;
                     const b     = p.score_breakdown || {};
+                    const alreadySent = isAutomationPairSent(p);
+                    const checkTitle = alreadySent
+                      ? '已發送，無法再次選取'
+                      : p.same_email_blocked || pairHasSameEmail(p)
+                        ? '雙方 Email 相同，無法發送'
+                        : !selectable
+                          ? '配額已滿，無法選取'
+                          : batchBlocked
+                            ? `已達免費會員本月上限（${quotaProjection.quota.limit} 次），無法再選取此用戶的配對`
+                            : undefined;
+                    const canToggle = selectable && !batchBlocked;
                     return (
                       <tr
                         key={key}
-                        className={`${styles.tableRow} ${isChk ? styles.checked : ''} ${p.quota_blocked ? styles.quotaBlockedRow : ''} ${p.same_email_blocked ? styles.quotaBlockedRow : ''} ${(!selectable || batchBlocked) ? styles.rowNotSelectable : ''}`}
-                        onClick={() => toggleRow(p)}
+                        className={`${styles.tableRow} ${isChk ? styles.checked : ''} ${p.quota_blocked ? styles.quotaBlockedRow : ''} ${p.same_email_blocked ? styles.quotaBlockedRow : ''} ${alreadySent ? styles.rowSent : ''} ${(!selectable || batchBlocked) ? styles.rowNotSelectable : ''}`}
+                        onClick={(e) => {
+                          // Avoid double-toggle when the click originated on the
+                          // checkbox/label (onChange already handled it).
+                          if (!canToggle) return;
+                          if (e.target.closest('input, label, a, button')) return;
+                          toggleRow(p);
+                        }}
                       >
-                        <td onClick={(e) => e.stopPropagation()}>
-                          <input
-                            type="checkbox"
-                            className={styles.checkbox}
-                            checked={isChk}
-                            disabled={!selectable || batchBlocked}
-                            title={
-                              p.same_email_blocked || pairHasSameEmail(p)
-                                ? '雙方 Email 相同，無法發送'
-                                : !selectable
-                                  ? '配額已滿，無法選取'
-                                  : batchBlocked
-                                    ? `已達免費會員本月上限（${quotaProjection.quota.limit} 次），無法再選取此用戶的配對`
-                                    : undefined
-                            }
-                            onChange={() => toggleRow(p)}
-                          />
+                        <td className={styles.checkCell}>
+                          {alreadySent ? (
+                            <span className={styles.checkSentPlaceholder} title={checkTitle} aria-hidden="true" />
+                          ) : (
+                            <label className={styles.checkLabel} title={checkTitle}>
+                              <input
+                                type="checkbox"
+                                className={styles.checkbox}
+                                checked={isChk}
+                                disabled={!canToggle}
+                                aria-label={`選取配對 ${key}`}
+                                onClick={(e) => e.stopPropagation()}
+                                onChange={() => {
+                                  if (!canToggle) return;
+                                  toggleRow(p);
+                                }}
+                              />
+                            </label>
+                          )}
                         </td>
                         <td style={{ fontWeight: 600, color: 'var(--text)' }}>
                           <div className={styles.userCell}>
