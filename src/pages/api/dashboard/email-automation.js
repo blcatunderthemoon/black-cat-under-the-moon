@@ -26,7 +26,7 @@ import {
 import { buildMatchResponsePremiumContext } from '../../../lib/match-response-premium.js';
 import { filterSuccessfulSentRows, isFailedSentMatchNote } from '../../../lib/match-sent-record.js';
 import { pairHasSameResponseEmail } from '../../../lib/match-response-auth.js';
-import { pickLatestResponsesPerPerson } from '../../../lib/response-dedupe.js';
+import { pickLatestResponsesPerPersonWithConduct } from '../../../lib/response-dedupe.js';
 import { buildLatestResponseIdResolver, remapPairRowToLatest } from '../../../lib/match-person-remap.js';
 import { fetchAllRows } from '../../../lib/supabase-fetch-all.js';
 import { authorizeStationOrForumAdmin } from '../../../lib/station-or-forum-admin-auth.js';
@@ -101,7 +101,9 @@ async function handleGet(req, res) {
 
   // Same email (or same user_id) → one person. Always pair with the latest row only,
   // even when older copies were never marked claim_status=duplicate.
-  const usersLatest = pickLatestResponsesPerPerson(allUsers || []);
+  // Inherit worst conduct across that person's rows so a penalty on an older id
+  // (e.g. #673 conduct=0) still blocks the newer resubmit (#761 default 100).
+  const usersLatest = pickLatestResponsesPerPersonWithConduct(allUsers || []);
   const excludedDuplicateCount = (allUsers || []).length - usersLatest.length;
   // Conduct < 50 (incl. 0) must not enter live pairing. Null score still counts as 100.
   // Keep usersLatest for historical「已發送」merge even when the live pool is tiny.

@@ -92,6 +92,69 @@ export function pickLatestResponsesPerPerson(rows) {
   return [...latestByKey.values()];
 }
 
+/**
+ * Worst (lowest) explicit conduct_score across all rows for each person.
+ * Null/missing scores are ignored — they mean "never penalised".
+ * @returns {Map<string, number>}
+ */
+export function worstConductScoreByPerson(rows) {
+  const worstByKey = new Map();
+  for (const row of rows || []) {
+    const key = personKeyForResponse(row);
+    if (key == null) continue;
+    if (row.conduct_score == null || row.conduct_score === '') continue;
+    const score = Number(row.conduct_score);
+    if (!Number.isFinite(score)) continue;
+    const prev = worstByKey.get(key);
+    if (prev == null || score < prev) worstByKey.set(key, score);
+  }
+  return worstByKey;
+}
+
+function conductStatusForScore(score) {
+  if (score >= 70) return 'active';
+  if (score >= 50) return 'warned';
+  return 'suspended';
+}
+
+/**
+ * Overlay person-level conduct onto latest-per-person rows.
+ *
+ * Penalties are often applied to an older response id. After resubmit, the new
+ * row defaults to conduct_score 100/null and would otherwise re-enter matching.
+ * Carry forward the worst explicit score for that person so conduct 0 stays out.
+ */
+export function applyPersonConductToLatest(latestRows, allRows) {
+  const worstByKey = worstConductScoreByPerson(allRows);
+  if (!worstByKey.size) return latestRows || [];
+
+  return (latestRows || []).map((row) => {
+    const key = personKeyForResponse(row);
+    if (key == null) return row;
+    const worst = worstByKey.get(key);
+    if (worst == null) return row;
+
+    const current = row.conduct_score == null || row.conduct_score === ''
+      ? 100
+      : Number(row.conduct_score);
+    if (!Number.isFinite(current) || worst >= current) return row;
+
+    return {
+      ...row,
+      conduct_score: worst,
+      conduct_status: conductStatusForScore(worst),
+    };
+  });
+}
+
+/**
+ * Latest row per person, with person-level conduct inherited from older rows.
+ */
+export function pickLatestResponsesPerPersonWithConduct(rows) {
+  const latest = pickLatestResponsesPerPerson(rows);
+  return applyPersonConductToLatest(latest, rows);
+}
+
 /** IDs of the rows that are NOT the latest for their person (i.e. superseded). */
 export function supersededResponseIds(rows) {
   const latestIds = new Set(pickLatestResponsesPerPerson(rows).map((r) => Number(r.id)));

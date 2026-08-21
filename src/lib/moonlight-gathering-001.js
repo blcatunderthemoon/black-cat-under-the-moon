@@ -13,8 +13,8 @@ export const MOONLIGHT_GATHERING_001_OPS_KEY = 'moonlight_gathering_001';
 export const MOONLIGHT_GATHERING_001_DEFAULTS = Object.freeze({
   title: 'Moonlight Gathering #001',
   capacity: 12,
-  /** Remaining open seats (manual ops). approved = capacity − seats_left */
-  seats_left: 6,
+  /** Remaining open seats — prefer ops_settings; this is only the cold-start fallback. */
+  seats_left: 12,
   starts_at: '2026-09-19T06:00:00.000Z', // 14:00 HKT
   ends_at: '2026-09-19T09:00:00.000Z', // 17:00 HKT
   starts_at_hk: '19/09/2026 (週六) 14:00',
@@ -170,7 +170,9 @@ export async function saveMoonlightGathering001Config(admin, patch) {
 
 /**
  * Merge featured #001 into a month’s gathering list when the month includes Sep 2026.
- * Pass `featuredCard` from resolveMoonlightGathering001Card when available.
+ * Prefer (1) explicit `featuredCard` from ops, then (2) a card already in `gatherings`
+ * (API may have injected live seats), and only then (3) code defaults.
+ * Never replace a live API card with stale defaults — that froze the calendar at 6/12.
  */
 export function withFeaturedMoonlightGatherings(
   gatherings,
@@ -182,8 +184,9 @@ export function withFeaturedMoonlightGatherings(
   const list = Array.isArray(gatherings) ? [...gatherings] : [];
   if (year !== 2026 || month !== 9) return list;
 
-  const featured = featuredCard || buildMoonlightGathering001Card(now);
-  const withoutDup = list.filter((g) => String(g?.id) !== featured.id);
+  const existing = list.find((g) => String(g?.id) === MOONLIGHT_GATHERING_001_ID) || null;
+  const featured = featuredCard || existing || buildMoonlightGathering001Card(now);
+  const withoutDup = list.filter((g) => String(g?.id) !== MOONLIGHT_GATHERING_001_ID);
   return [featured, ...withoutDup];
 }
 
